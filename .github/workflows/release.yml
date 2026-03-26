@@ -1,0 +1,40 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare plugin folder
+        run: |
+          set -euo pipefail
+          PLUGIN_SLUG="ai-not"
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p dist/"${PLUGIN_SLUG}"
+
+          rsync -a \
+            --exclude ".git/" \
+            --exclude ".github/" \
+            --exclude "dist/" \
+            --exclude ".DS_Store" \
+            ./ dist/"${PLUGIN_SLUG}"/
+
+          cd dist
+          zip -r "${PLUGIN_SLUG}-${VERSION}.zip" "${PLUGIN_SLUG}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
+          generate_release_notes: true
+
