@@ -1,34 +1,33 @@
 <?php
 /**
- * Plugin Name: AI Not (AI Connector Governance)
+ * Plugin Name: HandL AI Gate
  * Description: Lets administrators allow/deny which plugins may use the WordPress AI Client. Defaults to allow, with opt-in logging and best-effort attribution.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Haktan Suren
  * Requires at least: 7.0
  * Requires PHP: 7.4
  * Author URI: https://www.haktansuren.com/
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: ai-not
+ * Text Domain: handl-ai-gate
  * Domain Path: /languages
  *
- * @package AINot
+ * @package HandL_AIGate
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'AI_NOT_VERSION', '1.0.0' );
-define( 'AI_NOT_FILE', __FILE__ );
-define( 'AI_NOT_DIR', __DIR__ );
+define( 'HANDL_AIGATE_VERSION', '1.0.1' );
+define( 'HANDL_AIGATE_FILE', __FILE__ );
+define( 'HANDL_AIGATE_DIR', __DIR__ );
 
-require_once AI_NOT_DIR . '/includes/class-ai-not-plugin.php';
+require_once HANDL_AIGATE_DIR . '/includes/class-handl-aigate-plugin.php';
 
 add_action(
 	'plugins_loaded',
 	static function (): void {
-		\AINot\Plugin::instance()->init();
+		\HandL\AIGate\Plugin::instance()->init();
 	}
 );
-

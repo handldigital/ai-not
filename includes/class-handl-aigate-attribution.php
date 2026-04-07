@@ -2,10 +2,10 @@
 /**
  * Caller attribution helpers (best-effort).
  *
- * @package AINot
+ * @package HandL_AIGate
  */
 
-namespace AINot;
+namespace HandL\AIGate;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -43,7 +43,7 @@ final class Attribution {
 
 		$plugin_dir    = wp_normalize_path( WP_PLUGIN_DIR );
 		$mu_plugin_dir = defined( 'WPMU_PLUGIN_DIR' ) ? wp_normalize_path( WPMU_PLUGIN_DIR ) : null;
-		$self_dir      = wp_normalize_path( dirname( AI_NOT_FILE ) );
+		$self_dir      = wp_normalize_path( dirname( HANDL_AIGATE_FILE ) );
 
 		$plugins = function_exists( 'get_plugins' ) ? get_plugins() : array();
 		$plugin_basenames_by_dir = self::index_plugins_by_directory( $plugins, $plugin_dir );
@@ -142,4 +142,3 @@ final class Attribution {
 		return $rel;
 	}
 }
-

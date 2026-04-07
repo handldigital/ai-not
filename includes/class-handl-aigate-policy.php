@@ -2,10 +2,10 @@
 /**
  * Enforcement + logging.
  *
- * @package AINot
+ * @package HandL_AIGate
  */
 
-namespace AINot;
+namespace HandL\AIGate;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -126,4 +126,3 @@ final class Policy {
 		update_option( Plugin::LOG_OPTION_KEY, $log, false );
 	}
 }
-
