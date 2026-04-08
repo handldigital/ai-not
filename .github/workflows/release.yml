@@ -18,7 +18,7 @@ jobs:
       - name: Prepare plugin folder
         run: |
           set -euo pipefail
-          PLUGIN_SLUG="handl-ai-gate"
+          PLUGIN_SLUG="handl-ai-connector-access-control"
           VERSION="${GITHUB_REF_NAME#v}"
           mkdir -p dist/"${PLUGIN_SLUG}"
 

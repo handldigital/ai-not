@@ -2,10 +2,10 @@
 /**
  * Enforcement + logging.
  *
- * @package HandL_AIGate
+ * @package HandL_AICAC
  */
 
-namespace HandL\AIGate;
+namespace HandL\AICAC;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
