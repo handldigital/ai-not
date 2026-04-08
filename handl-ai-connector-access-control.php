@@ -2,7 +2,7 @@
 /**
  * Plugin Name: HandL AI Connector Access Control
  * Description: Lets administrators allow/deny which plugins may use the WordPress AI Client. Defaults to allow, with opt-in logging and best-effort attribution.
- * Version: 1.0.2
+ * Version: 1.0.3
  * Author: Haktan Suren
  * Requires at least: 7.0
  * Requires PHP: 7.4
@@ -19,9 +19,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HANDL_AICAC_VERSION', '1.0.2' );
+define( 'HANDL_AICAC_VERSION', '1.0.3' );
 define( 'HANDL_AICAC_FILE', __FILE__ );
 define( 'HANDL_AICAC_DIR', __DIR__ );
+define( 'HANDL_AICAC_URL', plugin_dir_url( __FILE__ ) );
 
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin.php';
 

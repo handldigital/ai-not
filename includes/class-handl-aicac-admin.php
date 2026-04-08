@@ -77,8 +77,13 @@ final class Admin {
 			$log = array();
 		}
 
+		$icon_src = add_query_arg( 'ver', HANDL_AICAC_VERSION, HANDL_AICAC_URL . 'assets/icon-128x128.png' );
+
 		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__( 'HandL AI Connector Access Control', 'handl-ai-connector-access-control' ) . '</h1>';
+		echo '<h1 style="display:flex;align-items:center;gap:12px;">';
+		echo '<img src="' . esc_url( $icon_src ) . '" alt="" width="40" height="40" style="border-radius:8px;" loading="lazy" decoding="async" />';
+		echo esc_html__( 'HandL AI Connector Access Control', 'handl-ai-connector-access-control' );
+		echo '</h1>';
 		echo '<p>' . esc_html__( 'Allow/deny which plugins may execute prompts via the WordPress AI Client. Default policy is allow.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		echo '<form method="get" style="margin: 0 0 12px 0;">';

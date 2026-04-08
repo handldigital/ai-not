@@ -4,7 +4,7 @@ Tags: ai, governance, security, handl, ai client
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,6 +47,9 @@ Only AI calls made through the WordPress AI Client APIs that pass through `wp_ai
 No. It is best-effort and may be unknown or ambiguous for some execution paths (cron, REST bootstraps, shared libraries, MU plugins).
 
 == Changelog ==
+
+= 1.0.3 =
+* Added logos + branding
 
 = 1.0.2 =
 * Renamed plugin to HandL AI Connector Access Control (slug `handl-ai-connector-access-control`). Prefixed options, constants, menus, and forms per WordPress.org guidelines. Migrates settings from previous plugin slugs when present.
