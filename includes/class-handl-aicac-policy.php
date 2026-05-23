@@ -41,15 +41,20 @@ final class Policy {
 
 		$decision = $this->decide( $policy, $plugin );
 
+		$snapshot = Prompt_Snapshot::from_builder( $builder );
+
 		$this->log_event(
-			array(
-				'ts'        => time(),
-				'plugin'    => $plugin,
-				'file'      => $attrib['file'] ?? null,
-				'method'    => $attrib['method'] ?? null,
-				'decision'  => $decision ? 'deny' : 'allow',
-				'user_id'   => get_current_user_id(),
-				'uri'       => isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) ) : null,
+			array_merge(
+				array(
+					'ts'       => time(),
+					'plugin'   => $plugin,
+					'file'     => $attrib['file'] ?? null,
+					'caller'   => $attrib['method'] ?? null,
+					'decision' => $decision ? 'deny' : 'allow',
+					'user_id'  => get_current_user_id(),
+					'uri'      => isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) ) : null,
+				),
+				$snapshot
 			)
 		);
 

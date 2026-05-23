@@ -27,6 +27,20 @@ final class Admin {
 		}
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+	}
+
+	public function enqueue_assets( string $hook_suffix ): void {
+		if ( 'settings_page_handl-ai-connector-access-control' !== $hook_suffix ) {
+			return;
+		}
+
+		wp_enqueue_style(
+			'handl-aicac-admin',
+			HANDL_AICAC_URL . 'assets/admin.css',
+			array(),
+			HANDL_AICAC_VERSION
+		);
 	}
 
 	public function register_menu(): void {
@@ -128,7 +142,13 @@ final class Admin {
 		echo '<th scope="row">' . esc_html__( 'Logging', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<td>';
 		echo '<label><input type="checkbox" name="handl_aicac_log_enabled" value="1" ' . checked( ! empty( $policy['log_enabled'] ), true, false ) . ' /> ' . esc_html__( 'Enable recent-call logging', 'handl-ai-connector-access-control' ) . '</label>';
-		echo '<p class="description">' . esc_html__( 'When enabled, this stores a local “recent calls” log (plugin attribution, decision, user id, and request URI). Nothing is sent off-site.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Stores a local ring buffer in the options table (nothing is sent off-site). Entries may include provider, model, operation, a truncated prompt preview, attribution, decision, user id, and request URI.', 'handl-ai-connector-access-control' ) . '</p>';
+		$log_limit = (int) ( $policy['log_limit'] ?? 200 );
+		echo '<p style="margin-top:10px;">';
+		echo '<label for="handl-aicac-log-limit"><strong>' . esc_html__( 'Retain entries', 'handl-ai-connector-access-control' ) . '</strong></label> ';
+		echo '<input type="number" id="handl-aicac-log-limit" name="handl_aicac_log_limit" value="' . esc_attr( (string) $log_limit ) . '" min="20" max="1000" step="1" class="small-text" />';
+		echo ' <span class="description">' . esc_html__( '(20–1000). Oldest entries drop when full. There is no time-based expiry.', 'handl-ai-connector-access-control' ) . '</span>';
+		echo '</p>';
 		echo '</td>';
 		echo '</tr>';
 		echo '</table>';
@@ -188,46 +208,52 @@ final class Admin {
 		submit_button( __( 'Save changes', 'handl-ai-connector-access-control' ) );
 		echo '</form>';
 
+		$log_limit_policy = (int) ( $policy['log_limit'] ?? 200 );
+		$stored_count     = count( $log );
+
+		echo '<div class="handl-aicac-log-wrap">';
 		echo '<h2>' . esc_html__( 'Recent AI calls (best-effort)', 'handl-ai-connector-access-control' ) . '</h2>';
-		echo '<table class="widefat striped">';
+		echo '<p class="handl-aicac-log-meta">';
+		printf(
+			/* translators: 1: stored count, 2: retention limit, 3: rows shown in table */
+			esc_html__( 'Showing up to %3$d newest rows. %1$d of %2$d stored entries retained (count-based; no TTL). Provider/model are read from the prompt builder when available.', 'handl-ai-connector-access-control' ),
+			(int) $stored_count,
+			(int) $log_limit_policy,
+			50
+		);
+		echo '</p>';
+		echo '<table class="widefat striped handl-aicac-log-table">';
 		echo '<thead><tr>';
-		echo '<th>' . esc_html__( 'Time', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th class="column-time">' . esc_html__( 'Time', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Decision', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th class="column-operation">' . esc_html__( 'Operation', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th class="column-provider">' . esc_html__( 'Provider', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th class="column-model">' . esc_html__( 'Model', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Source file', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Prompt', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'User', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'URI', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead><tbody>';
 
-		$log = array_reverse( $log );
+		$log   = array_reverse( $log );
 		$shown = 0;
 		foreach ( $log as $row ) {
 			if ( $shown >= 50 ) {
 				break;
 			}
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
 			$shown++;
-			$ts       = isset( $row['ts'] ) ? (int) $row['ts'] : 0;
-			$decision = isset( $row['decision'] ) ? (string) $row['decision'] : '';
-			$plugin   = isset( $row['plugin'] ) ? (string) $row['plugin'] : '';
-			$file     = isset( $row['file'] ) ? (string) $row['file'] : '';
-			$user_id  = isset( $row['user_id'] ) ? (int) $row['user_id'] : 0;
-			$uri      = isset( $row['uri'] ) ? (string) $row['uri'] : '';
-
-			echo '<tr>';
-			echo '<td>' . esc_html( $ts ? wp_date( 'Y-m-d H:i:s', $ts ) : '' ) . '</td>';
-			echo '<td>' . esc_html( $decision ) . '</td>';
-			echo '<td><code>' . esc_html( $plugin ?: 'unknown' ) . '</code></td>';
-			echo '<td><code style="font-size:12px;">' . esc_html( $file ) . '</code></td>';
-			echo '<td>' . esc_html( $user_id ? (string) $user_id : '' ) . '</td>';
-			echo '<td><code style="font-size:12px;">' . esc_html( $uri ) . '</code></td>';
-			echo '</tr>';
+			$this->render_log_row( $row, $plugins );
 		}
 
 		if ( 0 === $shown ) {
-			echo '<tr><td colspan="6">' . esc_html__( 'No calls logged yet.', 'handl-ai-connector-access-control' ) . '</td></tr>';
+			echo '<tr><td colspan="9">' . esc_html__( 'No calls logged yet. Enable logging above and trigger an AI Client request.', 'handl-ai-connector-access-control' ) . '</td></tr>';
 		}
 
 		echo '</tbody></table>';
+		echo '</div>';
 		echo '</div>';
 	}
 
@@ -241,6 +267,11 @@ final class Admin {
 
 		$posted_log_enabled = filter_input( INPUT_POST, 'handl_aicac_log_enabled', FILTER_UNSAFE_RAW );
 		$policy['log_enabled'] = ! empty( $posted_log_enabled );
+
+		$posted_log_limit = filter_input( INPUT_POST, 'handl_aicac_log_limit', FILTER_VALIDATE_INT );
+		if ( false !== $posted_log_limit && null !== $posted_log_limit ) {
+			$policy['log_limit'] = (int) $posted_log_limit;
+		}
 
 		$rules = array();
 		$posted_rules = filter_input( INPUT_POST, 'handl_aicac_rule', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
@@ -263,5 +294,114 @@ final class Admin {
 
 	private function render_option( string $value, string $current, string $label ): void {
 		echo '<option value="' . esc_attr( $value ) . '" ' . selected( $current, $value, false ) . '>' . esc_html( $label ) . '</option>';
+	}
+
+	/**
+	 * @param array<string,mixed> $row
+	 * @param array<string,array<string,mixed>> $plugins
+	 */
+	private function render_log_row( array $row, array $plugins ): void {
+		$ts        = isset( $row['ts'] ) ? (int) $row['ts'] : 0;
+		$decision  = isset( $row['decision'] ) ? (string) $row['decision'] : '';
+		$operation = isset( $row['operation'] ) ? (string) $row['operation'] : '';
+		$provider  = isset( $row['provider'] ) ? (string) $row['provider'] : '';
+		$model     = isset( $row['model'] ) ? (string) $row['model'] : '';
+		$plugin    = isset( $row['plugin'] ) ? (string) $row['plugin'] : '';
+		$file      = isset( $row['file'] ) ? (string) $row['file'] : '';
+		$user_id   = isset( $row['user_id'] ) ? (int) $row['user_id'] : 0;
+		$uri       = isset( $row['uri'] ) ? (string) $row['uri'] : '';
+		$prompt    = isset( $row['prompt_preview'] ) ? (string) $row['prompt_preview'] : '';
+
+		if ( '' === $model && ! empty( $row['model_preferences'] ) && is_array( $row['model_preferences'] ) ) {
+			$model = implode( ', ', array_map( 'strval', $row['model_preferences'] ) );
+		}
+
+		$model_inferred = ! empty( $row['model_inferred'] );
+
+		$plugin_label = $plugin;
+		if ( $plugin && isset( $plugins[ $plugin ]['Name'] ) ) {
+			$plugin_label = (string) $plugins[ $plugin ]['Name'];
+		}
+
+		echo '<tr>';
+		echo '<td class="column-time">' . esc_html( $ts ? wp_date( 'Y-m-d H:i:s', $ts ) : '—' ) . '</td>';
+		echo '<td>' . $this->render_decision_badge( $decision ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo '<td class="column-operation"><code>' . esc_html( $operation ?: '—' ) . '</code></td>';
+		echo '<td class="column-provider"><code>' . esc_html( $provider ?: '—' ) . '</code></td>';
+		echo '<td class="column-model"><code>' . esc_html( $model ?: '—' ) . '</code>';
+		if ( $model_inferred && $model ) {
+			echo '<br /><span class="description" style="font-size:11px;">' . esc_html__( 'auto-resolved', 'handl-ai-connector-access-control' ) . '</span>';
+		}
+		echo '</td>';
+		echo '<td>';
+		if ( $plugin ) {
+			echo '<strong>' . esc_html( $plugin_label ) . '</strong><br /><code>' . esc_html( $plugin ) . '</code>';
+			if ( $file ) {
+				echo '<br /><span class="description" style="font-size:11px;">' . esc_html( wp_basename( $file ) ) . '</span>';
+			}
+		} else {
+			echo '<span class="handl-aicac-muted">' . esc_html__( 'unknown', 'handl-ai-connector-access-control' ) . '</span>';
+		}
+		echo '</td>';
+		echo '<td>' . $this->render_prompt_cell( $prompt, $row ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo '</td>';
+		echo '<td>';
+		if ( $user_id > 0 ) {
+			$user      = get_userdata( $user_id );
+			$edit_link = get_edit_user_link( $user_id );
+			if ( $user && is_string( $edit_link ) && '' !== $edit_link ) {
+				echo '<a href="' . esc_url( $edit_link ) . '">' . esc_html( $user->display_name ) . '</a>';
+			} elseif ( $user ) {
+				echo esc_html( $user->display_name );
+			} else {
+				echo esc_html( sprintf( '#%d', $user_id ) );
+			}
+		} else {
+			echo '<span class="handl-aicac-muted">—</span>';
+		}
+		echo '</td>';
+		echo '<td><code>' . esc_html( $uri ?: '—' ) . '</code></td>';
+		echo '</tr>';
+	}
+
+	private function render_decision_badge( string $decision ): string {
+		if ( 'allow' === $decision ) {
+			return '<span class="handl-aicac-badge handl-aicac-badge--allow">' . esc_html__( 'allow', 'handl-ai-connector-access-control' ) . '</span>';
+		}
+		if ( 'deny' === $decision ) {
+			return '<span class="handl-aicac-badge handl-aicac-badge--deny">' . esc_html__( 'deny', 'handl-ai-connector-access-control' ) . '</span>';
+		}
+		return '<span class="handl-aicac-muted">' . esc_html( $decision ?: '—' ) . '</span>';
+	}
+
+	/**
+	 * @param array<string,mixed> $row
+	 */
+	private function render_prompt_cell( string $prompt, array $row ): string {
+		if ( '' === $prompt ) {
+			return '<span class="handl-aicac-muted">—</span>';
+		}
+
+		$config_note = '';
+		if ( ! empty( $row['config'] ) && is_array( $row['config'] ) ) {
+			$parts = array();
+			foreach ( $row['config'] as $key => $value ) {
+				if ( 'systemInstruction' === $key ) {
+					continue;
+				}
+				$parts[] = $key . '=' . ( is_scalar( $value ) ? (string) $value : wp_json_encode( $value ) );
+			}
+			if ( ! empty( $parts ) ) {
+				$config_note = '<p class="description" style="margin:4px 0 0;font-size:11px;">' . esc_html( implode( ', ', $parts ) ) . '</p>';
+			}
+		}
+
+		$html  = '<details class="handl-aicac-prompt-details">';
+		$html .= '<summary>' . esc_html__( 'View preview', 'handl-ai-connector-access-control' ) . '</summary>';
+		$html .= '<pre>' . esc_html( $prompt ) . '</pre>';
+		$html .= $config_note;
+		$html .= '</details>';
+
+		return $html;
 	}
 }

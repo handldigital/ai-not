@@ -28,6 +28,7 @@ final class Plugin {
 		self::migrate_legacy_options();
 
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-attribution.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-prompt-snapshot.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php';
 

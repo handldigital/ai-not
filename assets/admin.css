@@ -1,0 +1,73 @@
+.handl-aicac-log-wrap {
+	margin-top: 1.5em;
+}
+
+.handl-aicac-log-meta {
+	margin: 0 0 12px;
+	color: #646970;
+	max-width: 72em;
+}
+
+.handl-aicac-badge {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 4px;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.4;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+}
+
+.handl-aicac-badge--allow {
+	background: #d5f0d5;
+	color: #1e4620;
+}
+
+.handl-aicac-badge--deny {
+	background: #f5dcdc;
+	color: #8a2424;
+}
+
+.handl-aicac-log-table code {
+	font-size: 11px;
+	word-break: break-all;
+}
+
+.handl-aicac-log-table .column-time {
+	white-space: nowrap;
+	width: 11em;
+}
+
+.handl-aicac-log-table .column-operation {
+	width: 10em;
+}
+
+.handl-aicac-log-table .column-provider,
+.handl-aicac-log-table .column-model {
+	width: 8em;
+}
+
+.handl-aicac-prompt-details summary {
+	cursor: pointer;
+	color: #2271b1;
+	font-size: 12px;
+}
+
+.handl-aicac-prompt-details pre {
+	margin: 6px 0 0;
+	padding: 8px 10px;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	font-size: 11px;
+	line-height: 1.45;
+	max-height: 120px;
+	overflow: auto;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.handl-aicac-muted {
+	color: #a7aaad;
+}
