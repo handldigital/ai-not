@@ -27,6 +27,7 @@ jobs:
             --exclude ".github/" \
             --exclude "dist/" \
             --exclude ".DS_Store" \
+            --exclude "wordpress-org/" \
             ./ dist/"${PLUGIN_SLUG}"/
 
           cd dist
