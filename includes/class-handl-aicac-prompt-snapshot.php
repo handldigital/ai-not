@@ -396,10 +396,22 @@ final class Prompt_Snapshot {
 	/**
 	 * Decode WP AI Client function declaration names into matchable tool names.
 	 *
-	 * Prefer core helper when present; fall back to the documented wpab__ mapping.
 	 * Custom (non-ability) FunctionDeclarations pass through as the raw name.
+	 * Only wpab__-prefixed names go through core's ability decoder (or the
+	 * local str_replace fallback). Core's decoder assumes the prefix and
+	 * strips its first six characters unconditionally — calling it for
+	 * custom tool names mangles them (e.g. custom_tool → m_tool) so deny
+	 * list entries never match.
 	 */
 	private static function function_name_to_tool_name( string $function_name ): string {
+		$prefix = 'wpab__';
+
+		// Non-ability FunctionDeclaration — keep the raw tool name for matching + logging.
+		// Must run before core's decoder: that helper assumes the wpab__ prefix.
+		if ( 0 !== strpos( $function_name, $prefix ) ) {
+			return $function_name;
+		}
+
 		if ( class_exists( 'WP_AI_Client_Ability_Function_Resolver', false )
 			&& method_exists( 'WP_AI_Client_Ability_Function_Resolver', 'function_name_to_ability_name' )
 		) {
@@ -411,12 +423,6 @@ final class Prompt_Snapshot {
 			} catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
 				// Fall through to local decode.
 			}
-		}
-
-		$prefix = 'wpab__';
-		if ( 0 !== strpos( $function_name, $prefix ) ) {
-			// Non-ability function declaration — keep the raw tool name for matching + logging.
-			return $function_name;
 		}
 
 		$without = substr( $function_name, strlen( $prefix ) );
