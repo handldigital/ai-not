@@ -69,9 +69,13 @@ No. It is best-effort and may be unknown or ambiguous for some execution paths (
 = 1.0.7 =
 * Per-plugin × capability-family operation matrix (Text / Image / Speech / TTS / Video) on the Plugin rules tab.
 * `is_supported_for_*` and matching `generate_*` / `convert_text_to_speech*` map to the same family rule.
+* Generic `is_supported` / `generate_result` resolve family via core capability inference (no silent unknown bypass).
+* TTS prefix heuristics run before Text so unmapped TTS method names cannot misclassify as Text.
 * Snapshot is taken before the allow/deny decision so the operation is known at prevent time.
 * Explicit unknown-operation fallback (inherit plugin rule, allow, or deny).
+* Kill-switch exceptions fall through to normal plugin + family rules (do not widen access).
 * Recent-call log records and displays capability family.
+* Suggested-rules column renamed to "Plugin-level would enforce" (honest: not full matrix).
 
 = 1.0.6 =
 * Recent-call log records input (prompt) and output (completion) token counts via `wp_ai_client_after_generate_result` when logging is enabled.

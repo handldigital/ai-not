@@ -57,9 +57,16 @@ final class Operations {
 	 * Resolve a capability family from an AI Client method name.
 	 *
 	 * Unknown or empty operations return FAMILY_UNKNOWN so callers can apply
-	 * an explicit fallback (never an implicit random path).
+	 * an explicit fallback (never an implicit random path). For the generic
+	 * entry points `is_supported` / `generate_result`, pass the inferred
+	 * CapabilityEnum (or its string value) via $inferred_capability so the
+	 * matrix applies instead of silently treating them as unknown.
+	 *
+	 * @param string      $operation            AI Client method name.
+	 * @param mixed|null  $inferred_capability  CapabilityEnum instance, string
+	 *                                          value (e.g. image_generation), or null.
 	 */
-	public static function family_from_operation( string $operation ): string {
+	public static function family_from_operation( string $operation, $inferred_capability = null ): string {
 		$operation = trim( $operation );
 		if ( '' === $operation ) {
 			return self::FAMILY_UNKNOWN;
@@ -67,10 +74,30 @@ final class Operations {
 
 		$map = self::operation_map();
 		if ( isset( $map[ $operation ] ) ) {
-			return $map[ $operation ];
+			$mapped = $map[ $operation ];
+			// Generic methods are listed as unknown so we can try inference.
+			if ( self::FAMILY_UNKNOWN !== $mapped ) {
+				return $mapped;
+			}
+			if ( 'is_supported' === $operation || 'generate_result' === $operation ) {
+				$from_cap = self::family_from_capability( $inferred_capability );
+				if ( self::FAMILY_UNKNOWN !== $from_cap ) {
+					return $from_cap;
+				}
+			}
+			return self::FAMILY_UNKNOWN;
 		}
 
 		// Prefix heuristics for forward-compatible method names.
+		// TTS before Text: is_supported_for_text is a prefix of
+		// is_supported_for_text_to_speech*; testing Text first misclassifies
+		// unmapped TTS names as Text (silent fail-open on a TTS deny).
+		if (
+			0 === strpos( $operation, 'is_supported_for_text_to_speech' )
+			|| 0 === strpos( $operation, 'convert_text_to_speech' )
+		) {
+			return self::FAMILY_TTS;
+		}
 		if ( 0 === strpos( $operation, 'is_supported_for_text' ) || 0 === strpos( $operation, 'generate_text' ) ) {
 			return self::FAMILY_TEXT;
 		}
@@ -80,18 +107,54 @@ final class Operations {
 		if ( 0 === strpos( $operation, 'is_supported_for_speech' ) || 0 === strpos( $operation, 'generate_speech' ) ) {
 			return self::FAMILY_SPEECH;
 		}
-		if (
-			0 === strpos( $operation, 'is_supported_for_text_to_speech' )
-			|| 0 === strpos( $operation, 'convert_text_to_speech' )
-		) {
-			return self::FAMILY_TTS;
-		}
 		if ( 0 === strpos( $operation, 'is_supported_for_video' ) || 0 === strpos( $operation, 'generate_video' ) ) {
 			return self::FAMILY_VIDEO;
 		}
 
-		// Generic is_supported / generate_result without a family suffix.
+		// Last chance: inferred capability for unmapped generic-style names.
+		$from_cap = self::family_from_capability( $inferred_capability );
+		if ( self::FAMILY_UNKNOWN !== $from_cap ) {
+			return $from_cap;
+		}
+
 		return self::FAMILY_UNKNOWN;
+	}
+
+	/**
+	 * Map a CapabilityEnum instance or its string value onto a family.
+	 *
+	 * @param mixed $capability CapabilityEnum, string (text_generation), or null.
+	 */
+	public static function family_from_capability( $capability ): string {
+		if ( null === $capability || false === $capability ) {
+			return self::FAMILY_UNKNOWN;
+		}
+
+		if ( is_object( $capability ) ) {
+			if ( method_exists( $capability, '__toString' ) ) {
+				$capability = (string) $capability;
+			} else {
+				return self::FAMILY_UNKNOWN;
+			}
+		}
+
+		if ( ! is_string( $capability ) || '' === $capability ) {
+			return self::FAMILY_UNKNOWN;
+		}
+
+		// Normalize: text_generation | textGeneration | text-generation → text_generation.
+		$key = strtolower( preg_replace( '/([a-z])([A-Z])/', '$1_$2', $capability ) );
+		$key = str_replace( array( '-', ' ' ), '_', $key );
+
+		$map = array(
+			'text_generation'             => self::FAMILY_TEXT,
+			'image_generation'            => self::FAMILY_IMAGE,
+			'speech_generation'           => self::FAMILY_SPEECH,
+			'text_to_speech_conversion'   => self::FAMILY_TTS,
+			'video_generation'            => self::FAMILY_VIDEO,
+		);
+
+		return $map[ $key ] ?? self::FAMILY_UNKNOWN;
 	}
 
 	/**

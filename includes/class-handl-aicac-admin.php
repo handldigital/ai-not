@@ -349,8 +349,8 @@ final class Admin {
 		echo '<label for="handl-aicac-access-filter" class="screen-reader-text">' . esc_html__( 'Filter by AI access', 'handl-ai-connector-access-control' ) . '</label>';
 		echo '<select id="handl-aicac-access-filter" name="handl_aicac_access" onchange="if (this.form) { if (this.form.requestSubmit) { this.form.requestSubmit(); } else { HTMLFormElement.prototype.submit.call(this.form); } }">';
 		$this->render_option( 'all', $plugin_access_filter, __( 'All AI access', 'handl-ai-connector-access-control' ) );
-		$this->render_option( 'effective-allow', $plugin_access_filter, __( 'Effective allow', 'handl-ai-connector-access-control' ) );
-		$this->render_option( 'effective-deny', $plugin_access_filter, __( 'Effective deny', 'handl-ai-connector-access-control' ) );
+		$this->render_option( 'effective-allow', $plugin_access_filter, __( 'Plugin-level allow', 'handl-ai-connector-access-control' ) );
+		$this->render_option( 'effective-deny', $plugin_access_filter, __( 'Plugin-level deny', 'handl-ai-connector-access-control' ) );
 		$this->render_option( 'default-only', $plugin_access_filter, __( 'Default only', 'handl-ai-connector-access-control' ) );
 		echo '</select>';
 		echo '</div>';
@@ -1278,10 +1278,10 @@ final class Admin {
 		echo '<td>';
 		echo '<label><input type="checkbox" name="handl_aicac_kill_switch" value="1" form="' . esc_attr( $form_id ) . '" ' . checked( $kill_switch, true, false ) . ' id="handl-aicac-kill-switch" /> ';
 		echo esc_html__( 'Block all AI Client calls', 'handl-ai-connector-access-control' ) . '</label>';
-		echo '<p class="description">' . esc_html__( 'Overrides per-plugin rules. Unresolved callers are blocked too.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Blocks every AI Client call except plugins listed as exceptions. Unresolved callers are blocked too.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		echo '<div class="handl-aicac-kill-exceptions" style="margin-top:12px;">';
-		echo '<label for="handl-aicac-kill-exceptions"><strong>' . esc_html__( 'Exceptions (still allowed)', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
+		echo '<label for="handl-aicac-kill-exceptions"><strong>' . esc_html__( 'Exceptions (normal rules still apply)', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
 		echo '<select id="handl-aicac-kill-exceptions" name="handl_aicac_kill_exceptions[]" form="' . esc_attr( $form_id ) . '" multiple size="8" style="min-width:28em;max-width:100%;margin-top:6px;">';
 		foreach ( $plugins as $basename => $data ) {
 			$name = isset( $data['Name'] ) ? (string) $data['Name'] : $basename;
@@ -1294,7 +1294,7 @@ final class Admin {
 			);
 		}
 		echo '</select>';
-		echo '<p class="description">' . esc_html__( 'Hold Cmd (Mac) or Ctrl (Windows) to select multiple plugins. Ignored when the kill switch is off.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Excepted plugins are not killed site-wide — they still follow their normal plugin allow/deny and capability-family rules. Hold Cmd (Mac) or Ctrl (Windows) to select multiple. Ignored when the kill switch is off.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</div>';
 		echo '</td>';
 		echo '</tr>';
@@ -1311,7 +1311,7 @@ final class Admin {
 
 		echo '<h2>' . esc_html__( 'Suggested rules', 'handl-ai-connector-access-control' ) . '</h2>';
 		echo '<p class="description handl-aicac-log-meta" style="margin-top:0;">';
-		echo esc_html__( 'Plugins seen in the log during learn mode. “Would enforce” is what happens if you turn learn mode off (kill switch and per-plugin rules apply).', 'handl-ai-connector-access-control' );
+		echo esc_html__( 'Plugins seen in the log during learn mode. “Plugin-level would enforce” is the outer plugin gate only (kill switch + plugin allow/deny) — it does not include capability-family rules. Per-family effective decisions come later.', 'handl-ai-connector-access-control' );
 		echo '</p>';
 
 		if ( empty( $suggested ) ) {
@@ -1325,7 +1325,7 @@ final class Admin {
 		echo '<th>' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Last seen', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Rule', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Would enforce', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Plugin-level would enforce', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Actions', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead><tbody>';
 
