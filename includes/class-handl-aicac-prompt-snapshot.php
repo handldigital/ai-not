@@ -400,8 +400,8 @@ final class Prompt_Snapshot {
 	 * Only wpab__-prefixed names go through core's ability decoder (or the
 	 * local str_replace fallback). Core's decoder assumes the prefix and
 	 * strips its first six characters unconditionally — calling it for
-	 * custom tool names mangles them (e.g. custom_tool → m_tool) so deny
-	 * list entries never match.
+	 * custom tool names mangles them (e.g. custom_tool → _tool;
+	 * frink_custom_tool → custom_tool) so deny-list entries never match.
 	 */
 	private static function function_name_to_tool_name( string $function_name ): string {
 		$prefix = 'wpab__';
