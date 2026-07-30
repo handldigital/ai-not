@@ -192,19 +192,39 @@ final class Admin {
 		echo '<p class="description">' . esc_html__( 'Used when the calling plugin cannot be resolved or has no explicit rule.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td>';
 		echo '</tr>';
+		echo '<tr>';
+		echo '<th scope="row">' . esc_html__( 'Unknown operations', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<td>';
+		$unknown = $policy['unknown_operation'] ?? 'inherit';
+		echo '<select name="handl_aicac_unknown_operation" form="' . esc_attr( $rules_form_id ) . '">';
+		$this->render_option( 'inherit', (string) $unknown, __( 'Inherit plugin rule', 'handl-ai-connector-access-control' ) );
+		$this->render_option( 'allow', (string) $unknown, __( 'Allow', 'handl-ai-connector-access-control' ) );
+		$this->render_option( 'deny', (string) $unknown, __( 'Deny', 'handl-ai-connector-access-control' ) );
+		echo '</select>';
+		echo '<p class="description">' . esc_html__( 'When an AI Client method does not map to Text / Image / Speech / TTS / Video (including music, embeddings, and generic is_supported). Support checks and matching generate_* methods always share the same family rule.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '</td>';
+		echo '</tr>';
 		$this->render_kill_switch_settings_rows( $policy, $rules_form_id, $plugins );
 		echo '</table>';
 
+		$family_labels = Operations::family_labels();
+
 		echo '<h2>' . esc_html__( 'Plugin rules', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<p class="description">' . esc_html__( 'Plugin access is the outer gate. Capability columns refine what an allowed plugin may do (e.g. allow text, deny image). Inherit follows the plugin AI access rule. A plugin-level Deny blocks every family.', 'handl-ai-connector-access-control' ) . '</p>';
 		$this->render_plugin_rules_filters( $plugin_status_filter, $plugin_access_filter );
-		echo '<table class="widefat striped">';
+		echo '<table class="widefat striped handl-aicac-rules-matrix">';
 		echo '<thead><tr>';
 		echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Status', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'AI access', 'handl-ai-connector-access-control' ) . '</th>';
+		foreach ( $family_labels as $family_id => $family_label ) {
+			echo '<th class="handl-aicac-col-family">' . esc_html( $family_label ) . '</th>';
+		}
 		echo '<th>' . esc_html__( 'Plugin file', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead>';
 		echo '<tbody>';
+
+		$operations = is_array( $policy['operations'] ?? null ) ? (array) $policy['operations'] : array();
 
 		foreach ( $plugins as $basename => $data ) {
 			$name    = isset( $data['Name'] ) ? (string) $data['Name'] : $basename;
@@ -231,6 +251,10 @@ final class Admin {
 				continue;
 			}
 
+			$plugin_ops = isset( $operations[ $basename ] ) && is_array( $operations[ $basename ] )
+				? $operations[ $basename ]
+				: array();
+
 			echo '<tr>';
 			echo '<td><strong>' . esc_html( $name ) . '</strong></td>';
 			echo '<td>' . ( $enabled ? '<span class="dashicons dashicons-yes"></span> ' . esc_html__( 'Active', 'handl-ai-connector-access-control' ) : esc_html__( 'Inactive', 'handl-ai-connector-access-control' ) ) . '</td>';
@@ -241,6 +265,21 @@ final class Admin {
 			$this->render_option( 'deny', (string) $rule, __( 'Deny', 'handl-ai-connector-access-control' ) );
 			echo '</select>';
 			echo '</td>';
+			foreach ( $family_labels as $family_id => $family_label ) {
+				$family_rule = isset( $plugin_ops[ $family_id ] ) ? (string) $plugin_ops[ $family_id ] : '';
+				echo '<td class="handl-aicac-col-family">';
+				echo '<select name="handl_aicac_operation[' . esc_attr( $basename ) . '][' . esc_attr( $family_id ) . ']" form="' . esc_attr( $rules_form_id ) . '" aria-label="' . esc_attr( sprintf(
+					/* translators: 1: plugin name, 2: capability family */
+					__( '%1$s — %2$s', 'handl-ai-connector-access-control' ),
+					$name,
+					$family_label
+				) ) . '">';
+				$this->render_option( '', $family_rule, __( 'Inherit', 'handl-ai-connector-access-control' ) );
+				$this->render_option( 'allow', $family_rule, __( 'Allow', 'handl-ai-connector-access-control' ) );
+				$this->render_option( 'deny', $family_rule, __( 'Deny', 'handl-ai-connector-access-control' ) );
+				echo '</select>';
+				echo '</td>';
+			}
 			echo '<td><code>' . esc_html( $basename ) . '</code></td>';
 			echo '</tr>';
 		}
@@ -723,7 +762,7 @@ final class Admin {
 		echo '<thead><tr>';
 		echo '<th class="column-time">' . esc_html__( 'Time', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Decision', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-operation">' . esc_html__( 'Operation', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th class="column-operation">' . esc_html__( 'Operation / family', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th class="column-provider">' . esc_html__( 'Provider', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th class="column-model">' . esc_html__( 'Model', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th class="column-tokens">' . esc_html__( 'Input tokens', 'handl-ai-connector-access-control' ) . '</th>';
@@ -1132,6 +1171,9 @@ final class Admin {
 		$posted_default = filter_input( INPUT_POST, 'handl_aicac_default', FILTER_UNSAFE_RAW );
 		$policy['default'] = ( 'deny' === sanitize_text_field( (string) $posted_default ) ) ? 'deny' : 'allow';
 
+		$posted_unknown = filter_input( INPUT_POST, 'handl_aicac_unknown_operation', FILTER_UNSAFE_RAW );
+		$policy['unknown_operation'] = Policy::sanitize_unknown_operation( $posted_unknown );
+
 		$rules        = array();
 		$posted_rules = filter_input( INPUT_POST, 'handl_aicac_rule', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
 		if ( is_array( $posted_rules ) ) {
@@ -1147,6 +1189,9 @@ final class Admin {
 			}
 		}
 		$policy['plugins'] = $rules;
+
+		$posted_ops = filter_input( INPUT_POST, 'handl_aicac_operation', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		$policy['operations'] = Policy::sanitize_operations( is_array( $posted_ops ) ? $posted_ops : array() );
 
 		$this->apply_kill_switch_settings_from_post( $policy );
 
@@ -1394,7 +1439,17 @@ final class Admin {
 			}
 		}
 		echo '</td>';
-		echo '<td class="column-operation"><code>' . esc_html( $operation ?: '—' ) . '</code></td>';
+		$family = isset( $row['capability_family'] ) ? (string) $row['capability_family'] : '';
+		if ( '' === $family && '' !== $operation ) {
+			$family = Operations::family_from_operation( $operation );
+		}
+		$family_labels = Operations::family_labels();
+		$family_label  = $family_labels[ $family ] ?? ( Operations::FAMILY_UNKNOWN === $family ? __( 'Unknown', 'handl-ai-connector-access-control' ) : $family );
+		echo '<td class="column-operation"><code>' . esc_html( $operation ?: '—' ) . '</code>';
+		if ( '' !== $family ) {
+			echo '<br /><span class="description handl-aicac-family-label">' . esc_html( $family_label ) . '</span>';
+		}
+		echo '</td>';
 		echo '<td class="column-provider"><code>' . esc_html( $provider ?: '—' ) . '</code></td>';
 		echo '<td class="column-model"><code>' . esc_html( $model ?: '—' ) . '</code>';
 		if ( $model_inferred && $model ) {

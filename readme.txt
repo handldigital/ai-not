@@ -4,7 +4,7 @@ Tags: ai, governance, security, handl, ai client
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.6
+Stable tag: 1.0.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,6 +15,8 @@ Control which plugins may execute prompts via the WordPress AI Client.
 HandL AI Connector Access Control lets administrators allow/deny AI Client prompt execution on a per-plugin basis using the `wp_ai_client_prevent_prompt` filter introduced with the WordPress AI Client.
 
 Default behavior is **allow**.
+
+**Per-plugin × capability matrix** (Plugin rules tab) refines access by family — Text, Image, Speech, TTS, Video — so you can allow text generation while denying image generation for the same plugin. Support checks (`is_supported_for_*`) and matching `generate_*` methods share the same family rule. Unknown operations (music, embeddings, generic methods) use a configurable fallback (inherit / allow / deny).
 
 **Learn mode** (Audit & log tab) logs every AI Client call without blocking, so you can discover callers before enabling deny rules on the Plugin rules tab.
 
@@ -31,6 +33,7 @@ If you enable **recent-call logging** in Settings → HandL AI Connector Access 
 - Timestamp
 - Allow/deny decision
 - AI Client operation (e.g. `generate_text`, `is_supported_for_text_generation`)
+- Capability family (text / image / speech / tts / video / unknown)
 - Provider and model when set on the prompt builder (or model preferences)
 - Truncated prompt preview and selected generation config (best-effort)
 - Input and output token counts when the AI Client completes a generation (best-effort)
@@ -62,6 +65,13 @@ No. It is best-effort and may be unknown or ambiguous for some execution paths (
 2. Recent AI calls audit trail — review provider, model, prompt preview, user, and request URI for each AI Client call.
 
 == Changelog ==
+
+= 1.0.7 =
+* Per-plugin × capability-family operation matrix (Text / Image / Speech / TTS / Video) on the Plugin rules tab.
+* `is_supported_for_*` and matching `generate_*` / `convert_text_to_speech*` map to the same family rule.
+* Snapshot is taken before the allow/deny decision so the operation is known at prevent time.
+* Explicit unknown-operation fallback (inherit plugin rule, allow, or deny).
+* Recent-call log records and displays capability family.
 
 = 1.0.6 =
 * Recent-call log records input (prompt) and output (completion) token counts via `wp_ai_client_after_generate_result` when logging is enabled.

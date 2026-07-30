@@ -399,3 +399,14 @@
 		width: 22%;
 	}
 }
+
+/* F1: operation matrix */
+.handl-aicac-rules-matrix .handl-aicac-col-family {
+	min-width: 5.5em;
+}
+.handl-aicac-rules-matrix .handl-aicac-col-family select {
+	max-width: 6.5em;
+}
+.handl-aicac-family-label {
+	font-size: 11px;
+}
