@@ -4,7 +4,7 @@ Tags: ai, governance, security, handl, ai client
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.8
+Stable tag: 1.0.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -23,6 +23,8 @@ Default behavior is **allow**.
 **Learn mode** (Audit & log tab) logs every AI Client call without blocking, so you can discover callers before enabling deny rules on the Plugin rules tab.
 
 **Emergency kill switch** blocks all AI Client calls except plugins you list as exceptions.
+
+**Denial email alerts** (opt-in) notify an admin when enforcement blocks a prompt — immediate (rate-limited) or hourly digest. **Estimated $** on the audit log is a rough token × rate placeholder, not billing. When WordPress disables AI site-wide via `wp_supports_ai`, an honesty banner explains why the audit log may be empty.
 
 Caller attribution is best-effort and is determined by inspecting the PHP call stack and mapping file paths to installed plugins.
 
@@ -67,6 +69,13 @@ No. It is best-effort and may be unknown or ambiguous for some execution paths (
 2. Recent AI calls audit trail — review provider, model, prompt preview, user, and request URI for each AI Client call.
 
 == Changelog ==
+
+= 1.0.9 =
+* Denial email alerts (opt-in): immediate rate-limited mail or hourly digest via wp_mail; attributed to HandL AICAC.
+* Honesty banner when AI is disabled site-wide via wp_supports_ai (audit intentionally empty because core short-circuits before our filter).
+* Estimated-$ column on the recent-call log from retained token counts × configurable $/1M rates (observability only; labeled est.).
+* Inferred provider/model values labeled "inferred" in the audit UI (observability honesty — not enforcement).
+* PHP 7.4 nested-POST filter_input path for the operation matrix verified PASS on PHP 7.4.33 cgi.
 
 = 1.0.8 =
 * AI tool arming (caller intent): deny prompts that arm denied tools (`functionDeclarations` — WordPress abilities and custom tools) at prevent time.
