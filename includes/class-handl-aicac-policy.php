@@ -676,6 +676,11 @@ final class Policy {
 
 		update_option( Plugin::OPTION_KEY, $policy, false );
 		Alerts::maybe_schedule( $policy );
+
+		// Issue 7: disabling alerts must not leave denial metadata queued.
+		if ( empty( $policy['alert_on_deny'] ) ) {
+			Alerts::clear_digest_queue();
+		}
 	}
 
 	/**

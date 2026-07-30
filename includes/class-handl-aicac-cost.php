@@ -51,6 +51,17 @@ final class Cost {
 	}
 
 	/**
+	 * True when rates still match the built-in placeholders (admin has not set custom rates).
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	public static function using_default_rates( array $policy ): bool {
+		$rates = self::rates_from_policy( $policy );
+		return abs( $rates['input_per_m'] - self::DEFAULT_INPUT_PER_M ) < 0.00001
+			&& abs( $rates['output_per_m'] - self::DEFAULT_OUTPUT_PER_M ) < 0.00001;
+	}
+
+	/**
 	 * @param array{input_per_m:float,output_per_m:float}|null $rates
 	 */
 	public static function estimate_usd( ?int $input_tokens, ?int $output_tokens, ?array $rates = null ): ?float {

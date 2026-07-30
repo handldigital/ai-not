@@ -1786,9 +1786,17 @@ final class Admin {
 			return '<span class="handl-aicac-muted">—</span>';
 		}
 
-		return '<span class="handl-aicac-est-cost" title="' . esc_attr__( 'Rough estimate from configured rates × tokens. Not a bill.', 'handl-ai-connector-access-control' ) . '">'
+		$using_defaults = Cost::using_default_rates( $policy );
+		$title          = $using_defaults
+			? __( 'Rough estimate using built-in default placeholder rates × tokens. Not a bill — set rates under Estimated cost rates.', 'handl-ai-connector-access-control' )
+			: __( 'Rough estimate from configured rates × tokens. Not a bill.', 'handl-ai-connector-access-control' );
+		$label          = $using_defaults
+			? __( 'est. · default rates', 'handl-ai-connector-access-control' )
+			: __( 'est.', 'handl-ai-connector-access-control' );
+
+		return '<span class="handl-aicac-est-cost" title="' . esc_attr( $title ) . '">'
 			. esc_html( Cost::format_usd( $usd ) )
-			. '<br /><span class="description" style="font-size:11px;">' . esc_html__( 'est.', 'handl-ai-connector-access-control' ) . '</span>'
+			. '<br /><span class="description" style="font-size:11px;">' . esc_html( $label ) . '</span>'
 			. '</span>';
 	}
 
