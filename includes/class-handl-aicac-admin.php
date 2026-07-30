@@ -207,6 +207,8 @@ final class Admin {
 		$this->render_kill_switch_settings_rows( $policy, $rules_form_id, $plugins );
 		echo '</table>';
 
+		$this->render_ability_arming_settings( $policy, $rules_form_id );
+
 		$family_labels = Operations::family_labels();
 
 		echo '<h2>' . esc_html__( 'Plugin rules', 'handl-ai-connector-access-control' ) . '</h2>';
@@ -1193,9 +1195,124 @@ final class Admin {
 		$posted_ops = filter_input( INPUT_POST, 'handl_aicac_operation', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
 		$policy['operations'] = Policy::sanitize_operations( is_array( $posted_ops ) ? $posted_ops : array() );
 
+		// Accept new field name; also read legacy POST key during transition.
+		$posted_tools = filter_input( INPUT_POST, 'handl_aicac_denied_tools', FILTER_UNSAFE_RAW );
+		if ( null === $posted_tools || false === $posted_tools || '' === $posted_tools ) {
+			$posted_tools = filter_input( INPUT_POST, 'handl_aicac_denied_abilities', FILTER_UNSAFE_RAW );
+		}
+		$policy['denied_tools'] = Policy::sanitize_denied_tools( (string) $posted_tools );
+
 		$this->apply_kill_switch_settings_from_post( $policy );
 
 		Policy::save_policy( $policy );
+	}
+
+	/**
+	 * Caller-intent tool deny-at-arming (F2). Distinct from MCP visibility.
+	 *
+	 * Matches any armed tool name — WordPress abilities (wpab__) and custom
+	 * FunctionDeclarations. The registered-abilities checklist is a helper subset.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function render_ability_arming_settings( array $policy, string $form_id ): void {
+		$denied      = Policy::get_denied_tools( $policy );
+		$denied_text = implode( "\n", $denied );
+		$registered  = $this->list_registered_ability_names();
+
+		echo '<h2>' . esc_html__( 'AI tool arming (caller intent)', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<div class="notice notice-info inline handl-aicac-ability-axis-notice"><p>';
+		echo esc_html__( 'This controls which tools a model may be offered when a plugin calls the AI Client (functionDeclarations on the prompt). It covers WordPress abilities (using_abilities / wpab__) and custom FunctionDeclarations. It is not MCP visibility, and it does not unregister abilities for the rest of the site. Denials block the entire prompt at arming time and are logged under this plugin’s name so you can tell a blocked tool call from an upstream plugin bug. Matching is case-insensitive.', 'handl-ai-connector-access-control' );
+		echo '</p></div>';
+
+		echo '<table class="form-table" role="presentation">';
+		echo '<tr>';
+		echo '<th scope="row"><label for="handl-aicac-denied-tools">' . esc_html__( 'Denied tools', 'handl-ai-connector-access-control' ) . '</label></th>';
+		echo '<td>';
+		echo '<textarea name="handl_aicac_denied_tools" id="handl-aicac-denied-tools" form="' . esc_attr( $form_id ) . '" rows="6" cols="50" class="large-text code" placeholder="namespace/tool-name">' . esc_textarea( $denied_text ) . '</textarea>';
+		echo '<p class="description">' . esc_html__( 'One tool name per line (example: mainwp/add-site-v1). If a prompt arms any listed tool, the call is denied before the model runs. Leave empty to allow all tools that plugins choose to arm. Custom tool names (not just registered abilities) may be listed.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		// Flag deny-list entries that match nothing currently registered (helper only).
+		if ( ! empty( $denied ) ) {
+			$inert = array();
+			foreach ( $denied as $entry ) {
+				if ( ! Policy::deny_entry_matches_registered( $entry, $registered ) ) {
+					$inert[] = $entry;
+				}
+			}
+			if ( ! empty( $inert ) ) {
+				echo '<div class="notice notice-warning inline handl-aicac-inert-tools"><p>';
+				echo esc_html__( 'Not currently registered — will apply if a plugin registers it later (or if a custom tool uses this name):', 'handl-ai-connector-access-control' );
+				echo ' <code>' . esc_html( implode( ', ', $inert ) ) . '</code>';
+				echo '</p></div>';
+			}
+		}
+
+		if ( ! empty( $registered ) ) {
+			echo '<p class="description"><strong>' . esc_html__( 'Registered abilities (helper subset — custom tool names may also be listed above):', 'handl-ai-connector-access-control' ) . '</strong></p>';
+			echo '<ul class="handl-aicac-registered-abilities">';
+			foreach ( $registered as $name ) {
+				// Case-insensitive check so checkbox reflects normalized matching.
+				$checked = Policy::deny_entry_matches_registered( $name, $denied ) ? ' checked="checked"' : '';
+				echo '<li><label>';
+				echo '<input type="checkbox" class="handl-aicac-tool-quick-add" data-tool="' . esc_attr( $name ) . '"' . $checked . ' /> ';
+				echo '<code>' . esc_html( $name ) . '</code>';
+				echo '</label></li>';
+			}
+			echo '</ul>';
+			echo '<p class="description">' . esc_html__( 'Checkboxes only help fill the list above — save still uses the textarea. Click a box to add or remove that name from the list before saving. This list is not an enumeration of everything the deny list can match.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<script>';
+			echo '(function(){var ta=document.getElementById("handl-aicac-denied-tools");if(!ta)return;';
+			echo 'function lines(){return ta.value.split(/\\r\\n|\\r|\\n/).map(function(s){return s.trim();}).filter(Boolean);}';
+			echo 'function write(arr){ta.value=arr.join("\\n");}';
+			echo 'function idx(cur,n){var nl=n.toLowerCase();for(var i=0;i<cur.length;i++){if(cur[i].toLowerCase()===nl)return i;}return -1;}';
+			echo 'document.querySelectorAll(".handl-aicac-tool-quick-add").forEach(function(cb){cb.addEventListener("change",function(){var n=cb.getAttribute("data-tool");var cur=lines();var i=idx(cur,n);if(cb.checked&&i<0)cur.push(n);if(!cb.checked&&i>=0)cur.splice(i,1);write(cur);});});';
+			echo '})();';
+			echo '</script>';
+		} else {
+			echo '<p class="description">' . esc_html__( 'No abilities are registered via the Abilities API on this site right now. You can still pre-list ability or custom tool names that plugins may arm later.', 'handl-ai-connector-access-control' ) . '</p>';
+		}
+
+		echo '</td>';
+		echo '</tr>';
+		echo '</table>';
+	}
+
+	/**
+	 * @return list<string>
+	 */
+	private function list_registered_ability_names(): array {
+		if ( ! function_exists( 'wp_get_abilities' ) ) {
+			return array();
+		}
+
+		try {
+			$abilities = wp_get_abilities();
+		} catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+			return array();
+		}
+
+		if ( ! is_array( $abilities ) ) {
+			return array();
+		}
+
+		$names = array();
+		foreach ( $abilities as $ability ) {
+			if ( is_object( $ability ) && method_exists( $ability, 'get_name' ) ) {
+				$name = (string) $ability->get_name();
+			} elseif ( is_string( $ability ) ) {
+				$name = $ability;
+			} else {
+				continue;
+			}
+			if ( '' !== $name ) {
+				$names[] = $name;
+			}
+		}
+
+		$names = array_values( array_unique( $names ) );
+		sort( $names, SORT_STRING );
+		return $names;
 	}
 
 	/**
@@ -1438,6 +1555,28 @@ final class Admin {
 				echo '</span>';
 			}
 		}
+		$reason = isset( $row['denial_reason'] ) ? (string) $row['denial_reason'] : '';
+		if ( '' !== $reason && ( 'deny' === $decision || ( ! empty( $policy['audit_only'] ) && 'deny' === ( $row['would_decision'] ?? '' ) ) ) ) {
+			echo '<br /><span class="description handl-aicac-denial-reason">' . esc_html( $this->format_denial_reason_label( $reason ) ) . '</span>';
+		}
+		$matched = array();
+		if ( isset( $row['matched_tools'] ) && is_array( $row['matched_tools'] ) ) {
+			$matched = $row['matched_tools'];
+		} elseif ( isset( $row['matched_abilities'] ) && is_array( $row['matched_abilities'] ) ) {
+			$matched = $row['matched_abilities'];
+		}
+		if ( ! empty( $matched ) ) {
+			echo '<br /><span class="description handl-aicac-matched-tools"><code>' . esc_html( implode( ', ', array_map( 'strval', $matched ) ) ) . '</code></span>';
+		}
+		$armed = array();
+		if ( isset( $row['armed_tools'] ) && is_array( $row['armed_tools'] ) ) {
+			$armed = $row['armed_tools'];
+		} elseif ( isset( $row['armed_abilities'] ) && is_array( $row['armed_abilities'] ) ) {
+			$armed = $row['armed_abilities'];
+		}
+		if ( ! empty( $armed ) && empty( $matched ) ) {
+			echo '<br /><span class="description handl-aicac-armed-tools">' . esc_html__( 'armed:', 'handl-ai-connector-access-control' ) . ' <code>' . esc_html( implode( ', ', array_map( 'strval', $armed ) ) ) . '</code></span>';
+		}
 		echo '</td>';
 		$family = isset( $row['capability_family'] ) ? (string) $row['capability_family'] : '';
 		if ( '' === $family && '' !== $operation ) {
@@ -1514,6 +1653,26 @@ final class Admin {
 		}
 
 		return $html;
+	}
+
+	/**
+	 * Human label for denial_reason codes (loud denials — admin blames this plugin).
+	 */
+	private function format_denial_reason_label( string $reason ): string {
+		$map = array(
+			'kill_switch'         => __( 'Denied by HandL AICAC: emergency kill switch', 'handl-ai-connector-access-control' ),
+			'plugin'              => __( 'Denied by HandL AICAC: plugin rule', 'handl-ai-connector-access-control' ),
+			'capability_family'   => __( 'Denied by HandL AICAC: capability family rule', 'handl-ai-connector-access-control' ),
+			'unknown_operation'   => __( 'Denied by HandL AICAC: unknown operation fallback', 'handl-ai-connector-access-control' ),
+			'tool_armed'          => __( 'Denied by HandL AICAC: prompt armed a blocked tool (caller intent)', 'handl-ai-connector-access-control' ),
+			// Legacy reason code from pre-rename log rows.
+			'ability_armed'       => __( 'Denied by HandL AICAC: prompt armed a blocked tool (caller intent)', 'handl-ai-connector-access-control' ),
+		);
+		return $map[ $reason ] ?? sprintf(
+			/* translators: %s: internal denial reason code */
+			__( 'Denied by HandL AICAC: %s', 'handl-ai-connector-access-control' ),
+			$reason
+		);
 	}
 
 	private function render_decision_badge( string $decision ): string {

@@ -4,7 +4,7 @@ Tags: ai, governance, security, handl, ai client
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.7
+Stable tag: 1.0.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,6 +17,8 @@ HandL AI Connector Access Control lets administrators allow/deny AI Client promp
 Default behavior is **allow**.
 
 **Per-plugin × capability matrix** (Plugin rules tab) refines access by family — Text, Image, Speech, TTS, Video — so you can allow text generation while denying image generation for the same plugin. Support checks (`is_supported_for_*`) and matching `generate_*` methods share the same family rule. Unknown operations (music, embeddings, generic methods) use a configurable fallback (inherit / allow / deny).
+
+**AI tool arming (caller intent)** denies a prompt when it arms a blocked WordPress ability via the AI Client (`using_abilities` → `functionDeclarations`). This is not MCP visibility and does not unregister abilities site-wide. Denials are logged under this plugin’s name with the blocked ability ids.
 
 **Learn mode** (Audit & log tab) logs every AI Client call without blocking, so you can discover callers before enabling deny rules on the Plugin rules tab.
 
@@ -65,6 +67,14 @@ No. It is best-effort and may be unknown or ambiguous for some execution paths (
 2. Recent AI calls audit trail — review provider, model, prompt preview, user, and request URI for each AI Client call.
 
 == Changelog ==
+
+= 1.0.8 =
+* AI tool arming (caller intent): deny prompts that arm denied tools (`functionDeclarations` — WordPress abilities and custom tools) at prevent time.
+* Denied tools list on Plugin rules tab; registered abilities shown as a helper subset (not an enumeration of everything matchable).
+* Case-insensitive matching; entries that match no currently registered ability are flagged (still saved — pre-listing is allowed).
+* Loud denials: log `denial_reason` and `matched_tools` on every denial (including non-tool denials that also armed a blocked tool).
+* Snapshot extracts `armed_tools` from model config without reflection.
+* Option key `denied_tools` (migrates legacy `denied_abilities` on read).
 
 = 1.0.7 =
 * Per-plugin × capability-family operation matrix (Text / Image / Speech / TTS / Video) on the Plugin rules tab.
