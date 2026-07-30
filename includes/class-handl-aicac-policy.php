@@ -47,21 +47,28 @@ final class Policy {
 		$attrib = Attribution::resolve_from_backtrace();
 		$plugin = is_string( $attrib['plugin'] ?? null ) ? (string) $attrib['plugin'] : null;
 
-		$would_prevent = self::would_prevent( $policy, $plugin );
-		$prevent       = self::should_prevent( $policy, $plugin );
+		// Snapshot first so operation/family are known before the decision (F1 constraint).
+		// Snapshot resolves capability_family including inference for generate_result / is_supported.
+		$snapshot  = Prompt_Snapshot::from_builder( $builder );
+		$operation = isset( $snapshot['operation'] ) ? (string) $snapshot['operation'] : '';
+		$family    = isset( $snapshot['capability_family'] ) && is_string( $snapshot['capability_family'] )
+			? (string) $snapshot['capability_family']
+			: Operations::family_from_operation( $operation );
 
-		$snapshot = Prompt_Snapshot::from_builder( $builder );
+		$would_prevent = self::would_prevent( $policy, $plugin, $operation, $family );
+		$prevent       = self::should_prevent( $policy, $plugin, $operation, $family );
 
 		$event = array_merge(
 			array(
-				'ts'             => time(),
-				'plugin'         => $plugin,
-				'file'           => $attrib['file'] ?? null,
-				'caller'         => $attrib['method'] ?? null,
-				'decision'       => $prevent ? 'deny' : 'allow',
-				'would_decision' => $would_prevent ? 'deny' : 'allow',
-				'user_id'        => get_current_user_id(),
-				'uri'            => isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) ) : null,
+				'ts'                 => time(),
+				'plugin'             => $plugin,
+				'file'               => $attrib['file'] ?? null,
+				'caller'             => $attrib['method'] ?? null,
+				'decision'           => $prevent ? 'deny' : 'allow',
+				'would_decision'     => $would_prevent ? 'deny' : 'allow',
+				'capability_family'  => $family,
+				'user_id'            => get_current_user_id(),
+				'uri'                => isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) ) : null,
 			),
 			$snapshot
 		);
@@ -70,7 +77,7 @@ final class Policy {
 			$event['audit_only'] = true;
 		}
 
-		if ( ! $prevent && self::is_generating_operation( isset( $snapshot['operation'] ) ? (string) $snapshot['operation'] : '' ) ) {
+		if ( ! $prevent && self::is_generating_operation( $operation ) ) {
 			$event['log_key'] = self::generate_log_key();
 			self::$pending_token_log_keys[] = $event['log_key'];
 		}
@@ -84,41 +91,53 @@ final class Policy {
 	 * Whether to block the prompt (enforcement).
 	 *
 	 * @param array<string,mixed> $policy
+	 * @param string|null         $operation AI Client method name when known.
+	 * @param string|null         $capability_family Pre-resolved family from snapshot (preferred).
 	 */
-	public static function should_prevent( array $policy, ?string $plugin_basename ): bool {
+	public static function should_prevent( array $policy, ?string $plugin_basename, ?string $operation = null, ?string $capability_family = null ): bool {
 		if ( ! empty( $policy['audit_only'] ) ) {
 			return false;
 		}
 
-		return self::would_prevent( $policy, $plugin_basename );
+		return self::would_prevent( $policy, $plugin_basename, $operation, $capability_family );
 	}
 
 	/**
 	 * What would happen if enforcement were active (ignores audit-only).
 	 *
+	 * Decision order:
+	 * 1. Kill switch — non-excepted callers blocked; exceptions fall through to normal rules
+	 *    (plugin + family), not unconditional allow.
+	 * 2. Plugin-level deny (all families denied).
+	 * 3. Capability-family rule when plugin is allowed (or inherits allow).
+	 * 4. Unknown-operation fallback when the method has no family mapping.
+	 *
 	 * @param array<string,mixed> $policy
+	 * @param string|null         $operation AI Client method name when known.
+	 * @param string|null         $capability_family Pre-resolved family from snapshot (preferred).
 	 */
-	public static function would_prevent( array $policy, ?string $plugin_basename ): bool {
+	public static function would_prevent( array $policy, ?string $plugin_basename, ?string $operation = null, ?string $capability_family = null ): bool {
 		if ( ! empty( $policy['kill_switch'] ) ) {
 			$exceptions = self::get_kill_switch_exceptions( $policy );
 			if ( $plugin_basename && in_array( $plugin_basename, $exceptions, true ) ) {
-				return false;
+				// Fall through to normal rules for exceptions — do not widen access.
+			} else {
+				return true;
 			}
-
-			return true;
 		}
 
 		$instance = self::instance();
-		return $instance->decide( $policy, $plugin_basename );
+		return $instance->decide( $policy, $plugin_basename, $operation, $capability_family );
 	}
 
 	/**
-	 * Effective allow/deny label for a plugin under current policy (ignores audit-only).
+	 * Plugin-level allow/deny label under current policy (ignores audit-only and family rules).
+	 * Used for suggested-rules UI — not a full effective matrix decision.
 	 *
 	 * @param array<string,mixed> $policy
 	 */
 	public static function effective_decision_label( array $policy, ?string $plugin_basename ): string {
-		return self::would_prevent( $policy, $plugin_basename ) ? 'deny' : 'allow';
+		return self::would_prevent( $policy, $plugin_basename, null ) ? 'deny' : 'allow';
 	}
 
 	/**
@@ -229,16 +248,98 @@ final class Policy {
 
 	/**
 	 * @param array<string,mixed> $policy
+	 * @param string|null         $operation AI Client method name when known.
+	 * @param string|null         $capability_family Pre-resolved family (from snapshot inference).
 	 */
-	private function decide( array $policy, ?string $plugin_basename ): bool {
+	private function decide( array $policy, ?string $plugin_basename, ?string $operation = null, ?string $capability_family = null ): bool {
+		$plugin_decision = $this->plugin_level_decision( $policy, $plugin_basename );
+
+		// Outer gate: plugin deny blocks every family.
+		if ( 'deny' === $plugin_decision ) {
+			return true;
+		}
+
+		// No operation context (e.g. suggested-rules UI) → plugin-level only.
+		if ( null === $operation || '' === $operation ) {
+			return false;
+		}
+
+		$family = ( is_string( $capability_family ) && '' !== $capability_family )
+			? $capability_family
+			: Operations::family_from_operation( $operation );
+
+		if ( Operations::FAMILY_UNKNOWN === $family ) {
+			return $this->unknown_operation_prevents( $policy );
+		}
+
+		$family_rule = $this->family_rule_for_plugin( $policy, $plugin_basename, $family );
+		if ( 'deny' === $family_rule ) {
+			return true;
+		}
+		if ( 'allow' === $family_rule ) {
+			return false;
+		}
+
+		// Inherit: plugin already allowed.
+		return false;
+	}
+
+	/**
+	 * Plugin-level allow/deny (no family refinement).
+	 *
+	 * @param array<string,mixed> $policy
+	 * @return 'allow'|'deny'
+	 */
+	private function plugin_level_decision( array $policy, ?string $plugin_basename ): string {
 		$default = ( $policy['default'] ?? 'allow' ) === 'deny' ? 'deny' : 'allow';
 		$rules   = is_array( $policy['plugins'] ?? null ) ? (array) $policy['plugins'] : array();
 
 		if ( $plugin_basename && isset( $rules[ $plugin_basename ] ) ) {
-			return 'deny' === $rules[ $plugin_basename ];
+			return 'deny' === $rules[ $plugin_basename ] ? 'deny' : 'allow';
 		}
 
-		return 'deny' === $default;
+		return $default;
+	}
+
+	/**
+	 * Explicit per-plugin family rule, or empty string for inherit.
+	 *
+	 * @param array<string,mixed> $policy
+	 * @return 'allow'|'deny'|''
+	 */
+	private function family_rule_for_plugin( array $policy, ?string $plugin_basename, string $family ): string {
+		if ( ! $plugin_basename ) {
+			return '';
+		}
+
+		$ops = is_array( $policy['operations'] ?? null ) ? (array) $policy['operations'] : array();
+		if ( ! isset( $ops[ $plugin_basename ] ) || ! is_array( $ops[ $plugin_basename ] ) ) {
+			return '';
+		}
+
+		$rule = $ops[ $plugin_basename ][ $family ] ?? '';
+		if ( 'allow' === $rule || 'deny' === $rule ) {
+			return $rule;
+		}
+
+		return '';
+	}
+
+	/**
+	 * Unknown-operation fallback: inherit | allow | deny.
+	 *
+	 * Only reachable when the plugin-level decision is already allow (plugin
+	 * deny returns earlier), so inherit means allow.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function unknown_operation_prevents( array $policy ): bool {
+		$fallback = $policy['unknown_operation'] ?? 'inherit';
+		if ( 'deny' === $fallback ) {
+			return true;
+		}
+		// allow or inherit (plugin already allowed when this is called).
+		return false;
 	}
 
 	/**
@@ -265,7 +366,57 @@ final class Policy {
 			$policy['log_limit'] = 1000;
 		}
 
+		$policy['operations']        = self::sanitize_operations( $policy['operations'] ?? array() );
+		$policy['unknown_operation'] = self::sanitize_unknown_operation( $policy['unknown_operation'] ?? 'inherit' );
+
 		return $policy;
+	}
+
+	/**
+	 * @param mixed $raw
+	 * @return array<string,array<string,string>>
+	 */
+	public static function sanitize_operations( $raw ): array {
+		if ( ! is_array( $raw ) ) {
+			return array();
+		}
+
+		$families = Operations::families();
+		$out      = array();
+
+		foreach ( $raw as $basename => $family_rules ) {
+			$basename = sanitize_text_field( (string) $basename );
+			if ( '' === $basename || ! is_array( $family_rules ) ) {
+				continue;
+			}
+
+			$row = array();
+			foreach ( $families as $family ) {
+				$rule = isset( $family_rules[ $family ] ) ? sanitize_text_field( (string) $family_rules[ $family ] ) : '';
+				if ( 'allow' === $rule || 'deny' === $rule ) {
+					$row[ $family ] = $rule;
+				}
+			}
+
+			if ( ! empty( $row ) ) {
+				$out[ $basename ] = $row;
+			}
+		}
+
+		return $out;
+	}
+
+	/**
+	 * @param mixed $raw
+	 * @return 'inherit'|'allow'|'deny'
+	 */
+	public static function sanitize_unknown_operation( $raw ): string {
+		$raw = sanitize_text_field( (string) $raw );
+		if ( 'allow' === $raw || 'deny' === $raw ) {
+			return $raw;
+		}
+
+		return 'inherit';
 	}
 
 	/**
@@ -277,6 +428,8 @@ final class Policy {
 		}
 
 		$policy['kill_switch_exceptions'] = self::get_kill_switch_exceptions( $policy );
+		$policy['operations']             = self::sanitize_operations( $policy['operations'] ?? array() );
+		$policy['unknown_operation']      = self::sanitize_unknown_operation( $policy['unknown_operation'] ?? 'inherit' );
 
 		update_option( Plugin::OPTION_KEY, $policy, false );
 	}

@@ -33,13 +33,20 @@ final class Prompt_Snapshot {
 			}
 
 			$operation = self::operation_from_backtrace();
+			$op_name   = isset( $operation['operation'] ) ? (string) $operation['operation'] : '';
+
+			// Resolve capability once; reuse for provider/model inference and family mapping.
+			// Generic is_supported / generate_result only get a real family when inference works.
+			$capability = self::capability_from_operation( $inner, $op_name );
+			$family     = Operations::family_from_operation( $op_name, $capability );
 
 			return array_merge(
 				$operation,
-				self::extract_provider_model( $inner, isset( $operation['operation'] ) ? (string) $operation['operation'] : '' ),
+				self::extract_provider_model( $inner, $op_name, $capability ),
 				self::extract_config( $inner ),
 				array(
-					'prompt_preview' => self::extract_prompt_preview( $inner ),
+					'prompt_preview'    => self::extract_prompt_preview( $inner ),
+					'capability_family' => $family,
 				)
 			);
 		} catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
@@ -68,11 +75,12 @@ final class Prompt_Snapshot {
 	}
 
 	/**
-	 * @param object $inner PromptBuilder instance.
-	 * @param string $operation AI Client method that triggered the filter.
+	 * @param object     $inner PromptBuilder instance.
+	 * @param string     $operation AI Client method that triggered the filter.
+	 * @param mixed|null $capability Pre-resolved CapabilityEnum (avoids double work).
 	 * @return array<string,mixed>
 	 */
-	private static function extract_provider_model( object $inner, string $operation ): array {
+	private static function extract_provider_model( object $inner, string $operation, $capability = null ): array {
 		$ref = new \ReflectionClass( $inner );
 
 		$provider    = self::read_property( $ref, $inner, 'providerIdOrClassName' );
@@ -113,7 +121,12 @@ final class Prompt_Snapshot {
 		}
 
 		if ( null === $out['model'] || null === $out['provider'] ) {
-			$inferred = self::resolve_inferred_provider_model( $inner, $operation, is_array( $preferences ) ? $preferences : array() );
+			$inferred = self::resolve_inferred_provider_model(
+				$inner,
+				$operation,
+				is_array( $preferences ) ? $preferences : array(),
+				$capability
+			);
 			if ( null !== $inferred['provider'] && null === $out['provider'] ) {
 				$out['provider'] = $inferred['provider'];
 			}
@@ -138,9 +151,10 @@ final class Prompt_Snapshot {
 	 * @param object              $inner PromptBuilder instance.
 	 * @param string              $operation AI Client method name.
 	 * @param array<int,string>   $preferences Model preference keys from the builder.
+	 * @param mixed|null          $capability Pre-resolved CapabilityEnum or null.
 	 * @return array{provider:?string,model:?string,model_inferred:bool}
 	 */
-	private static function resolve_inferred_provider_model( object $inner, string $operation, array $preferences ): array {
+	private static function resolve_inferred_provider_model( object $inner, string $operation, array $preferences, $capability = null ): array {
 		$empty = array(
 			'provider'       => null,
 			'model'          => null,
@@ -158,7 +172,9 @@ final class Prompt_Snapshot {
 			return $empty;
 		}
 
-		$capability = self::capability_from_operation( $inner, $operation );
+		if ( null === $capability ) {
+			$capability = self::capability_from_operation( $inner, $operation );
+		}
 		if ( null === $capability ) {
 			return $empty;
 		}
@@ -264,10 +280,15 @@ final class Prompt_Snapshot {
 				$method->setAccessible( true );
 				return $method->invoke( $inner );
 			} catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
-				return $enum::textGeneration();
+				// Inference failed — null so family stays unknown (not Text).
+				// Guessing textGeneration here would fail-open past unknown_operation=deny.
+				return null;
 			}
 		}
 
+		// Provider/model inference only: a wrong guess is a slightly wrong log
+		// row. Enforcement must not treat this as a real family — family_from_operation
+		// ignores inferred capability except for is_supported / generate_result.
 		if ( 0 === strpos( $operation, 'generate_' ) || 0 === strpos( $operation, 'convert_text_to_speech' ) ) {
 			return $enum::textGeneration();
 		}
