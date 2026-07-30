@@ -111,12 +111,11 @@ final class Operations {
 			return self::FAMILY_VIDEO;
 		}
 
-		// Last chance: inferred capability for unmapped generic-style names.
-		$from_cap = self::family_from_capability( $inferred_capability );
-		if ( self::FAMILY_UNKNOWN !== $from_cap ) {
-			return $from_cap;
-		}
-
+		// Unmapped operations stay unknown so the admin's unknown_operation
+		// fallback applies. Do not consume $inferred_capability here —
+		// capability_from_operation() guesses textGeneration for provider
+		// inference, and feeding that into enforcement reclassifies every
+		// unknown as Text (silent fail-open on unknown=deny).
 		return self::FAMILY_UNKNOWN;
 	}
 

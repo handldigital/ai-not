@@ -280,10 +280,15 @@ final class Prompt_Snapshot {
 				$method->setAccessible( true );
 				return $method->invoke( $inner );
 			} catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
-				return $enum::textGeneration();
+				// Inference failed — null so family stays unknown (not Text).
+				// Guessing textGeneration here would fail-open past unknown_operation=deny.
+				return null;
 			}
 		}
 
+		// Provider/model inference only: a wrong guess is a slightly wrong log
+		// row. Enforcement must not treat this as a real family — family_from_operation
+		// ignores inferred capability except for is_supported / generate_result.
 		if ( 0 === strpos( $operation, 'generate_' ) || 0 === strpos( $operation, 'convert_text_to_speech' ) ) {
 			return $enum::textGeneration();
 		}
