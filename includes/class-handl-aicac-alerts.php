@@ -252,8 +252,12 @@ final class Alerts {
 		$body .= "\n" . __( 'This message was sent by HandL AICAC (not by the calling plugin). Review rules under Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' ) . "\n";
 		$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=log' ) . "\n";
 
+		// record_send only on true; false/Throwable → queue so the denial is not silently lost
+		// and does not burn a rate slot (Frink live: pre_wp_mail → false still rate_count++ on 488b0df).
 		if ( self::safe_wp_mail( $to, $subject, $body ) ) {
 			self::record_send();
+		} else {
+			self::queue_digest_row( $event );
 		}
 	}
 
