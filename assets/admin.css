@@ -410,3 +410,8 @@
 .handl-aicac-family-label {
 	font-size: 11px;
 }
+
+.handl-aicac-ability-axis-notice { margin: 0.5em 0 1em; }
+.handl-aicac-registered-abilities { max-height: 12em; overflow: auto; margin: 0.5em 0; }
+.handl-aicac-registered-abilities li { margin: 0.15em 0; }
+.handl-aicac-denial-reason { color: #b32d2e; font-weight: 600; }

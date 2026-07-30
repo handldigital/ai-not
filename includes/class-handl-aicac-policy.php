@@ -34,7 +34,7 @@ final class Policy {
 	}
 
 	/**
-	 * @param bool $prevent
+	 * @param bool  $prevent
 	 * @param mixed $builder WP_AI_Client_Prompt_Builder clone (read-only)
 	 */
 	public function maybe_prevent_prompt( bool $prevent, $builder ): bool {
@@ -47,7 +47,7 @@ final class Policy {
 		$attrib = Attribution::resolve_from_backtrace();
 		$plugin = is_string( $attrib['plugin'] ?? null ) ? (string) $attrib['plugin'] : null;
 
-		// Snapshot first so operation/family are known before the decision (F1 constraint).
+		// Snapshot first so operation/family/armed tools are known before the decision.
 		// Snapshot resolves capability_family including inference for generate_result / is_supported.
 		$snapshot  = Prompt_Snapshot::from_builder( $builder );
 		$operation = isset( $snapshot['operation'] ) ? (string) $snapshot['operation'] : '';
@@ -55,20 +55,35 @@ final class Policy {
 			? (string) $snapshot['capability_family']
 			: Operations::family_from_operation( $operation );
 
-		$would_prevent = self::would_prevent( $policy, $plugin, $operation, $family );
-		$prevent       = self::should_prevent( $policy, $plugin, $operation, $family );
+		// Prefer armed_tools; accept legacy armed_abilities key from older snapshots.
+		$armed_raw = $snapshot['armed_tools'] ?? $snapshot['armed_abilities'] ?? array();
+		$armed     = is_array( $armed_raw )
+			? array_values( array_map( 'strval', $armed_raw ) )
+			: array();
+
+		$would_eval = self::evaluate( $policy, $plugin, $operation, $armed, $family );
+		$eval       = ! empty( $policy['audit_only'] )
+			? array( 'prevent' => false, 'reason' => '', 'matched_tools' => array() )
+			: $would_eval;
+
+		$prevent       = (bool) $eval['prevent'];
+		$would_prevent = (bool) $would_eval['prevent'];
 
 		$event = array_merge(
 			array(
-				'ts'                 => time(),
-				'plugin'             => $plugin,
-				'file'               => $attrib['file'] ?? null,
-				'caller'             => $attrib['method'] ?? null,
-				'decision'           => $prevent ? 'deny' : 'allow',
-				'would_decision'     => $would_prevent ? 'deny' : 'allow',
-				'capability_family'  => $family,
-				'user_id'            => get_current_user_id(),
-				'uri'                => isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) ) : null,
+				'ts'                => time(),
+				'plugin'            => $plugin,
+				'file'              => $attrib['file'] ?? null,
+				'caller'            => $attrib['method'] ?? null,
+				'decision'          => $prevent ? 'deny' : 'allow',
+				'would_decision'    => $would_prevent ? 'deny' : 'allow',
+				'capability_family' => $family,
+				'denial_reason'     => $would_eval['reason'] ?? '',
+				'matched_tools'     => $would_eval['matched_tools'] ?? array(),
+				// Legacy alias for pre-rename log readers.
+				'matched_abilities' => $would_eval['matched_tools'] ?? array(),
+				'user_id'           => get_current_user_id(),
+				'uri'               => isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) ) : null,
 			),
 			$snapshot
 		);
@@ -92,42 +107,68 @@ final class Policy {
 	 *
 	 * @param array<string,mixed> $policy
 	 * @param string|null         $operation AI Client method name when known.
+	 * @param list<string>|null   $armed_tools Tool/ability names armed on the prompt.
 	 * @param string|null         $capability_family Pre-resolved family from snapshot (preferred).
 	 */
-	public static function should_prevent( array $policy, ?string $plugin_basename, ?string $operation = null, ?string $capability_family = null ): bool {
+	public static function should_prevent( array $policy, ?string $plugin_basename, ?string $operation = null, ?array $armed_tools = null, ?string $capability_family = null ): bool {
 		if ( ! empty( $policy['audit_only'] ) ) {
 			return false;
 		}
 
-		return self::would_prevent( $policy, $plugin_basename, $operation, $capability_family );
+		return self::would_prevent( $policy, $plugin_basename, $operation, $armed_tools, $capability_family );
 	}
 
 	/**
 	 * What would happen if enforcement were active (ignores audit-only).
 	 *
+	 * @param array<string,mixed> $policy
+	 * @param string|null         $operation AI Client method name when known.
+	 * @param list<string>|null   $armed_tools Tool/ability names armed on the prompt.
+	 * @param string|null         $capability_family Pre-resolved family from snapshot (preferred).
+	 */
+	public static function would_prevent( array $policy, ?string $plugin_basename, ?string $operation = null, ?array $armed_tools = null, ?string $capability_family = null ): bool {
+		$eval = self::evaluate( $policy, $plugin_basename, $operation, $armed_tools, $capability_family );
+		return (bool) $eval['prevent'];
+	}
+
+	/**
+	 * Full evaluation with denial reason (for loud audit trail).
+	 *
 	 * Decision order:
 	 * 1. Kill switch — non-excepted callers blocked; exceptions fall through to normal rules
-	 *    (plugin + family), not unconditional allow.
+	 *    (plugin + family + tool arming), not unconditional allow.
 	 * 2. Plugin-level deny (all families denied).
 	 * 3. Capability-family rule when plugin is allowed (or inherits allow).
 	 * 4. Unknown-operation fallback when the method has no family mapping.
+	 * 5. Tool deny-at-arming — prompt arms a denied tool (F2).
+	 *
+	 * Matched tools are collected on every denial regardless of which rule fired.
 	 *
 	 * @param array<string,mixed> $policy
 	 * @param string|null         $operation AI Client method name when known.
+	 * @param list<string>|null   $armed_tools Tool/ability names armed on the prompt.
 	 * @param string|null         $capability_family Pre-resolved family from snapshot (preferred).
+	 * @return array{prevent:bool,reason:string,matched_tools:list<string>}
 	 */
-	public static function would_prevent( array $policy, ?string $plugin_basename, ?string $operation = null, ?string $capability_family = null ): bool {
+	public static function evaluate( array $policy, ?string $plugin_basename, ?string $operation = null, ?array $armed_tools = null, ?string $capability_family = null ): array {
 		if ( ! empty( $policy['kill_switch'] ) ) {
 			$exceptions = self::get_kill_switch_exceptions( $policy );
 			if ( $plugin_basename && in_array( $plugin_basename, $exceptions, true ) ) {
 				// Fall through to normal rules for exceptions — do not widen access.
 			} else {
-				return true;
+				return self::with_matched_tools(
+					array(
+						'prevent' => true,
+						'reason'  => 'kill_switch',
+					),
+					$policy,
+					$armed_tools ?? array()
+				);
 			}
 		}
 
 		$instance = self::instance();
-		return $instance->decide( $policy, $plugin_basename, $operation, $capability_family );
+		return $instance->decide_detailed( $policy, $plugin_basename, $operation, $armed_tools ?? array(), $capability_family );
 	}
 
 	/**
@@ -249,38 +290,210 @@ final class Policy {
 	/**
 	 * @param array<string,mixed> $policy
 	 * @param string|null         $operation AI Client method name when known.
+	 * @param list<string>        $armed_tools
 	 * @param string|null         $capability_family Pre-resolved family (from snapshot inference).
+	 * @return array{prevent:bool,reason:string,matched_tools:list<string>}
 	 */
-	private function decide( array $policy, ?string $plugin_basename, ?string $operation = null, ?string $capability_family = null ): bool {
+	private function decide_detailed( array $policy, ?string $plugin_basename, ?string $operation, array $armed_tools, ?string $capability_family = null ): array {
+		$allow = array(
+			'prevent'       => false,
+			'reason'        => '',
+			'matched_tools' => array(),
+		);
+
 		$plugin_decision = $this->plugin_level_decision( $policy, $plugin_basename );
 
-		// Outer gate: plugin deny blocks every family.
+		// Outer gate: plugin deny blocks every family and tool arming.
 		if ( 'deny' === $plugin_decision ) {
-			return true;
+			return self::with_matched_tools(
+				array(
+					'prevent' => true,
+					'reason'  => 'plugin',
+				),
+				$policy,
+				$armed_tools
+			);
 		}
 
-		// No operation context (e.g. suggested-rules UI) → plugin-level only.
-		if ( null === $operation || '' === $operation ) {
+		// Capability family (F1) — only when operation is known.
+		if ( null !== $operation && '' !== $operation ) {
+			$family = ( is_string( $capability_family ) && '' !== $capability_family )
+				? $capability_family
+				: Operations::family_from_operation( $operation );
+
+			if ( Operations::FAMILY_UNKNOWN === $family ) {
+				if ( $this->unknown_operation_prevents( $policy ) ) {
+					return self::with_matched_tools(
+						array(
+							'prevent' => true,
+							'reason'  => 'unknown_operation',
+						),
+						$policy,
+						$armed_tools
+					);
+				}
+			} else {
+				$family_rule = $this->family_rule_for_plugin( $policy, $plugin_basename, $family );
+				if ( 'deny' === $family_rule ) {
+					return self::with_matched_tools(
+						array(
+							'prevent' => true,
+							'reason'  => 'capability_family',
+						),
+						$policy,
+						$armed_tools
+					);
+				}
+			}
+		}
+
+		// F2: deny-at-arming — block if any armed tool is on the deny list.
+		$matched = $this->matched_denied_tools( $policy, $armed_tools );
+		if ( ! empty( $matched ) ) {
+			return array(
+				'prevent'       => true,
+				'reason'        => 'tool_armed',
+				'matched_tools' => $matched,
+			);
+		}
+
+		// Even on allow, surface matches if any (empty when nothing matched).
+		return self::with_matched_tools( $allow, $policy, $armed_tools );
+	}
+
+	/**
+	 * Attach case-normalized deny-list matches to any evaluation result.
+	 *
+	 * @param array{prevent:bool,reason:string} $result
+	 * @param array<string,mixed>               $policy
+	 * @param list<string>                      $armed_tools
+	 * @return array{prevent:bool,reason:string,matched_tools:list<string>}
+	 */
+	private static function with_matched_tools( array $result, array $policy, array $armed_tools ): array {
+		$instance = self::instance();
+		$result['matched_tools'] = $instance->matched_denied_tools( $policy, $armed_tools );
+		return $result;
+	}
+
+	/**
+	 * Case-normalized match of armed tools against the deny list.
+	 * Returned values keep the armed tool's original casing for the audit trail.
+	 *
+	 * @param array<string,mixed> $policy
+	 * @param list<string>        $armed_tools
+	 * @return list<string>
+	 */
+	private function matched_denied_tools( array $policy, array $armed_tools ): array {
+		if ( empty( $armed_tools ) ) {
+			return array();
+		}
+
+		$denied = self::get_denied_tools( $policy );
+		if ( empty( $denied ) ) {
+			return array();
+		}
+
+		$denied_lookup = array();
+		foreach ( $denied as $name ) {
+			$denied_lookup[ self::normalize_tool_key( $name ) ] = true;
+		}
+
+		$matched = array();
+		foreach ( $armed_tools as $tool ) {
+			$tool = sanitize_text_field( (string) $tool );
+			if ( '' === $tool ) {
+				continue;
+			}
+			if ( isset( $denied_lookup[ self::normalize_tool_key( $tool ) ] ) ) {
+				$matched[] = $tool;
+			}
+		}
+
+		return array_values( array_unique( $matched ) );
+	}
+
+	/**
+	 * @param array<string,mixed> $policy
+	 * @return list<string>
+	 */
+	public static function get_denied_tools( array $policy ): array {
+		// Prefer denied_tools; fall back to legacy denied_abilities option key.
+		$raw = $policy['denied_tools'] ?? $policy['denied_abilities'] ?? array();
+		return self::sanitize_denied_tools( $raw );
+	}
+
+	/**
+	 * @deprecated Use get_denied_tools().
+	 * @param array<string,mixed> $policy
+	 * @return list<string>
+	 */
+	public static function get_denied_abilities( array $policy ): array {
+		return self::get_denied_tools( $policy );
+	}
+
+	/**
+	 * @param mixed $raw
+	 * @return list<string>
+	 */
+	public static function sanitize_denied_tools( $raw ): array {
+		if ( is_string( $raw ) ) {
+			// Textarea: one tool name per line.
+			$raw = preg_split( '/\r\n|\r|\n/', $raw );
+		}
+		if ( ! is_array( $raw ) ) {
+			return array();
+		}
+
+		$out = array();
+		foreach ( $raw as $name ) {
+			$name = sanitize_text_field( (string) $name );
+			$name = trim( $name );
+			if ( '' === $name ) {
+				continue;
+			}
+			// Tool names look like namespace/action or custom FunctionDeclaration ids.
+			if ( strlen( $name ) > 200 ) {
+				continue;
+			}
+			$out[] = $name;
+		}
+
+		return array_values( array_unique( $out ) );
+	}
+
+	/**
+	 * @deprecated Use sanitize_denied_tools().
+	 * @param mixed $raw
+	 * @return list<string>
+	 */
+	public static function sanitize_denied_abilities( $raw ): array {
+		return self::sanitize_denied_tools( $raw );
+	}
+
+	/**
+	 * Lowercase key for case-insensitive tool matching.
+	 */
+	public static function normalize_tool_key( string $name ): string {
+		return strtolower( trim( $name ) );
+	}
+
+	/**
+	 * Whether a deny-list entry matches any currently registered ability (case-insensitive).
+	 * Used only for admin UI flags — pre-listing unregistered names is allowed.
+	 *
+	 * @param string       $entry           Deny-list entry as stored.
+	 * @param list<string> $registered_names Currently registered ability names.
+	 */
+	public static function deny_entry_matches_registered( string $entry, array $registered_names ): bool {
+		$key = self::normalize_tool_key( $entry );
+		if ( '' === $key ) {
 			return false;
 		}
-
-		$family = ( is_string( $capability_family ) && '' !== $capability_family )
-			? $capability_family
-			: Operations::family_from_operation( $operation );
-
-		if ( Operations::FAMILY_UNKNOWN === $family ) {
-			return $this->unknown_operation_prevents( $policy );
+		foreach ( $registered_names as $name ) {
+			if ( self::normalize_tool_key( (string) $name ) === $key ) {
+				return true;
+			}
 		}
-
-		$family_rule = $this->family_rule_for_plugin( $policy, $plugin_basename, $family );
-		if ( 'deny' === $family_rule ) {
-			return true;
-		}
-		if ( 'allow' === $family_rule ) {
-			return false;
-		}
-
-		// Inherit: plugin already allowed.
 		return false;
 	}
 
@@ -369,6 +582,15 @@ final class Policy {
 		$policy['operations']        = self::sanitize_operations( $policy['operations'] ?? array() );
 		$policy['unknown_operation'] = self::sanitize_unknown_operation( $policy['unknown_operation'] ?? 'inherit' );
 
+		// Tools rename: read new key, migrate legacy denied_abilities.
+		$tools_raw = $policy['denied_tools'] ?? null;
+		if ( null === $tools_raw || ( is_array( $tools_raw ) && empty( $tools_raw ) ) ) {
+			if ( ! empty( $policy['denied_abilities'] ) ) {
+				$tools_raw = $policy['denied_abilities'];
+			}
+		}
+		$policy['denied_tools'] = self::sanitize_denied_tools( $tools_raw ?? array() );
+
 		return $policy;
 	}
 
@@ -430,6 +652,9 @@ final class Policy {
 		$policy['kill_switch_exceptions'] = self::get_kill_switch_exceptions( $policy );
 		$policy['operations']             = self::sanitize_operations( $policy['operations'] ?? array() );
 		$policy['unknown_operation']      = self::sanitize_unknown_operation( $policy['unknown_operation'] ?? 'inherit' );
+		$policy['denied_tools']           = self::sanitize_denied_tools( $policy['denied_tools'] ?? $policy['denied_abilities'] ?? array() );
+		// Drop legacy key on save so the option stores the honest name.
+		unset( $policy['denied_abilities'] );
 
 		update_option( Plugin::OPTION_KEY, $policy, false );
 	}

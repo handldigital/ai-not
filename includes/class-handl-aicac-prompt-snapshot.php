@@ -347,7 +347,80 @@ final class Prompt_Snapshot {
 			$pick['systemInstruction'] = self::truncate( $arr['systemInstruction'], 120 );
 		}
 
-		return empty( $pick ) ? array() : array( 'config' => $pick );
+		$out = empty( $pick ) ? array() : array( 'config' => $pick );
+
+		// F2: tools armed on this prompt via using_abilities() / functionDeclarations
+		// (wpab__* abilities and custom FunctionDeclarations alike).
+		$armed = self::extract_armed_tools( $arr );
+		if ( ! empty( $armed ) ) {
+			$out['armed_tools'] = $armed;
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Tool names the model is being offered on this prompt.
+	 *
+	 * Reads ModelConfig::toArray()['functionDeclarations'][*]['name'] and decodes
+	 * the WordPress ability prefix (wpab__namespace__name → namespace/name).
+	 * Non-wpab__ names are kept as raw tool ids (custom FunctionDeclarations).
+	 *
+	 * @param array<string,mixed> $config_array ModelConfig::toArray() shape.
+	 * @return list<string>
+	 */
+	private static function extract_armed_tools( array $config_array ): array {
+		$raw = $config_array['functionDeclarations'] ?? null;
+		if ( ! is_array( $raw ) || empty( $raw ) ) {
+			return array();
+		}
+
+		$names = array();
+		foreach ( $raw as $decl ) {
+			if ( ! is_array( $decl ) ) {
+				continue;
+			}
+			$fn = isset( $decl['name'] ) ? (string) $decl['name'] : '';
+			if ( '' === $fn ) {
+				continue;
+			}
+			$tool = self::function_name_to_tool_name( $fn );
+			if ( '' !== $tool ) {
+				$names[] = $tool;
+			}
+		}
+
+		return array_values( array_unique( $names ) );
+	}
+
+	/**
+	 * Decode WP AI Client function declaration names into matchable tool names.
+	 *
+	 * Prefer core helper when present; fall back to the documented wpab__ mapping.
+	 * Custom (non-ability) FunctionDeclarations pass through as the raw name.
+	 */
+	private static function function_name_to_tool_name( string $function_name ): string {
+		if ( class_exists( 'WP_AI_Client_Ability_Function_Resolver', false )
+			&& method_exists( 'WP_AI_Client_Ability_Function_Resolver', 'function_name_to_ability_name' )
+		) {
+			try {
+				$decoded = \WP_AI_Client_Ability_Function_Resolver::function_name_to_ability_name( $function_name );
+				if ( is_string( $decoded ) && '' !== $decoded ) {
+					return $decoded;
+				}
+			} catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+				// Fall through to local decode.
+			}
+		}
+
+		$prefix = 'wpab__';
+		if ( 0 !== strpos( $function_name, $prefix ) ) {
+			// Non-ability function declaration — keep the raw tool name for matching + logging.
+			return $function_name;
+		}
+
+		$without = substr( $function_name, strlen( $prefix ) );
+		return str_replace( '__', '/', $without );
 	}
 
 	/**
