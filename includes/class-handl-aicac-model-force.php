@@ -207,8 +207,14 @@ final class Model_Force {
 	}
 
 	/**
-	 * Called from Policy after allow decision: apply preference on the clone
-	 * and arm final-route verification for this request.
+	 * Called from Policy after allow decision on a *generating* operation only:
+	 * apply preference on the clone and arm final-route verification for this call.
+	 *
+	 * Pending expectation is a single request-scoped static slot. Clear it at every
+	 * entry before deciding (overwrite-or-clear, never carry). Consume-on-verify
+	 * still runs in verify_final_route. That way an armed call that never reaches
+	 * wp_ai_client_before_generate_result (denied later, provider throws pre-hook,
+	 * support-check path that must not arm, etc.) cannot poison the next call.
 	 *
 	 * @param mixed               $builder WP_AI_Client_Prompt_Builder clone.
 	 * @param array<string,mixed> $policy
@@ -216,6 +222,9 @@ final class Model_Force {
 	 * @return array{applied:bool,reason:string,provider?:string,model?:string,source?:string}
 	 */
 	public static function maybe_apply( $builder, array $policy, ?string $plugin_basename ): array {
+		// Self-cleaning slot: staleness cannot outlive one call regardless of exit path.
+		self::$pending_expected = null;
+
 		$resolved = self::resolve_route( $policy, $plugin_basename );
 		if ( empty( $resolved['apply'] ) ) {
 			return array(

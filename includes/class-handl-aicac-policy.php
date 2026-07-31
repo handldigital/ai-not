@@ -97,10 +97,16 @@ final class Policy {
 			self::$pending_token_log_keys[] = $event['log_key'];
 		}
 
-		// F4 experimental: per-plugin force on allowed prompts (does not change $prevent).
-		// Mutates the shallow-cloned builder's shared inner; final route is verified later.
+		// F4 experimental: per-plugin force on allowed *generating* prompts only.
+		// Support checks and generations share the allow/deny *decision* (F1 family
+		// rule), but must not share the *arming*: the rule answers "may it," the
+		// arm asserts "it will happen and be verified," and only generations fire
+		// BeforeGenerateResultEvent to consume that expectation. Arming a support
+		// check leaves a stale pending expectation that can fail-close the next
+		// generation (including an unpinned plugin) — fail-closed against the wrong party.
+		// Mutates the shallow-cloned builder's shared inner; final route verified later.
 		// Pin follows detected caller (nearest plugin frame) — not a spend guarantee.
-		if ( ! $prevent ) {
+		if ( ! $prevent && self::is_generating_operation( $operation ) ) {
 			$force = Model_Force::maybe_apply( $builder, $policy, $plugin );
 			if ( ! empty( $force['applied'] ) ) {
 				$event['model_forced']    = true;
