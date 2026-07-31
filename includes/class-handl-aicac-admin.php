@@ -2016,7 +2016,23 @@ final class Admin {
 			echo '<span class="handl-aicac-muted">—</span>';
 		}
 		echo '</td>';
-		echo '<td><code>' . esc_html( $uri ?: '—' ) . '</code></td>';
+		echo '<td><code>' . esc_html( $uri ?: '—' ) . '</code>';
+		// M4 keeps the first path on collapse; label it when the cluster has multiple calls.
+		if ( $is_direct_http && '' !== $uri ) {
+			$uri_cluster = isset( $row['count'] ) ? (int) $row['count'] : 1;
+			if ( $uri_cluster > 1 ) {
+				echo '<br /><span class="description" style="font-size:11px;">';
+				echo esc_html(
+					sprintf(
+						/* translators: %d: total HTTP calls in this cluster */
+						__( 'first of %d', 'handl-ai-connector-access-control' ),
+						$uri_cluster
+					)
+				);
+				echo '</span>';
+			}
+		}
+		echo '</td>';
 		echo '<td class="column-actions handl-aicac-quick-actions">';
 		if ( $plugin ) {
 			$this->render_quick_rule_buttons( $plugin, $log_filters );

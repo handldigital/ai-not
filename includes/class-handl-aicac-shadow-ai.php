@@ -143,6 +143,12 @@ final class Shadow_AI {
 			self::$flush_registered = true;
 			// Priority 0: flush before other shutdown work that might exit early.
 			add_action( 'shutdown', array( self::class, 'flush_pending' ), 0 );
+			// Floor: catch calls observed *during* later shutdown hooks (priority > 0).
+			// WP action order alone drops those — $flush_registered stays true so the
+			// action is never re-added, and priority 0 has already run. PHP's
+			// register_shutdown_function runs after every WP shutdown action;
+			// flush_pending is idempotent on empty $pending (no double-write).
+			register_shutdown_function( array( self::class, 'flush_pending' ) );
 		}
 
 		return $preempt;
@@ -172,11 +178,19 @@ final class Shadow_AI {
 		self::$pending = array();
 
 		foreach ( $batch as $item ) {
-			$event           = $item['event'];
-			$tally           = isset( $item['tally'] ) ? (int) $item['tally'] : 1;
-			$event['count']  = $tally > 0 ? $tally : 1;
+			$event          = $item['event'];
+			$tally          = isset( $item['tally'] ) ? (int) $item['tally'] : 1;
+			$event['count'] = $tally > 0 ? $tally : 1;
+			// Multi-call first flush: first observation ts is already on the event;
+			// copy to first_ts before overwriting so the row has a real span (Δ5).
+			if ( $tally > 1 ) {
+				$first = isset( $event['ts'] ) ? (int) $event['ts'] : 0;
+				if ( $first > 0 && ! isset( $event['first_ts'] ) ) {
+					$event['first_ts'] = $first;
+				}
+			}
 			// ts is last call time in this request batch (first observation kept its fields).
-			$event['ts']     = time();
+			$event['ts'] = time();
 			Policy::append_log_event( $event );
 		}
 	}
