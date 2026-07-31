@@ -1048,8 +1048,8 @@ final class Admin {
 				'<p class="handl-aicac-insights-meta">%s</p>',
 				esc_html(
 					sprintf(
-						/* translators: 1: stored count, 2: retention limit */
-						__( 'Based on %1$d of %2$d stored calls (count-based retention; no TTL).', 'handl-ai-connector-access-control' ),
+						/* translators: 1: stored entry count, 2: retention limit (entries) */
+						__( 'Based on %1$d of %2$d stored entries (entry-based retention; no TTL).', 'handl-ai-connector-access-control' ),
 						$stored_count,
 						$log_limit_policy
 					)
@@ -1366,8 +1366,8 @@ final class Admin {
 		echo '<p class="handl-aicac-log-meta">';
 		if ( $this->log_filters_active( $log_filters ) ) {
 			printf(
-				/* translators: 1: rows shown, 2: matching count, 3: stored count, 4: retention limit */
-				esc_html__( 'Showing %1$d of %2$d matching calls (newest first, up to 50). %3$d of %4$d stored entries retained (count-based; no TTL).', 'handl-ai-connector-access-control' ),
+				/* translators: 1: entries shown, 2: matching-entry count, 3: stored entry count, 4: retention limit */
+				esc_html__( 'Showing %1$d of %2$d matching entries (newest first, up to 50). %3$d of %4$d stored entries retained (entry-based; no TTL).', 'handl-ai-connector-access-control' ),
 				count( $rows_to_show ),
 				$matching_count,
 				(int) $stored_count,
@@ -1375,8 +1375,8 @@ final class Admin {
 			);
 		} else {
 			printf(
-				/* translators: 1: stored count, 2: retention limit, 3: rows shown in table */
-				esc_html__( 'Showing up to %3$d newest rows. %1$d of %2$d stored entries retained (count-based; no TTL). Provider/model are read from the prompt builder when available. Input/output tokens are filled after the model responds (allowed generate_* calls only).', 'handl-ai-connector-access-control' ),
+				/* translators: 1: stored entry count, 2: retention limit, 3: rows shown in table */
+				esc_html__( 'Showing up to %3$d newest rows. %1$d of %2$d stored entries retained (entry-based; no TTL). Provider/model are read from the prompt builder when available. Input/output tokens are filled after the model responds (allowed generate_* calls only).', 'handl-ai-connector-access-control' ),
 				(int) $stored_count,
 				(int) $log_limit_policy,
 				count( $rows_to_show )
