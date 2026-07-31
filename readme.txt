@@ -93,7 +93,7 @@ No. It pins the route for calls we attribute to that plugin’s nearest stack fr
 
 = 1.0.13 =
 * Rules: kill-switch Exceptions is a scrollable checkbox list (no Cmd/Ctrl multi-select). Name and plugin path on separate lines.
-* Exceptions block is muted while the kill switch is off (state shown, not narrated). Exception selections still save if kill is off.
+* Exceptions are dimmed while the kill switch is off, with a note. Exception selections still save if kill is off.
 * Copy diet: label “Exceptions”; one line — excepted plugins still follow normal allow/deny and capability-family rules.
 
 = 1.0.12 =

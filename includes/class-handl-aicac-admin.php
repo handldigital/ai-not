@@ -2249,8 +2249,8 @@ final class Admin {
 	private function render_kill_switch_settings_rows( array $policy, string $form_id, array $plugins ): void {
 		$kill_switch = ! empty( $policy['kill_switch'] );
 		$exceptions  = Policy::get_kill_switch_exceptions( $policy );
-		// Muted when kill switch is off (state shown, not narrated). Checkboxes stay
-		// enabled for POST so exception selections survive a save while kill is off.
+		// Dimmed + state note when kill is off; list stays fully operable (no pointer-events
+		// block, no disabled checkboxes) so staging exceptions before enabling kill still POSTs.
 		$ex_class = 'handl-aicac-kill-exceptions' . ( $kill_switch ? '' : ' is-muted' );
 
 		echo '<tr>';
@@ -2261,10 +2261,12 @@ final class Admin {
 		echo '<p class="description">' . esc_html__( 'Blocks every AI Client call except plugins listed as exceptions. Unresolved callers are blocked too.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		echo '<div class="' . esc_attr( $ex_class ) . '" id="handl-aicac-kill-exceptions-wrap">';
-		echo '<p class="handl-aicac-kill-exceptions__heading"><strong>' . esc_html__( 'Exceptions', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		echo '<p class="handl-aicac-kill-exceptions__heading" id="handl-aicac-kill-exceptions-heading"><strong>' . esc_html__( 'Exceptions', 'handl-ai-connector-access-control' ) . '</strong></p>';
 		// Load-bearing: "exception" ≠ unconditionally allowed.
 		echo '<p class="description">' . esc_html__( 'Excepted plugins still follow their normal allow/deny and capability-family rules.', 'handl-ai-connector-access-control' ) . '</p>';
-		echo '<div class="handl-aicac-kill-exceptions__list" role="group" aria-label="' . esc_attr__( 'Kill switch exception plugins', 'handl-ai-connector-access-control' ) . '">';
+		// Visible only while kill is off; same listener toggles hidden with is-muted.
+		echo '<p class="description handl-aicac-kill-exceptions__state" id="handl-aicac-kill-exceptions-state"' . ( $kill_switch ? ' hidden' : '' ) . '>' . esc_html__( 'Not in effect while the kill switch is off.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<div class="handl-aicac-kill-exceptions__list" role="group" aria-labelledby="handl-aicac-kill-exceptions-heading">';
 		$i = 0;
 		foreach ( $plugins as $basename => $data ) {
 			++$i;
@@ -2281,10 +2283,10 @@ final class Admin {
 		}
 		echo '</div>';
 		echo '</div>';
-		// Live mute toggle before save (does not change policy until form submit).
+		// Live mute + state-note toggle before save (does not change policy until form submit).
 		echo '<script>';
-		echo '(function(){var k=document.getElementById("handl-aicac-kill-switch"),w=document.getElementById("handl-aicac-kill-exceptions-wrap");';
-		echo 'if(!k||!w)return;function s(){w.classList.toggle("is-muted",!k.checked);}k.addEventListener("change",s);s();})();';
+		echo '(function(){var k=document.getElementById("handl-aicac-kill-switch"),w=document.getElementById("handl-aicac-kill-exceptions-wrap"),n=document.getElementById("handl-aicac-kill-exceptions-state");';
+		echo 'if(!k||!w)return;function s(){w.classList.toggle("is-muted",!k.checked);if(n)n.hidden=k.checked;}k.addEventListener("change",s);s();})();';
 		echo '</script>';
 		echo '</td>';
 		echo '</tr>';

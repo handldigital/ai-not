@@ -213,11 +213,10 @@
 
 .handl-aicac-kill-exceptions.is-muted .handl-aicac-kill-exceptions__list {
 	background: #f6f7f7;
-	pointer-events: none;
 }
 
-.handl-aicac-kill-exceptions.is-muted .handl-aicac-kill-exceptions__item {
-	cursor: default;
+.handl-aicac-kill-exceptions__state {
+	margin: 4px 0 0;
 }
 
 /* Usage insights tab */
