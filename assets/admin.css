@@ -420,3 +420,69 @@
 .handl-aicac-registered-abilities { max-height: 12em; overflow: auto; margin: 0.5em 0; }
 .handl-aicac-registered-abilities li { margin: 0.15em 0; }
 .handl-aicac-denial-reason { color: #b32d2e; font-weight: 600; }
+
+/* F5 dashboard tiles — native postbox cards */
+.handl-aicac-dashboard .handl-aicac-tile {
+	max-width: 52em;
+	margin: 0 0 16px;
+}
+
+.handl-aicac-dashboard .handl-aicac-tile .inside {
+	margin: 0;
+	padding: 12px 16px 16px;
+}
+
+.handl-aicac-coverage-headline {
+	font-size: 1.15em;
+	margin: 0 0 6px;
+	line-height: 1.35;
+}
+
+.handl-aicac-coverage-window {
+	margin: 0 0 10px;
+}
+
+.handl-aicac-coverage-buckets {
+	margin: 0 0 10px;
+	line-height: 1.55;
+}
+
+.handl-aicac-spend-total {
+	font-size: 1.35em;
+	margin: 0 0 10px;
+}
+
+.handl-aicac-danger {
+	color: #8a2424;
+}
+
+.handl-aicac-settings-panel {
+	margin: 0 0 1.25em;
+	padding: 10px 14px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 2px;
+	max-width: 72em;
+}
+
+.handl-aicac-settings-panel > summary {
+	cursor: pointer;
+	padding: 4px 0;
+}
+
+.handl-aicac-settings-panel[open] > summary {
+	margin-bottom: 8px;
+	border-bottom: 1px solid #dcdcde;
+	padding-bottom: 8px;
+}
+
+.handl-aicac-inline-undo .button,
+.handl-aicac-inline-undo .button-link {
+	vertical-align: baseline;
+	margin-left: 4px;
+}
+
+.handl-aicac-not-governable {
+	font-size: 11px;
+	color: #646970;
+}

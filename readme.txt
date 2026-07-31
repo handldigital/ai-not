@@ -4,7 +4,7 @@ Tags: ai, governance, security, handl, ai client
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.11
+Stable tag: 1.0.12
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -16,17 +16,17 @@ HandL AI Connector Access Control lets administrators allow/deny AI Client promp
 
 Default behavior is **allow**.
 
-**Per-plugin × capability matrix** (Plugin rules tab) refines access by family — Text, Image, Speech, TTS, Video — so you can allow text generation while denying image generation for the same plugin. Support checks (`is_supported_for_*`) and matching `generate_*` methods share the same family rule. Unknown operations (music, embeddings, generic methods) use a configurable fallback (inherit / allow / deny).
+**Per-plugin × capability matrix** (Rules tab) refines access by family — Text, Image, Speech, TTS, Video — so you can allow text generation while denying image generation for the same plugin. Support checks (`is_supported_for_*`) and matching `generate_*` methods share the same family rule. Unknown operations (music, embeddings, generic methods) use a configurable fallback (inherit / allow / deny).
 
 **AI tool arming (caller intent)** denies a prompt when it arms a blocked WordPress ability via the AI Client (`using_abilities` → `functionDeclarations`). This is not MCP visibility and does not unregister abilities site-wide. Denials are logged under this plugin’s name with the blocked ability ids.
 
-**Learn mode** (Audit & log tab) logs every AI Client call without blocking, so you can discover callers before enabling deny rules on the Plugin rules tab.
+**Learn mode** (Activity tab) logs every AI Client call without blocking, so you can discover callers before enabling deny rules on the Rules tab.
 
 **Emergency kill switch** blocks all AI Client calls except plugins you list as exceptions.
 
 **Denial email alerts** (opt-in) notify an admin when enforcement blocks a prompt — immediate (rate-limited) or hourly digest. **Estimated $** on the audit log is a rough token × rate placeholder, not billing. When WordPress disables AI site-wide via `wp_supports_ai`, an honesty banner explains why the audit log may be empty.
 
-**EXPERIMENTAL per-plugin model force** (Plugin rules tab; empty force fields = off) can pin allowed AI Client generations to a provider/model **per detected caller**. Pins follow the nearest plugin frame on the PHP backtrace (best-effort) — not who initiated the call, and **not a spend guarantee**. Unattributed calls (cron, REST bootstraps, shared libraries, MU plugins, etc.) run unforced by default; admins can opt into an explicit unattributed target via the same “Unknown operations”-style control. Force relies on unsupported shallow-clone behaviour in the AI Client prevent hook, verifies the final route with exact provider/model matching before the provider call, and fail-closes on mismatch. Prefer official core routing filters when available.
+**EXPERIMENTAL per-plugin model force** (Rules tab; empty force fields = off) can pin allowed AI Client generations to a provider/model **per detected caller**. Pins follow the nearest plugin frame on the PHP backtrace (best-effort) — not who initiated the call, and **not a spend guarantee**. Unattributed calls (cron, REST bootstraps, shared libraries, MU plugins, etc.) run unforced by default; admins can opt into an explicit unattributed target via the same “Unknown operations”-style control. Force relies on unsupported shallow-clone behaviour in the AI Client prevent hook, verifies the final route with exact provider/model matching before the provider call, and fail-closes on mismatch. Prefer official core routing filters when available.
 
 **Shadow-AI detector (observe only):** when logging or learn mode is on, the plugin watches WordPress HTTP for requests to a curated list of known AI provider hosts (OpenAI, Anthropic, Google Generative Language, Cohere, Mistral, Groq, Together, Fireworks, Perplexity, xAI, DeepSeek, OpenRouter, …). Traffic that already flows through the core AI Client is ignored. Direct bypasses are retained as `observe` rows (`channel=direct_http`) so you can see AI activity **outside** what these rules control — they do **not** block HTTP. This is a curated list, not a complete inventory of every AI host on the internet.
 
@@ -90,6 +90,13 @@ No. It pins the route for calls we attribute to that plugin’s nearest stack fr
 
 == Changelog ==
 
+= 1.0.12 =
+* F5: Dashboard-first admin (Dashboard / Rules / Activity / Insights). Coverage tile measures known AI activity (through AI Client vs outside — not governed by these rules) with log window, span, and saturation notice.
+* F5: Pin-hold tile (X of Y attempted forces) plus separate unattributed never-evaluated count; learn-mode pin_matched observation (not would-succeed).
+* F5: Block-that-one from Dashboard (single-click deny + undo). Shadow callers listed as not governable.
+* F5: Settings demoted under Rules collapsible panel. Cleanup: unforced count branch, has_any_force_rules bool check. F6 known limits: first-of-N on user, keep observation ts on flush, _n for first-of-N.
+
+
 = 1.0.11 =
 * Shadow-AI detector (observe only): log plugins that call known AI provider hosts over WordPress HTTP while bypassing the AI Client.
 * Curated host list (OpenAI, Anthropic, Google Generative Language, Cohere, Mistral, Groq, Together, Fireworks, Perplexity, xAI, DeepSeek, OpenRouter, …); not a complete inventory.
@@ -103,7 +110,7 @@ No. It pins the route for calls we attribute to that plugin’s nearest stack fr
 * Lisa gate-1 follow-up: count unit = calls; collapse moves to tail; unattributed keys include file; first observation fields retained.
 
 = 1.0.10 =
-* EXPERIMENTAL: per-plugin force of AI Client generations to a provider/model (Plugin rules table columns; empty = off; labeled EXPERIMENTAL in the UI).
+* EXPERIMENTAL: per-plugin force of AI Client generations to a provider/model (Rules table columns; empty = off; labeled EXPERIMENTAL in the UI).
 * Unattributed calls: explicit control (default don’t force; optional force to an admin-picked provider/model — not a site-wide pin for attributed plugins).
 * Pins follow detected caller (best-effort nearest plugin frame) — not a spend guarantee; readme/UI state the bound.
 * Unforced-count surface from retained audit rows when pins exist and callers resolve unknown.
@@ -127,14 +134,14 @@ No. It pins the route for calls we attribute to that plugin’s nearest stack fr
 
 = 1.0.8 =
 * AI tool arming (caller intent): deny prompts that arm denied tools (`functionDeclarations` — WordPress abilities and custom tools) at prevent time.
-* Denied tools list on Plugin rules tab; registered abilities shown as a helper subset (not an enumeration of everything matchable).
+* Denied tools list on Rules tab; registered abilities shown as a helper subset (not an enumeration of everything matchable).
 * Case-insensitive matching; entries that match no currently registered ability are flagged (still saved — pre-listing is allowed).
 * Loud denials: log `denial_reason` and `matched_tools` on every denial (including non-tool denials that also armed a blocked tool).
 * Snapshot extracts `armed_tools` from model config without reflection.
 * Option key `denied_tools` (migrates legacy `denied_abilities` on read).
 
 = 1.0.7 =
-* Per-plugin × capability-family operation matrix (Text / Image / Speech / TTS / Video) on the Plugin rules tab.
+* Per-plugin × capability-family operation matrix (Text / Image / Speech / TTS / Video) on the Rules tab.
 * `is_supported_for_*` and matching `generate_*` / `convert_text_to_speech*` map to the same family rule.
 * Generic `is_supported` / `generate_result` resolve family via core capability inference (no silent unknown bypass).
 * TTS prefix heuristics run before Text so unmapped TTS method names cannot misclassify as Text.
@@ -147,7 +154,7 @@ No. It pins the route for calls we attribute to that plugin’s nearest stack fr
 = 1.0.6 =
 * Recent-call log records input (prompt) and output (completion) token counts via `wp_ai_client_after_generate_result` when logging is enabled.
 * Usage insights tab: aggregated call counts and token sums/peaks by plugin, provider, model, and operation from the retained log.
-* Learn mode (Audit & log tab): log every AI Client call without blocking; suggested rules from the log; “would enforce” decision in the audit trail.
+* Learn mode (Activity tab): log every AI Client call without blocking; suggested rules from the log; “would enforce” decision in the audit trail.
 * Emergency kill switch: block all AI Client calls with optional per-plugin exceptions.
 * Quick actions on the recent-call log: allow or deny a plugin in one click.
 

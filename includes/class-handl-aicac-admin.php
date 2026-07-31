@@ -71,12 +71,16 @@ final class Admin {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'handl-ai-connector-access-control' ) );
 		}
 
-		$tab = 'rules';
+		// F5: Dashboard is default (board Q2). "log" aliases Activity for old bookmarks.
+		$tab = 'dashboard';
 		if ( isset( $_REQUEST['handl_aicac_tab'] ) ) {
 			$tab = sanitize_key( wp_unslash( (string) $_REQUEST['handl_aicac_tab'] ) );
 		}
-		if ( ! in_array( $tab, array( 'rules', 'log', 'insights' ), true ) ) {
-			$tab = 'rules';
+		if ( 'log' === $tab ) {
+			$tab = 'activity';
+		}
+		if ( ! in_array( $tab, array( 'dashboard', 'rules', 'activity', 'insights' ), true ) ) {
+			$tab = 'dashboard';
 		}
 
 		$plugin_status_filter = 'all';
@@ -108,24 +112,31 @@ final class Admin {
 				Alerts::instance()->send_digest();
 				$redirect = add_query_arg(
 					array(
-						'page'                      => 'handl-ai-connector-access-control',
-						'handl_aicac_tab'           => 'log',
-						'handl_aicac_digest_sent'   => '1',
+						'page'                    => 'handl-ai-connector-access-control',
+						'handl_aicac_tab'         => 'activity',
+						'handl_aicac_digest_sent' => '1',
 					),
 					admin_url( 'options-general.php' )
 				);
 				wp_safe_redirect( $redirect );
 				exit;
 			}
+			if ( 'undo_quick_rule' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_undo_quick_rule', 'handl_aicac_nonce' );
+				$this->handle_undo_quick_rule();
+			}
 		}
 
 		$saved       = false;
 		$quick_saved = isset( $_GET['handl_aicac_quick_saved'] ) && '1' === (string) $_GET['handl_aicac_quick_saved'];
 		$digest_sent = isset( $_GET['handl_aicac_digest_sent'] ) && '1' === (string) $_GET['handl_aicac_digest_sent'];
+		$blocked_ok  = isset( $_GET['handl_aicac_blocked'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['handl_aicac_blocked'] ) ) : '';
+		$undo_rule   = isset( $_GET['handl_aicac_undo_rule'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['handl_aicac_undo_rule'] ) ) : '';
+		$undone      = isset( $_GET['handl_aicac_undone'] ) && '1' === (string) $_GET['handl_aicac_undone'];
 
 		if ( isset( $_POST['handl_aicac_action'] ) && 'save' === $_POST['handl_aicac_action'] ) {
 			check_admin_referer( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
-			if ( 'log' === $tab ) {
+			if ( 'activity' === $tab ) {
 				$this->handle_save_log();
 			} else {
 				$this->handle_save_rules();
@@ -151,7 +162,7 @@ final class Admin {
 		echo '<img src="' . esc_url( $icon_src ) . '" alt="" width="40" height="40" style="border-radius:8px;" loading="lazy" decoding="async" />';
 		echo esc_html__( 'HandL AI Connector Access Control', 'handl-ai-connector-access-control' );
 		echo '</h1>';
-		echo '<p>' . esc_html__( 'Allow/deny which plugins may execute prompts via the WordPress AI Client. Default policy is allow.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p>' . esc_html__( 'See whether AI activity is governed, what is spending, and block a plugin in one click. Default policy is allow.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		$this->render_tabs( $tab, $plugin_status_filter, $plugin_access_filter, $this->log_filters );
 
@@ -163,6 +174,30 @@ final class Admin {
 		}
 		if ( $digest_sent ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Denial digest send attempted (queue cleared only if mail succeeded).', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		if ( $undone ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Plugin rule restored.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		if ( '' !== $blocked_ok ) {
+			$blocked_label = isset( $plugins[ $blocked_ok ]['Name'] ) ? (string) $plugins[ $blocked_ok ]['Name'] : $blocked_ok;
+			echo '<div class="notice notice-success is-dismissible"><p>';
+			echo esc_html(
+				sprintf(
+					/* translators: %s: plugin display name */
+					__( 'Blocked %s at the plugin level. New AI Client calls from this plugin will be denied.', 'handl-ai-connector-access-control' ),
+					$blocked_label
+				)
+			);
+			// Board Q3: single-click block + undo notice (no confirm dialog).
+			echo ' ';
+			echo '<form method="post" class="handl-aicac-inline-undo" style="display:inline;">';
+			wp_nonce_field( 'handl_aicac_undo_quick_rule', 'handl_aicac_nonce' );
+			echo '<input type="hidden" name="handl_aicac_action" value="undo_quick_rule" />';
+			echo '<input type="hidden" name="handl_aicac_quick_plugin" value="' . esc_attr( $blocked_ok ) . '" />';
+			echo '<input type="hidden" name="handl_aicac_undo_rule" value="' . esc_attr( $undo_rule ) . '" />';
+			submit_button( __( 'Undo', 'handl-ai-connector-access-control' ), 'link', 'submit', false );
+			echo '</form>';
+			echo '</p></div>';
 		}
 
 		// Honesty banner: core skips our filter when AI is disabled site-wide.
@@ -177,16 +212,22 @@ final class Admin {
 		}
 
 		if ( ! empty( $policy['audit_only'] ) ) {
-			$audit_notice = esc_html__( 'Learn mode is on: calls are logged and never blocked. Per-plugin rules show as “would enforce” only. Turn off learn mode on the Audit & log tab when you are ready to enforce.', 'handl-ai-connector-access-control' );
-			if ( 'log' !== $tab ) {
-				$audit_notice .= ' <a href="' . esc_url( admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=log' ) ) . '">' . esc_html__( 'Open Audit & log', 'handl-ai-connector-access-control' ) . '</a>';
+			$audit_notice = esc_html__( 'Learn mode is on: calls are logged and never blocked. Per-plugin rules show as “would enforce” only. Turn off learn mode on the Activity tab when you are ready to enforce.', 'handl-ai-connector-access-control' );
+			if ( 'activity' !== $tab ) {
+				$audit_notice .= ' <a href="' . esc_url( admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' ) ) . '">' . esc_html__( 'Open Activity', 'handl-ai-connector-access-control' ) . '</a>';
 			}
 			echo '<div class="notice notice-info"><p>' . wp_kses_post( $audit_notice ) . '</p></div>';
 		} elseif ( ! empty( $policy['kill_switch'] ) ) {
 			echo '<div class="notice notice-warning"><p>' . esc_html__( 'Emergency kill switch is on: all AI Client calls are blocked except plugins listed as exceptions.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 
-		if ( 'log' === $tab ) {
+		if ( 'dashboard' === $tab ) {
+			$this->render_dashboard_tab( $log, $policy, $plugins );
+			echo '</div>';
+			return;
+		}
+
+		if ( 'activity' === $tab ) {
 			$this->render_log_tab( $log, $policy, $plugins );
 			echo '</div>';
 			return;
@@ -198,6 +239,7 @@ final class Admin {
 			return;
 		}
 
+		// --- Rules tab ---
 		echo '<div class="handl-aicac-tab-panel">';
 
 		$rules_form_id = 'handl-aicac-rules-save';
@@ -210,6 +252,11 @@ final class Admin {
 		echo '<input type="hidden" name="handl_aicac_access" value="' . esc_attr( $plugin_access_filter ) . '" />';
 		echo '</form>';
 
+		// Settings demoted: collapsible panel, not the first thing you see (F5 IA).
+		echo '<details class="handl-aicac-settings-panel">';
+		echo '<summary><strong>' . esc_html__( 'Settings', 'handl-ai-connector-access-control' ) . '</strong> — ';
+		echo esc_html__( 'site default, unknown operations, kill switch, tool arming, model force', 'handl-ai-connector-access-control' );
+		echo '</summary>';
 		echo '<table class="form-table" role="presentation">';
 		echo '<tr>';
 		echo '<th scope="row">' . esc_html__( 'Default policy', 'handl-ai-connector-access-control' ) . '</th>';
@@ -238,6 +285,7 @@ final class Admin {
 
 		$this->render_ability_arming_settings( $policy, $rules_form_id );
 		$this->render_model_force_settings( $policy, $rules_form_id, $log );
+		echo '</details>';
 
 		$family_labels = Operations::family_labels();
 		$force_map     = Model_Force::force_map( $policy );
@@ -449,12 +497,17 @@ final class Admin {
 	}
 
 	/**
-	 * @param 'rules'|'log'|'insights' $active_tab
+	 * @param 'dashboard'|'rules'|'activity'|'insights' $active_tab
 	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $log_filters
 	 */
 	private function render_tabs( string $active_tab, string $plugin_status_filter, string $plugin_access_filter, array $log_filters ): void {
 		$base_args = array(
 			'page' => 'handl-ai-connector-access-control',
+		);
+
+		$dashboard_url = add_query_arg(
+			array_merge( $base_args, array( 'handl_aicac_tab' => 'dashboard' ) ),
+			admin_url( 'options-general.php' )
 		);
 
 		$rules_url = add_query_arg(
@@ -469,8 +522,8 @@ final class Admin {
 			admin_url( 'options-general.php' )
 		);
 
-		$log_url = add_query_arg(
-			array_merge( $base_args, array( 'handl_aicac_tab' => 'log' ), $this->log_filters_to_query_args( $log_filters ) ),
+		$activity_url = add_query_arg(
+			array_merge( $base_args, array( 'handl_aicac_tab' => 'activity' ), $this->log_filters_to_query_args( $log_filters ) ),
 			admin_url( 'options-general.php' )
 		);
 
@@ -482,23 +535,460 @@ final class Admin {
 		echo '<nav class="nav-tab-wrapper wp-clearfix" aria-label="' . esc_attr__( 'Settings sections', 'handl-ai-connector-access-control' ) . '">';
 		printf(
 			'<a href="%1$s" class="nav-tab%2$s">%3$s</a>',
-			esc_url( $rules_url ),
-			'rules' === $active_tab ? ' nav-tab-active' : '',
-			esc_html__( 'Plugin rules', 'handl-ai-connector-access-control' )
+			esc_url( $dashboard_url ),
+			'dashboard' === $active_tab ? ' nav-tab-active' : '',
+			esc_html__( 'Dashboard', 'handl-ai-connector-access-control' )
 		);
 		printf(
 			'<a href="%1$s" class="nav-tab%2$s">%3$s</a>',
-			esc_url( $log_url ),
-			'log' === $active_tab ? ' nav-tab-active' : '',
-			esc_html__( 'Audit & log', 'handl-ai-connector-access-control' )
+			esc_url( $rules_url ),
+			'rules' === $active_tab ? ' nav-tab-active' : '',
+			esc_html__( 'Rules', 'handl-ai-connector-access-control' )
+		);
+		printf(
+			'<a href="%1$s" class="nav-tab%2$s">%3$s</a>',
+			esc_url( $activity_url ),
+			'activity' === $active_tab ? ' nav-tab-active' : '',
+			esc_html__( 'Activity', 'handl-ai-connector-access-control' )
 		);
 		printf(
 			'<a href="%1$s" class="nav-tab%2$s handl-aicac-nav-tab--insights">%3$s</a>',
 			esc_url( $insights_url ),
 			'insights' === $active_tab ? ' nav-tab-active' : '',
-			esc_html__( 'Usage insights', 'handl-ai-connector-access-control' )
+			esc_html__( 'Insights', 'handl-ai-connector-access-control' )
 		);
 		echo '</nav>';
+	}
+
+	/**
+	 * F5 Dashboard — answers: Am I safe? What's spending? Block that one.
+	 *
+	 * @param array<int,mixed> $log
+	 * @param array<string,mixed> $policy
+	 * @param array<string,array<string,mixed>> $plugins
+	 */
+	private function render_dashboard_tab( array $log, array $policy, array $plugins ): void {
+		$coverage = $this->compute_coverage_buckets( $log, $policy );
+		$pin      = Model_Force::pin_hold_stats( $log );
+		$unforced = Model_Force::count_unforced_unattributed( $log );
+		$has_pins = Model_Force::has_any_force_rules( $policy );
+		$rates    = Cost::rates_from_policy( $policy );
+
+		// Spend over retained log (AI Client rows with tokens only; direct_http has none).
+		$est_total   = 0.0;
+		$est_any     = false;
+		$deny_n      = 0;
+		$plugin_spend = array();
+		foreach ( $log as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$is_direct = isset( $row['channel'] ) && 'direct_http' === (string) $row['channel'];
+			if ( ! $is_direct && 'deny' === (string) ( $row['decision'] ?? '' ) ) {
+				++$deny_n;
+			}
+			if ( $is_direct ) {
+				continue;
+			}
+			$in  = array_key_exists( 'input_tokens', $row ) ? (int) $row['input_tokens'] : null;
+			$out = array_key_exists( 'output_tokens', $row ) ? (int) $row['output_tokens'] : null;
+			$usd = Cost::estimate_usd( $in, $out, $rates );
+			if ( null === $usd ) {
+				continue;
+			}
+			$est_any    = true;
+			$est_total += $usd;
+			$p          = isset( $row['plugin'] ) ? (string) $row['plugin'] : '';
+			if ( '' === $p ) {
+				$p = '__unknown__';
+			}
+			if ( ! isset( $plugin_spend[ $p ] ) ) {
+				$plugin_spend[ $p ] = array( 'usd' => 0.0, 'calls' => 0 );
+			}
+			$plugin_spend[ $p ]['usd']   += $usd;
+			$plugin_spend[ $p ]['calls'] += 1;
+		}
+		uasort(
+			$plugin_spend,
+			static function ( $a, $b ) {
+				return $b['usd'] <=> $a['usd'];
+			}
+		);
+
+		// Top attributed offenders for block-that-one (AI Client only; calls by plugin).
+		$offenders = array();
+		foreach ( $log as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			if ( isset( $row['channel'] ) && 'direct_http' === (string) $row['channel'] ) {
+				continue;
+			}
+			$p = isset( $row['plugin'] ) ? (string) $row['plugin'] : '';
+			if ( '' === $p ) {
+				continue;
+			}
+			if ( ! isset( $offenders[ $p ] ) ) {
+				$offenders[ $p ] = 0;
+			}
+			++$offenders[ $p ];
+		}
+		arsort( $offenders );
+
+		// Shadow top callers (observe only — not governable here).
+		$shadow_top = array();
+		foreach ( $log as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			if ( ! isset( $row['channel'] ) || 'direct_http' !== (string) $row['channel'] ) {
+				continue;
+			}
+			$p = isset( $row['plugin'] ) ? (string) $row['plugin'] : '';
+			$c = isset( $row['count'] ) ? max( 1, (int) $row['count'] ) : 1;
+			$key = '' !== $p ? $p : ( '__host__:' . (string) ( $row['host'] ?? '' ) );
+			if ( ! isset( $shadow_top[ $key ] ) ) {
+				$shadow_top[ $key ] = array(
+					'calls'  => 0,
+					'plugin' => $p,
+					'host'   => (string) ( $row['host'] ?? '' ),
+				);
+			}
+			$shadow_top[ $key ]['calls'] += $c;
+		}
+		uasort(
+			$shadow_top,
+			static function ( $a, $b ) {
+				return $b['calls'] <=> $a['calls'];
+			}
+		);
+
+		echo '<div class="handl-aicac-tab-panel handl-aicac-dashboard">';
+
+		// --- Coverage tile (Δ1 + Δ5) ---
+		echo '<div class="postbox handl-aicac-tile handl-aicac-tile--coverage">';
+		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Coverage', 'handl-ai-connector-access-control' ) . '</h2></div>';
+		echo '<div class="inside">';
+		if ( $coverage['D'] > 0 ) {
+			// Q4 defaulted headline — one string, changeable at haktan F5 review.
+			echo '<p class="handl-aicac-coverage-headline"><strong>';
+			echo esc_html__( 'Some AI activity on this site is outside what these rules can control', 'handl-ai-connector-access-control' );
+			echo '</strong></p>';
+		} elseif ( $coverage['M'] > 0 ) {
+			echo '<p class="handl-aicac-coverage-headline"><strong>';
+			echo esc_html__( 'Known AI activity in this log is flowing through the AI Client', 'handl-ai-connector-access-control' );
+			echo '</strong></p>';
+		} else {
+			echo '<p class="handl-aicac-coverage-headline"><strong>';
+			echo esc_html__( 'No AI activity retained in the log yet', 'handl-ai-connector-access-control' );
+			echo '</strong></p>';
+		}
+
+		echo '<p class="description handl-aicac-coverage-window">';
+		echo esc_html(
+			sprintf(
+				/* translators: 1: log_limit setting, 2: human span or em dash */
+				__( 'in the last %1$s logged events · spanning %2$s', 'handl-ai-connector-access-control' ),
+				number_format_i18n( $coverage['log_limit'] ),
+				$coverage['span_label']
+			)
+		);
+		echo '</p>';
+
+		echo '<p class="handl-aicac-coverage-buckets">';
+		echo '<strong>' . esc_html__( 'Known AI activity:', 'handl-ai-connector-access-control' ) . '</strong> ';
+		echo esc_html(
+			sprintf(
+				/* translators: %s: formatted call count M */
+				__( '%s calls', 'handl-ai-connector-access-control' ),
+				number_format_i18n( $coverage['M'] )
+			)
+		);
+		echo '<br />';
+		echo esc_html(
+			sprintf(
+				/* translators: 1: N through AI Client, 2: A attributed, 3: U unattributed */
+				__( '— Through the AI Client: %1$s (attributed %2$s · unattributed %3$s)', 'handl-ai-connector-access-control' ),
+				number_format_i18n( $coverage['N'] ),
+				number_format_i18n( $coverage['A'] ),
+				number_format_i18n( $coverage['U'] )
+			)
+		);
+		echo '<br />';
+		echo esc_html(
+			sprintf(
+				/* translators: %s: D outside AI Client call count */
+				__( '— Outside the AI Client: %s — seen, not governed by these rules', 'handl-ai-connector-access-control' ),
+				number_format_i18n( $coverage['D'] )
+			)
+		);
+		echo '</p>';
+
+		if ( $coverage['saturated'] ) {
+			echo '<div class="notice notice-warning inline"><p>';
+			echo esc_html(
+				sprintf(
+					/* translators: %d: log_limit */
+					__( 'Log is at its %d-event limit; older events have aged out. Raise the limit in Settings (Activity tab) for a longer window.', 'handl-ai-connector-access-control' ),
+					$coverage['log_limit']
+				)
+			);
+			echo '</p></div>';
+		}
+
+		echo '<p class="description">';
+		echo esc_html__( 'Not counted here (named blind spots, not false precision): site-wide wp_supports_ai short-circuit; raw curl / external workers that never touch WordPress HTTP or the AI Client.', 'handl-ai-connector-access-control' );
+		echo '</p>';
+		echo '</div></div>';
+
+		// --- Safety / control ---
+		echo '<div class="postbox handl-aicac-tile handl-aicac-tile--safety">';
+		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Safety & control', 'handl-ai-connector-access-control' ) . '</h2></div>';
+		echo '<div class="inside">';
+		$default = ( $policy['default'] ?? 'allow' ) === 'deny' ? __( 'Deny', 'handl-ai-connector-access-control' ) : __( 'Allow', 'handl-ai-connector-access-control' );
+		$learn   = ! empty( $policy['audit_only'] )
+			? __( 'Learn mode on (observation only — no deny/force)', 'handl-ai-connector-access-control' )
+			: __( 'Learn mode off (enforcing)', 'handl-ai-connector-access-control' );
+		echo '<p><strong>' . esc_html__( 'Default:', 'handl-ai-connector-access-control' ) . '</strong> ' . esc_html( $default );
+		echo ' · <strong>' . esc_html( $learn ) . '</strong></p>';
+		if ( ! empty( $policy['kill_switch'] ) ) {
+			echo '<p class="handl-aicac-danger"><strong>' . esc_html__( 'Emergency kill switch is on.', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		}
+		echo '<p>' . esc_html(
+			sprintf(
+				/* translators: %d: deny count in retained log */
+				_n( '%d deny in this log window.', '%d denies in this log window.', $deny_n, 'handl-ai-connector-access-control' ),
+				$deny_n
+			)
+		) . '</p>';
+		echo '</div></div>';
+
+		// --- Spend ---
+		echo '<div class="postbox handl-aicac-tile handl-aicac-tile--spend">';
+		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Spend (estimated)', 'handl-ai-connector-access-control' ) . '</h2></div>';
+		echo '<div class="inside">';
+		if ( $est_any ) {
+			echo '<p class="handl-aicac-spend-total"><strong>$' . esc_html( number_format_i18n( $est_total, 2 ) ) . '</strong> ';
+			echo '<span class="description">' . esc_html__( 'est. · default rates', 'handl-ai-connector-access-control' );
+			if ( ! Cost::using_default_rates( $policy ) ) {
+				echo ' ' . esc_html__( '(custom rates)', 'handl-ai-connector-access-control' );
+			}
+			echo '</span></p>';
+			echo '<table class="widefat striped" style="max-width:36em;"><thead><tr>';
+			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'Est. $', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '</tr></thead><tbody>';
+			$i = 0;
+			foreach ( $plugin_spend as $p => $row ) {
+				if ( $i >= 8 ) {
+					break;
+				}
+				++$i;
+				$label = '__unknown__' === $p
+					? __( 'unknown', 'handl-ai-connector-access-control' )
+					: ( isset( $plugins[ $p ]['Name'] ) ? (string) $plugins[ $p ]['Name'] : $p );
+				echo '<tr><td>' . esc_html( $label ) . '</td>';
+				echo '<td>$' . esc_html( number_format_i18n( $row['usd'], 2 ) ) . '</td>';
+				echo '<td>' . esc_html( number_format_i18n( $row['calls'] ) ) . '</td></tr>';
+			}
+			echo '</tbody></table>';
+		} else {
+			echo '<p class="description">' . esc_html__( 'No token-backed estimates in the retained log yet.', 'handl-ai-connector-access-control' ) . '</p>';
+		}
+		echo '</div></div>';
+
+		// --- Pin-hold (Δ2): quiet when no force rules ---
+		if ( $has_pins ) {
+			echo '<div class="postbox handl-aicac-tile handl-aicac-tile--pins">';
+			echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Did my pins hold?', 'handl-ai-connector-access-control' ) . '</h2></div>';
+			echo '<div class="inside">';
+			echo '<p><strong>';
+			echo esc_html(
+				sprintf(
+					/* translators: 1: X held, 2: Y attempted */
+					__( 'Pins held for %1$s of %2$s attempted forces', 'handl-ai-connector-access-control' ),
+					number_format_i18n( $pin['held'] ),
+					number_format_i18n( $pin['attempted'] )
+				)
+			);
+			echo '</strong></p>';
+			if ( $unforced > 0 ) {
+				echo '<p>';
+				echo esc_html(
+					sprintf(
+						/* translators: %d: unattributed never-evaluated count */
+						_n(
+							'%d call could not be attributed; pins were never evaluated for it.',
+							'%d calls could not be attributed; pins were never evaluated for them.',
+							$unforced,
+							'handl-ai-connector-access-control'
+						),
+						$unforced
+					)
+				);
+				echo '</p>';
+			}
+			if ( ! empty( $pin['by_skip'] ) ) {
+				echo '<ul class="ul-disc">';
+				foreach ( $pin['by_skip'] as $reason => $n ) {
+					echo '<li><code>' . esc_html( $reason ) . '</code>: ' . esc_html( number_format_i18n( $n ) ) . '</li>';
+				}
+				echo '</ul>';
+			}
+			echo '</div></div>';
+		}
+
+		// --- Block that one ---
+		echo '<div class="postbox handl-aicac-tile handl-aicac-tile--block">';
+		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Block that one', 'handl-ai-connector-access-control' ) . '</h2></div>';
+		echo '<div class="inside">';
+		echo '<p class="description">' . esc_html__( 'Top attributed AI Client callers in this log. One click sets a plugin-level Deny (undo from the success notice).', 'handl-ai-connector-access-control' ) . '</p>';
+		if ( empty( $offenders ) ) {
+			echo '<p class="description">' . esc_html__( 'No attributed AI Client callers in the retained log.', 'handl-ai-connector-access-control' ) . '</p>';
+		} else {
+			echo '<table class="widefat striped"><thead><tr>';
+			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'Rule', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'Actions', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '</tr></thead><tbody>';
+			$i = 0;
+			foreach ( $offenders as $p => $calls ) {
+				if ( $i >= 10 ) {
+					break;
+				}
+				++$i;
+				$label    = isset( $plugins[ $p ]['Name'] ) ? (string) $plugins[ $p ]['Name'] : $p;
+				$explicit = isset( $policy['plugins'][ $p ] ) ? (string) $policy['plugins'][ $p ] : '';
+				echo '<tr>';
+				echo '<td><strong>' . esc_html( $label ) . '</strong><br /><code>' . esc_html( $p ) . '</code></td>';
+				echo '<td>' . esc_html( number_format_i18n( $calls ) ) . '</td>';
+				echo '<td>' . esc_html( $this->format_explicit_rule_label( $explicit ) ) . '</td>';
+				echo '<td class="handl-aicac-quick-actions">';
+				// Single-click deny (board Q3); return to dashboard with undo notice.
+				echo '<form method="post" class="handl-aicac-quick-rule-form">';
+				wp_nonce_field( 'handl_aicac_quick_rule', 'handl_aicac_nonce' );
+				echo '<input type="hidden" name="handl_aicac_action" value="quick_rule" />';
+				echo '<input type="hidden" name="handl_aicac_quick_plugin" value="' . esc_attr( $p ) . '" />';
+				echo '<input type="hidden" name="handl_aicac_quick_rule" value="deny" />';
+				echo '<input type="hidden" name="handl_aicac_return_tab" value="dashboard" />';
+				submit_button( __( 'Block', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false, array( 'class' => 'button button-small button-link-delete' ) );
+				echo '</form>';
+				echo '</td></tr>';
+			}
+			echo '</tbody></table>';
+		}
+
+		// Shadow rows: explicit not-governable state (F5 item 5 / standing rule).
+		if ( ! empty( $shadow_top ) ) {
+			echo '<h3 style="margin-top:1.25em;">' . esc_html__( 'Outside AI Client (observe only)', 'handl-ai-connector-access-control' ) . '</h3>';
+			echo '<p class="description">' . esc_html__( 'These callers bypass the AI Client. Allow/Deny rules cannot reach them.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<table class="widefat striped"><thead><tr>';
+			echo '<th>' . esc_html__( 'Caller', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'Actions', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '</tr></thead><tbody>';
+			$i = 0;
+			foreach ( $shadow_top as $row ) {
+				if ( $i >= 8 ) {
+					break;
+				}
+				++$i;
+				$p     = (string) ( $row['plugin'] ?? '' );
+				$label = '' !== $p && isset( $plugins[ $p ]['Name'] )
+					? (string) $plugins[ $p ]['Name']
+					: ( '' !== $p ? $p : (string) ( $row['host'] ?? __( 'unknown', 'handl-ai-connector-access-control' ) ) );
+				echo '<tr>';
+				echo '<td><strong>' . esc_html( $label ) . '</strong>';
+				if ( '' !== (string) ( $row['host'] ?? '' ) ) {
+					echo '<br /><code>' . esc_html( (string) $row['host'] ) . '</code>';
+				}
+				echo '</td>';
+				echo '<td>' . esc_html( number_format_i18n( (int) $row['calls'] ) ) . '</td>';
+				echo '<td><span class="description handl-aicac-not-governable">';
+				echo esc_html__( 'not governed by these rules', 'handl-ai-connector-access-control' );
+				echo '</span></td></tr>';
+			}
+			echo '</tbody></table>';
+		}
+		echo '</div></div>';
+
+		echo '</div>'; // .handl-aicac-dashboard
+	}
+
+	/**
+	 * Coverage buckets: M = N + D, N = A + U (Δ1). Units = HTTP calls (F6 contract).
+	 * Span from min(first_ts|ts) .. max(ts); saturation when count >= log_limit (Δ5).
+	 *
+	 * @param array<int,mixed>    $log
+	 * @param array<string,mixed> $policy
+	 * @return array{A:int,U:int,N:int,D:int,M:int,log_limit:int,saturated:bool,span_label:string,min_ts:int,max_ts:int}
+	 */
+	private function compute_coverage_buckets( array $log, array $policy ): array {
+		$log_limit = (int) ( $policy['log_limit'] ?? 200 );
+		if ( $log_limit < 1 ) {
+			$log_limit = 200;
+		}
+		$A = 0;
+		$U = 0;
+		$D = 0;
+		$min_ts = 0;
+		$max_ts = 0;
+
+		foreach ( $log as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$ts       = isset( $row['ts'] ) ? (int) $row['ts'] : 0;
+			$first_ts = isset( $row['first_ts'] ) ? (int) $row['first_ts'] : 0;
+			// Prefer first_ts for the lower bound so collapsed clusters don't understate span.
+			$lo = $first_ts > 0 ? $first_ts : $ts;
+			$hi = $ts > 0 ? $ts : $first_ts;
+			if ( $lo > 0 && ( 0 === $min_ts || $lo < $min_ts ) ) {
+				$min_ts = $lo;
+			}
+			if ( $hi > $max_ts ) {
+				$max_ts = $hi;
+			}
+
+			$is_direct = isset( $row['channel'] ) && 'direct_http' === (string) $row['channel'];
+			if ( $is_direct ) {
+				$c = isset( $row['count'] ) ? (int) $row['count'] : 1;
+				$D += $c > 0 ? $c : 1;
+				continue;
+			}
+			$plugin = isset( $row['plugin'] ) ? (string) $row['plugin'] : '';
+			if ( '' !== $plugin ) {
+				++$A;
+			} else {
+				++$U;
+			}
+		}
+
+		$N = $A + $U;
+		$M = $N + $D;
+		$span_label = '—';
+		if ( $min_ts > 0 && $max_ts > 0 ) {
+			if ( $max_ts === $min_ts ) {
+				$span_label = __( 'a single moment', 'handl-ai-connector-access-control' );
+			} else {
+				$span_label = human_time_diff( $min_ts, $max_ts );
+			}
+		}
+
+		return array(
+			'A'          => $A,
+			'U'          => $U,
+			'N'          => $N,
+			'D'          => $D,
+			'M'          => $M,
+			'log_limit'  => $log_limit,
+			'saturated'  => count( $log ) >= $log_limit,
+			'span_label' => $span_label,
+			'min_ts'     => $min_ts,
+			'max_ts'     => $max_ts,
+		);
 	}
 
 	/**
@@ -547,9 +1037,9 @@ final class Admin {
 		echo '</p>';
 		if ( 0 === $stored_count ) {
 			echo '<p class="handl-aicac-insights-empty-note">';
-			echo esc_html__( 'No data yet. Turn on learn mode or logging on Audit & log, then trigger a few AI Client requests.', 'handl-ai-connector-access-control' );
-			echo ' <a href="' . esc_url( admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=log' ) ) . '">';
-			echo esc_html__( 'Open Audit & log', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'No data yet. Turn on learn mode or logging on Activity, then trigger a few AI Client requests.', 'handl-ai-connector-access-control' );
+			echo ' <a href="' . esc_url( admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' ) ) . '">';
+			echo esc_html__( 'Open Activity', 'handl-ai-connector-access-control' );
 			echo '</a></p>';
 		} else {
 			printf(
@@ -823,7 +1313,7 @@ final class Admin {
 		echo '<form method="post" style="margin-bottom:1.5em;">';
 		wp_nonce_field( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
 		echo '<input type="hidden" name="handl_aicac_action" value="save" />';
-		echo '<input type="hidden" name="handl_aicac_tab" value="log" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
 		$this->render_log_filter_hiddens( $log_filters );
 		$this->render_logging_settings( $policy );
 		submit_button( __( 'Save audit settings', 'handl-ai-connector-access-control' ) );
@@ -834,7 +1324,7 @@ final class Admin {
 			echo '<form method="post" style="margin-bottom:1.5em;">';
 			wp_nonce_field( 'handl_aicac_send_digest', 'handl_aicac_nonce' );
 			echo '<input type="hidden" name="handl_aicac_action" value="send_denial_digest" />';
-			echo '<input type="hidden" name="handl_aicac_tab" value="log" />';
+			echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
 			submit_button(
 				sprintf(
 					/* translators: %d: queued denial count */
@@ -1085,7 +1575,7 @@ final class Admin {
 		$base_url = add_query_arg(
 			array(
 				'page'            => 'handl-ai-connector-access-control',
-				'handl_aicac_tab' => 'log',
+				'handl_aicac_tab' => 'activity',
 			),
 			admin_url( 'options-general.php' )
 		);
@@ -1125,7 +1615,7 @@ final class Admin {
 
 		echo '<form method="get">';
 		echo '<input type="hidden" name="page" value="handl-ai-connector-access-control" />';
-		echo '<input type="hidden" name="handl_aicac_tab" value="log" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
 		if ( '' !== $filters['decision'] ) {
 			echo '<input type="hidden" name="handl_aicac_log_decision" value="' . esc_attr( $filters['decision'] ) . '" />';
 		}
@@ -1261,7 +1751,7 @@ final class Admin {
 		$log_limit   = (int) ( $policy['log_limit'] ?? 200 );
 
 		echo '<p class="description" style="max-width:52em;margin-bottom:1em;">';
-		echo esc_html__( 'Use this tab to observe AI Client usage. Learn mode logs every call without blocking. When learn mode is off, you can still log calls for troubleshooting. Enforcement lives on the Plugin rules tab.', 'handl-ai-connector-access-control' );
+		echo esc_html__( 'Use this tab to observe AI Client and direct-HTTP AI activity. Learn mode logs every call without blocking. When learn mode is off, you can still log calls for troubleshooting. Enforcement lives on the Rules and Dashboard tabs.', 'handl-ai-connector-access-control' );
 		echo '</p>';
 
 		echo '<table class="form-table" role="presentation">';
@@ -1679,23 +2169,62 @@ final class Admin {
 	private function handle_quick_rule_redirect( array $log_filters ): void {
 		$plugin = filter_input( INPUT_POST, 'handl_aicac_quick_plugin', FILTER_UNSAFE_RAW );
 		$rule   = filter_input( INPUT_POST, 'handl_aicac_quick_rule', FILTER_UNSAFE_RAW );
+		$return = filter_input( INPUT_POST, 'handl_aicac_return_tab', FILTER_UNSAFE_RAW );
 
 		$plugin = sanitize_text_field( (string) $plugin );
 		$rule   = sanitize_text_field( (string) $rule );
+		$return = sanitize_key( (string) $return );
+		if ( ! in_array( $return, array( 'dashboard', 'activity', 'rules' ), true ) ) {
+			$return = 'activity';
+		}
+
+		// Capture previous explicit rule for undo (empty string = Default).
+		$policy   = Policy::get_policy();
+		$prev     = '';
+		if ( isset( $policy['plugins'][ $plugin ] ) && is_string( $policy['plugins'][ $plugin ] ) ) {
+			$prev = (string) $policy['plugins'][ $plugin ];
+			if ( 'allow' !== $prev && 'deny' !== $prev ) {
+				$prev = '';
+			}
+		}
 
 		if ( Policy::set_plugin_rule( $plugin, $rule ) ) {
-			$redirect = add_query_arg(
-				array_merge(
-					array(
-						'page'                    => 'handl-ai-connector-access-control',
-						'handl_aicac_tab'         => 'log',
-						'handl_aicac_quick_saved' => '1',
-					),
-					$this->log_filters_to_query_args( $log_filters )
-				),
-				admin_url( 'options-general.php' )
+			$args = array(
+				'page'            => 'handl-ai-connector-access-control',
+				'handl_aicac_tab' => $return,
 			);
-			wp_safe_redirect( $redirect );
+			if ( 'dashboard' === $return && 'deny' === $rule ) {
+				$args['handl_aicac_blocked']   = $plugin;
+				$args['handl_aicac_undo_rule'] = $prev;
+			} else {
+				$args['handl_aicac_quick_saved'] = '1';
+				$args                           = array_merge( $args, $this->log_filters_to_query_args( $log_filters ) );
+			}
+			wp_safe_redirect( add_query_arg( $args, admin_url( 'options-general.php' ) ) );
+			exit;
+		}
+	}
+
+	/**
+	 * Restore a previous plugin rule after dashboard single-click block (board Q3 undo).
+	 */
+	private function handle_undo_quick_rule(): void {
+		$plugin = sanitize_text_field( (string) filter_input( INPUT_POST, 'handl_aicac_quick_plugin', FILTER_UNSAFE_RAW ) );
+		$prev   = sanitize_text_field( (string) filter_input( INPUT_POST, 'handl_aicac_undo_rule', FILTER_UNSAFE_RAW ) );
+		if ( 'allow' !== $prev && 'deny' !== $prev ) {
+			$prev = '';
+		}
+		if ( '' !== $plugin && Policy::set_plugin_rule( $plugin, $prev ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'page'               => 'handl-ai-connector-access-control',
+						'handl_aicac_tab'    => 'dashboard',
+						'handl_aicac_undone' => '1',
+					),
+					admin_url( 'options-general.php' )
+				)
+			);
 			exit;
 		}
 	}
@@ -1961,6 +2490,16 @@ final class Admin {
 		if ( $is_direct_http ) {
 			echo '<br /><span class="description" style="font-size:11px;">' . esc_html__( 'direct HTTP', 'handl-ai-connector-access-control' ) . '</span>';
 		}
+		if ( ! empty( $row['pin_matched'] ) ) {
+			$pp = isset( $row['pin_provider'] ) ? (string) $row['pin_provider'] : '';
+			$pm = isset( $row['pin_model'] ) ? (string) $row['pin_model'] : '';
+			echo '<br /><span class="description handl-aicac-pin-matched" style="font-size:11px;">';
+			echo esc_html__( 'pin matched', 'handl-ai-connector-access-control' );
+			if ( '' !== $pp || '' !== $pm ) {
+				echo ' → <code>' . esc_html( $pp . ( '' !== $pp && '' !== $pm ? '/' : '' ) . $pm ) . '</code>';
+			}
+			echo '</span>';
+		}
 		if ( ! empty( $row['model_forced'] ) ) {
 			$fp = isset( $row['forced_provider'] ) ? (string) $row['forced_provider'] : '';
 			$fm = isset( $row['forced_model'] ) ? (string) $row['forced_model'] : '';
@@ -2012,6 +2551,19 @@ final class Admin {
 			} else {
 				echo esc_html( sprintf( '#%d', $user_id ) );
 			}
+			// M4 keeps first user_id on collapse; same "first of N" honesty as path (F6 known limit).
+			$user_cluster = $is_direct_http && isset( $row['count'] ) ? (int) $row['count'] : 1;
+			if ( $is_direct_http && $user_cluster > 1 ) {
+				echo '<br /><span class="description" style="font-size:11px;">';
+				echo esc_html(
+					sprintf(
+						/* translators: %d: total HTTP calls in this cluster */
+						_n( 'first of %d', 'first of %d', $user_cluster, 'handl-ai-connector-access-control' ),
+						$user_cluster
+					)
+				);
+				echo '</span>';
+			}
 		} else {
 			echo '<span class="handl-aicac-muted">—</span>';
 		}
@@ -2025,7 +2577,7 @@ final class Admin {
 				echo esc_html(
 					sprintf(
 						/* translators: %d: total HTTP calls in this cluster */
-						__( 'first of %d', 'handl-ai-connector-access-control' ),
+						_n( 'first of %d', 'first of %d', $uri_cluster, 'handl-ai-connector-access-control' ),
 						$uri_cluster
 					)
 				);
