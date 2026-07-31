@@ -26,9 +26,9 @@ Default behavior is **allow**.
 
 **Denial email alerts** (opt-in) notify an admin when enforcement blocks a prompt — immediate (rate-limited) or hourly digest. **Estimated $** on the audit log is a rough token × rate placeholder, not billing. When WordPress disables AI site-wide via `wp_supports_ai`, an honesty banner explains why the audit log may be empty.
 
-**EXPERIMENTAL model force** (Plugin rules tab, off by default) can pin allowed AI Client generations to a configured provider/model. It relies on unsupported shallow-clone behaviour in the AI Client prevent hook, verifies the final route before the provider call, and fail-closes on mismatch. Prefer official core routing filters when available.
+**EXPERIMENTAL per-plugin model force** (Plugin rules tab; empty force fields = off) can pin allowed AI Client generations to a provider/model **per detected caller**. Pins follow the nearest plugin frame on the PHP backtrace (best-effort) — not who initiated the call, and **not a spend guarantee**. Unattributed calls (cron, REST bootstraps, shared libraries, MU plugins, etc.) run unforced by default; admins can opt into an explicit unattributed target via the same “Unknown operations”-style control. Force relies on unsupported shallow-clone behaviour in the AI Client prevent hook, verifies the final route with exact provider/model matching before the provider call, and fail-closes on mismatch. Prefer official core routing filters when available.
 
-Caller attribution is best-effort and is determined by inspecting the PHP call stack and mapping file paths to installed plugins.
+Caller attribution is best-effort and is determined by inspecting the PHP call stack and mapping file paths to installed plugins. When force is configured, the retained log surfaces how many calls could not be attributed and ran unforced.
 
 == Privacy / Data ==
 
@@ -72,7 +72,10 @@ Alert mail does **not** include prompt preview or user identity. Digest rows wai
 Only AI calls made through the WordPress AI Client APIs that pass through `wp_ai_client_prevent_prompt`.
 
 = Is attribution perfect? =
-No. It is best-effort and may be unknown or ambiguous for some execution paths (cron, REST bootstraps, shared libraries, MU plugins).
+No. It is best-effort and may be unknown or ambiguous for some execution paths (cron, REST bootstraps, shared libraries, MU plugins). Experimental model force uses the same attribution: a pin follows the **detected** caller, not a guarantee of which product “owns” the spend.
+
+= Does experimental model force guarantee cost control per plugin? =
+No. It pins the route for calls we attribute to that plugin’s nearest stack frame. Unattributed calls are unforced by default (configurable). Misattribution can apply another plugin’s pin without failing closed — existence of a resolved plugin is not proof it is the right one.
 
 == Screenshots ==
 
@@ -82,8 +85,11 @@ No. It is best-effort and may be unknown or ambiguous for some execution paths (
 == Changelog ==
 
 = 1.0.10 =
-* EXPERIMENTAL: force AI Client generations to a configured provider/model (Plugin rules tab; off by default; labeled EXPERIMENTAL in the UI).
-* Guardrails: runtime clone-sharing compatibility check; final-route verification on wp_ai_client_before_generate_result; fail-closed (throw → WP_Error) on mismatch; persistent admin health warning when the override is unhealthy; does not change allow/deny.
+* EXPERIMENTAL: per-plugin force of AI Client generations to a provider/model (Plugin rules table columns; empty = off; labeled EXPERIMENTAL in the UI).
+* Unattributed calls: explicit control (default don’t force; optional force to an admin-picked provider/model — not a site-wide pin for attributed plugins).
+* Pins follow detected caller (best-effort nearest plugin frame) — not a spend guarantee; readme/UI state the bound.
+* Unforced-count surface from retained audit rows when pins exist and callers resolve unknown.
+* Guardrails: clone-compat cheap pre-check (not the safety); final-route verification with exact provider matching (no substring); fail-closed (throw → WP_Error) on mismatch; health option writes only on status transition; persistent admin health warning when unhealthy; does not change allow/deny.
 * Uninstall removes model-force health option.
 * Does not send data off-site (force is local routing preference only).
 

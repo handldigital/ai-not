@@ -1,6 +1,6 @@
 <?php
 /**
- * Experimental model force / downgrade (F4).
+ * Experimental per-plugin model force / downgrade (F4).
  *
  * @package HandL_AICAC
  */
@@ -12,14 +12,29 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Pins AI Client generation to an admin-configured provider/model pair.
+ * Pins AI Client generation to an admin-configured provider/model pair per detected caller.
  *
  * EXPERIMENTAL. Relies on a WordPress AI Client implementation detail: the
  * prevent-prompt filter receives a shallow clone of WP_AI_Client_Prompt_Builder
  * that currently shares the private inner PromptBuilder. Core documents that
- * clone as read-only. If core adds a deep __clone(), overrides stop taking
- * effect — clone-compat detection + final-route verification exist so that
- * failure is loud, never silent.
+ * clone as read-only. If core deep-clones or otherwise stops sharing the inner
+ * builder, overrides stop taking effect.
+ *
+ * Guardrail 1 (is_clone_compatible) is a cheap pre-check only: it detects one
+ * failure mode (wrapper defining __clone). It does not prove the mutation will
+ * land. Guardrail 2 (verify_final_route / route_matches) is the real safety —
+ * exact provider+model match after selection, fail-closed on mismatch. Do not
+ * relax guardrail 2 because guardrail 1 said "compatible".
+ *
+ * Force applies only when a caller is attributed (a plugin frame resolved from
+ * the backtrace, best-effort, nearest-frame) and that plugin has a force row —
+ * or, when the admin explicitly opts in, for unattributed calls via the
+ * Unattributed-calls control. Unattributed with default "don't force" ⇒ route
+ * untouched, logged unforced, counted.
+ *
+ * Attribution answers "whose file is nearest," not "who initiated" — a pin
+ * follows the detected caller and is not a spend guarantee. Misattribution can
+ * select the wrong pin without tripping fail-closed (existence ≠ correctness).
  *
  * This class never changes allow/deny. It only mutates route preference and
  * fail-closes generation when the final selected model does not match.
@@ -52,17 +67,133 @@ final class Model_Force {
 	}
 
 	/**
-	 * Whether the experimental force is fully configured and on.
+	 * Whether any experimental force rule is configured (per-plugin or unattributed opt-in).
 	 *
 	 * @param array<string,mixed> $policy
 	 */
-	public static function is_enabled( array $policy ): bool {
-		if ( empty( $policy['model_force_enabled'] ) ) {
-			return false;
+	public static function has_any_force_rules( array $policy ): bool {
+		$map = self::force_map( $policy );
+		if ( ! empty( $map ) ) {
+			return true;
 		}
-		$provider = self::sanitize_id( $policy['model_force_provider'] ?? '' );
-		$model    = self::sanitize_id( $policy['model_force_model'] ?? '' );
-		return '' !== $provider && '' !== $model;
+		return null !== self::unattributed_route( $policy );
+	}
+
+	/**
+	 * @param array<string,mixed> $policy
+	 * @return array<string,array{provider:string,model:string}>
+	 */
+	public static function force_map( array $policy ): array {
+		$raw = $policy['model_force_plugins'] ?? array();
+		if ( ! is_array( $raw ) ) {
+			return array();
+		}
+		$out = array();
+		foreach ( $raw as $basename => $row ) {
+			$basename = sanitize_text_field( (string) $basename );
+			if ( '' === $basename || ! is_array( $row ) ) {
+				continue;
+			}
+			$provider = self::sanitize_id( $row['provider'] ?? '' );
+			$model    = self::sanitize_id( $row['model'] ?? '' );
+			if ( '' === $provider || '' === $model ) {
+				continue;
+			}
+			$out[ $basename ] = array(
+				'provider' => $provider,
+				'model'    => $model,
+			);
+		}
+		return $out;
+	}
+
+	/**
+	 * @param mixed $raw
+	 * @return array<string,array{provider:string,model:string}>
+	 */
+	public static function sanitize_force_map( $raw ): array {
+		if ( ! is_array( $raw ) ) {
+			return array();
+		}
+		return self::force_map( array( 'model_force_plugins' => $raw ) );
+	}
+
+	/**
+	 * Unattributed-calls mode: none (default) | force.
+	 *
+	 * @param mixed $raw
+	 * @return 'none'|'force'
+	 */
+	public static function sanitize_unattributed_mode( $raw ): string {
+		$raw = sanitize_text_field( (string) $raw );
+		return 'force' === $raw ? 'force' : 'none';
+	}
+
+	/**
+	 * Explicit unattributed force target, or null when mode is none / incomplete.
+	 *
+	 * @param array<string,mixed> $policy
+	 * @return array{provider:string,model:string}|null
+	 */
+	public static function unattributed_route( array $policy ): ?array {
+		if ( 'force' !== self::sanitize_unattributed_mode( $policy['model_force_unattributed'] ?? 'none' ) ) {
+			return null;
+		}
+		$provider = self::sanitize_id( $policy['model_force_unattributed_provider'] ?? '' );
+		$model    = self::sanitize_id( $policy['model_force_unattributed_model'] ?? '' );
+		if ( '' === $provider || '' === $model ) {
+			return null;
+		}
+		return array(
+			'provider' => $provider,
+			'model'    => $model,
+		);
+	}
+
+	/**
+	 * Resolve the force target for a detected caller (or unattributed).
+	 *
+	 * Force applies only when a caller is attributed (plugin frame from the
+	 * backtrace, best-effort, nearest-frame) and that plugin has a force row.
+	 * Unattributed ⇒ no force unless the admin's Unattributed-calls control is
+	 * set to force with an explicit provider/model (not a resurrected site-wide pin).
+	 *
+	 * @param array<string,mixed> $policy
+	 * @return array{apply:bool,reason:string,provider?:string,model?:string,source?:string}
+	 */
+	public static function resolve_route( array $policy, ?string $plugin_basename ): array {
+		$plugin_basename = is_string( $plugin_basename ) ? sanitize_text_field( $plugin_basename ) : '';
+
+		if ( '' === $plugin_basename ) {
+			$ua = self::unattributed_route( $policy );
+			if ( null === $ua ) {
+				// Countable gap only when someone configured at least one pin.
+				if ( ! empty( self::force_map( $policy ) ) ) {
+					return array( 'apply' => false, 'reason' => 'unattributed' );
+				}
+				return array( 'apply' => false, 'reason' => 'no_rule' );
+			}
+			return array(
+				'apply'    => true,
+				'reason'   => 'ok',
+				'provider' => $ua['provider'],
+				'model'    => $ua['model'],
+				'source'   => 'unattributed',
+			);
+		}
+
+		$map = self::force_map( $policy );
+		if ( ! isset( $map[ $plugin_basename ] ) ) {
+			return array( 'apply' => false, 'reason' => 'no_rule' );
+		}
+
+		return array(
+			'apply'    => true,
+			'reason'   => 'ok',
+			'provider' => $map[ $plugin_basename ]['provider'],
+			'model'    => $map[ $plugin_basename ]['model'],
+			'source'   => 'plugin',
+		);
 	}
 
 	/**
@@ -81,15 +212,20 @@ final class Model_Force {
 	 *
 	 * @param mixed               $builder WP_AI_Client_Prompt_Builder clone.
 	 * @param array<string,mixed> $policy
-	 * @return array{applied:bool,reason:string,provider?:string,model?:string}
+	 * @param string|null         $plugin_basename Detected caller (nearest plugin frame) or null.
+	 * @return array{applied:bool,reason:string,provider?:string,model?:string,source?:string}
 	 */
-	public static function maybe_apply( $builder, array $policy ): array {
-		if ( ! self::is_enabled( $policy ) ) {
-			return array( 'applied' => false, 'reason' => 'disabled' );
+	public static function maybe_apply( $builder, array $policy, ?string $plugin_basename ): array {
+		$resolved = self::resolve_route( $policy, $plugin_basename );
+		if ( empty( $resolved['apply'] ) ) {
+			return array(
+				'applied' => false,
+				'reason'  => (string) ( $resolved['reason'] ?? 'no_rule' ),
+			);
 		}
 
-		$provider = self::sanitize_id( $policy['model_force_provider'] ?? '' );
-		$model    = self::sanitize_id( $policy['model_force_model'] ?? '' );
+		$provider = self::sanitize_id( $resolved['provider'] ?? '' );
+		$model    = self::sanitize_id( $resolved['model'] ?? '' );
 		if ( '' === $provider || '' === $model ) {
 			return array( 'applied' => false, 'reason' => 'incomplete' );
 		}
@@ -134,27 +270,20 @@ final class Model_Force {
 		} catch ( \Throwable $e ) {
 			self::record_health(
 				array(
-					'status'       => 'apply_failed',
-					'last_error'   => substr( $e->getMessage(), 0, 200 ),
-					'last_error_at'=> time(),
+					'status'        => 'apply_failed',
+					'last_error'    => substr( $e->getMessage(), 0, 200 ),
+					'last_error_at' => time(),
 				)
 			);
 			return array( 'applied' => false, 'reason' => 'apply_threw' );
 		}
 
 		// Arm verification only when we believe the override landed on a shared inner.
+		// No health write on the allow path here — "armed" is not diagnostic value;
+		// guardrail 2 writes verified_ok / route_mismatch once status actually changes.
 		self::$pending_expected = array(
 			'provider' => strtolower( $provider ),
 			'model'    => strtolower( $model ),
-		);
-
-		self::record_health(
-			array(
-				'clone_compatible' => true,
-				'clone_reason'     => self::$clone_reason ?? 'shallow_wrapper_clone',
-				'status'           => 'armed',
-				'last_armed_at'    => time(),
-			)
 		);
 
 		return array(
@@ -162,6 +291,7 @@ final class Model_Force {
 			'reason'   => 'ok',
 			'provider' => $provider,
 			'model'    => $model,
+			'source'   => (string) ( $resolved['source'] ?? 'plugin' ),
 		);
 	}
 
@@ -180,10 +310,11 @@ final class Model_Force {
 
 		if ( ! is_object( $event ) || ! method_exists( $event, 'getModel' ) ) {
 			self::fail_closed_mismatch( $expected, '(unreadable event)', '(unreadable event)' );
+			return; // fail_closed throws; return keeps call sites safe if that ever changes.
 		}
 
 		try {
-			$model_obj = $event->getModel();
+			$model_obj       = $event->getModel();
 			$actual_model    = '';
 			$actual_provider = '';
 
@@ -201,25 +332,34 @@ final class Model_Force {
 			}
 		} catch ( \Throwable $e ) {
 			self::fail_closed_mismatch( $expected, '(error)', '(error)' );
-			return; // unreachable — fail_closed throws.
+			return; // fail_closed throws.
 		}
 
 		if ( ! self::route_matches( $expected, $actual_provider, $actual_model ) ) {
 			self::fail_closed_mismatch( $expected, $actual_provider, $actual_model );
+			return; // fail_closed throws.
 		}
 
-		// Success: clear mismatch health if any.
+		// Success: write health only on transition (record_health no-ops if already verified_ok).
 		self::record_health(
 			array(
-				'status'            => 'verified_ok',
-				'last_verified_at'  => time(),
-				'last_mismatch_at'  => null,
-				'last_mismatch'     => null,
+				'clone_compatible' => true,
+				'clone_reason'     => self::$clone_reason ?? 'shallow_wrapper_clone',
+				'status'           => 'verified_ok',
+				'last_verified_at' => time(),
+				'last_mismatch_at' => null,
+				'last_mismatch'    => null,
 			)
 		);
 	}
 
 	/**
+	 * Exact provider + model match only (guardrail 2 safety).
+	 *
+	 * No substring / "near match" on provider ids: azure-openai must not pass
+	 * for expected openai. Registries that return model as "provider/model"
+	 * are accepted only when the provider id itself still matches exactly.
+	 *
 	 * @param array{provider:string,model:string} $expected
 	 */
 	private static function route_matches( array $expected, string $provider, string $model ): bool {
@@ -228,22 +368,23 @@ final class Model_Force {
 		if ( '' === $p || '' === $m ) {
 			return false;
 		}
-		// Exact match preferred; also accept model id alone if provider matches class-style id.
+		// Exact provider + exact model.
 		if ( $p === $expected['provider'] && $m === $expected['model'] ) {
 			return true;
 		}
-		// Some registries return model as "provider/model".
-		if ( $m === $expected['provider'] . '/' . $expected['model'] ) {
-			return true;
-		}
-		// Provider id may be a class name containing the short id.
-		if ( $m === $expected['model'] && ( $p === $expected['provider'] || false !== stripos( $p, $expected['provider'] ) ) ) {
+		// Some registries return model as "provider/model" while provider is still exact.
+		if ( $p === $expected['provider'] && $m === $expected['provider'] . '/' . $expected['model'] ) {
 			return true;
 		}
 		return false;
 	}
 
 	/**
+	 * Throws unconditionally — generation becomes WP_Error before the provider call.
+	 *
+	 * Signature stays :void for PHP 7.4 (never is 8.1+). Call sites must return
+	 * after invoking so a future early-return inside this method cannot fall through.
+	 *
 	 * @param array{provider:string,model:string} $expected
 	 * @return never
 	 */
@@ -276,11 +417,14 @@ final class Model_Force {
 	}
 
 	/**
-	 * Guardrail 1: detect whether the prevent-prompt clone shares the inner builder.
+	 * Guardrail 1 — cheap pre-check only, not the safety gate.
 	 *
-	 * Current WP 7.0.x: wrapper has no __clone → PHP shallow-clones the object and
-	 * the private PromptBuilder property is shared (Frink live probe: same_inner true).
-	 * If core later adds a deep __clone on the wrapper, we refuse to force.
+	 * Detects one failure mode: WP_AI_Client_Prompt_Builder declaring __clone
+	 * (which would break the shallow-clone shared-inner assumption on WP 7.0.2).
+	 * Does NOT detect: fresh wrapper around a cloned inner, explicit inner clone
+	 * before apply_filters, or immutable fluent methods. Those still look
+	 * "compatible" here; only guardrail 2 (final-route verification) proves
+	 * the force landed. Never relax route_matches because this returned true.
 	 */
 	public static function is_clone_compatible(): bool {
 		if ( null !== self::$clone_compatible ) {
@@ -333,6 +477,12 @@ final class Model_Force {
 	}
 
 	/**
+	 * Persist health only when status or other non-timestamp fields change.
+	 *
+	 * On the allow path every generation used to write twice (armed + verified_ok)
+	 * because updated_at always differed. Skip no-op updates so hot-path AI calls
+	 * do not hit the options table.
+	 *
 	 * @param array<string,mixed> $patch
 	 */
 	public static function record_health( array $patch ): void {
@@ -340,15 +490,29 @@ final class Model_Force {
 		if ( ! is_array( $current ) ) {
 			$current = array();
 		}
+
+		$next = $current;
 		foreach ( $patch as $k => $v ) {
 			if ( null === $v ) {
-				unset( $current[ $k ] );
+				unset( $next[ $k ] );
 			} else {
-				$current[ $k ] = $v;
+				$next[ $k ] = $v;
 			}
 		}
-		$current['updated_at'] = time();
-		update_option( self::HEALTH_OPTION_KEY, $current, false );
+
+		// Compare without timestamps that always churn on the hot path.
+		$ignore   = array( 'updated_at', 'last_armed_at', 'last_verified_at', 'last_error_at', 'last_mismatch_at' );
+		$curr_cmp = $current;
+		$next_cmp = $next;
+		foreach ( $ignore as $key ) {
+			unset( $curr_cmp[ $key ], $next_cmp[ $key ] );
+		}
+		if ( $curr_cmp === $next_cmp ) {
+			return;
+		}
+
+		$next['updated_at'] = time();
+		update_option( self::HEALTH_OPTION_KEY, $next, false );
 	}
 
 	/**
@@ -360,12 +524,63 @@ final class Model_Force {
 	}
 
 	/**
+	 * Count retained audit rows that ran unforced because the caller was unattributed.
+	 *
+	 * F2 inert-entry pattern applied to routing: surface the attribution gap
+	 * instead of letting the admin infer it from a bill.
+	 *
+	 * @param array<int,mixed> $log
+	 */
+	public static function count_unforced_unattributed( array $log ): int {
+		$n = 0;
+		foreach ( $log as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			if ( ! empty( $row['model_force_unforced'] ) ) {
+				++$n;
+				continue;
+			}
+			if ( isset( $row['model_force_skipped'] ) && 'unattributed' === (string) $row['model_force_skipped'] ) {
+				++$n;
+			}
+		}
+		return $n;
+	}
+
+	/**
+	 * How many retained rows were forced for a given plugin basename.
+	 *
+	 * @param array<int,mixed> $log
+	 */
+	public static function count_forced_for_plugin( array $log, string $plugin_basename ): int {
+		$plugin_basename = sanitize_text_field( $plugin_basename );
+		if ( '' === $plugin_basename ) {
+			return 0;
+		}
+		$n = 0;
+		foreach ( $log as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			if ( empty( $row['model_forced'] ) ) {
+				continue;
+			}
+			$p = isset( $row['plugin'] ) ? (string) $row['plugin'] : '';
+			if ( $p === $plugin_basename ) {
+				++$n;
+			}
+		}
+		return $n;
+	}
+
+	/**
 	 * Whether a persistent admin warning should show.
 	 *
 	 * @param array<string,mixed> $policy
 	 */
 	public static function needs_health_warning( array $policy ): bool {
-		if ( ! self::is_enabled( $policy ) ) {
+		if ( ! self::has_any_force_rules( $policy ) ) {
 			return false;
 		}
 		if ( ! self::is_clone_compatible() ) {
@@ -385,7 +600,7 @@ final class Model_Force {
 		}
 
 		$policy = Policy::get_policy();
-		if ( ! self::is_enabled( $policy ) ) {
+		if ( ! self::has_any_force_rules( $policy ) ) {
 			return;
 		}
 
@@ -395,13 +610,13 @@ final class Model_Force {
 
 		if ( $compat['compatible'] && ! in_array( $status, array( 'route_mismatch', 'clone_incompatible', 'apply_failed' ), true ) ) {
 			// Still surface a quiet experimental banner on our own settings screen only.
-			$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+			$screen     = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 			$on_our_page = $screen && isset( $screen->id ) && false !== strpos( (string) $screen->id, 'handl-ai-connector-access-control' );
 			if ( ! $on_our_page ) {
 				return;
 			}
-			echo '<div class="notice notice-warning"><p><strong>' . esc_html__( 'EXPERIMENTAL: Model force is enabled.', 'handl-ai-connector-access-control' ) . '</strong> ';
-			echo esc_html__( 'This feature relies on unsupported AI Client clone behaviour. Prefer it only for controlled testing. An upstream routing filter is the supported exit ramp.', 'handl-ai-connector-access-control' );
+			echo '<div class="notice notice-warning"><p><strong>' . esc_html__( 'EXPERIMENTAL: Per-plugin model force is configured.', 'handl-ai-connector-access-control' ) . '</strong> ';
+			echo esc_html__( 'Pins follow the detected caller (best-effort nearest plugin frame) and are not a spend guarantee. This feature relies on unsupported AI Client clone behaviour. An upstream routing filter is the supported exit ramp.', 'handl-ai-connector-access-control' );
 			echo ' <a href="' . esc_url( admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules' ) ) . '">' . esc_html__( 'Review settings', 'handl-ai-connector-access-control' ) . '</a></p></div>';
 			return;
 		}
@@ -412,7 +627,7 @@ final class Model_Force {
 			echo esc_html(
 				sprintf(
 					/* translators: %s: technical reason code */
-					__( 'Clone-sharing compatibility check failed (%s). The forced provider/model will not be applied — WordPress may have fixed the shallow clone. Disable this experimental feature or wait for an official routing filter.', 'handl-ai-connector-access-control' ),
+					__( 'Clone-compat pre-check failed (%s). Forced provider/model will not be applied — WordPress may have fixed the shallow clone. Disable this experimental feature or wait for an official routing filter.', 'handl-ai-connector-access-control' ),
 					$compat['reason']
 				)
 			);
@@ -422,7 +637,7 @@ final class Model_Force {
 			if ( ! empty( $detail['expected_model'] ) ) {
 				echo ' ' . esc_html(
 					sprintf(
-						/* translators: 1: expected, 2: actual */
+						/* translators: 1: expected provider, 2: expected model, 3: actual provider, 4: actual model */
 						__( 'Expected %1$s / %2$s; got %3$s / %4$s.', 'handl-ai-connector-access-control' ),
 						(string) ( $detail['expected_provider'] ?? '' ),
 						(string) ( $detail['expected_model'] ?? '' ),
@@ -432,7 +647,7 @@ final class Model_Force {
 				);
 			}
 		} else {
-			echo esc_html__( 'The experimental override failed to apply. Generation continues on the caller’s chosen model until you fix or disable the force.', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'The experimental override failed to apply. Generation continues on the caller’s chosen model until you fix or clear the force rows.', 'handl-ai-connector-access-control' );
 		}
 
 		echo ' <a href="' . esc_url( admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules' ) ) . '">' . esc_html__( 'Open settings', 'handl-ai-connector-access-control' ) . '</a></p></div>';
