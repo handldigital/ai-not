@@ -117,7 +117,7 @@ final class Policy {
 		// not "a generation missed its pin" (the call might have been a support check).
 		// Observability only; stays out of the unforced count. Suppressed unless at
 		// least one pin exists (resolve_route pins-exist precedent).
-		if ( ! $prevent && '' === $operation && ! empty( Model_Force::force_map( $policy ) ) ) {
+		if ( ! $prevent && '' === $operation && ! empty( Model_Force::has_any_force_rules( $policy ) ) ) {
 			$event['model_force_skipped'] = 'operation_unresolved';
 		}
 
