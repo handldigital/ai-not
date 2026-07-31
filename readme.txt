@@ -84,7 +84,8 @@ No. It is best-effort and may be unknown or ambiguous for some execution paths (
 * Privacy section documents what alerts transmit, that they are opt-in/off by default, and that mail uses the site's transport.
 * Alert mail uses path-only URI (query string stripped); full URI remains local-log only.
 * wp_mail failures are contained (throwing SMTP replacements cannot fatal a denied AI call).
-* Alert send deferred to shutdown so denials stay off the blocking AI Client path.
+* Alert send deferred to shutdown so the AI Client denial filter path does not block on SMTP (connection release is not claimed — FastCGI typically holds until shutdown completes).
+* Immediate-mode failures and rate-limit overflow drain via the same hourly cron safety net (scheduled whenever alert_on_deny is on, not only in digest mode).
 * Digest queue cleared when alerts are disabled; uninstall removes digest queue, rate option, and cron event.
 * Digest cron self-heals on init if the scheduled event was lost.
 * Honesty banner when AI is disabled site-wide via wp_supports_ai (audit intentionally empty because core short-circuits before our filter).

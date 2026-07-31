@@ -16,9 +16,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Observability only — never influences allow/deny.
  *
- * Mail work is deferred to shutdown so a denial stays the fast path
- * (no synchronous SMTP on the AI Client filter). Outbound copies use
- * path-only URIs; full request URIs remain in the local audit log only.
+ * Mail work is deferred to shutdown so the AI Client denial *filter* path
+ * does not block on SMTP. That is not the same as releasing the HTTP
+ * connection early — typical FastCGI holds the client open until shutdown
+ * finishes unless something calls fastcgi_finish_request() (WordPress does
+ * not by default). Outbound copies use path-only URIs; full request URIs
+ * remain in the local audit log only.
  */
 final class Alerts {
 	public const DIGEST_OPTION_KEY = 'handl_aicac_denial_digest_queue';
@@ -62,15 +65,18 @@ final class Alerts {
 	}
 
 	/**
-	 * Schedule hourly digest when policy uses digest mode.
+	 * Schedule the hourly digest/drain cron whenever denial alerts are on.
+	 *
+	 * Digest mode: primary delivery. Immediate mode: safety net that drains
+	 * failed sends and rate-limit overflow within the hour (does nothing when
+	 * the queue is empty). Unschedules only when alerts are fully off.
 	 *
 	 * @param array<string,mixed> $policy
 	 */
 	public static function maybe_schedule( array $policy ): void {
 		$enabled = ! empty( $policy['alert_on_deny'] );
-		$mode    = self::sanitize_mode( $policy['alert_mode'] ?? 'immediate' );
 
-		if ( $enabled && 'digest' === $mode ) {
+		if ( $enabled ) {
 			if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 				wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', self::CRON_HOOK );
 			}
@@ -94,7 +100,8 @@ final class Alerts {
 	 * Called after a real enforcement denial is logged.
 	 *
 	 * Work is deferred to shutdown so the AI Client filter path does not block
-	 * on SMTP or option thrash. Never changes allow/deny.
+	 * on SMTP or option thrash (not a claim that the HTTP response is already
+	 * released to the client). Never changes allow/deny.
 	 *
 	 * @param array<string,mixed> $event  Log row shape.
 	 * @param array<string,mixed> $policy Current policy.

@@ -1231,9 +1231,9 @@ final class Admin {
 		echo '<br /><span class="description">' . esc_html__( 'Leave empty to use the site admin email.', 'handl-ai-connector-access-control' ) . '</span></p>';
 		echo '<p style="margin-top:8px;">';
 		echo '<label><input type="radio" name="handl_aicac_alert_mode" value="immediate" ' . checked( $alert_mode, 'immediate', false ) . ' /> ';
-		echo esc_html__( 'Immediate (rate-limited to 20/hour; overflow joins the digest queue)', 'handl-ai-connector-access-control' ) . '</label><br />';
+		echo esc_html__( 'Immediate (rate-limited to 20/hour; overflow and failed sends drain via hourly cron)', 'handl-ai-connector-access-control' ) . '</label><br />';
 		echo '<label><input type="radio" name="handl_aicac_alert_mode" value="digest" ' . checked( $alert_mode, 'digest', false ) . ' /> ';
-		echo esc_html__( 'Hourly digest (cron)', 'handl-ai-connector-access-control' ) . '</label>';
+		echo esc_html__( 'Hourly digest (cron; primary delivery)', 'handl-ai-connector-access-control' ) . '</label>';
 		echo '</p>';
 		if ( $pending > 0 ) {
 			echo '<p class="description"><strong>' . esc_html(
