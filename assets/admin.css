@@ -154,8 +154,70 @@
 	vertical-align: top;
 }
 
-.handl-aicac-kill-exceptions select[disabled] {
-	opacity: 0.6;
+/* Kill-switch exceptions — checkbox list (issue #14); muted when kill is off */
+.handl-aicac-kill-exceptions {
+	margin-top: 12px;
+	max-width: 40em;
+}
+
+.handl-aicac-kill-exceptions__heading {
+	margin: 0 0 4px;
+}
+
+.handl-aicac-kill-exceptions__list {
+	margin: 8px 0 0;
+	padding: 6px 8px;
+	max-height: 14em;
+	overflow: auto;
+	border: 1px solid #c3c4c7;
+	border-radius: 2px;
+	background: #fff;
+}
+
+.handl-aicac-kill-exceptions__item {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	margin: 0;
+	padding: 5px 4px;
+	line-height: 1.35;
+	cursor: pointer;
+}
+
+.handl-aicac-kill-exceptions__item + .handl-aicac-kill-exceptions__item {
+	border-top: 1px solid #f0f0f1;
+}
+
+.handl-aicac-kill-exceptions__item input[type="checkbox"] {
+	margin: 2px 0 0;
+	flex: 0 0 auto;
+}
+
+.handl-aicac-kill-exceptions__text {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.handl-aicac-kill-exceptions__slug {
+	font-size: 11px;
+	color: #646970;
+	word-break: break-all;
+}
+
+.handl-aicac-kill-exceptions.is-muted {
+	opacity: 0.55;
+}
+
+.handl-aicac-kill-exceptions.is-muted .handl-aicac-kill-exceptions__list {
+	background: #f6f7f7;
+	pointer-events: none;
+}
+
+.handl-aicac-kill-exceptions.is-muted .handl-aicac-kill-exceptions__item {
+	cursor: default;
 }
 
 /* Usage insights tab */
