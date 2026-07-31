@@ -117,7 +117,8 @@ final class Policy {
 		// not "a generation missed its pin" (the call might have been a support check).
 		// Observability only; stays out of the unforced count. Suppressed unless at
 		// least one pin exists (resolve_route pins-exist precedent).
-		if ( ! $prevent && '' === $operation && ! empty( Model_Force::has_any_force_rules( $policy ) ) ) {
+		// F5 cleanup #2: has_any_force_rules() already returns bool — no ! empty() wrapper.
+		if ( ! $prevent && '' === $operation && Model_Force::has_any_force_rules( $policy ) ) {
 			$event['model_force_skipped'] = 'operation_unresolved';
 		}
 
@@ -136,6 +137,22 @@ final class Policy {
 					if ( 'unattributed' === $skip ) {
 						$event['model_force_unforced'] = true;
 					}
+				}
+			}
+		}
+
+		// F5 Δ3: learn mode observes that a pin *matched* — not that the call would
+		// have succeeded (guardrail-2 may still fail-close). Action gates stay off.
+		// Reachability: generating ops only; attributed plugin pin (source=plugin).
+		// Support checks silent. Design law: action gates ≠ observation gates.
+		if ( ! $prevent && ! empty( $policy['audit_only'] ) && self::is_generating_operation( $operation ) ) {
+			$plugin_bn = is_string( $plugin ) ? $plugin : '';
+			if ( '' !== $plugin_bn ) {
+				$resolved = Model_Force::resolve_route( $policy, $plugin_bn );
+				if ( ! empty( $resolved['apply'] ) && 'plugin' === (string) ( $resolved['source'] ?? '' ) ) {
+					$event['pin_matched']  = true;
+					$event['pin_provider'] = (string) ( $resolved['provider'] ?? '' );
+					$event['pin_model']    = (string) ( $resolved['model'] ?? '' );
 				}
 			}
 		}
@@ -751,11 +768,12 @@ final class Policy {
 	}
 
 	/**
-	 * Set allow/deny for one plugin (quick action from log).
+	 * Set allow/deny for one plugin (quick action from Activity / Dashboard).
+	 * Empty $rule clears the explicit rule (inherit Default) — used by undo.
 	 */
 	public static function set_plugin_rule( string $plugin_basename, string $rule ): bool {
 		$rule = sanitize_text_field( $rule );
-		if ( 'allow' !== $rule && 'deny' !== $rule ) {
+		if ( '' !== $rule && 'allow' !== $rule && 'deny' !== $rule ) {
 			return false;
 		}
 
@@ -765,7 +783,14 @@ final class Policy {
 		}
 
 		$policy = self::get_policy();
-		$policy['plugins'][ $plugin_basename ] = $rule;
+		if ( ! isset( $policy['plugins'] ) || ! is_array( $policy['plugins'] ) ) {
+			$policy['plugins'] = array();
+		}
+		if ( '' === $rule ) {
+			unset( $policy['plugins'][ $plugin_basename ] );
+		} else {
+			$policy['plugins'][ $plugin_basename ] = $rule;
+		}
 		self::save_policy( $policy );
 
 		return true;

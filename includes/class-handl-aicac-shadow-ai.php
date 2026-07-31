@@ -181,16 +181,20 @@ final class Shadow_AI {
 			$event          = $item['event'];
 			$tally          = isset( $item['tally'] ) ? (int) $item['tally'] : 1;
 			$event['count'] = $tally > 0 ? $tally : 1;
-			// Multi-call first flush: first observation ts is already on the event;
-			// copy to first_ts before overwriting so the row has a real span (Δ5).
+			// Keep the observation-time ts. Overwriting with flush time made a single
+			// call at minute 2 of a long WP-CLI run look like minute 120 (Lisa known
+			// limit; F5 rides the fix while touching this file). Multi-call still
+			// sets first_ts from the first observation before any later write path
+			// might refresh last activity on collapse.
 			if ( $tally > 1 ) {
 				$first = isset( $event['ts'] ) ? (int) $event['ts'] : 0;
 				if ( $first > 0 && ! isset( $event['first_ts'] ) ) {
 					$event['first_ts'] = $first;
 				}
 			}
-			// ts is last call time in this request batch (first observation kept its fields).
-			$event['ts'] = time();
+			if ( ! isset( $event['ts'] ) || (int) $event['ts'] <= 0 ) {
+				$event['ts'] = time();
+			}
 			Policy::append_log_event( $event );
 		}
 	}

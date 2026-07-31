@@ -541,6 +541,8 @@ final class Model_Force {
 	 * @param array<int,mixed> $log
 	 */
 	public static function count_unforced_unattributed( array $log ): int {
+		// model_force_unforced is set whenever skip === unattributed (policy.php);
+		// the redundant model_force_skipped === unattributed branch is gone (F5 cleanup #1).
 		$n = 0;
 		foreach ( $log as $row ) {
 			if ( ! is_array( $row ) ) {
@@ -548,13 +550,51 @@ final class Model_Force {
 			}
 			if ( ! empty( $row['model_force_unforced'] ) ) {
 				++$n;
-				continue;
-			}
-			if ( isset( $row['model_force_skipped'] ) && 'unattributed' === (string) $row['model_force_skipped'] ) {
-				++$n;
 			}
 		}
 		return $n;
+	}
+
+	/**
+	 * Pin-hold stats over attempted forces only (Δ2).
+	 *
+	 * Y = model_forced + technical skips (clone_incompatible, apply_threw,
+	 * no_preference_api, incomplete). X = model_forced. Unattributed-unforced
+	 * and operation_unresolved stay out of this ratio.
+	 *
+	 * @param array<int,mixed> $log
+	 * @return array{held:int,attempted:int,by_skip:array<string,int>}
+	 */
+	public static function pin_hold_stats( array $log ): array {
+		$held      = 0;
+		$attempted = 0;
+		$by_skip   = array();
+		$technical = array( 'clone_incompatible', 'apply_threw', 'no_preference_api', 'incomplete' );
+
+		foreach ( $log as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			if ( ! empty( $row['model_forced'] ) ) {
+				++$held;
+				++$attempted;
+				continue;
+			}
+			$skip = isset( $row['model_force_skipped'] ) ? (string) $row['model_force_skipped'] : '';
+			if ( in_array( $skip, $technical, true ) ) {
+				++$attempted;
+				if ( ! isset( $by_skip[ $skip ] ) ) {
+					$by_skip[ $skip ] = 0;
+				}
+				++$by_skip[ $skip ];
+			}
+		}
+
+		return array(
+			'held'      => $held,
+			'attempted' => $attempted,
+			'by_skip'   => $by_skip,
+		);
 	}
 
 	/**

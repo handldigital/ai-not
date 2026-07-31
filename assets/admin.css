@@ -420,3 +420,160 @@
 .handl-aicac-registered-abilities { max-height: 12em; overflow: auto; margin: 0.5em 0; }
 .handl-aicac-registered-abilities li { margin: 0.15em 0; }
 .handl-aicac-denial-reason { color: #b32d2e; font-weight: 600; }
+
+/* F5 dashboard — one page width (matches Insights 1200px) */
+.handl-aicac-dashboard {
+	max-width: 1200px;
+}
+
+/* Coverage full-width on top; secondary tiles in grid below */
+.handl-aicac-dashboard .handl-aicac-tile--coverage {
+	margin: 0 0 16px;
+}
+
+/*
+ * Secondary tiles. Default align-items is stretch — short Safety fills Spend's
+ * row height so leftover space sits *inside* the card, not as an external hole
+ * (Frink defect 2 / Lisa). Do not set align-items: start.
+ */
+.handl-aicac-dashboard-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 16px;
+	margin: 0 0 16px;
+}
+
+@media screen and (min-width: 961px) {
+	.handl-aicac-dashboard-grid {
+		grid-template-columns: 1fr 1fr;
+	}
+
+	/*
+	 * Odd last tile spans full width (Lisa / Frink dual-fixture):
+	 * - 3 tiles (no pins): Block is 3rd → full width
+	 * - 4 tiles (with pins): Block is 4th → normal 2×2, Pins keeps its partner
+	 * - N later: still correct without per-tile class hardcoding
+	 * Grid children are only .handl-aicac-tile postboxes — no stray wrappers.
+	 */
+	.handl-aicac-dashboard-grid > .handl-aicac-tile:last-child:nth-child(odd) {
+		grid-column: 1 / -1;
+	}
+}
+
+/* Native postbox cards — joined header/body, shared rhythm */
+.handl-aicac-dashboard .handl-aicac-tile {
+	max-width: none;
+	margin: 0;
+	border: 1px solid #c3c4c7;
+	box-shadow: none;
+	background: #fff;
+}
+
+/* Grid children: flex column so stretched tiles paint through .inside */
+.handl-aicac-dashboard-grid .handl-aicac-tile {
+	display: flex;
+	flex-direction: column;
+	min-height: 100%;
+}
+
+.handl-aicac-dashboard-grid .handl-aicac-tile .inside {
+	flex: 1 1 auto;
+}
+
+.handl-aicac-dashboard .handl-aicac-tile .postbox-header {
+	border-bottom: 1px solid #dcdcde;
+	background: #f6f7f7;
+}
+
+.handl-aicac-dashboard .handl-aicac-tile .postbox-header .hndle {
+	margin: 0;
+	padding: 10px 14px;
+	font-size: 13px;
+	line-height: 1.4;
+	cursor: default;
+}
+
+.handl-aicac-dashboard .handl-aicac-tile .inside {
+	margin: 0;
+	padding: 12px 16px 16px;
+	border-top: 0;
+}
+
+.handl-aicac-dashboard .handl-aicac-tile .inside > :first-child {
+	margin-top: 0;
+}
+
+.handl-aicac-dashboard .handl-aicac-tile .inside > :last-child {
+	margin-bottom: 0;
+}
+
+/* Tables fill their card; numeric columns right-aligned */
+.handl-aicac-dashboard .handl-aicac-tile-table {
+	width: 100%;
+	max-width: none;
+	table-layout: auto;
+}
+
+.handl-aicac-dashboard .handl-aicac-tile-table th.column-num,
+.handl-aicac-dashboard .handl-aicac-tile-table td.column-num {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+	width: 1%;
+}
+
+.handl-aicac-coverage-headline {
+	font-size: 1.15em;
+	margin: 0 0 6px;
+	line-height: 1.35;
+}
+
+.handl-aicac-coverage-window {
+	margin: 0 0 10px;
+}
+
+.handl-aicac-coverage-buckets {
+	margin: 0 0 10px;
+	line-height: 1.55;
+}
+
+.handl-aicac-spend-total {
+	font-size: 1.35em;
+	margin: 0 0 10px;
+	font-variant-numeric: tabular-nums;
+}
+
+.handl-aicac-danger {
+	color: #8a2424;
+}
+
+.handl-aicac-settings-panel {
+	margin: 0 0 1.25em;
+	padding: 10px 14px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 2px;
+	max-width: 72em;
+}
+
+.handl-aicac-settings-panel > summary {
+	cursor: pointer;
+	padding: 4px 0;
+}
+
+.handl-aicac-settings-panel[open] > summary {
+	margin-bottom: 8px;
+	border-bottom: 1px solid #dcdcde;
+	padding-bottom: 8px;
+}
+
+.handl-aicac-inline-undo .button,
+.handl-aicac-inline-undo .button-link {
+	vertical-align: baseline;
+	margin-left: 4px;
+}
+
+.handl-aicac-not-governable {
+	font-size: 11px;
+	color: #646970;
+}
