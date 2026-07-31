@@ -563,6 +563,32 @@ final class Admin {
 					)
 				)
 			);
+			// F6: one-line count only — not a second coverage %. Charts below are AI Client rows.
+			// Sum of `count` on collapsed clusters (chatty-host collapse); missing count = 1.
+			$direct_http_count = 0;
+			foreach ( $log as $log_row ) {
+				if ( is_array( $log_row ) && isset( $log_row['channel'] ) && 'direct_http' === (string) $log_row['channel'] ) {
+					$cluster = isset( $log_row['count'] ) ? (int) $log_row['count'] : 1;
+					$direct_http_count += $cluster > 0 ? $cluster : 1;
+				}
+			}
+			if ( $direct_http_count > 0 ) {
+				printf(
+					'<p class="handl-aicac-insights-meta handl-aicac-insights-shadow">%s</p>',
+					esc_html(
+						sprintf(
+							/* translators: %d: sum of direct_http row counts (HTTP calls) outside the AI Client */
+							_n(
+								'%d AI HTTP call outside the AI Client (seen, not governed by these rules).',
+								'%d AI HTTP calls outside the AI Client (seen, not governed by these rules).',
+								$direct_http_count,
+								'handl-ai-connector-access-control'
+							),
+							$direct_http_count
+						)
+					)
+				);
+			}
 		}
 		echo '</div>';
 		echo '</div>';
@@ -917,7 +943,7 @@ final class Admin {
 
 		if ( isset( $_REQUEST['handl_aicac_log_decision'] ) ) {
 			$decision = sanitize_key( wp_unslash( (string) $_REQUEST['handl_aicac_log_decision'] ) );
-			if ( 'allow' === $decision || 'deny' === $decision ) {
+			if ( 'allow' === $decision || 'deny' === $decision || 'observe' === $decision ) {
 				$filters['decision'] = $decision;
 			}
 		}
@@ -1001,7 +1027,7 @@ final class Admin {
 			}
 
 			$decision = $this->get_log_row_field( $row, 'decision' );
-			if ( 'allow' === $decision || 'deny' === $decision ) {
+			if ( 'allow' === $decision || 'deny' === $decision || 'observe' === $decision ) {
 				$options['decision'][ $decision ] = $decision;
 			}
 
@@ -1065,9 +1091,10 @@ final class Admin {
 		);
 
 		$decision_views = array(
-			''      => __( 'All', 'handl-ai-connector-access-control' ),
-			'allow' => __( 'Allow', 'handl-ai-connector-access-control' ),
-			'deny'  => __( 'Deny', 'handl-ai-connector-access-control' ),
+			''         => __( 'All', 'handl-ai-connector-access-control' ),
+			'allow'    => __( 'Allow', 'handl-ai-connector-access-control' ),
+			'deny'     => __( 'Deny', 'handl-ai-connector-access-control' ),
+			'observe'  => __( 'Outside AI Client', 'handl-ai-connector-access-control' ),
 		);
 
 		$other_filters = $filters;
@@ -1821,6 +1848,11 @@ final class Admin {
 		$input_tokens  = array_key_exists( 'input_tokens', $row ) ? (int) $row['input_tokens'] : null;
 		$output_tokens = array_key_exists( 'output_tokens', $row ) ? (int) $row['output_tokens'] : null;
 		$thought_tokens = array_key_exists( 'thought_tokens', $row ) ? (int) $row['thought_tokens'] : null;
+		$is_direct_http = isset( $row['channel'] ) && 'direct_http' === (string) $row['channel'];
+		$host           = isset( $row['host'] ) ? (string) $row['host'] : '';
+		if ( $is_direct_http && '' === $provider && ! empty( $row['shadow_provider'] ) ) {
+			$provider = (string) $row['shadow_provider'];
+		}
 
 		$model          = $this->get_log_row_model( $row );
 		$model_inferred = ! empty( $row['model_inferred'] );
@@ -1834,7 +1866,50 @@ final class Admin {
 		echo '<td class="column-time">' . esc_html( $ts ? wp_date( 'Y-m-d H:i:s', $ts ) : '—' ) . '</td>';
 		echo '<td>';
 		echo $this->render_decision_badge( $decision ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		if ( ! empty( $policy['audit_only'] ) ) {
+		if ( $is_direct_http ) {
+			echo '<br /><span class="description handl-aicac-shadow-label" style="font-size:11px;">';
+			echo esc_html__( 'outside AI Client — not governed by these rules', 'handl-ai-connector-access-control' );
+			echo '</span>';
+			$cluster_count = isset( $row['count'] ) ? (int) $row['count'] : 1;
+			if ( $cluster_count > 1 ) {
+				echo '<br /><span class="description handl-aicac-shadow-count" style="font-size:11px;">';
+				// count = HTTP calls (not page loads). Span from first_ts..ts when collapsed.
+				$first_ts = isset( $row['first_ts'] ) ? (int) $row['first_ts'] : 0;
+				$last_ts  = $ts > 0 ? $ts : ( isset( $row['ts'] ) ? (int) $row['ts'] : 0 );
+				if ( $first_ts > 0 && $last_ts > 0 && $last_ts !== $first_ts ) {
+					echo esc_html(
+						sprintf(
+							/* translators: 1: call count, 2: first time, 3: last time */
+							_n(
+								'seen %1$d call between %2$s and %3$s',
+								'seen %1$d calls between %2$s and %3$s',
+								$cluster_count,
+								'handl-ai-connector-access-control'
+							),
+							$cluster_count,
+							wp_date( 'Y-m-d H:i:s', $first_ts ),
+							wp_date( 'Y-m-d H:i:s', $last_ts )
+						)
+					);
+				} else {
+					echo esc_html(
+						sprintf(
+							/* translators: %d: number of HTTP calls in this cluster */
+							_n(
+								'seen %d call',
+								'seen %d calls',
+								$cluster_count,
+								'handl-ai-connector-access-control'
+							),
+							$cluster_count
+						)
+					);
+				}
+				echo '</span>';
+			}
+		}
+		// Learn-mode "would" is AI Client only — direct_http is observe-only (no would-enforce).
+		if ( ! $is_direct_http && ! empty( $policy['audit_only'] ) ) {
 			$would = isset( $row['would_decision'] ) ? (string) $row['would_decision'] : '';
 			if ( '' === $would && $plugin ) {
 				$would = Policy::effective_decision_label( $policy, $plugin );
@@ -1870,17 +1945,22 @@ final class Admin {
 		}
 		echo '</td>';
 		$family = isset( $row['capability_family'] ) ? (string) $row['capability_family'] : '';
-		if ( '' === $family && '' !== $operation ) {
+		if ( '' === $family && '' !== $operation && ! $is_direct_http ) {
 			$family = Operations::family_from_operation( $operation );
 		}
 		$family_labels = Operations::family_labels();
 		$family_label  = $family_labels[ $family ] ?? ( Operations::FAMILY_UNKNOWN === $family ? __( 'Unknown', 'handl-ai-connector-access-control' ) : $family );
 		echo '<td class="column-operation"><code>' . esc_html( $operation ?: '—' ) . '</code>';
-		if ( '' !== $family ) {
+		if ( $is_direct_http && '' !== $host ) {
+			echo '<br /><span class="description handl-aicac-shadow-host" style="font-size:11px;"><code>' . esc_html( $host ) . '</code></span>';
+		} elseif ( '' !== $family ) {
 			echo '<br /><span class="description handl-aicac-family-label">' . esc_html( $family_label ) . '</span>';
 		}
 		echo '</td>';
 		echo '<td class="column-provider"><code>' . esc_html( $provider ?: '—' ) . '</code>';
+		if ( $is_direct_http ) {
+			echo '<br /><span class="description" style="font-size:11px;">' . esc_html__( 'direct HTTP', 'handl-ai-connector-access-control' ) . '</span>';
+		}
 		if ( ! empty( $row['model_forced'] ) ) {
 			$fp = isset( $row['forced_provider'] ) ? (string) $row['forced_provider'] : '';
 			$fm = isset( $row['forced_model'] ) ? (string) $row['forced_model'] : '';
@@ -1936,9 +2016,34 @@ final class Admin {
 			echo '<span class="handl-aicac-muted">—</span>';
 		}
 		echo '</td>';
-		echo '<td><code>' . esc_html( $uri ?: '—' ) . '</code></td>';
+		echo '<td><code>' . esc_html( $uri ?: '—' ) . '</code>';
+		// M4 keeps the first path on collapse; label it when the cluster has multiple calls.
+		if ( $is_direct_http && '' !== $uri ) {
+			$uri_cluster = isset( $row['count'] ) ? (int) $row['count'] : 1;
+			if ( $uri_cluster > 1 ) {
+				echo '<br /><span class="description" style="font-size:11px;">';
+				echo esc_html(
+					sprintf(
+						/* translators: %d: total HTTP calls in this cluster */
+						__( 'first of %d', 'handl-ai-connector-access-control' ),
+						$uri_cluster
+					)
+				);
+				echo '</span>';
+			}
+		}
+		echo '</td>';
 		echo '<td class="column-actions handl-aicac-quick-actions">';
-		if ( $plugin ) {
+		// direct_http is observe-only: Allow/Deny write AI Client rules that cannot
+		// govern this traffic. A live button that is a no-op for the row shown is a
+		// false enforcement surface (F6 live gate / F5 item 5 / standing rule: the PR
+		// that introduces a row type owns every control that renders on that type).
+		// Wording matches the decision-column label — one concept, one phrase.
+		if ( $is_direct_http ) {
+			echo '<span class="description handl-aicac-not-governable" style="font-size:11px;">';
+			echo esc_html__( 'not governed by these rules', 'handl-ai-connector-access-control' );
+			echo '</span>';
+		} elseif ( $plugin ) {
 			$this->render_quick_rule_buttons( $plugin, $log_filters );
 		} else {
 			echo '<span class="handl-aicac-muted">—</span>';
@@ -2022,6 +2127,9 @@ final class Admin {
 		}
 		if ( 'deny' === $decision ) {
 			return '<span class="handl-aicac-badge handl-aicac-badge--deny">' . esc_html__( 'deny', 'handl-ai-connector-access-control' ) . '</span>';
+		}
+		if ( 'observe' === $decision ) {
+			return '<span class="handl-aicac-badge handl-aicac-badge--observe">' . esc_html__( 'observe', 'handl-ai-connector-access-control' ) . '</span>';
 		}
 		return '<span class="handl-aicac-muted">' . esc_html( $decision ?: '—' ) . '</span>';
 	}

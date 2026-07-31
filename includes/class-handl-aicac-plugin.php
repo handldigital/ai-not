@@ -33,6 +33,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cost.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alerts.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-model-force.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-shadow-ai.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-analytics.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php';
@@ -40,6 +41,7 @@ final class Plugin {
 		Policy::instance()->init();
 		Alerts::instance()->init();
 		Model_Force::instance()->init();
+		Shadow_AI::instance()->init();
 		Admin::instance()->init();
 	}
 
