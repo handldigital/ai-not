@@ -103,10 +103,25 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_quick_rule', 'handl_aicac_nonce' );
 				$this->handle_quick_rule_redirect( $this->log_filters );
 			}
+			if ( 'send_denial_digest' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_send_digest', 'handl_aicac_nonce' );
+				Alerts::instance()->send_digest();
+				$redirect = add_query_arg(
+					array(
+						'page'                      => 'handl-ai-connector-access-control',
+						'handl_aicac_tab'           => 'log',
+						'handl_aicac_digest_sent'   => '1',
+					),
+					admin_url( 'options-general.php' )
+				);
+				wp_safe_redirect( $redirect );
+				exit;
+			}
 		}
 
 		$saved       = false;
 		$quick_saved = isset( $_GET['handl_aicac_quick_saved'] ) && '1' === (string) $_GET['handl_aicac_quick_saved'];
+		$digest_sent = isset( $_GET['handl_aicac_digest_sent'] ) && '1' === (string) $_GET['handl_aicac_digest_sent'];
 
 		if ( isset( $_POST['handl_aicac_action'] ) && 'save' === $_POST['handl_aicac_action'] ) {
 			check_admin_referer( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
@@ -145,6 +160,20 @@ final class Admin {
 		}
 		if ( $quick_saved ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Plugin rule updated.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		if ( $digest_sent ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Denial digest send attempted (queue cleared only if mail succeeded).', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+
+		// Honesty banner: core skips our filter when AI is disabled site-wide.
+		if ( function_exists( 'wp_supports_ai' ) && ! wp_supports_ai() ) {
+			$why = defined( 'WP_AI_SUPPORT' ) && ! WP_AI_SUPPORT
+				? __( 'WP_AI_SUPPORT is defined as false (or equivalent).', 'handl-ai-connector-access-control' )
+				: __( 'The wp_supports_ai filter is returning false.', 'handl-ai-connector-access-control' );
+			echo '<div class="notice notice-warning"><p><strong>' . esc_html__( 'AI is disabled site-wide via wp_supports_ai.', 'handl-ai-connector-access-control' ) . '</strong> ';
+			echo esc_html( $why ) . ' ';
+			echo esc_html__( 'WordPress short-circuits prompts before HandL AICAC’s prevent filter runs, so this plugin’s audit log will be empty or incomplete for those calls — that is expected, not a broken install.', 'handl-ai-connector-access-control' );
+			echo '</p></div>';
 		}
 
 		if ( ! empty( $policy['audit_only'] ) ) {
@@ -717,6 +746,25 @@ final class Admin {
 		submit_button( __( 'Save audit settings', 'handl-ai-connector-access-control' ) );
 		echo '</form>';
 
+		$pending_digest = count( Alerts::pending_digest_rows() );
+		if ( $pending_digest > 0 && ! empty( $policy['alert_on_deny'] ) ) {
+			echo '<form method="post" style="margin-bottom:1.5em;">';
+			wp_nonce_field( 'handl_aicac_send_digest', 'handl_aicac_nonce' );
+			echo '<input type="hidden" name="handl_aicac_action" value="send_denial_digest" />';
+			echo '<input type="hidden" name="handl_aicac_tab" value="log" />';
+			submit_button(
+				sprintf(
+					/* translators: %d: queued denial count */
+					__( 'Send denial digest now (%d queued)', 'handl-ai-connector-access-control' ),
+					$pending_digest
+				),
+				'secondary',
+				'submit',
+				false
+			);
+			echo '</form>';
+		}
+
 		if ( ! empty( $policy['audit_only'] ) ) {
 			$this->render_suggested_rules( $log, $policy, $plugins, $log_filters );
 		}
@@ -769,6 +817,7 @@ final class Admin {
 		echo '<th class="column-model">' . esc_html__( 'Model', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th class="column-tokens">' . esc_html__( 'Input tokens', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th class="column-tokens">' . esc_html__( 'Output tokens', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th class="column-tokens">' . esc_html__( 'Est. $', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Prompt', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'User', 'handl-ai-connector-access-control' ) . '</th>';
@@ -790,7 +839,7 @@ final class Admin {
 			} else {
 				$empty_message = __( 'No calls to display.', 'handl-ai-connector-access-control' );
 			}
-			echo '<tr><td colspan="12">' . esc_html( $empty_message ) . '</td></tr>';
+			echo '<tr><td colspan="13">' . esc_html( $empty_message ) . '</td></tr>';
 		}
 
 		echo '</tbody></table>';
@@ -1164,6 +1213,53 @@ final class Admin {
 		echo ' <span class="description">' . esc_html__( '(20–1000). Oldest entries drop when full. No time-based expiry.', 'handl-ai-connector-access-control' ) . '</span>';
 		echo '</td>';
 		echo '</tr>';
+
+		// F3: denial alerts.
+		$alert_on   = ! empty( $policy['alert_on_deny'] );
+		$alert_mode = Alerts::sanitize_mode( $policy['alert_mode'] ?? 'immediate' );
+		$alert_email = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
+		$pending     = count( Alerts::pending_digest_rows() );
+
+		echo '<tr>';
+		echo '<th scope="row">' . esc_html__( 'Denial email alerts', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<td>';
+		echo '<label><input type="checkbox" name="handl_aicac_alert_on_deny" value="1" ' . checked( $alert_on, true, false ) . ' /> ';
+		echo esc_html__( 'Email when a prompt is denied (enforcement only — not learn mode)', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Messages are attributed to HandL AICAC so you can tell a blocked tool call from an upstream plugin bug. Uses wp_mail only.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p style="margin-top:8px;"><label for="handl-aicac-alert-email">' . esc_html__( 'Recipient', 'handl-ai-connector-access-control' ) . '</label><br />';
+		echo '<input type="email" class="regular-text" id="handl-aicac-alert-email" name="handl_aicac_alert_email" value="' . esc_attr( $alert_email ) . '" placeholder="' . esc_attr( (string) get_option( 'admin_email' ) ) . '" />';
+		echo '<br /><span class="description">' . esc_html__( 'Leave empty to use the site admin email.', 'handl-ai-connector-access-control' ) . '</span></p>';
+		echo '<p style="margin-top:8px;">';
+		echo '<label><input type="radio" name="handl_aicac_alert_mode" value="immediate" ' . checked( $alert_mode, 'immediate', false ) . ' /> ';
+		echo esc_html__( 'Immediate (rate-limited to 20/hour; overflow and failed sends drain via hourly cron)', 'handl-ai-connector-access-control' ) . '</label><br />';
+		echo '<label><input type="radio" name="handl_aicac_alert_mode" value="digest" ' . checked( $alert_mode, 'digest', false ) . ' /> ';
+		echo esc_html__( 'Hourly digest (cron; primary delivery)', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '</p>';
+		if ( $pending > 0 ) {
+			echo '<p class="description"><strong>' . esc_html(
+				sprintf(
+					/* translators: %d: queued denial count */
+					_n( '%d denial queued for the next digest.', '%d denials queued for the next digest.', $pending, 'handl-ai-connector-access-control' ),
+					$pending
+				)
+			) . '</strong></p>';
+		}
+		echo '</td>';
+		echo '</tr>';
+
+		// F3: estimated $ rates (observability only).
+		$rates = Cost::rates_from_policy( $policy );
+		echo '<tr>';
+		echo '<th scope="row">' . esc_html__( 'Estimated cost rates', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<td>';
+		echo '<p class="description" style="margin-top:0;">' . esc_html__( 'Rough USD per 1M tokens for the audit “est. $” column only. Not billing, not enforcement — placeholders so you can scan spend-ish signal from retained logs.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<label for="handl-aicac-est-in">' . esc_html__( 'Input (prompt) $/1M', 'handl-ai-connector-access-control' ) . '</label> ';
+		echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="handl-aicac-est-in" name="handl_aicac_est_usd_input_per_m" value="' . esc_attr( (string) $rates['input_per_m'] ) . '" /> ';
+		echo '<label for="handl-aicac-est-out" style="margin-left:12px;">' . esc_html__( 'Output (completion) $/1M', 'handl-ai-connector-access-control' ) . '</label> ';
+		echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="handl-aicac-est-out" name="handl_aicac_est_usd_output_per_m" value="' . esc_attr( (string) $rates['output_per_m'] ) . '" />';
+		echo '</td>';
+		echo '</tr>';
+
 		echo '</table>';
 	}
 
@@ -1353,6 +1449,20 @@ final class Admin {
 		if ( false !== $posted_log_limit && null !== $posted_log_limit ) {
 			$policy['log_limit'] = (int) $posted_log_limit;
 		}
+
+		$posted_alert = filter_input( INPUT_POST, 'handl_aicac_alert_on_deny', FILTER_UNSAFE_RAW );
+		$policy['alert_on_deny'] = ! empty( $posted_alert );
+		$policy['alert_mode']    = Alerts::sanitize_mode( filter_input( INPUT_POST, 'handl_aicac_alert_mode', FILTER_UNSAFE_RAW ) );
+		$policy['alert_email']   = Alerts::sanitize_email( filter_input( INPUT_POST, 'handl_aicac_alert_email', FILTER_UNSAFE_RAW ) );
+
+		$policy['est_usd_input_per_m']  = Cost::sanitize_rate(
+			filter_input( INPUT_POST, 'handl_aicac_est_usd_input_per_m', FILTER_UNSAFE_RAW ),
+			Cost::DEFAULT_INPUT_PER_M
+		);
+		$policy['est_usd_output_per_m'] = Cost::sanitize_rate(
+			filter_input( INPUT_POST, 'handl_aicac_est_usd_output_per_m', FILTER_UNSAFE_RAW ),
+			Cost::DEFAULT_OUTPUT_PER_M
+		);
 	}
 
 	/**
@@ -1589,14 +1699,20 @@ final class Admin {
 			echo '<br /><span class="description handl-aicac-family-label">' . esc_html( $family_label ) . '</span>';
 		}
 		echo '</td>';
-		echo '<td class="column-provider"><code>' . esc_html( $provider ?: '—' ) . '</code></td>';
+		echo '<td class="column-provider"><code>' . esc_html( $provider ?: '—' ) . '</code>';
+		// Observability honesty: inferred provider/model must not look like builder-set facts.
+		if ( $model_inferred && $provider ) {
+			echo '<br /><span class="description handl-aicac-inferred-label" style="font-size:11px;">' . esc_html__( 'inferred', 'handl-ai-connector-access-control' ) . '</span>';
+		}
+		echo '</td>';
 		echo '<td class="column-model"><code>' . esc_html( $model ?: '—' ) . '</code>';
 		if ( $model_inferred && $model ) {
-			echo '<br /><span class="description" style="font-size:11px;">' . esc_html__( 'auto-resolved', 'handl-ai-connector-access-control' ) . '</span>';
+			echo '<br /><span class="description handl-aicac-inferred-label" style="font-size:11px;">' . esc_html__( 'inferred', 'handl-ai-connector-access-control' ) . '</span>';
 		}
 		echo '</td>';
 		echo '<td class="column-tokens">' . $this->render_token_count( $input_tokens ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo '<td class="column-tokens">' . $this->render_token_count( $output_tokens, $thought_tokens ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo '<td class="column-tokens">' . $this->render_est_cost_cell( $input_tokens, $output_tokens, $policy ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo '<td>';
 		if ( $plugin ) {
 			echo '<strong>' . esc_html( $plugin_label ) . '</strong><br /><code>' . esc_html( $plugin ) . '</code>';
@@ -1653,6 +1769,35 @@ final class Admin {
 		}
 
 		return $html;
+	}
+
+	/**
+	 * Estimated USD cell — observability only; never enforcement.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function render_est_cost_cell( ?int $input_tokens, ?int $output_tokens, array $policy ): string {
+		if ( null === $input_tokens && null === $output_tokens ) {
+			return '<span class="handl-aicac-muted">—</span>';
+		}
+
+		$usd = Cost::estimate_usd( $input_tokens, $output_tokens, Cost::rates_from_policy( $policy ) );
+		if ( null === $usd ) {
+			return '<span class="handl-aicac-muted">—</span>';
+		}
+
+		$using_defaults = Cost::using_default_rates( $policy );
+		$title          = $using_defaults
+			? __( 'Rough estimate using built-in default placeholder rates × tokens. Not a bill — set rates under Estimated cost rates.', 'handl-ai-connector-access-control' )
+			: __( 'Rough estimate from configured rates × tokens. Not a bill.', 'handl-ai-connector-access-control' );
+		$label          = $using_defaults
+			? __( 'est. · default rates', 'handl-ai-connector-access-control' )
+			: __( 'est.', 'handl-ai-connector-access-control' );
+
+		return '<span class="handl-aicac-est-cost" title="' . esc_attr( $title ) . '">'
+			. esc_html( Cost::format_usd( $usd ) )
+			. '<br /><span class="description" style="font-size:11px;">' . esc_html( $label ) . '</span>'
+			. '</span>';
 	}
 
 	/**

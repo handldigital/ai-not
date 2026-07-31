@@ -99,6 +99,11 @@ final class Policy {
 
 		$this->log_event( $event );
 
+		// Observability only: opt-in denial email / digest. Never changes $prevent.
+		if ( $prevent && empty( $policy['audit_only'] ) ) {
+			Alerts::maybe_notify_denial( $event, $policy );
+		}
+
 		return $prevent;
 	}
 
@@ -591,6 +596,13 @@ final class Policy {
 		}
 		$policy['denied_tools'] = self::sanitize_denied_tools( $tools_raw ?? array() );
 
+		// F3: denial alerts + estimated-$ rates (observability only).
+		$policy['alert_on_deny'] = (bool) ( $policy['alert_on_deny'] ?? false );
+		$policy['alert_mode']    = Alerts::sanitize_mode( $policy['alert_mode'] ?? 'immediate' );
+		$policy['alert_email']   = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
+		$policy['est_usd_input_per_m']  = Cost::sanitize_rate( $policy['est_usd_input_per_m'] ?? Cost::DEFAULT_INPUT_PER_M, Cost::DEFAULT_INPUT_PER_M );
+		$policy['est_usd_output_per_m'] = Cost::sanitize_rate( $policy['est_usd_output_per_m'] ?? Cost::DEFAULT_OUTPUT_PER_M, Cost::DEFAULT_OUTPUT_PER_M );
+
 		return $policy;
 	}
 
@@ -656,7 +668,19 @@ final class Policy {
 		// Drop legacy key on save so the option stores the honest name.
 		unset( $policy['denied_abilities'] );
 
+		$policy['alert_on_deny'] = ! empty( $policy['alert_on_deny'] );
+		$policy['alert_mode']    = Alerts::sanitize_mode( $policy['alert_mode'] ?? 'immediate' );
+		$policy['alert_email']   = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
+		$policy['est_usd_input_per_m']  = Cost::sanitize_rate( $policy['est_usd_input_per_m'] ?? Cost::DEFAULT_INPUT_PER_M, Cost::DEFAULT_INPUT_PER_M );
+		$policy['est_usd_output_per_m'] = Cost::sanitize_rate( $policy['est_usd_output_per_m'] ?? Cost::DEFAULT_OUTPUT_PER_M, Cost::DEFAULT_OUTPUT_PER_M );
+
 		update_option( Plugin::OPTION_KEY, $policy, false );
+		Alerts::maybe_schedule( $policy );
+
+		// Issue 7: disabling alerts must not leave denial metadata queued.
+		if ( empty( $policy['alert_on_deny'] ) ) {
+			Alerts::clear_digest_queue();
+		}
 	}
 
 	/**

@@ -4,7 +4,7 @@ Tags: ai, governance, security, handl, ai client
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.8
+Stable tag: 1.0.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -24,11 +24,13 @@ Default behavior is **allow**.
 
 **Emergency kill switch** blocks all AI Client calls except plugins you list as exceptions.
 
+**Denial email alerts** (opt-in) notify an admin when enforcement blocks a prompt — immediate (rate-limited) or hourly digest. **Estimated $** on the audit log is a rough token × rate placeholder, not billing. When WordPress disables AI site-wide via `wp_supports_ai`, an honesty banner explains why the audit log may be empty.
+
 Caller attribution is best-effort and is determined by inspecting the PHP call stack and mapping file paths to installed plugins.
 
 == Privacy / Data ==
 
-This plugin does not send data to any external service.
+By default this plugin does **not** send data to any external service. Two **opt-in** features may store or transmit call metadata; both are **off by default**.
 
 If you enable **recent-call logging** in Settings → HandL AI Connector Access Control, it stores a local log in the WordPress options table containing:
 
@@ -41,11 +43,20 @@ If you enable **recent-call logging** in Settings → HandL AI Connector Access 
 - Input and output token counts when the AI Client completes a generation (best-effort)
 - Best-effort calling plugin (plugin basename) and source file
 - Current user id and display name
-- Request URI
+- Full request URI (including query string, kept only on this site)
 
 Logs are kept as a **count-based ring buffer** (default 200 entries, configurable 20–1000). There is **no time-based TTL**—older rows drop only when the buffer is full.
 
-Logging is **disabled by default**.
+If you enable **denial email alerts**, the plugin sends a message via WordPress `wp_mail` when enforcement blocks a prompt (immediate rate-limited mail, or an hourly digest). The recipient is the address you configure, or the site `admin_email` if left empty — that may be any address you enter, and mail is delivered through whatever transport your site uses (core PHP mail or an SMTP / transactional-mail plugin). Alert messages include:
+
+- Timestamp
+- Calling plugin (best-effort basename)
+- AI Client operation and capability family
+- Denial reason and any matched blocked tools
+- Provider and model when known (may be labeled inferred)
+- Request path only (query string is stripped before mail; full URI stays in the local log if logging is enabled)
+
+Alert mail does **not** include prompt preview or user identity. Digest rows waiting to send are stored in a local options queue (path-only URI) and are removed when alerts are turned off or the plugin is uninstalled.
 
 == Installation ==
 
@@ -67,6 +78,20 @@ No. It is best-effort and may be unknown or ambiguous for some execution paths (
 2. Recent AI calls audit trail — review provider, model, prompt preview, user, and request URI for each AI Client call.
 
 == Changelog ==
+
+= 1.0.9 =
+* Denial email alerts (opt-in): immediate rate-limited mail or hourly digest via wp_mail; attributed to HandL AICAC.
+* Privacy section documents what alerts transmit, that they are opt-in/off by default, and that mail uses the site's transport.
+* Alert mail uses path-only URI (query string stripped); full URI remains local-log only.
+* wp_mail failures are contained (throwing SMTP replacements cannot fatal a denied AI call).
+* Alert send deferred to shutdown so the AI Client denial filter path does not block on SMTP (connection release is not claimed — FastCGI typically holds until shutdown completes).
+* Immediate-mode failures and rate-limit overflow drain via the same hourly cron safety net (scheduled whenever alert_on_deny is on, not only in digest mode).
+* Digest queue cleared when alerts are disabled; uninstall removes digest queue, rate option, and cron event.
+* Digest cron self-heals on init if the scheduled event was lost.
+* Honesty banner when AI is disabled site-wide via wp_supports_ai (audit intentionally empty because core short-circuits before our filter).
+* Estimated-$ column on the recent-call log from retained token counts × configurable $/1M rates (observability only; labeled est./default rates).
+* Inferred provider/model values labeled "inferred" in the audit UI (observability honesty — not enforcement).
+* PHP 7.4 nested-POST filter_input path for the operation matrix verified PASS on PHP 7.4.33 cgi.
 
 = 1.0.8 =
 * AI tool arming (caller intent): deny prompts that arm denied tools (`functionDeclarations` — WordPress abilities and custom tools) at prevent time.
