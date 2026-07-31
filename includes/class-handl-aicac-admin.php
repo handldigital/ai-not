@@ -743,6 +743,9 @@ final class Admin {
 		echo '</p>';
 		echo '</div></div>';
 
+		// Secondary tiles: 2-col on wide viewports (CSS); coverage stays full-width above.
+		echo '<div class="handl-aicac-dashboard-grid">';
+
 		// --- Safety / control ---
 		echo '<div class="postbox handl-aicac-tile handl-aicac-tile--safety">';
 		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Safety & control', 'handl-ai-connector-access-control' ) . '</h2></div>';
@@ -776,10 +779,10 @@ final class Admin {
 				echo ' ' . esc_html__( '(custom rates)', 'handl-ai-connector-access-control' );
 			}
 			echo '</span></p>';
-			echo '<table class="widefat striped" style="max-width:36em;"><thead><tr>';
+			echo '<table class="widefat striped handl-aicac-tile-table"><thead><tr>';
 			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'Est. $', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th class="column-num">' . esc_html__( 'Est. $', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '</tr></thead><tbody>';
 			$i = 0;
 			foreach ( $plugin_spend as $p => $row ) {
@@ -791,8 +794,8 @@ final class Admin {
 					? __( 'unknown', 'handl-ai-connector-access-control' )
 					: ( isset( $plugins[ $p ]['Name'] ) ? (string) $plugins[ $p ]['Name'] : $p );
 				echo '<tr><td>' . esc_html( $label ) . '</td>';
-				echo '<td>$' . esc_html( number_format_i18n( $row['usd'], 2 ) ) . '</td>';
-				echo '<td>' . esc_html( number_format_i18n( $row['calls'] ) ) . '</td></tr>';
+				echo '<td class="column-num">$' . esc_html( number_format_i18n( $row['usd'], 2 ) ) . '</td>';
+				echo '<td class="column-num">' . esc_html( number_format_i18n( $row['calls'] ) ) . '</td></tr>';
 			}
 			echo '</tbody></table>';
 		} else {
@@ -849,9 +852,9 @@ final class Admin {
 		if ( empty( $offenders ) ) {
 			echo '<p class="description">' . esc_html__( 'No attributed AI Client callers in the retained log.', 'handl-ai-connector-access-control' ) . '</p>';
 		} else {
-			echo '<table class="widefat striped"><thead><tr>';
+			echo '<table class="widefat striped handl-aicac-tile-table"><thead><tr>';
 			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '<th>' . esc_html__( 'Rule', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '<th>' . esc_html__( 'Actions', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '</tr></thead><tbody>';
@@ -865,7 +868,7 @@ final class Admin {
 				$explicit = isset( $policy['plugins'][ $p ] ) ? (string) $policy['plugins'][ $p ] : '';
 				echo '<tr>';
 				echo '<td><strong>' . esc_html( $label ) . '</strong><br /><code>' . esc_html( $p ) . '</code></td>';
-				echo '<td>' . esc_html( number_format_i18n( $calls ) ) . '</td>';
+				echo '<td class="column-num">' . esc_html( number_format_i18n( $calls ) ) . '</td>';
 				echo '<td>' . esc_html( $this->format_explicit_rule_label( $explicit ) ) . '</td>';
 				echo '<td class="handl-aicac-quick-actions">';
 				// Single-click deny (board Q3); return to dashboard with undo notice.
@@ -886,9 +889,9 @@ final class Admin {
 		if ( ! empty( $shadow_top ) ) {
 			echo '<h3 style="margin-top:1.25em;">' . esc_html__( 'Outside AI Client (observe only)', 'handl-ai-connector-access-control' ) . '</h3>';
 			echo '<p class="description">' . esc_html__( 'These callers bypass the AI Client. Allow/Deny rules cannot reach them.', 'handl-ai-connector-access-control' ) . '</p>';
-			echo '<table class="widefat striped"><thead><tr>';
+			echo '<table class="widefat striped handl-aicac-tile-table"><thead><tr>';
 			echo '<th>' . esc_html__( 'Caller', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '<th>' . esc_html__( 'Actions', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '</tr></thead><tbody>';
 			$i = 0;
@@ -907,7 +910,7 @@ final class Admin {
 					echo '<br /><code>' . esc_html( (string) $row['host'] ) . '</code>';
 				}
 				echo '</td>';
-				echo '<td>' . esc_html( number_format_i18n( (int) $row['calls'] ) ) . '</td>';
+				echo '<td class="column-num">' . esc_html( number_format_i18n( (int) $row['calls'] ) ) . '</td>';
 				echo '<td><span class="description handl-aicac-not-governable">';
 				echo esc_html__( 'not governed by these rules', 'handl-ai-connector-access-control' );
 				echo '</span></td></tr>';
@@ -916,6 +919,7 @@ final class Admin {
 		}
 		echo '</div></div>';
 
+		echo '</div>'; // .handl-aicac-dashboard-grid
 		echo '</div>'; // .handl-aicac-dashboard
 	}
 
