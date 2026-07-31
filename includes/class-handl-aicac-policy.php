@@ -97,16 +97,31 @@ final class Policy {
 			self::$pending_token_log_keys[] = $event['log_key'];
 		}
 
-		// F4 experimental: per-plugin force on allowed *generating* prompts only.
-		// Support checks and generations share the allow/deny *decision* (F1 family
-		// rule), but must not share the *arming*: the rule answers "may it," the
-		// arm asserts "it will happen and be verified," and only generations fire
-		// BeforeGenerateResultEvent to consume that expectation. Arming a support
-		// check leaves a stale pending expectation that can fail-close the next
-		// generation (including an unpinned plugin) — fail-closed against the wrong party.
+		// F4 experimental: per-plugin force on allowed *generating* prompts only,
+		// and only outside learn mode. Support checks and generations share the
+		// allow/deny *decision* (F1 family rule), but must not share the *arming*:
+		// the rule answers "may it," the arm asserts "it will happen and be
+		// verified," and only generations fire BeforeGenerateResultEvent to consume
+		// that expectation. Arming a support check leaves a stale pending
+		// expectation that can fail-close the next generation (including an
+		// unpinned plugin) — fail-closed against the wrong party.
+		// Learn mode (audit_only) must stay observation-only: force mutates the
+		// route and fail-closes on mismatch, which would block calls — the same
+		// promise-vs-mechanism gap as an unqualified "without blocking" claim.
 		// Mutates the shallow-cloned builder's shared inner; final route verified later.
 		// Pin follows detected caller (nearest plugin frame) — not a spend guarantee.
-		if ( ! $prevent && self::is_generating_operation( $operation ) ) {
+		//
+		// Sibling of the arming gate (not inside it): empty $operation makes
+		// is_generating_operation() false, so the skip whitelist below is unreachable.
+		// Statement is only what the mechanism knows — force was never evaluated —
+		// not "a generation missed its pin" (the call might have been a support check).
+		// Observability only; stays out of the unforced count. Suppressed unless at
+		// least one pin exists (resolve_route pins-exist precedent).
+		if ( ! $prevent && '' === $operation && ! empty( Model_Force::force_map( $policy ) ) ) {
+			$event['model_force_skipped'] = 'operation_unresolved';
+		}
+
+		if ( ! $prevent && empty( $policy['audit_only'] ) && self::is_generating_operation( $operation ) ) {
 			$force = Model_Force::maybe_apply( $builder, $policy, $plugin );
 			if ( ! empty( $force['applied'] ) ) {
 				$event['model_forced']    = true;
