@@ -97,6 +97,49 @@ final class Policy {
 			self::$pending_token_log_keys[] = $event['log_key'];
 		}
 
+		// F4 experimental: per-plugin force on allowed *generating* prompts only,
+		// and only outside learn mode. Support checks and generations share the
+		// allow/deny *decision* (F1 family rule), but must not share the *arming*:
+		// the rule answers "may it," the arm asserts "it will happen and be
+		// verified," and only generations fire BeforeGenerateResultEvent to consume
+		// that expectation. Arming a support check leaves a stale pending
+		// expectation that can fail-close the next generation (including an
+		// unpinned plugin) — fail-closed against the wrong party.
+		// Learn mode (audit_only) must stay observation-only: force mutates the
+		// route and fail-closes on mismatch, which would block calls — the same
+		// promise-vs-mechanism gap as an unqualified "without blocking" claim.
+		// Mutates the shallow-cloned builder's shared inner; final route verified later.
+		// Pin follows detected caller (nearest plugin frame) — not a spend guarantee.
+		//
+		// Sibling of the arming gate (not inside it): empty $operation makes
+		// is_generating_operation() false, so the skip whitelist below is unreachable.
+		// Statement is only what the mechanism knows — force was never evaluated —
+		// not "a generation missed its pin" (the call might have been a support check).
+		// Observability only; stays out of the unforced count. Suppressed unless at
+		// least one pin exists (resolve_route pins-exist precedent).
+		if ( ! $prevent && '' === $operation && ! empty( Model_Force::has_any_force_rules( $policy ) ) ) {
+			$event['model_force_skipped'] = 'operation_unresolved';
+		}
+
+		if ( ! $prevent && empty( $policy['audit_only'] ) && self::is_generating_operation( $operation ) ) {
+			$force = Model_Force::maybe_apply( $builder, $policy, $plugin );
+			if ( ! empty( $force['applied'] ) ) {
+				$event['model_forced']    = true;
+				$event['forced_provider'] = $force['provider'] ?? '';
+				$event['forced_model']    = $force['model'] ?? '';
+				$event['forced_source']   = $force['source'] ?? 'plugin';
+			} else {
+				$skip = (string) ( $force['reason'] ?? '' );
+				// Log countable gaps: unattributed while pins exist, plus hard failures.
+				if ( in_array( $skip, array( 'unattributed', 'clone_incompatible', 'apply_threw', 'no_preference_api', 'incomplete' ), true ) ) {
+					$event['model_force_skipped'] = $skip;
+					if ( 'unattributed' === $skip ) {
+						$event['model_force_unforced'] = true;
+					}
+				}
+			}
+		}
+
 		$this->log_event( $event );
 
 		// Observability only: opt-in denial email / digest. Never changes $prevent.
@@ -603,6 +646,19 @@ final class Policy {
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate( $policy['est_usd_input_per_m'] ?? Cost::DEFAULT_INPUT_PER_M, Cost::DEFAULT_INPUT_PER_M );
 		$policy['est_usd_output_per_m'] = Cost::sanitize_rate( $policy['est_usd_output_per_m'] ?? Cost::DEFAULT_OUTPUT_PER_M, Cost::DEFAULT_OUTPUT_PER_M );
 
+		// F4 experimental per-plugin model force (off by default; empty map = no force).
+		$policy['model_force_plugins']               = Model_Force::sanitize_force_map( $policy['model_force_plugins'] ?? array() );
+		$policy['model_force_unattributed']          = Model_Force::sanitize_unattributed_mode( $policy['model_force_unattributed'] ?? 'none' );
+		$policy['model_force_unattributed_provider'] = Model_Force::sanitize_id( $policy['model_force_unattributed_provider'] ?? '' );
+		$policy['model_force_unattributed_model']    = Model_Force::sanitize_id( $policy['model_force_unattributed_model'] ?? '' );
+		// Incomplete unattributed "force" falls back to none (same as incomplete site-wide before).
+		if ( 'force' === $policy['model_force_unattributed']
+			&& ( '' === $policy['model_force_unattributed_provider'] || '' === $policy['model_force_unattributed_model'] ) ) {
+			$policy['model_force_unattributed'] = 'none';
+		}
+		// Drop superseded site-wide keys if present in stored option (read path normalizes).
+		unset( $policy['model_force_enabled'], $policy['model_force_provider'], $policy['model_force_model'] );
+
 		return $policy;
 	}
 
@@ -673,6 +729,17 @@ final class Policy {
 		$policy['alert_email']   = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate( $policy['est_usd_input_per_m'] ?? Cost::DEFAULT_INPUT_PER_M, Cost::DEFAULT_INPUT_PER_M );
 		$policy['est_usd_output_per_m'] = Cost::sanitize_rate( $policy['est_usd_output_per_m'] ?? Cost::DEFAULT_OUTPUT_PER_M, Cost::DEFAULT_OUTPUT_PER_M );
+
+		$policy['model_force_plugins']               = Model_Force::sanitize_force_map( $policy['model_force_plugins'] ?? array() );
+		$policy['model_force_unattributed']          = Model_Force::sanitize_unattributed_mode( $policy['model_force_unattributed'] ?? 'none' );
+		$policy['model_force_unattributed_provider'] = Model_Force::sanitize_id( $policy['model_force_unattributed_provider'] ?? '' );
+		$policy['model_force_unattributed_model']    = Model_Force::sanitize_id( $policy['model_force_unattributed_model'] ?? '' );
+		if ( 'force' === $policy['model_force_unattributed']
+			&& ( '' === $policy['model_force_unattributed_provider'] || '' === $policy['model_force_unattributed_model'] ) ) {
+			$policy['model_force_unattributed'] = 'none';
+		}
+		// Site-wide pin removed: per-plugin replaces it. Never re-store legacy keys.
+		unset( $policy['model_force_enabled'], $policy['model_force_provider'], $policy['model_force_model'] );
 
 		update_option( Plugin::OPTION_KEY, $policy, false );
 		Alerts::maybe_schedule( $policy );
