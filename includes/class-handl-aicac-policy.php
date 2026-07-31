@@ -772,27 +772,44 @@ final class Policy {
 	}
 
 	/**
-	 * Seconds within which repeated direct_http for the same plugin+host collapses
-	 * into one row (count++). Board F6 design question 2026-07-31: deliberate YES.
+	 * Idle seconds after last activity before a new direct_http row is started
+	 * for the same collapse key (sliding idle timeout — not a fixed bucket).
+	 * Board F6 design question 2026-07-31: deliberate YES to collapse.
 	 */
 	private const DIRECT_HTTP_COLLAPSE_WINDOW = 300;
 
 	/**
 	 * Append a retained log row (AI Client events and F6 direct_http observations).
 	 *
-	 * STORAGE CONTRACT (board 2026-07-31, binding on F6):
-	 * AI Client rows and channel=direct_http rows share ONE FIFO ring buffer
-	 * (`log_limit`, default 200, clamp 20–1000). One window is the only way F5
-	 * coverage buckets (M = N + D) legitimately sum. Separate per-channel budgets
+	 * STORAGE CONTRACT (board 2026-07-31, binding on F6) — units in the table:
+	 *
+	 * | Field            | Value                                      | Unit / notes                          |
+	 * |------------------|--------------------------------------------|---------------------------------------|
+	 * | channel          | direct_http (AI Client omits / ai_client)  | enum                                  |
+	 * | ts               | last activity in cluster (or row time)     | unix seconds                          |
+	 * | first_ts         | first activity when collapsed              | unix seconds (optional)               |
+	 * | plugin, file, caller | first observation retained on collapse | attribution strings / null            |
+	 * | host             | request host only                          | hostname                              |
+	 * | shadow_provider  | matched id or empty                        | enum string                           |
+	 * | decision         | observe (F6 v1 not enforcement)            | enum                                  |
+	 * | count            | HTTP *calls* (missing = 1)                 | calls — same unit as AI Client rows   |
+	 * | (no body / keys) | privacy                                    | —                                     |
+	 * | ring buffer      | SHARED with AI Client rows                 | log_limit slots (default 200)         |
+	 *
+	 * One shared FIFO is the only way F5 coverage buckets (M = N + D) sum.
+	 * D = sum of count over direct_http rows. Separate per-channel budgets
 	 * would re-introduce the two-denominator honesty bug in storage form.
 	 *
-	 * CHATTY-HOST COLLAPSE (F6 v1, deliberate): for direct_http only, if a row for
-	 * the same plugin+host exists within DIRECT_HTTP_COLLAPSE_WINDOW seconds, that
-	 * row's `count` is incremented and `ts` refreshed instead of appending. D for
-	 * coverage is the sum of counts; each collapsed cluster still costs one ring
-	 * slot. Per-request de-dupe in Shadow_AI is a separate first line within one
-	 * PHP request. Deciding against collapse would leave F6's exact target (a
-	 * chatty shadow plugin) able to erase the rest of the log.
+	 * CHATTY-HOST COLLAPSE (F6 v1, deliberate):
+	 * - Match key: attributed plugin|host; unattributed host|file (so unknown
+	 *   callers do not all merge into one row).
+	 * - Idle timeout DIRECT_HTTP_COLLAPSE_WINDOW from last `ts`.
+	 * - On collapse: add incoming count (not hardcoded +1), keep first
+	 *   file/caller/uri/user_id, set first_ts, refresh ts, MOVE row to tail
+	 *   so active clusters are not evicted ahead of idle AI Client rows and
+	 *   the array stays ordered by last activity for FIFO + span.
+	 * - Shadow_AI tallies calls in-request and flushes once on shutdown so
+	 *   count means calls, not page loads (Lisa gate-1 / board preference).
 	 *
 	 * Public so Shadow_AI can write the same ring buffer without duplicating the gate.
 	 *
@@ -831,19 +848,27 @@ final class Policy {
 	}
 
 	/**
-	 * Collapse a direct_http observation into the newest matching plugin+host row
-	 * if it falls inside DIRECT_HTTP_COLLAPSE_WINDOW.
+	 * Collapse a direct_http observation into a matching active cluster, or fail.
+	 *
+	 * On success the matched row is removed from its current index and appended
+	 * at the tail (last-activity order restored for FIFO eviction and Δ5 span).
 	 *
 	 * @param array<int,mixed>    $log   Log array (modified in place on success).
-	 * @param array<string,mixed> $event Incoming observation.
+	 * @param array<string,mixed> $event Incoming observation (count = calls).
 	 * @return bool True if collapsed (caller must persist $log).
 	 */
 	private static function collapse_direct_http_into_log( array &$log, array $event ): bool {
 		$host   = isset( $event['host'] ) ? (string) $event['host'] : '';
 		$plugin = ( isset( $event['plugin'] ) && is_string( $event['plugin'] ) ) ? (string) $event['plugin'] : '';
+		$file   = ( isset( $event['file'] ) && is_string( $event['file'] ) ) ? (string) $event['file'] : '';
 		$now    = isset( $event['ts'] ) ? (int) $event['ts'] : time();
 		if ( $now <= 0 ) {
 			$now = time();
+		}
+
+		$incoming = isset( $event['count'] ) ? (int) $event['count'] : 1;
+		if ( $incoming < 1 ) {
+			$incoming = 1;
 		}
 
 		for ( $i = count( $log ) - 1; $i >= 0; $i-- ) {
@@ -862,8 +887,15 @@ final class Policy {
 			if ( $row_plugin !== $plugin ) {
 				continue;
 			}
+			// Unattributed: also require matching file so distinct unknown callers stay separate.
+			if ( '' === $plugin ) {
+				$row_file = ( isset( $row['file'] ) && is_string( $row['file'] ) ) ? (string) $row['file'] : '';
+				if ( $row_file !== $file ) {
+					continue;
+				}
+			}
 
-			// Newest matching plugin+host row. If outside the window, start a new row.
+			// Newest matching row. Idle timeout from last activity (sliding, not fixed bucket).
 			$row_ts = isset( $row['ts'] ) ? (int) $row['ts'] : 0;
 			if ( $row_ts > 0 && ( $now - $row_ts ) > self::DIRECT_HTTP_COLLAPSE_WINDOW ) {
 				return false;
@@ -873,26 +905,18 @@ final class Policy {
 			if ( $prior < 1 ) {
 				$prior = 1;
 			}
-			$row['count'] = $prior + 1;
+			// Unit: calls. Add the incoming call tally (never discard event['count']).
+			$row['count'] = $prior + $incoming;
 			if ( ! isset( $row['first_ts'] ) ) {
 				$row['first_ts'] = $row_ts > 0 ? $row_ts : $now;
 			}
 			$row['ts'] = $now;
-			// Refresh attribution to the latest observation of this cluster.
-			if ( array_key_exists( 'file', $event ) ) {
-				$row['file'] = $event['file'];
-			}
-			if ( array_key_exists( 'caller', $event ) ) {
-				$row['caller'] = $event['caller'];
-			}
-			if ( array_key_exists( 'uri', $event ) ) {
-				$row['uri'] = $event['uri'];
-			}
-			if ( array_key_exists( 'user_id', $event ) ) {
-				$row['user_id'] = $event['user_id'];
-			}
+			// Keep first observation's file/caller/uri/user_id (do not overwrite with newest).
+			// Shadow_provider / host / plugin already matched; leave them alone.
 
-			$log[ $i ] = $row;
+			// Move to tail: restores last-activity order (Δ5 span, FIFO eviction of idle rows).
+			array_splice( $log, $i, 1 );
+			$log[] = $row;
 			return true;
 		}
 

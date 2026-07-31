@@ -20,9 +20,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  * coverage tile can later widen its denominator (F5) without a second %.
  *
  * STORAGE: writes via Policy::append_log_event into the SAME ring buffer as
- * AI Client rows (board 2026-07-31). Chatty-host collapse (plugin+host within
- * a short window → count++) lives in that append path. This class only does
- * per-request de-dupe as a first line within one PHP request.
+ * AI Client rows (board 2026-07-31). Chatty-host collapse lives in that append
+ * path. This class tallies in-request HTTP calls and flushes once on shutdown
+ * so `count` means *calls* (same unit as AI Client rows), not page loads.
  *
  * Exclusion: traffic whose stack already includes the core AI Client HTTP
  * path is not "shadow" — that path is governed by wp_ai_client_prevent_prompt.
@@ -31,11 +31,15 @@ final class Shadow_AI {
 	private static ?Shadow_AI $instance = null;
 
 	/**
-	 * Per-request de-dupe: "plugin|host" already logged this request.
+	 * In-request tally + first observation per collapse key.
+	 * Avoids N update_option writes in one request; flushed once on shutdown.
 	 *
-	 * @var array<string,true>
+	 * @var array<string,array{tally:int,event:array<string,mixed>}>
 	 */
-	private static array $seen = array();
+	private static array $pending = array();
+
+	/** Whether shutdown flush is registered for this request. */
+	private static bool $flush_registered = false;
 
 	public static function instance(): Shadow_AI {
 		if ( null === self::$instance ) {
@@ -91,16 +95,20 @@ final class Shadow_AI {
 
 		$attrib = Attribution::resolve_from_backtrace();
 		$plugin = is_string( $attrib['plugin'] ?? null ) ? (string) $attrib['plugin'] : '';
-		// De-dupe key: unknown callers still de-dupe by host so a tight loop does not flood.
-		$dedupe_key = ( '' !== $plugin ? $plugin : '__unknown__' ) . '|' . $host;
-		if ( isset( self::$seen[ $dedupe_key ] ) ) {
-			return $preempt;
-		}
-		self::$seen[ $dedupe_key ] = true;
+		$file   = is_string( $attrib['file'] ?? null ) ? (string) $attrib['file'] : '';
+		// Key matches Policy collapse: attributed → plugin|host; unattributed → file|host
+		// so distinct unknown callers do not merge into one misleading row.
+		$dedupe_key = self::collapse_key( $plugin, $host, $file );
 
 		$path = isset( $parsed['path'] ) ? (string) $parsed['path'] : '/';
 		// Privacy: path only, never query string (may carry keys / tokens in bad clients).
 		$path = '' !== $path ? $path : '/';
+
+		if ( isset( self::$pending[ $dedupe_key ] ) ) {
+			// Same key again this request: tally another *call* (not a page load).
+			self::$pending[ $dedupe_key ]['tally']++;
+			return $preempt;
+		}
 
 		$event = array(
 			'channel'         => 'direct_http',
@@ -118,15 +126,59 @@ final class Shadow_AI {
 			// Path-only (no query). Reuses the log column named uri without expanding retention.
 			'uri'             => $path,
 			'user_id'         => get_current_user_id(),
+			// Unit: HTTP *calls* (Lisa gate-1 / board preference). Flushed tally may raise this.
+			'count'           => 1,
 		);
 
 		if ( ! empty( $policy['audit_only'] ) ) {
 			$event['audit_only'] = true;
 		}
 
-		Policy::append_log_event( $event );
+		self::$pending[ $dedupe_key ] = array(
+			'tally' => 1,
+			'event' => $event,
+		);
+
+		if ( ! self::$flush_registered ) {
+			self::$flush_registered = true;
+			// Priority 0: flush before other shutdown work that might exit early.
+			add_action( 'shutdown', array( self::class, 'flush_pending' ), 0 );
+		}
 
 		return $preempt;
+	}
+
+	/**
+	 * Collapse / de-dupe key. Attributed: plugin|host. Unattributed: __unknown__|host|file.
+	 */
+	public static function collapse_key( string $plugin, string $host, string $file = '' ): string {
+		if ( '' !== $plugin ) {
+			return $plugin . '|' . $host;
+		}
+		return '__unknown__|' . $host . '|' . $file;
+	}
+
+	/**
+	 * Write pending in-request tallies once. count = number of HTTP calls this request.
+	 * Public for tests / emergency flush; normally hooked on shutdown.
+	 */
+	public static function flush_pending(): void {
+		if ( empty( self::$pending ) ) {
+			return;
+		}
+
+		$batch = self::$pending;
+		// Clear first so a re-entrant observe during write cannot double-count.
+		self::$pending = array();
+
+		foreach ( $batch as $item ) {
+			$event           = $item['event'];
+			$tally           = isset( $item['tally'] ) ? (int) $item['tally'] : 1;
+			$event['count']  = $tally > 0 ? $tally : 1;
+			// ts is last call time in this request batch (first observation kept its fields).
+			$event['ts']     = time();
+			Policy::append_log_event( $event );
+		}
 	}
 
 	/**

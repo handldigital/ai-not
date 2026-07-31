@@ -50,7 +50,7 @@ If you enable **recent-call logging** in Settings → HandL AI Connector Access 
 - Full request URI (including query string, kept only on this site) for AI Client admin-request context
 - For **direct-HTTP AI observations** only: request **host** and **path** (query string stripped). No request body, no Authorization headers, no API keys. Channel label `direct_http` and matched provider id when known.
 
-Logs are kept as a **single shared count-based ring buffer** (default 200 entries, configurable 20–1000) for both AI Client rows and direct-HTTP AI observations. There is **no time-based TTL**—older rows drop only when the buffer is full. Repeated direct-HTTP observations of the same plugin + host within a short window are collapsed into one row with a `count` (so a chatty bypass does not erase the rest of the log).
+Logs are kept as a **single shared count-based ring buffer** (default 200 entries, configurable 20–1000) for both AI Client rows and direct-HTTP AI observations. There is **no time-based TTL**—older rows drop only when the buffer is full. Repeated direct-HTTP **calls** from the same attributed plugin + host (or the same unattributed file + host) that stay active within ~5 minutes of idle time are collapsed into one row whose `count` is the number of HTTP **calls** (same unit as AI Client rows). Active clusters move to the newest slot so a chatty bypass does not erase the rest of the log, and the log does not drop the chatty cluster ahead of idle rows.
 
 If you enable **denial email alerts**, the plugin sends a message via WordPress `wp_mail` when enforcement blocks a prompt (immediate rate-limited mail, or an hourly digest). The recipient is the address you configure, or the site `admin_email` if left empty — that may be any address you enter, and mail is delivered through whatever transport your site uses (core PHP mail or an SMTP / transactional-mail plugin). Alert messages include:
 
@@ -96,10 +96,11 @@ No. It pins the route for calls we attribute to that plugin’s nearest stack fr
 * Excludes core AI Client / php-ai-client stack traffic (those paths already hit `wp_ai_client_prevent_prompt`).
 * Retained rows: `channel=direct_http`, host, path-only (no query), shadow provider id, decision `observe` — no body, no Authorization headers.
 * STORAGE: direct_http rows share the same ring buffer as AI Client rows (one window so coverage buckets can sum).
-* Chatty-host collapse: same plugin+host within ~5 minutes increments `count` on the existing row instead of flooding the buffer; per-request de-dupe remains.
+* Chatty-host collapse: same attributed plugin+host (or unattributed file+host) with ~5 min idle timeout adds incoming call tallies into one row; active clusters move to the tail; first file/caller/path kept; `count` = HTTP **calls** (not page loads) via in-request tally + shutdown flush.
 * Same log gate as other observability (log_enabled or learn mode).
-* Audit filter “Outside AI Client”; Insights one-line count only (does not invent a second coverage %; sums collapsed counts).
+* Audit filter “Outside AI Client”; Insights one-line sum of call counts only (does not invent a second coverage %; sums collapsed `count`s).
 * Privacy / Data section documents host + path-only retention for direct-HTTP observations (ships with the PR that starts retaining the field).
+* Lisa gate-1 follow-up: count unit = calls; collapse moves to tail; unattributed keys include file; first observation fields retained.
 
 = 1.0.10 =
 * EXPERIMENTAL: per-plugin force of AI Client generations to a provider/model (Plugin rules table columns; empty = off; labeled EXPERIMENTAL in the UI).

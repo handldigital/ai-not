@@ -577,10 +577,10 @@ final class Admin {
 					'<p class="handl-aicac-insights-meta handl-aicac-insights-shadow">%s</p>',
 					esc_html(
 						sprintf(
-							/* translators: %d: number of direct-HTTP AI observations outside the AI Client */
+							/* translators: %d: sum of direct_http row counts (HTTP calls) outside the AI Client */
 							_n(
-								'%d observation of AI traffic outside the AI Client (seen, not governed by these rules).',
-								'%d observations of AI traffic outside the AI Client (seen, not governed by these rules).',
+								'%d AI HTTP call outside the AI Client (seen, not governed by these rules).',
+								'%d AI HTTP calls outside the AI Client (seen, not governed by these rules).',
 								$direct_http_count,
 								'handl-ai-connector-access-control'
 							),
@@ -1873,18 +1873,38 @@ final class Admin {
 			$cluster_count = isset( $row['count'] ) ? (int) $row['count'] : 1;
 			if ( $cluster_count > 1 ) {
 				echo '<br /><span class="description handl-aicac-shadow-count" style="font-size:11px;">';
-				echo esc_html(
-					sprintf(
-						/* translators: %d: times this plugin+host was observed in the collapse window */
-						_n(
-							'seen %d time in this window',
-							'seen %d times in this window',
+				// count = HTTP calls (not page loads). Span from first_ts..ts when collapsed.
+				$first_ts = isset( $row['first_ts'] ) ? (int) $row['first_ts'] : 0;
+				$last_ts  = $ts > 0 ? $ts : ( isset( $row['ts'] ) ? (int) $row['ts'] : 0 );
+				if ( $first_ts > 0 && $last_ts > 0 && $last_ts !== $first_ts ) {
+					echo esc_html(
+						sprintf(
+							/* translators: 1: call count, 2: first time, 3: last time */
+							_n(
+								'seen %1$d call between %2$s and %3$s',
+								'seen %1$d calls between %2$s and %3$s',
+								$cluster_count,
+								'handl-ai-connector-access-control'
+							),
 							$cluster_count,
-							'handl-ai-connector-access-control'
-						),
-						$cluster_count
-					)
-				);
+							wp_date( 'Y-m-d H:i:s', $first_ts ),
+							wp_date( 'Y-m-d H:i:s', $last_ts )
+						)
+					);
+				} else {
+					echo esc_html(
+						sprintf(
+							/* translators: %d: number of HTTP calls in this cluster */
+							_n(
+								'seen %d call',
+								'seen %d calls',
+								$cluster_count,
+								'handl-ai-connector-access-control'
+							),
+							$cluster_count
+						)
+					);
+				}
 				echo '</span>';
 			}
 		}
