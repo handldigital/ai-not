@@ -2036,10 +2036,12 @@ final class Admin {
 		echo '<td class="column-actions handl-aicac-quick-actions">';
 		// direct_http is observe-only: Allow/Deny write AI Client rules that cannot
 		// govern this traffic. A live button that is a no-op for the row shown is a
-		// false enforcement surface (F6 live gate / F5 item 5).
+		// false enforcement surface (F6 live gate / F5 item 5 / standing rule: the PR
+		// that introduces a row type owns every control that renders on that type).
+		// Wording matches the decision-column label — one concept, one phrase.
 		if ( $is_direct_http ) {
 			echo '<span class="description handl-aicac-not-governable" style="font-size:11px;">';
-			echo esc_html__( 'Not governable here', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'not governed by these rules', 'handl-ai-connector-access-control' );
 			echo '</span>';
 		} elseif ( $plugin ) {
 			$this->render_quick_rule_buttons( $plugin, $log_filters );
