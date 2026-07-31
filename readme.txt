@@ -43,6 +43,7 @@ If you enable **recent-call logging** in Settings → HandL AI Connector Access 
 - AI Client operation (e.g. `generate_text`, `is_supported_for_text_generation`) — or `direct_http` for shadow observations
 - Capability family (text / image / speech / tts / video / unknown) for AI Client rows
 - Provider and model when set on the prompt builder (or model preferences)
+- In learn mode: whether a configured model pin matched, and the provider/model you pinned
 - Truncated prompt preview and selected generation config (best-effort; AI Client rows only)
 - Input and output token counts when the AI Client completes a generation (best-effort)
 - Best-effort calling plugin (plugin basename) and source file

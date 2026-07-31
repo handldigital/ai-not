@@ -687,8 +687,8 @@ final class Admin {
 		echo '<p class="description handl-aicac-coverage-window">';
 		echo esc_html(
 			sprintf(
-				/* translators: 1: log_limit setting, 2: human span or em dash */
-				__( 'in the last %1$s logged events · spanning %2$s', 'handl-ai-connector-access-control' ),
+				/* translators: 1: log_limit (row slots), 2: human span or em dash */
+				__( 'from the last %1$s log entries · spanning %2$s', 'handl-ai-connector-access-control' ),
 				number_format_i18n( $coverage['log_limit'] ),
 				$coverage['span_label']
 			)
@@ -723,13 +723,15 @@ final class Admin {
 			)
 		);
 		echo '</p>';
+		// Calls (M) can exceed log_limit entries when direct_http rows collapse multiple HTTP calls.
+		echo '<p class="description">' . esc_html__( 'One log entry can represent many calls from the same plugin.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( $coverage['saturated'] ) {
 			echo '<div class="notice notice-warning inline"><p>';
 			echo esc_html(
 				sprintf(
-					/* translators: %d: log_limit */
-					__( 'Log is at its %d-event limit; older events have aged out. Raise the limit in Settings (Activity tab) for a longer window.', 'handl-ai-connector-access-control' ),
+					/* translators: %d: log_limit (row slots) */
+					__( 'Log is at its %d-entry limit; older entries have aged out. Raise the limit in Settings (Activity tab) for a longer window.', 'handl-ai-connector-access-control' ),
 					$coverage['log_limit']
 				)
 			);
@@ -2176,6 +2178,13 @@ final class Admin {
 		$return = sanitize_key( (string) $return );
 		if ( ! in_array( $return, array( 'dashboard', 'activity', 'rules' ), true ) ) {
 			$return = 'activity';
+		}
+
+		// set_plugin_rule() also accepts '' (clear) for undo — this caller must not.
+		// Widening the shared validator for undo must not relax Allow/Deny posts into
+		// silent rule-deletes (Lisa F5 should-fix).
+		if ( 'allow' !== $rule && 'deny' !== $rule ) {
+			return;
 		}
 
 		// Capture previous explicit rule for undo (empty string = Default).
