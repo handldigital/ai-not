@@ -564,10 +564,12 @@ final class Admin {
 				)
 			);
 			// F6: one-line count only — not a second coverage %. Charts below are AI Client rows.
+			// Sum of `count` on collapsed clusters (chatty-host collapse); missing count = 1.
 			$direct_http_count = 0;
 			foreach ( $log as $log_row ) {
 				if ( is_array( $log_row ) && isset( $log_row['channel'] ) && 'direct_http' === (string) $log_row['channel'] ) {
-					++$direct_http_count;
+					$cluster = isset( $log_row['count'] ) ? (int) $log_row['count'] : 1;
+					$direct_http_count += $cluster > 0 ? $cluster : 1;
 				}
 			}
 			if ( $direct_http_count > 0 ) {
@@ -1868,6 +1870,23 @@ final class Admin {
 			echo '<br /><span class="description handl-aicac-shadow-label" style="font-size:11px;">';
 			echo esc_html__( 'outside AI Client — not governed by these rules', 'handl-ai-connector-access-control' );
 			echo '</span>';
+			$cluster_count = isset( $row['count'] ) ? (int) $row['count'] : 1;
+			if ( $cluster_count > 1 ) {
+				echo '<br /><span class="description handl-aicac-shadow-count" style="font-size:11px;">';
+				echo esc_html(
+					sprintf(
+						/* translators: %d: times this plugin+host was observed in the collapse window */
+						_n(
+							'seen %d time in this window',
+							'seen %d times in this window',
+							$cluster_count,
+							'handl-ai-connector-access-control'
+						),
+						$cluster_count
+					)
+				);
+				echo '</span>';
+			}
 		}
 		// Learn-mode "would" is AI Client only — direct_http is observe-only (no would-enforce).
 		if ( ! $is_direct_http && ! empty( $policy['audit_only'] ) ) {

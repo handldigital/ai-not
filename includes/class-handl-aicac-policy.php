@@ -772,7 +772,27 @@ final class Policy {
 	}
 
 	/**
+	 * Seconds within which repeated direct_http for the same plugin+host collapses
+	 * into one row (count++). Board F6 design question 2026-07-31: deliberate YES.
+	 */
+	private const DIRECT_HTTP_COLLAPSE_WINDOW = 300;
+
+	/**
 	 * Append a retained log row (AI Client events and F6 direct_http observations).
+	 *
+	 * STORAGE CONTRACT (board 2026-07-31, binding on F6):
+	 * AI Client rows and channel=direct_http rows share ONE FIFO ring buffer
+	 * (`log_limit`, default 200, clamp 20–1000). One window is the only way F5
+	 * coverage buckets (M = N + D) legitimately sum. Separate per-channel budgets
+	 * would re-introduce the two-denominator honesty bug in storage form.
+	 *
+	 * CHATTY-HOST COLLAPSE (F6 v1, deliberate): for direct_http only, if a row for
+	 * the same plugin+host exists within DIRECT_HTTP_COLLAPSE_WINDOW seconds, that
+	 * row's `count` is incremented and `ts` refreshed instead of appending. D for
+	 * coverage is the sum of counts; each collapsed cluster still costs one ring
+	 * slot. Per-request de-dupe in Shadow_AI is a separate first line within one
+	 * PHP request. Deciding against collapse would leave F6's exact target (a
+	 * chatty shadow plugin) able to erase the rest of the log.
 	 *
 	 * Public so Shadow_AI can write the same ring buffer without duplicating the gate.
 	 *
@@ -791,6 +811,16 @@ final class Policy {
 			$log = array();
 		}
 
+		$is_direct_http = isset( $event['channel'] ) && 'direct_http' === (string) $event['channel'];
+		if ( $is_direct_http && self::collapse_direct_http_into_log( $log, $event ) ) {
+			update_option( Plugin::LOG_OPTION_KEY, $log, false );
+			return;
+		}
+
+		if ( $is_direct_http && ! isset( $event['count'] ) ) {
+			$event['count'] = 1;
+		}
+
 		$log[] = $event;
 		$count = count( $log );
 		if ( $count > $limit ) {
@@ -798,6 +828,75 @@ final class Policy {
 		}
 
 		update_option( Plugin::LOG_OPTION_KEY, $log, false );
+	}
+
+	/**
+	 * Collapse a direct_http observation into the newest matching plugin+host row
+	 * if it falls inside DIRECT_HTTP_COLLAPSE_WINDOW.
+	 *
+	 * @param array<int,mixed>    $log   Log array (modified in place on success).
+	 * @param array<string,mixed> $event Incoming observation.
+	 * @return bool True if collapsed (caller must persist $log).
+	 */
+	private static function collapse_direct_http_into_log( array &$log, array $event ): bool {
+		$host   = isset( $event['host'] ) ? (string) $event['host'] : '';
+		$plugin = ( isset( $event['plugin'] ) && is_string( $event['plugin'] ) ) ? (string) $event['plugin'] : '';
+		$now    = isset( $event['ts'] ) ? (int) $event['ts'] : time();
+		if ( $now <= 0 ) {
+			$now = time();
+		}
+
+		for ( $i = count( $log ) - 1; $i >= 0; $i-- ) {
+			$row = $log[ $i ];
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			if ( ! isset( $row['channel'] ) || 'direct_http' !== (string) $row['channel'] ) {
+				continue;
+			}
+			$row_host = isset( $row['host'] ) ? (string) $row['host'] : '';
+			if ( $row_host !== $host ) {
+				continue;
+			}
+			$row_plugin = ( isset( $row['plugin'] ) && is_string( $row['plugin'] ) ) ? (string) $row['plugin'] : '';
+			if ( $row_plugin !== $plugin ) {
+				continue;
+			}
+
+			// Newest matching plugin+host row. If outside the window, start a new row.
+			$row_ts = isset( $row['ts'] ) ? (int) $row['ts'] : 0;
+			if ( $row_ts > 0 && ( $now - $row_ts ) > self::DIRECT_HTTP_COLLAPSE_WINDOW ) {
+				return false;
+			}
+
+			$prior = isset( $row['count'] ) ? (int) $row['count'] : 1;
+			if ( $prior < 1 ) {
+				$prior = 1;
+			}
+			$row['count'] = $prior + 1;
+			if ( ! isset( $row['first_ts'] ) ) {
+				$row['first_ts'] = $row_ts > 0 ? $row_ts : $now;
+			}
+			$row['ts'] = $now;
+			// Refresh attribution to the latest observation of this cluster.
+			if ( array_key_exists( 'file', $event ) ) {
+				$row['file'] = $event['file'];
+			}
+			if ( array_key_exists( 'caller', $event ) ) {
+				$row['caller'] = $event['caller'];
+			}
+			if ( array_key_exists( 'uri', $event ) ) {
+				$row['uri'] = $event['uri'];
+			}
+			if ( array_key_exists( 'user_id', $event ) ) {
+				$row['user_id'] = $event['user_id'];
+			}
+
+			$log[ $i ] = $row;
+			return true;
+		}
+
+		return false;
 	}
 
 	/**

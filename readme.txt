@@ -50,7 +50,7 @@ If you enable **recent-call logging** in Settings → HandL AI Connector Access 
 - Full request URI (including query string, kept only on this site) for AI Client admin-request context
 - For **direct-HTTP AI observations** only: request **host** and **path** (query string stripped). No request body, no Authorization headers, no API keys. Channel label `direct_http` and matched provider id when known.
 
-Logs are kept as a **count-based ring buffer** (default 200 entries, configurable 20–1000). There is **no time-based TTL**—older rows drop only when the buffer is full.
+Logs are kept as a **single shared count-based ring buffer** (default 200 entries, configurable 20–1000) for both AI Client rows and direct-HTTP AI observations. There is **no time-based TTL**—older rows drop only when the buffer is full. Repeated direct-HTTP observations of the same plugin + host within a short window are collapsed into one row with a `count` (so a chatty bypass does not erase the rest of the log).
 
 If you enable **denial email alerts**, the plugin sends a message via WordPress `wp_mail` when enforcement blocks a prompt (immediate rate-limited mail, or an hourly digest). The recipient is the address you configure, or the site `admin_email` if left empty — that may be any address you enter, and mail is delivered through whatever transport your site uses (core PHP mail or an SMTP / transactional-mail plugin). Alert messages include:
 
@@ -95,8 +95,10 @@ No. It pins the route for calls we attribute to that plugin’s nearest stack fr
 * Curated host list (OpenAI, Anthropic, Google Generative Language, Cohere, Mistral, Groq, Together, Fireworks, Perplexity, xAI, DeepSeek, OpenRouter, …); not a complete inventory.
 * Excludes core AI Client / php-ai-client stack traffic (those paths already hit `wp_ai_client_prevent_prompt`).
 * Retained rows: `channel=direct_http`, host, path-only (no query), shadow provider id, decision `observe` — no body, no Authorization headers.
-* Same log gate as other observability (log_enabled or learn mode); per-request de-dupe by plugin+host.
-* Audit filter “Outside AI Client”; Insights one-line count only (does not invent a second coverage %).
+* STORAGE: direct_http rows share the same ring buffer as AI Client rows (one window so coverage buckets can sum).
+* Chatty-host collapse: same plugin+host within ~5 minutes increments `count` on the existing row instead of flooding the buffer; per-request de-dupe remains.
+* Same log gate as other observability (log_enabled or learn mode).
+* Audit filter “Outside AI Client”; Insights one-line count only (does not invent a second coverage %; sums collapsed counts).
 * Privacy / Data section documents host + path-only retention for direct-HTTP observations (ships with the PR that starts retaining the field).
 
 = 1.0.10 =

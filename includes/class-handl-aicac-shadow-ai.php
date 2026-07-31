@@ -19,6 +19,11 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Authorization headers. Retains host + path-only (query stripped) so the
  * coverage tile can later widen its denominator (F5) without a second %.
  *
+ * STORAGE: writes via Policy::append_log_event into the SAME ring buffer as
+ * AI Client rows (board 2026-07-31). Chatty-host collapse (plugin+host within
+ * a short window → count++) lives in that append path. This class only does
+ * per-request de-dupe as a first line within one PHP request.
+ *
  * Exclusion: traffic whose stack already includes the core AI Client HTTP
  * path is not "shadow" — that path is governed by wp_ai_client_prevent_prompt.
  */
