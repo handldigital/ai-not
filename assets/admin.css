@@ -436,12 +436,24 @@
 	grid-template-columns: 1fr;
 	gap: 16px;
 	margin: 0 0 16px;
-	align-items: start;
+	/* stretch: short Safety fills Spend's row height (no external half-row hole) */
+	align-items: stretch;
 }
 
 @media screen and (min-width: 961px) {
 	.handl-aicac-dashboard-grid {
 		grid-template-columns: 1fr 1fr;
+	}
+
+	/*
+	 * Frink dual-fixture gate + Ralph pre-auth:
+	 * - Block full width (no-pins: alone at half width; force-rules: widest table)
+	 * - Pins full width when present (otherwise orphan half-column above full Block)
+	 * Safety | Spend remain the only 2-col pair.
+	 */
+	.handl-aicac-dashboard-grid .handl-aicac-tile--block,
+	.handl-aicac-dashboard-grid .handl-aicac-tile--pins {
+		grid-column: 1 / -1;
 	}
 }
 
@@ -452,6 +464,17 @@
 	border: 1px solid #c3c4c7;
 	box-shadow: none;
 	background: #fff;
+}
+
+/* Grid children: flex column so stretched tiles paint through .inside */
+.handl-aicac-dashboard-grid .handl-aicac-tile {
+	display: flex;
+	flex-direction: column;
+	min-height: 100%;
+}
+
+.handl-aicac-dashboard-grid .handl-aicac-tile .inside {
+	flex: 1 1 auto;
 }
 
 .handl-aicac-dashboard .handl-aicac-tile .postbox-header {
