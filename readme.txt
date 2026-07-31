@@ -4,7 +4,7 @@ Tags: ai, governance, security, handl, ai client
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.10
+Stable tag: 1.0.11
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,6 +28,8 @@ Default behavior is **allow**.
 
 **EXPERIMENTAL per-plugin model force** (Plugin rules tab; empty force fields = off) can pin allowed AI Client generations to a provider/model **per detected caller**. Pins follow the nearest plugin frame on the PHP backtrace (best-effort) — not who initiated the call, and **not a spend guarantee**. Unattributed calls (cron, REST bootstraps, shared libraries, MU plugins, etc.) run unforced by default; admins can opt into an explicit unattributed target via the same “Unknown operations”-style control. Force relies on unsupported shallow-clone behaviour in the AI Client prevent hook, verifies the final route with exact provider/model matching before the provider call, and fail-closes on mismatch. Prefer official core routing filters when available.
 
+**Shadow-AI detector (observe only):** when logging or learn mode is on, the plugin watches WordPress HTTP for requests to a curated list of known AI provider hosts (OpenAI, Anthropic, Google Generative Language, Cohere, Mistral, Groq, Together, Fireworks, Perplexity, xAI, DeepSeek, OpenRouter, …). Traffic that already flows through the core AI Client is ignored. Direct bypasses are retained as `observe` rows (`channel=direct_http`) so you can see AI activity **outside** what these rules control — they do **not** block HTTP. This is a curated list, not a complete inventory of every AI host on the internet.
+
 Caller attribution is best-effort and is determined by inspecting the PHP call stack and mapping file paths to installed plugins. When force is configured, the retained log surfaces how many calls could not be attributed and ran unforced.
 
 == Privacy / Data ==
@@ -37,15 +39,16 @@ By default this plugin does **not** send data to any external service. Two **opt
 If you enable **recent-call logging** in Settings → HandL AI Connector Access Control, it stores a local log in the WordPress options table containing:
 
 - Timestamp
-- Allow/deny decision
-- AI Client operation (e.g. `generate_text`, `is_supported_for_text_generation`)
-- Capability family (text / image / speech / tts / video / unknown)
+- Allow/deny decision (AI Client rows) or observe (direct-HTTP AI observations)
+- AI Client operation (e.g. `generate_text`, `is_supported_for_text_generation`) — or `direct_http` for shadow observations
+- Capability family (text / image / speech / tts / video / unknown) for AI Client rows
 - Provider and model when set on the prompt builder (or model preferences)
-- Truncated prompt preview and selected generation config (best-effort)
+- Truncated prompt preview and selected generation config (best-effort; AI Client rows only)
 - Input and output token counts when the AI Client completes a generation (best-effort)
 - Best-effort calling plugin (plugin basename) and source file
 - Current user id and display name
-- Full request URI (including query string, kept only on this site)
+- Full request URI (including query string, kept only on this site) for AI Client admin-request context
+- For **direct-HTTP AI observations** only: request **host** and **path** (query string stripped). No request body, no Authorization headers, no API keys. Channel label `direct_http` and matched provider id when known.
 
 Logs are kept as a **count-based ring buffer** (default 200 entries, configurable 20–1000). There is **no time-based TTL**—older rows drop only when the buffer is full.
 
@@ -69,7 +72,10 @@ Alert mail does **not** include prompt preview or user identity. Digest rows wai
 == Frequently Asked Questions ==
 
 = Does this stop all AI usage? =
-Only AI calls made through the WordPress AI Client APIs that pass through `wp_ai_client_prevent_prompt`.
+Only AI calls made through the WordPress AI Client APIs that pass through `wp_ai_client_prevent_prompt`. The shadow-AI detector **observes** direct HTTP to known AI hosts; it does not block those requests in this version.
+
+= What does “outside the AI Client” mean on Audit & log? =
+A plugin (or other PHP code) issued a WordPress HTTP request to a known AI provider host without going through the AI Client path this plugin gates. Those rows are labeled observe — seen, not governed by allow/deny/force rules.
 
 = Is attribution perfect? =
 No. It is best-effort and may be unknown or ambiguous for some execution paths (cron, REST bootstraps, shared libraries, MU plugins). Experimental model force uses the same attribution: a pin follows the **detected** caller, not a guarantee of which product “owns” the spend.
@@ -83,6 +89,15 @@ No. It pins the route for calls we attribute to that plugin’s nearest stack fr
 2. Recent AI calls audit trail — review provider, model, prompt preview, user, and request URI for each AI Client call.
 
 == Changelog ==
+
+= 1.0.11 =
+* Shadow-AI detector (observe only): log plugins that call known AI provider hosts over WordPress HTTP while bypassing the AI Client.
+* Curated host list (OpenAI, Anthropic, Google Generative Language, Cohere, Mistral, Groq, Together, Fireworks, Perplexity, xAI, DeepSeek, OpenRouter, …); not a complete inventory.
+* Excludes core AI Client / php-ai-client stack traffic (those paths already hit `wp_ai_client_prevent_prompt`).
+* Retained rows: `channel=direct_http`, host, path-only (no query), shadow provider id, decision `observe` — no body, no Authorization headers.
+* Same log gate as other observability (log_enabled or learn mode); per-request de-dupe by plugin+host.
+* Audit filter “Outside AI Client”; Insights one-line count only (does not invent a second coverage %).
+* Privacy / Data section documents host + path-only retention for direct-HTTP observations (ships with the PR that starts retaining the field).
 
 = 1.0.10 =
 * EXPERIMENTAL: per-plugin force of AI Client generations to a provider/model (Plugin rules table columns; empty = off; labeled EXPERIMENTAL in the UI).

@@ -73,6 +73,11 @@
 	color: #8a2424;
 }
 
+.handl-aicac-badge--observe {
+	background: #e8e4f5;
+	color: #3c2d6e;
+}
+
 .handl-aicac-log-table code {
 	font-size: 11px;
 	word-break: break-all;

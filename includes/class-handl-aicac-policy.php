@@ -772,9 +772,13 @@ final class Policy {
 	}
 
 	/**
+	 * Append a retained log row (AI Client events and F6 direct_http observations).
+	 *
+	 * Public so Shadow_AI can write the same ring buffer without duplicating the gate.
+	 *
 	 * @param array<string,mixed> $event
 	 */
-	private function log_event( array $event ): void {
+	public static function append_log_event( array $event ): void {
 		$policy = self::get_policy();
 		if ( empty( $policy['log_enabled'] ) && empty( $policy['audit_only'] ) ) {
 			return;
@@ -794,6 +798,13 @@ final class Policy {
 		}
 
 		update_option( Plugin::LOG_OPTION_KEY, $log, false );
+	}
+
+	/**
+	 * @param array<string,mixed> $event
+	 */
+	private function log_event( array $event ): void {
+		self::append_log_event( $event );
 	}
 
 	/**

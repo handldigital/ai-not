@@ -64,6 +64,13 @@ final class Analytics {
 				continue;
 			}
 
+			// F6 direct_http rows widen "known AI activity" for F5; they must not
+			// inflate AI Client spend/token aggregates or mint a second coverage %.
+			// Insights shows a separate one-line count for these observations.
+			if ( isset( $row['channel'] ) && 'direct_http' === (string) $row['channel'] ) {
+				continue;
+			}
+
 			$tokens = self::tokens_from_row( $row );
 			$ts     = isset( $row['ts'] ) ? (int) $row['ts'] : 0;
 
