@@ -431,13 +431,16 @@
 	margin: 0 0 16px;
 }
 
+/*
+ * Secondary tiles. Default align-items is stretch — short Safety fills Spend's
+ * row height so leftover space sits *inside* the card, not as an external hole
+ * (Frink defect 2 / Lisa). Do not set align-items: start.
+ */
 .handl-aicac-dashboard-grid {
 	display: grid;
 	grid-template-columns: 1fr;
 	gap: 16px;
 	margin: 0 0 16px;
-	/* stretch: short Safety fills Spend's row height (no external half-row hole) */
-	align-items: stretch;
 }
 
 @media screen and (min-width: 961px) {
@@ -446,13 +449,13 @@
 	}
 
 	/*
-	 * Frink dual-fixture gate + Ralph pre-auth:
-	 * - Block full width (no-pins: alone at half width; force-rules: widest table)
-	 * - Pins full width when present (otherwise orphan half-column above full Block)
-	 * Safety | Spend remain the only 2-col pair.
+	 * Odd last tile spans full width (Lisa / Frink dual-fixture):
+	 * - 3 tiles (no pins): Block is 3rd → full width
+	 * - 4 tiles (with pins): Block is 4th → normal 2×2, Pins keeps its partner
+	 * - N later: still correct without per-tile class hardcoding
+	 * Grid children are only .handl-aicac-tile postboxes — no stray wrappers.
 	 */
-	.handl-aicac-dashboard-grid .handl-aicac-tile--block,
-	.handl-aicac-dashboard-grid .handl-aicac-tile--pins {
+	.handl-aicac-dashboard-grid > .handl-aicac-tile:last-child:nth-child(odd) {
 		grid-column: 1 / -1;
 	}
 }
