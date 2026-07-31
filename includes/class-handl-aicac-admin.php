@@ -237,6 +237,7 @@ final class Admin {
 		echo '</table>';
 
 		$this->render_ability_arming_settings( $policy, $rules_form_id );
+		$this->render_model_force_settings( $policy, $rules_form_id );
 
 		$family_labels = Operations::family_labels();
 
@@ -1299,8 +1300,101 @@ final class Admin {
 		$policy['denied_tools'] = Policy::sanitize_denied_tools( (string) $posted_tools );
 
 		$this->apply_kill_switch_settings_from_post( $policy );
+		$this->apply_model_force_settings_from_post( $policy );
 
 		Policy::save_policy( $policy );
+	}
+
+	/**
+	 * @param array<string,mixed> $policy
+	 */
+	private function apply_model_force_settings_from_post( array &$policy ): void {
+		$posted_on = filter_input( INPUT_POST, 'handl_aicac_model_force_enabled', FILTER_UNSAFE_RAW );
+		$policy['model_force_enabled']  = ! empty( $posted_on );
+		$policy['model_force_provider'] = Model_Force::sanitize_id( filter_input( INPUT_POST, 'handl_aicac_model_force_provider', FILTER_UNSAFE_RAW ) );
+		$policy['model_force_model']    = Model_Force::sanitize_id( filter_input( INPUT_POST, 'handl_aicac_model_force_model', FILTER_UNSAFE_RAW ) );
+	}
+
+	/**
+	 * EXPERIMENTAL model force / downgrade (F4).
+	 *
+	 * Labeled experimental in words (not fine print). Relies on unsupported
+	 * clone-sharing; final-route verification fail-closes on mismatch.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function render_model_force_settings( array $policy, string $form_id ): void {
+		$enabled  = ! empty( $policy['model_force_enabled'] );
+		$provider = (string) ( $policy['model_force_provider'] ?? '' );
+		$model    = (string) ( $policy['model_force_model'] ?? '' );
+		$compat   = Model_Force::clone_compat_status();
+		$health   = Model_Force::get_health();
+
+		echo '<h2>' . esc_html__( 'EXPERIMENTAL: Force provider / model', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<div class="notice notice-warning inline"><p>';
+		echo '<strong>' . esc_html__( 'EXPERIMENTAL — not a supported production control.', 'handl-ai-connector-access-control' ) . '</strong> ';
+		echo esc_html__( 'This pins AI Client generation to a provider and model by mutating a clone that WordPress documents as read-only. It works today only because the wrapper shares its inner builder (shallow clone). If core fixes that, forcing stops working. We detect that case, refuse to apply a silent no-op, and show a health warning. Final selected model is verified on wp_ai_client_before_generate_result; mismatch throws so generation becomes a WP_Error before any provider call. The durable exit ramp is an official WordPress routing filter — draft text is reviewed with the plugin author before filing upstream.', 'handl-ai-connector-access-control' );
+		echo '</p></div>';
+
+		echo '<table class="form-table" role="presentation">';
+		echo '<tr>';
+		echo '<th scope="row">' . esc_html__( 'Enable experimental force', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<td>';
+		echo '<label><input type="checkbox" name="handl_aicac_model_force_enabled" value="1" form="' . esc_attr( $form_id ) . '" ' . checked( $enabled, true, false ) . ' /> ';
+		echo esc_html__( 'Force all allowed AI Client generations to the provider/model below (EXPERIMENTAL)', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Does not change allow/deny. Denied prompts stay denied. Incomplete config (missing provider or model) cannot stay enabled.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '</td>';
+		echo '</tr>';
+
+		echo '<tr>';
+		echo '<th scope="row"><label for="handl-aicac-model-force-provider">' . esc_html__( 'Provider id', 'handl-ai-connector-access-control' ) . '</label></th>';
+		echo '<td>';
+		echo '<input type="text" class="regular-text code" id="handl-aicac-model-force-provider" name="handl_aicac_model_force_provider" form="' . esc_attr( $form_id ) . '" value="' . esc_attr( $provider ) . '" placeholder="openai" autocomplete="off" />';
+		echo '<p class="description">' . esc_html__( 'AI Client provider id (example: openai). Must match an installed, configured provider.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '</td>';
+		echo '</tr>';
+
+		echo '<tr>';
+		echo '<th scope="row"><label for="handl-aicac-model-force-model">' . esc_html__( 'Model id', 'handl-ai-connector-access-control' ) . '</label></th>';
+		echo '<td>';
+		echo '<input type="text" class="regular-text code" id="handl-aicac-model-force-model" name="handl_aicac_model_force_model" form="' . esc_attr( $form_id ) . '" value="' . esc_attr( $model ) . '" placeholder="gpt-4o-mini" autocomplete="off" />';
+		echo '<p class="description">' . esc_html__( 'Exact model id the provider expects. On mismatch the generation is blocked before the provider call (fail-closed).', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '</td>';
+		echo '</tr>';
+
+		echo '<tr>';
+		echo '<th scope="row">' . esc_html__( 'Runtime health', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<td>';
+		if ( $compat['compatible'] ) {
+			echo '<p style="margin:0;"><span class="dashicons dashicons-yes-alt" style="color:#00a32a;"></span> ';
+			echo esc_html__( 'Clone-sharing compatibility: OK on this WordPress (shallow wrapper clone).', 'handl-ai-connector-access-control' );
+			echo '</p>';
+		} else {
+			echo '<p style="margin:0;"><span class="dashicons dashicons-warning" style="color:#d63638;"></span> ';
+			echo esc_html(
+				sprintf(
+					/* translators: %s: reason code */
+					__( 'Clone-sharing compatibility: FAIL (%s). Force will not be applied.', 'handl-ai-connector-access-control' ),
+					$compat['reason']
+				)
+			);
+			echo '</p>';
+		}
+		$status = isset( $health['status'] ) ? (string) $health['status'] : '';
+		if ( '' !== $status ) {
+			echo '<p class="description" style="margin-top:6px;">';
+			echo esc_html(
+				sprintf(
+					/* translators: %s: health status code */
+					__( 'Last force status: %s', 'handl-ai-connector-access-control' ),
+					$status
+				)
+			);
+			echo '</p>';
+		}
+		echo '</td>';
+		echo '</tr>';
+		echo '</table>';
 	}
 
 	/**
@@ -1700,6 +1794,15 @@ final class Admin {
 		}
 		echo '</td>';
 		echo '<td class="column-provider"><code>' . esc_html( $provider ?: '—' ) . '</code>';
+		if ( ! empty( $row['model_forced'] ) ) {
+			$fp = isset( $row['forced_provider'] ) ? (string) $row['forced_provider'] : '';
+			$fm = isset( $row['forced_model'] ) ? (string) $row['forced_model'] : '';
+			echo '<br /><span class="description handl-aicac-forced-label" style="font-size:11px;">' . esc_html__( 'forced', 'handl-ai-connector-access-control' );
+			if ( '' !== $fp || '' !== $fm ) {
+				echo ' → <code>' . esc_html( trim( $fp . '/' . $fm, '/' ) ) . '</code>';
+			}
+			echo '</span>';
+		}
 		// Observability honesty: inferred provider/model must not look like builder-set facts.
 		if ( $model_inferred && $provider ) {
 			echo '<br /><span class="description handl-aicac-inferred-label" style="font-size:11px;">' . esc_html__( 'inferred', 'handl-ai-connector-access-control' ) . '</span>';

@@ -19,6 +19,9 @@ if ( function_exists( 'wp_clear_scheduled_hook' ) ) {
 	wp_clear_scheduled_hook( 'handl_aicac_send_denial_digest' );
 }
 
+// F4: experimental model-force health state.
+delete_option( 'handl_aicac_model_force_health' );
+
 // Legacy option keys from prior renames.
 delete_option( 'handl_aigate_policy' );
 delete_option( 'handl_aigate_recent_calls' );

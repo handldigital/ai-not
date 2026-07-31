@@ -97,6 +97,19 @@ final class Policy {
 			self::$pending_token_log_keys[] = $event['log_key'];
 		}
 
+		// F4 experimental: force provider/model on allowed prompts (does not change $prevent).
+		// Mutates the shallow-cloned builder's shared inner; final route is verified later.
+		if ( ! $prevent ) {
+			$force = Model_Force::maybe_apply( $builder, $policy );
+			if ( ! empty( $force['applied'] ) ) {
+				$event['model_forced']    = true;
+				$event['forced_provider'] = $force['provider'] ?? '';
+				$event['forced_model']    = $force['model'] ?? '';
+			} elseif ( Model_Force::is_enabled( $policy ) ) {
+				$event['model_force_skipped'] = $force['reason'] ?? 'unknown';
+			}
+		}
+
 		$this->log_event( $event );
 
 		// Observability only: opt-in denial email / digest. Never changes $prevent.
@@ -603,6 +616,11 @@ final class Policy {
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate( $policy['est_usd_input_per_m'] ?? Cost::DEFAULT_INPUT_PER_M, Cost::DEFAULT_INPUT_PER_M );
 		$policy['est_usd_output_per_m'] = Cost::sanitize_rate( $policy['est_usd_output_per_m'] ?? Cost::DEFAULT_OUTPUT_PER_M, Cost::DEFAULT_OUTPUT_PER_M );
 
+		// F4 experimental model force (off by default).
+		$policy['model_force_enabled']  = ! empty( $policy['model_force_enabled'] );
+		$policy['model_force_provider'] = Model_Force::sanitize_id( $policy['model_force_provider'] ?? '' );
+		$policy['model_force_model']    = Model_Force::sanitize_id( $policy['model_force_model'] ?? '' );
+
 		return $policy;
 	}
 
@@ -673,6 +691,14 @@ final class Policy {
 		$policy['alert_email']   = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate( $policy['est_usd_input_per_m'] ?? Cost::DEFAULT_INPUT_PER_M, Cost::DEFAULT_INPUT_PER_M );
 		$policy['est_usd_output_per_m'] = Cost::sanitize_rate( $policy['est_usd_output_per_m'] ?? Cost::DEFAULT_OUTPUT_PER_M, Cost::DEFAULT_OUTPUT_PER_M );
+
+		$policy['model_force_enabled']  = ! empty( $policy['model_force_enabled'] );
+		$policy['model_force_provider'] = Model_Force::sanitize_id( $policy['model_force_provider'] ?? '' );
+		$policy['model_force_model']    = Model_Force::sanitize_id( $policy['model_force_model'] ?? '' );
+		// Incomplete config cannot stay "enabled" — avoids a half-armed experimental state.
+		if ( $policy['model_force_enabled'] && ( '' === $policy['model_force_provider'] || '' === $policy['model_force_model'] ) ) {
+			$policy['model_force_enabled'] = false;
+		}
 
 		update_option( Plugin::OPTION_KEY, $policy, false );
 		Alerts::maybe_schedule( $policy );

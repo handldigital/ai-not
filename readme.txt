@@ -4,7 +4,7 @@ Tags: ai, governance, security, handl, ai client
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.9
+Stable tag: 1.0.10
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,6 +25,8 @@ Default behavior is **allow**.
 **Emergency kill switch** blocks all AI Client calls except plugins you list as exceptions.
 
 **Denial email alerts** (opt-in) notify an admin when enforcement blocks a prompt — immediate (rate-limited) or hourly digest. **Estimated $** on the audit log is a rough token × rate placeholder, not billing. When WordPress disables AI site-wide via `wp_supports_ai`, an honesty banner explains why the audit log may be empty.
+
+**EXPERIMENTAL model force** (Plugin rules tab, off by default) can pin allowed AI Client generations to a configured provider/model. It relies on unsupported shallow-clone behaviour in the AI Client prevent hook, verifies the final route before the provider call, and fail-closes on mismatch. Prefer official core routing filters when available.
 
 Caller attribution is best-effort and is determined by inspecting the PHP call stack and mapping file paths to installed plugins.
 
@@ -78,6 +80,12 @@ No. It is best-effort and may be unknown or ambiguous for some execution paths (
 2. Recent AI calls audit trail — review provider, model, prompt preview, user, and request URI for each AI Client call.
 
 == Changelog ==
+
+= 1.0.10 =
+* EXPERIMENTAL: force AI Client generations to a configured provider/model (Plugin rules tab; off by default; labeled EXPERIMENTAL in the UI).
+* Guardrails: runtime clone-sharing compatibility check; final-route verification on wp_ai_client_before_generate_result; fail-closed (throw → WP_Error) on mismatch; persistent admin health warning when the override is unhealthy; does not change allow/deny.
+* Uninstall removes model-force health option.
+* Does not send data off-site (force is local routing preference only).
 
 = 1.0.9 =
 * Denial email alerts (opt-in): immediate rate-limited mail or hourly digest via wp_mail; attributed to HandL AICAC.
