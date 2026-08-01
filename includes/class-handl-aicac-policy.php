@@ -663,6 +663,17 @@ final class Policy {
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate( $policy['est_usd_input_per_m'] ?? Cost::DEFAULT_INPUT_PER_M, Cost::DEFAULT_INPUT_PER_M );
 		$policy['est_usd_output_per_m'] = Cost::sanitize_rate( $policy['est_usd_output_per_m'] ?? Cost::DEFAULT_OUTPUT_PER_M, Cost::DEFAULT_OUTPUT_PER_M );
 
+		// F7: weekly report preference — staged selected-by-default until first explicit choice.
+		// Delivery still requires logging/learn (Weekly_Report::is_active). Key absence ≠ off.
+		$raw_option = get_option( Plugin::OPTION_KEY );
+		$raw_is_arr = is_array( $raw_option );
+		if ( $raw_is_arr && array_key_exists( 'weekly_report_enabled', $raw_option ) ) {
+			$policy['weekly_report_enabled'] = (bool) $raw_option['weekly_report_enabled'];
+		} else {
+			// Checked-but-inactive: preference is selected; is_active gates send/schedule.
+			$policy['weekly_report_enabled'] = Weekly_Report::default_enabled_for_policy( $policy );
+		}
+
 		// F4 experimental per-plugin model force (off by default; empty map = no force).
 		$policy['model_force_plugins']               = Model_Force::sanitize_force_map( $policy['model_force_plugins'] ?? array() );
 		$policy['model_force_unattributed']          = Model_Force::sanitize_unattributed_mode( $policy['model_force_unattributed'] ?? 'none' );
@@ -747,6 +758,31 @@ final class Policy {
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate( $policy['est_usd_input_per_m'] ?? Cost::DEFAULT_INPUT_PER_M, Cost::DEFAULT_INPUT_PER_M );
 		$policy['est_usd_output_per_m'] = Cost::sanitize_rate( $policy['est_usd_output_per_m'] ?? Cost::DEFAULT_OUTPUT_PER_M, Cost::DEFAULT_OUTPUT_PER_M );
 
+		// F7 weekly key: store only an explicit choice. Key absence keeps the staged default.
+		// Activity form sets _weekly_report_write; other save paths preserve raw presence so a
+		// Rules/quick-rule save never pins a derived value and defeats default-on.
+		$raw_before     = get_option( Plugin::OPTION_KEY );
+		$had_weekly_key = is_array( $raw_before ) && array_key_exists( 'weekly_report_enabled', $raw_before );
+		$weekly_write   = isset( $policy['_weekly_report_write'] ) ? (string) $policy['_weekly_report_write'] : '';
+		unset( $policy['_weekly_report_write'], $policy['_weekly_report_value'] );
+
+		if ( 'set' === $weekly_write ) {
+			$policy['weekly_report_enabled'] = ! empty( $policy['weekly_report_enabled'] );
+		} elseif ( 'omit' === $weekly_write ) {
+			unset( $policy['weekly_report_enabled'] );
+		} elseif ( $had_weekly_key ) {
+			// Non-Activity save: keep stored explicit choice, ignore derived get_policy value.
+			$policy['weekly_report_enabled'] = ! empty( $raw_before['weekly_report_enabled'] );
+		} else {
+			// Key was never saved — leave it absent so staged default re-derives on read.
+			unset( $policy['weekly_report_enabled'] );
+		}
+
+		// In-memory preference for cron: stored value, or staged selected when key omitted.
+		$weekly_for_schedule = array_key_exists( 'weekly_report_enabled', $policy )
+			? ! empty( $policy['weekly_report_enabled'] )
+			: true;
+
 		$policy['model_force_plugins']               = Model_Force::sanitize_force_map( $policy['model_force_plugins'] ?? array() );
 		$policy['model_force_unattributed']          = Model_Force::sanitize_unattributed_mode( $policy['model_force_unattributed'] ?? 'none' );
 		$policy['model_force_unattributed_provider'] = Model_Force::sanitize_id( $policy['model_force_unattributed_provider'] ?? '' );
@@ -760,6 +796,10 @@ final class Policy {
 
 		update_option( Plugin::OPTION_KEY, $policy, false );
 		Alerts::maybe_schedule( $policy );
+		// maybe_schedule needs preference + log/learn from this save; not the stripped store shape.
+		$schedule_policy                           = $policy;
+		$schedule_policy['weekly_report_enabled'] = $weekly_for_schedule;
+		Weekly_Report::maybe_schedule( $schedule_policy );
 
 		// Issue 7: disabling alerts must not leave denial metadata queued.
 		if ( empty( $policy['alert_on_deny'] ) ) {

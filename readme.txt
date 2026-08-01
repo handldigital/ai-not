@@ -4,7 +4,7 @@ Tags: ai, governance, security, handl, ai client
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.13
+Stable tag: 1.0.14
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -24,7 +24,7 @@ Default behavior is **allow**.
 
 **Emergency kill switch** blocks all AI Client calls except plugins you list as exceptions.
 
-**Denial email alerts** (opt-in) notify an admin when enforcement blocks a prompt — immediate (rate-limited) or hourly digest. **Estimated $** on the audit log is a rough token × rate placeholder, not billing. When WordPress disables AI site-wide via `wp_supports_ai`, an honesty banner explains why the audit log may be empty.
+**Denial email alerts** (opt-in) notify an admin when enforcement blocks a prompt — immediate (rate-limited) or hourly digest. **Weekly report email** mails Dashboard aggregates (coverage, denials, estimated spend, pins) via the same `wp_mail` path; selected by default; reports are sent only while logging or learn mode is on, and it is always toggleable. **Estimated $** on the audit log and in the weekly report is a rough token × rate placeholder, not billing. When WordPress disables AI site-wide via `wp_supports_ai`, an honesty banner explains why the audit log may be empty.
 
 **EXPERIMENTAL per-plugin model force** (Rules tab; empty force fields = off) can pin allowed AI Client generations to a provider/model **per detected caller**. Pins follow the nearest plugin frame on the PHP backtrace (best-effort) — not who initiated the call, and **not a spend guarantee**. Unattributed calls (cron, REST bootstraps, shared libraries, MU plugins, etc.) run unforced by default; admins can opt into an explicit unattributed target via the same “Unknown operations”-style control. Force relies on unsupported shallow-clone behaviour in the AI Client prevent hook, verifies the final route with exact provider/model matching before the provider call, and fail-closes on mismatch. Prefer official core routing filters when available.
 
@@ -34,7 +34,7 @@ Caller attribution is best-effort and is determined by inspecting the PHP call s
 
 == Privacy / Data ==
 
-By default this plugin does **not** send data to any external service. Two **opt-in** features may store or transmit call metadata; both are **off by default**.
+By default this plugin does **not** send data to any external service. Features that store or transmit call metadata are **opt-in** (logging, denial alerts) or **default-on only while logging/learn mode is on** (weekly report) — each has an explicit Settings toggle.
 
 If you enable **recent-call logging** in Settings → HandL AI Connector Access Control, it stores a local log in the WordPress options table containing:
 
@@ -64,6 +64,17 @@ If you enable **denial email alerts**, the plugin sends a message via WordPress 
 
 Alert mail does **not** include prompt preview or user identity. Digest rows waiting to send are stored in a local options queue (path-only URI) and are removed when alerts are turned off or the plugin is uninstalled.
 
+If you enable the **weekly report email** (Activity tab), the plugin sends one message per week via WordPress `wp_mail` with Dashboard-style **aggregates** from the retained local log. This is the first surface where retained log data can leave the WordPress site (through your site’s mail transport into an inbox). The weekly report includes only:
+
+- Dated window from the oldest and newest retained log timestamps (self-dating so a late WP-cron send stays honest)
+- Coverage call counts (through the AI Client vs outside — not governed by these rules)
+- Deny count in the retained window; default policy and learn-mode / kill-switch state labels
+- Estimated spend total and top plugins by estimated $ (token × rate placeholders — not billing)
+- Pin-hold counts when experimental force rules are configured
+- Plugin display names (or basenames) for top estimated-spend rows
+
+Weekly report mail does **not** include prompt preview, user identity, request paths, hosts, denial reason detail rows, or any per-call URI. Recipient is the same address as denial alerts (or site `admin_email` if empty). Every email includes a link to turn the report off. The weekly cron is cleared when the report is disabled, logging is off, or the plugin is uninstalled.
+
 == Installation ==
 
 1. Upload the plugin folder to `/wp-content/plugins/handl-ai-connector-access-control/`
@@ -86,10 +97,22 @@ No. It pins the route for calls we attribute to that plugin’s nearest stack fr
 
 == Screenshots ==
 
-1. Per-plugin AI access rules — set a default policy and allow, deny, or inherit for each installed plugin.
-2. Recent AI calls audit trail — review provider, model, prompt preview, user, and request URI for each AI Client call.
+1. Dashboard — coverage of known AI activity (through the AI Client vs outside), safety, estimated spend, and block-that-one.
+2. Activity — Outside AI Client / shadow lane observe rows alongside governed AI Client traffic.
+3. Insights — entry vs call units and usage breakdowns from the retained log.
+4. Rules — kill-switch Exceptions as a scrollable checkbox list (still follows normal allow/deny rules).
+5. Activity — OBSERVE direct_http rows contrasted with governed AI Client decisions.
 
 == Changelog ==
+
+= 1.0.14 =
+* F7: Weekly report email — Dashboard aggregates via wp_mail on a weekly cron (coverage, denials, estimated spend, pins).
+* Aggregates only: no prompt text, user names, or request paths leave the site in the report.
+* Selected by default; reports sent only while logging or learn mode is on; Settings toggle + footer link in every email.
+* Self-dating window from retained log timestamps (WP-cron lateness acceptable for a summary).
+* Privacy / Data documents the weekly report exit surface (ships with this feature).
+* Screenshot captions updated for the current Dashboard / Activity / Insights / Exceptions UI.
+* A11y: aria-describedby on kill-switch Exceptions group (#16).
 
 = 1.0.13 =
 * Rules: kill-switch Exceptions is a scrollable checkbox list (no Cmd/Ctrl multi-select). Name and plugin path on separate lines.

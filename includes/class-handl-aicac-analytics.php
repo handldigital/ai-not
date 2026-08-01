@@ -118,6 +118,81 @@ final class Analytics {
 	}
 
 	/**
+	 * Coverage buckets: M = N + D, N = A + U (F5 Δ1). Units = HTTP calls (F6 contract).
+	 * Span from min(first_ts|ts) .. max(ts); saturation when entry count >= log_limit (Δ5).
+	 * Shared by Dashboard and weekly report email so wording and numbers cannot drift.
+	 *
+	 * @param array<int,mixed>    $log
+	 * @param array<string,mixed> $policy
+	 * @return array{A:int,U:int,N:int,D:int,M:int,log_limit:int,saturated:bool,span_label:string,min_ts:int,max_ts:int}
+	 */
+	public static function coverage_from_log( array $log, array $policy ): array {
+		$log_limit = (int) ( $policy['log_limit'] ?? 200 );
+		if ( $log_limit < 1 ) {
+			$log_limit = 200;
+		}
+		$A      = 0;
+		$U      = 0;
+		$D      = 0;
+		$min_ts = 0;
+		$max_ts = 0;
+
+		foreach ( $log as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$ts       = isset( $row['ts'] ) ? (int) $row['ts'] : 0;
+			$first_ts = isset( $row['first_ts'] ) ? (int) $row['first_ts'] : 0;
+			// Prefer first_ts for the lower bound so collapsed clusters don't understate span.
+			$lo = $first_ts > 0 ? $first_ts : $ts;
+			$hi = $ts > 0 ? $ts : $first_ts;
+			if ( $lo > 0 && ( 0 === $min_ts || $lo < $min_ts ) ) {
+				$min_ts = $lo;
+			}
+			if ( $hi > $max_ts ) {
+				$max_ts = $hi;
+			}
+
+			$is_direct = isset( $row['channel'] ) && 'direct_http' === (string) $row['channel'];
+			if ( $is_direct ) {
+				$c = isset( $row['count'] ) ? (int) $row['count'] : 1;
+				$D += $c > 0 ? $c : 1;
+				continue;
+			}
+			$plugin = isset( $row['plugin'] ) ? (string) $row['plugin'] : '';
+			if ( '' !== $plugin ) {
+				++$A;
+			} else {
+				++$U;
+			}
+		}
+
+		$N          = $A + $U;
+		$M          = $N + $D;
+		$span_label = '—';
+		if ( $min_ts > 0 && $max_ts > 0 ) {
+			if ( $max_ts === $min_ts ) {
+				$span_label = __( 'a single moment', 'handl-ai-connector-access-control' );
+			} else {
+				$span_label = human_time_diff( $min_ts, $max_ts );
+			}
+		}
+
+		return array(
+			'A'          => $A,
+			'U'          => $U,
+			'N'          => $N,
+			'D'          => $D,
+			'M'          => $M,
+			'log_limit'  => $log_limit,
+			'saturated'  => count( $log ) >= $log_limit,
+			'span_label' => $span_label,
+			'min_ts'     => $min_ts,
+			'max_ts'     => $max_ts,
+		);
+	}
+
+	/**
 	 * @param array<string,mixed> $row
 	 * @return array{input:int,output:int,total:int}|null
 	 */

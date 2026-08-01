@@ -924,77 +924,14 @@ final class Admin {
 	}
 
 	/**
-	 * Coverage buckets: M = N + D, N = A + U (Δ1). Units = HTTP calls (F6 contract).
-	 * Span from min(first_ts|ts) .. max(ts); saturation when count >= log_limit (Δ5).
+	 * Coverage buckets — delegates to Analytics so Dashboard and weekly email share one implementation.
 	 *
 	 * @param array<int,mixed>    $log
 	 * @param array<string,mixed> $policy
 	 * @return array{A:int,U:int,N:int,D:int,M:int,log_limit:int,saturated:bool,span_label:string,min_ts:int,max_ts:int}
 	 */
 	private function compute_coverage_buckets( array $log, array $policy ): array {
-		$log_limit = (int) ( $policy['log_limit'] ?? 200 );
-		if ( $log_limit < 1 ) {
-			$log_limit = 200;
-		}
-		$A = 0;
-		$U = 0;
-		$D = 0;
-		$min_ts = 0;
-		$max_ts = 0;
-
-		foreach ( $log as $row ) {
-			if ( ! is_array( $row ) ) {
-				continue;
-			}
-			$ts       = isset( $row['ts'] ) ? (int) $row['ts'] : 0;
-			$first_ts = isset( $row['first_ts'] ) ? (int) $row['first_ts'] : 0;
-			// Prefer first_ts for the lower bound so collapsed clusters don't understate span.
-			$lo = $first_ts > 0 ? $first_ts : $ts;
-			$hi = $ts > 0 ? $ts : $first_ts;
-			if ( $lo > 0 && ( 0 === $min_ts || $lo < $min_ts ) ) {
-				$min_ts = $lo;
-			}
-			if ( $hi > $max_ts ) {
-				$max_ts = $hi;
-			}
-
-			$is_direct = isset( $row['channel'] ) && 'direct_http' === (string) $row['channel'];
-			if ( $is_direct ) {
-				$c = isset( $row['count'] ) ? (int) $row['count'] : 1;
-				$D += $c > 0 ? $c : 1;
-				continue;
-			}
-			$plugin = isset( $row['plugin'] ) ? (string) $row['plugin'] : '';
-			if ( '' !== $plugin ) {
-				++$A;
-			} else {
-				++$U;
-			}
-		}
-
-		$N = $A + $U;
-		$M = $N + $D;
-		$span_label = '—';
-		if ( $min_ts > 0 && $max_ts > 0 ) {
-			if ( $max_ts === $min_ts ) {
-				$span_label = __( 'a single moment', 'handl-ai-connector-access-control' );
-			} else {
-				$span_label = human_time_diff( $min_ts, $max_ts );
-			}
-		}
-
-		return array(
-			'A'          => $A,
-			'U'          => $U,
-			'N'          => $N,
-			'D'          => $D,
-			'M'          => $M,
-			'log_limit'  => $log_limit,
-			'saturated'  => count( $log ) >= $log_limit,
-			'span_label' => $span_label,
-			'min_ts'     => $min_ts,
-			'max_ts'     => $max_ts,
-		);
+		return Analytics::coverage_from_log( $log, $policy );
 	}
 
 	/**
@@ -1827,6 +1764,22 @@ final class Admin {
 		echo '</td>';
 		echo '</tr>';
 
+		// F7: weekly aggregate report email (Dashboard mailed).
+		// Checked-but-inactive when no explicit preference: always render checked; delivery is
+		// gated by logging/learn (is_active). Provenance field records what the operator saw.
+		$weekly_on = ! empty( $policy['weekly_report_enabled'] );
+		echo '<tr>';
+		echo '<th scope="row">' . esc_html__( 'Weekly report email', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<td>';
+		// Hidden provenance: "what the UI presented as the untouched state" (board re-tip).
+		echo '<input type="hidden" name="handl_aicac_weekly_report_rendered" value="' . ( $weekly_on ? '1' : '0' ) . '" />';
+		echo '<label><input type="checkbox" name="handl_aicac_weekly_report_enabled" value="1" ' . checked( $weekly_on, true, false ) . ' /> ';
+		echo esc_html__( 'Email a weekly summary of Dashboard stats (coverage, denials, estimated spend, pins)', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Selected by default. Reports are sent only while logging or learn mode is on. Uncheck and save to opt out.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Uses the same recipient as denial alerts (or the site admin email). Aggregates and plugin names only — no prompt text, user names, or request paths. Delivered by weekly WP-cron via wp_mail; the email dates its own window so a late send stays honest.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '</td>';
+		echo '</tr>';
+
 		// F3: estimated $ rates (observability only).
 		$rates = Cost::rates_from_policy( $policy );
 		echo '<tr>';
@@ -2159,6 +2112,28 @@ final class Admin {
 		$policy['alert_mode']    = Alerts::sanitize_mode( filter_input( INPUT_POST, 'handl_aicac_alert_mode', FILTER_UNSAFE_RAW ) );
 		$policy['alert_email']   = Alerts::sanitize_email( filter_input( INPUT_POST, 'handl_aicac_alert_email', FILTER_UNSAFE_RAW ) );
 
+		// F7: persist weekly preference only on divergence from the rendered state.
+		// Provenance = what the checkbox showed; unchecked checkbox posts absence.
+		$posted_weekly    = ! empty( filter_input( INPUT_POST, 'handl_aicac_weekly_report_enabled', FILTER_UNSAFE_RAW ) );
+		$rendered_weekly  = ! empty( filter_input( INPUT_POST, 'handl_aicac_weekly_report_rendered', FILTER_UNSAFE_RAW ) );
+		$raw_opt          = get_option( Plugin::OPTION_KEY );
+		$had_weekly_key   = is_array( $raw_opt ) && array_key_exists( 'weekly_report_enabled', $raw_opt );
+
+		if ( $posted_weekly !== $rendered_weekly ) {
+			// Operator diverged from what was shown → store explicit choice.
+			$policy['weekly_report_enabled']  = $posted_weekly;
+			$policy['_weekly_report_write']   = 'set';
+		} elseif ( $had_weekly_key ) {
+			// No divergence; keep the already-stored explicit choice.
+			$policy['weekly_report_enabled']  = ! empty( $raw_opt['weekly_report_enabled'] );
+			$policy['_weekly_report_write']   = 'set';
+		} else {
+			// No divergence and never stored → leave key absent (staged default re-derives).
+			// In-memory true so maybe_schedule sees preference selected after logging turns on.
+			$policy['weekly_report_enabled']  = true;
+			$policy['_weekly_report_write']   = 'omit';
+		}
+
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate(
 			filter_input( INPUT_POST, 'handl_aicac_est_usd_input_per_m', FILTER_UNSAFE_RAW ),
 			Cost::DEFAULT_INPUT_PER_M
@@ -2266,7 +2241,8 @@ final class Admin {
 		echo '<p class="description">' . esc_html__( 'Excepted plugins still follow their normal allow/deny and capability-family rules.', 'handl-ai-connector-access-control' ) . '</p>';
 		// Visible only while kill is off; same listener toggles hidden with is-muted.
 		echo '<p class="description handl-aicac-kill-exceptions__state" id="handl-aicac-kill-exceptions-state"' . ( $kill_switch ? ' hidden' : '' ) . '>' . esc_html__( 'Not in effect while the kill switch is off.', 'handl-ai-connector-access-control' ) . '</p>';
-		echo '<div class="handl-aicac-kill-exceptions__list" role="group" aria-labelledby="handl-aicac-kill-exceptions-heading">';
+		// #16: announce the kill-off state line on group focus (sibling of aria-labelledby).
+		echo '<div class="handl-aicac-kill-exceptions__list" role="group" aria-labelledby="handl-aicac-kill-exceptions-heading" aria-describedby="handl-aicac-kill-exceptions-state">';
 		$i = 0;
 		foreach ( $plugins as $basename => $data ) {
 			++$i;
