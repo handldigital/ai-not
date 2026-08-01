@@ -17,6 +17,8 @@ delete_option( 'handl_aicac_denial_digest_queue' );
 delete_option( 'handl_aicac_denial_email_rate' );
 if ( function_exists( 'wp_clear_scheduled_hook' ) ) {
 	wp_clear_scheduled_hook( 'handl_aicac_send_denial_digest' );
+	// F7: weekly report cron.
+	wp_clear_scheduled_hook( 'handl_aicac_send_weekly_report' );
 }
 
 // F4: experimental model-force health state.

@@ -663,6 +663,15 @@ final class Policy {
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate( $policy['est_usd_input_per_m'] ?? Cost::DEFAULT_INPUT_PER_M, Cost::DEFAULT_INPUT_PER_M );
 		$policy['est_usd_output_per_m'] = Cost::sanitize_rate( $policy['est_usd_output_per_m'] ?? Cost::DEFAULT_OUTPUT_PER_M, Cost::DEFAULT_OUTPUT_PER_M );
 
+		// F7: weekly report — default ON only when logging/learn is on, and only until the key is saved.
+		$raw_option = get_option( Plugin::OPTION_KEY );
+		$raw_is_arr = is_array( $raw_option );
+		if ( $raw_is_arr && array_key_exists( 'weekly_report_enabled', $raw_option ) ) {
+			$policy['weekly_report_enabled'] = (bool) $raw_option['weekly_report_enabled'];
+		} else {
+			$policy['weekly_report_enabled'] = Weekly_Report::default_enabled_for_policy( $policy );
+		}
+
 		// F4 experimental per-plugin model force (off by default; empty map = no force).
 		$policy['model_force_plugins']               = Model_Force::sanitize_force_map( $policy['model_force_plugins'] ?? array() );
 		$policy['model_force_unattributed']          = Model_Force::sanitize_unattributed_mode( $policy['model_force_unattributed'] ?? 'none' );
@@ -746,6 +755,8 @@ final class Policy {
 		$policy['alert_email']   = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate( $policy['est_usd_input_per_m'] ?? Cost::DEFAULT_INPUT_PER_M, Cost::DEFAULT_INPUT_PER_M );
 		$policy['est_usd_output_per_m'] = Cost::sanitize_rate( $policy['est_usd_output_per_m'] ?? Cost::DEFAULT_OUTPUT_PER_M, Cost::DEFAULT_OUTPUT_PER_M );
+		// Explicit bool so the default-on-with-logging rule only applies before first save.
+		$policy['weekly_report_enabled'] = ! empty( $policy['weekly_report_enabled'] );
 
 		$policy['model_force_plugins']               = Model_Force::sanitize_force_map( $policy['model_force_plugins'] ?? array() );
 		$policy['model_force_unattributed']          = Model_Force::sanitize_unattributed_mode( $policy['model_force_unattributed'] ?? 'none' );
@@ -760,6 +771,7 @@ final class Policy {
 
 		update_option( Plugin::OPTION_KEY, $policy, false );
 		Alerts::maybe_schedule( $policy );
+		Weekly_Report::maybe_schedule( $policy );
 
 		// Issue 7: disabling alerts must not leave denial metadata queued.
 		if ( empty( $policy['alert_on_deny'] ) ) {
