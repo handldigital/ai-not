@@ -24,7 +24,7 @@ Default behavior is **allow**.
 
 **Emergency kill switch** blocks all AI Client calls except plugins you list as exceptions.
 
-**Denial email alerts** (opt-in) notify an admin when enforcement blocks a prompt — immediate (rate-limited) or hourly digest. **Weekly report email** mails Dashboard aggregates (coverage, denials, estimated spend, pins) via the same `wp_mail` path; defaults on when logging or learn mode is on, off otherwise, and is always toggleable. **Estimated $** on the audit log and in the weekly report is a rough token × rate placeholder, not billing. When WordPress disables AI site-wide via `wp_supports_ai`, an honesty banner explains why the audit log may be empty.
+**Denial email alerts** (opt-in) notify an admin when enforcement blocks a prompt — immediate (rate-limited) or hourly digest. **Weekly report email** mails Dashboard aggregates (coverage, denials, estimated spend, pins) via the same `wp_mail` path; selected by default; reports are sent only while logging or learn mode is on, and it is always toggleable. **Estimated $** on the audit log and in the weekly report is a rough token × rate placeholder, not billing. When WordPress disables AI site-wide via `wp_supports_ai`, an honesty banner explains why the audit log may be empty.
 
 **EXPERIMENTAL per-plugin model force** (Rules tab; empty force fields = off) can pin allowed AI Client generations to a provider/model **per detected caller**. Pins follow the nearest plugin frame on the PHP backtrace (best-effort) — not who initiated the call, and **not a spend guarantee**. Unattributed calls (cron, REST bootstraps, shared libraries, MU plugins, etc.) run unforced by default; admins can opt into an explicit unattributed target via the same “Unknown operations”-style control. Force relies on unsupported shallow-clone behaviour in the AI Client prevent hook, verifies the final route with exact provider/model matching before the provider call, and fail-closes on mismatch. Prefer official core routing filters when available.
 
@@ -108,7 +108,7 @@ No. It pins the route for calls we attribute to that plugin’s nearest stack fr
 = 1.0.14 =
 * F7: Weekly report email — Dashboard aggregates via wp_mail on a weekly cron (coverage, denials, estimated spend, pins).
 * Aggregates only: no prompt text, user names, or request paths leave the site in the report.
-* Default ON when logging or learn mode is on; OFF otherwise; Settings toggle + footer link in every email.
+* Selected by default; reports sent only while logging or learn mode is on; Settings toggle + footer link in every email.
 * Self-dating window from retained log timestamps (WP-cron lateness acceptable for a summary).
 * Privacy / Data documents the weekly report exit surface (ships with this feature).
 * Screenshot captions updated for the current Dashboard / Activity / Insights / Exceptions UI.

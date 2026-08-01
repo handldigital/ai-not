@@ -1765,13 +1765,18 @@ final class Admin {
 		echo '</tr>';
 
 		// F7: weekly aggregate report email (Dashboard mailed).
+		// Checked-but-inactive when no explicit preference: always render checked; delivery is
+		// gated by logging/learn (is_active). Provenance field records what the operator saw.
 		$weekly_on = ! empty( $policy['weekly_report_enabled'] );
 		echo '<tr>';
 		echo '<th scope="row">' . esc_html__( 'Weekly report email', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<td>';
+		// Hidden provenance: "what the UI presented as the untouched state" (board re-tip).
+		echo '<input type="hidden" name="handl_aicac_weekly_report_rendered" value="' . ( $weekly_on ? '1' : '0' ) . '" />';
 		echo '<label><input type="checkbox" name="handl_aicac_weekly_report_enabled" value="1" ' . checked( $weekly_on, true, false ) . ' /> ';
 		echo esc_html__( 'Email a weekly summary of Dashboard stats (coverage, denials, estimated spend, pins)', 'handl-ai-connector-access-control' ) . '</label>';
-		echo '<p class="description">' . esc_html__( 'Uses the same recipient as denial alerts (or the site admin email). Aggregates and plugin names only — no prompt text, user names, or request paths. Defaults on when logging or learn mode is on; off otherwise. Delivered by weekly WP-cron via wp_mail; the email dates its own window so a late send stays honest.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Selected by default. Reports are sent only while logging or learn mode is on. Uncheck and save to opt out.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Uses the same recipient as denial alerts (or the site admin email). Aggregates and plugin names only — no prompt text, user names, or request paths. Delivered by weekly WP-cron via wp_mail; the email dates its own window so a late send stays honest.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td>';
 		echo '</tr>';
 
@@ -2107,8 +2112,27 @@ final class Admin {
 		$policy['alert_mode']    = Alerts::sanitize_mode( filter_input( INPUT_POST, 'handl_aicac_alert_mode', FILTER_UNSAFE_RAW ) );
 		$policy['alert_email']   = Alerts::sanitize_email( filter_input( INPUT_POST, 'handl_aicac_alert_email', FILTER_UNSAFE_RAW ) );
 
-		$posted_weekly = filter_input( INPUT_POST, 'handl_aicac_weekly_report_enabled', FILTER_UNSAFE_RAW );
-		$policy['weekly_report_enabled'] = ! empty( $posted_weekly );
+		// F7: persist weekly preference only on divergence from the rendered state.
+		// Provenance = what the checkbox showed; unchecked checkbox posts absence.
+		$posted_weekly    = ! empty( filter_input( INPUT_POST, 'handl_aicac_weekly_report_enabled', FILTER_UNSAFE_RAW ) );
+		$rendered_weekly  = ! empty( filter_input( INPUT_POST, 'handl_aicac_weekly_report_rendered', FILTER_UNSAFE_RAW ) );
+		$raw_opt          = get_option( Plugin::OPTION_KEY );
+		$had_weekly_key   = is_array( $raw_opt ) && array_key_exists( 'weekly_report_enabled', $raw_opt );
+
+		if ( $posted_weekly !== $rendered_weekly ) {
+			// Operator diverged from what was shown → store explicit choice.
+			$policy['weekly_report_enabled']  = $posted_weekly;
+			$policy['_weekly_report_write']   = 'set';
+		} elseif ( $had_weekly_key ) {
+			// No divergence; keep the already-stored explicit choice.
+			$policy['weekly_report_enabled']  = ! empty( $raw_opt['weekly_report_enabled'] );
+			$policy['_weekly_report_write']   = 'set';
+		} else {
+			// No divergence and never stored → leave key absent (staged default re-derives).
+			// In-memory true so maybe_schedule sees preference selected after logging turns on.
+			$policy['weekly_report_enabled']  = true;
+			$policy['_weekly_report_write']   = 'omit';
+		}
 
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate(
 			filter_input( INPUT_POST, 'handl_aicac_est_usd_input_per_m', FILTER_UNSAFE_RAW ),

@@ -86,13 +86,16 @@ final class Weekly_Report {
 	}
 
 	/**
-	 * Default for the weekly-report toggle when the option key has never been saved.
-	 * ON only when logging or learn mode is already on.
+	 * Staged preference when the option key has never been saved.
 	 *
-	 * @param array<string,mixed> $policy
+	 * Always selected (checked-but-inactive). Delivery still requires logging or
+	 * learn mode via is_active() — same pattern as kill-switch exceptions staging.
+	 *
+	 * @param array<string,mixed> $policy Unused; kept for call-site stability.
 	 */
 	public static function default_enabled_for_policy( array $policy ): bool {
-		return ! empty( $policy['log_enabled'] ) || ! empty( $policy['audit_only'] );
+		unset( $policy );
+		return true;
 	}
 
 	/**
@@ -422,7 +425,7 @@ final class Weekly_Report {
 		}
 
 		// --- Privacy + manage ---
-		$lines[] = __( 'This report includes aggregate counts, estimated spend, and plugin names only. It does not include prompt text, user names, or request paths.', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'This report includes aggregate counts, estimated spend, and plugin names or plugin file identifiers only. It does not include prompt text, user names, request paths, hosts, or per-call URIs.', 'handl-ai-connector-access-control' );
 		$lines[] = __( 'This message was sent by HandL AICAC via your site’s wp_mail transport (core PHP mail or an SMTP plugin you installed).', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = __( 'Manage weekly reports (opt out / change recipient):', 'handl-ai-connector-access-control' );
