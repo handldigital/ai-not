@@ -4,7 +4,7 @@ Tags: ai, governance, security, handl, ai client
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.12
+Stable tag: 1.0.13
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -90,6 +90,11 @@ No. It pins the route for calls we attribute to that plugin’s nearest stack fr
 2. Recent AI calls audit trail — review provider, model, prompt preview, user, and request URI for each AI Client call.
 
 == Changelog ==
+
+= 1.0.13 =
+* Rules: kill-switch Exceptions is a scrollable checkbox list (no Cmd/Ctrl multi-select). Name and plugin path on separate lines.
+* Exceptions are dimmed while the kill switch is off, with a note. Exception selections still save if kill is off.
+* Copy diet: label “Exceptions”; one line — excepted plugins still follow normal allow/deny and capability-family rules.
 
 = 1.0.12 =
 * F5: Dashboard-first admin (Dashboard / Rules / Activity / Insights). Coverage tile measures known AI activity (through AI Client vs outside — not governed by these rules) with log window, span, and saturation notice.

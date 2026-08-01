@@ -2249,6 +2249,9 @@ final class Admin {
 	private function render_kill_switch_settings_rows( array $policy, string $form_id, array $plugins ): void {
 		$kill_switch = ! empty( $policy['kill_switch'] );
 		$exceptions  = Policy::get_kill_switch_exceptions( $policy );
+		// Dimmed + state note when kill is off; list stays fully operable (no pointer-events
+		// block, no disabled checkboxes) so staging exceptions before enabling kill still POSTs.
+		$ex_class = 'handl-aicac-kill-exceptions' . ( $kill_switch ? '' : ' is-muted' );
 
 		echo '<tr>';
 		echo '<th scope="row">' . esc_html__( 'Emergency kill switch', 'handl-ai-connector-access-control' ) . '</th>';
@@ -2257,22 +2260,34 @@ final class Admin {
 		echo esc_html__( 'Block all AI Client calls', 'handl-ai-connector-access-control' ) . '</label>';
 		echo '<p class="description">' . esc_html__( 'Blocks every AI Client call except plugins listed as exceptions. Unresolved callers are blocked too.', 'handl-ai-connector-access-control' ) . '</p>';
 
-		echo '<div class="handl-aicac-kill-exceptions" style="margin-top:12px;">';
-		echo '<label for="handl-aicac-kill-exceptions"><strong>' . esc_html__( 'Exceptions (normal rules still apply)', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
-		echo '<select id="handl-aicac-kill-exceptions" name="handl_aicac_kill_exceptions[]" form="' . esc_attr( $form_id ) . '" multiple size="8" style="min-width:28em;max-width:100%;margin-top:6px;">';
+		echo '<div class="' . esc_attr( $ex_class ) . '" id="handl-aicac-kill-exceptions-wrap">';
+		echo '<p class="handl-aicac-kill-exceptions__heading" id="handl-aicac-kill-exceptions-heading"><strong>' . esc_html__( 'Exceptions', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		// Load-bearing: "exception" ≠ unconditionally allowed.
+		echo '<p class="description">' . esc_html__( 'Excepted plugins still follow their normal allow/deny and capability-family rules.', 'handl-ai-connector-access-control' ) . '</p>';
+		// Visible only while kill is off; same listener toggles hidden with is-muted.
+		echo '<p class="description handl-aicac-kill-exceptions__state" id="handl-aicac-kill-exceptions-state"' . ( $kill_switch ? ' hidden' : '' ) . '>' . esc_html__( 'Not in effect while the kill switch is off.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<div class="handl-aicac-kill-exceptions__list" role="group" aria-labelledby="handl-aicac-kill-exceptions-heading">';
+		$i = 0;
 		foreach ( $plugins as $basename => $data ) {
+			++$i;
 			$name = isset( $data['Name'] ) ? (string) $data['Name'] : $basename;
-			printf(
-				'<option value="%1$s" %2$s>%3$s (%4$s)</option>',
-				esc_attr( $basename ),
-				selected( in_array( $basename, $exceptions, true ), true, false ),
-				esc_html( $name ),
-				esc_html( $basename )
-			);
+			$id   = 'handl-aicac-kill-ex-' . (string) $i;
+			$on   = in_array( $basename, $exceptions, true );
+			echo '<label class="handl-aicac-kill-exceptions__item" for="' . esc_attr( $id ) . '">';
+			echo '<input type="checkbox" id="' . esc_attr( $id ) . '" name="handl_aicac_kill_exceptions[]" value="' . esc_attr( $basename ) . '" form="' . esc_attr( $form_id ) . '" ' . checked( $on, true, false ) . ' />';
+			echo '<span class="handl-aicac-kill-exceptions__text">';
+			echo '<span class="handl-aicac-kill-exceptions__name">' . esc_html( $name ) . '</span>';
+			echo '<code class="handl-aicac-kill-exceptions__slug">' . esc_html( $basename ) . '</code>';
+			echo '</span>';
+			echo '</label>';
 		}
-		echo '</select>';
-		echo '<p class="description">' . esc_html__( 'Excepted plugins are not killed site-wide — they still follow their normal plugin allow/deny and capability-family rules. Hold Cmd (Mac) or Ctrl (Windows) to select multiple. Ignored when the kill switch is off.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</div>';
+		echo '</div>';
+		// Live mute + state-note toggle before save (does not change policy until form submit).
+		echo '<script>';
+		echo '(function(){var k=document.getElementById("handl-aicac-kill-switch"),w=document.getElementById("handl-aicac-kill-exceptions-wrap"),n=document.getElementById("handl-aicac-kill-exceptions-state");';
+		echo 'if(!k||!w)return;function s(){w.classList.toggle("is-muted",!k.checked);if(n)n.hidden=k.checked;}k.addEventListener("change",s);s();})();';
+		echo '</script>';
 		echo '</td>';
 		echo '</tr>';
 	}
