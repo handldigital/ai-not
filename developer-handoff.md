@@ -1,60 +1,51 @@
-# Developer Handoff — Issue #38 (Resolve PR #32 conflicts)
+# Developer Handoff — AICAC-3 (#21)
 
 ## Work item ID
 
-Issue #38 — Resolve conflicts of https://github.com/handldigital/ai-not/pull/32  
-Linked superseded/blocked work: AICAC-2 / issue #20 (still open; not implemented here)
+Issue #21 — AICAC-3: Verify authorization (nonce + capability) coverage on all admin state-mutating handlers
 
 ## Summary of behavior implemented
 
-Merged current `main` into PR #32 head (`agentops/implement-L0OJiW_IwpCZ`)
-and resolved all add/add conflicts by rewriting AgentOps handoffs for #38
-and keeping main’s AICAC-1 suite / runner log. No production plugin code
-was changed. Post-merge `composer test` → **OK (31 tests, 62 assertions)**.
+Completed a verification-only pass of `includes/class-handl-aicac-admin.php`.
+Every settings-save / action handler is enumerated with file:line; each has an
+identified capability mechanism (shared `manage_options` gate + menu cap) and
+nonce mechanism (`check_admin_referer` per action). Settings API implicit
+handling is explicitly **not found**. No confirmed missing checks on current
+handlers; one **Informational** defense-in-depth finding is filed for Quality.
+Production admin authz code was **not** changed. Added a static PHPUnit lock
+and the audit artifact `aicac-3-authz-coverage.md`.
 
 ## Files changed
 
-**Conflict resolutions:**
+- `aicac-3-authz-coverage.md` — full handler inventory, mechanism matrix, findings
+- `tests/Unit/AdminAuthzCoverageTest.php` — static source coverage lock
+- `implementation-plan.md`, `decisions.md`, `test-results.md`, `developer-handoff.md`
+- `.agentops-result.json`
 
-- `implementation-plan.md`, `decisions.md`, `test-results.md`,
-  `developer-handoff.md` — rewritten for issue #38
-- `.agentops-result.json` — rewritten for this job
-- `.agentops-runner-log.json` — kept **main**
-
-**Brought in from main via merge (already staged by merge):**
-
-- `composer.json`, `composer.lock`, `phpunit.xml.dist`
-- `tests/**` (PolicyEvaluate, OperationsFamily, ModelForceResolveRoute)
-- `.github/workflows/phpunit.yml`
-- `.github/workflows/release.yml` (excludes)
-- `.gitignore`
-
-**Unchanged:** all `includes/*`, main plugin file, runtime options.
+**Unchanged:** `includes/class-handl-aicac-admin.php` and all other production plugin PHP.
 
 ## Acceptance-criteria-to-test mapping
 
 | Acceptance criterion | Evidence |
 |----------------------|----------|
-| Resolve conflicts on PR #32 | Merge of `main` into PR head; conflict files resolved |
-| No conflict markers remain | `rg` clean on workspace |
-| Suite still green | `composer test` → OK (31 tests, 62 assertions) |
-| Do not expand AICAC-2 scope | Diff vs main is handoff-only; no new PHPCS/lint workflow |
+| Every settings-save/action handler enumerated with file:line | `aicac-3-authz-coverage.md` H1–H5 + private helper table; `AdminAuthzCoverageTest` action provider |
+| Nonce/capability per handler (shared wrappers / Settings API / not found) | Coverage matrix in audit; tests for L70 gate, menu cap, four nonces, Settings API not found |
+| Handlers without checks → severity + failure scenario | F-AICAC-3-1 (none/covered); F-AICAC-3-2 (Informational, private helpers); F-AICAC-3-3 (Settings API N/A) |
+| Findings routed to Quality, not fixed under this story | No production authz edits; NEXT_OWNER=QUALITY |
 
 ## Commands executed
 
 ```bash
-export PATH="/home/ubuntu/php-runtime:$PATH"
-git fetch origin pull/32/head:pr-32
-git checkout pr-32
-git merge origin/main   # conflicts then resolved
 composer install --no-interaction
 composer test
+php -l tests/Unit/AdminAuthzCoverageTest.php
+php -l includes/class-handl-aicac-admin.php
 ```
 
 ## Test results
 
 ```
-OK (31 tests, 62 assertions)
+OK (42 tests, 131 assertions)
 ```
 
 Full capture: `test-results.md`.
@@ -65,52 +56,46 @@ None.
 
 ## Configuration changes
 
-None beyond adopting main’s already-merged CI / `.gitignore` / release excludes
-via the merge. No new runtime configuration. No AICAC-2 CI expansion.
+None.
 
 ## Security considerations
 
-- No secrets introduced.
-- Production authz / policy engine code untouched.
-- Test-only tooling remains excluded from release zip (main’s `release.yml`).
+- Verification concludes current admin POST mutators are gated by `manage_options`
+  and per-action nonces; the original “5 matches” scan matches shared-wrapper design.
+- Informational residual: private mutators do not re-verify; a future alternate
+  entry point without checks would be dangerous (F-AICAC-3-2).
+- No secrets introduced; no authz controls weakened.
 
 ## Known limitations
 
-- After conflict resolution, PR #32 has **no unique product delta** vs `main`
-  (original PR was blocked AICAC-2 artifacts only; AICAC-1 already on main).
-  The PR is mergeable but product-redundant; Product/Human should close or
-  no-op-merge it and re-queue AICAC-2 (#20) as a fresh implement job.
-- This credential-free workspace does not push; control plane must publish
-  the updated PR head for GitHub to show mergeable.
+- Static tests do not boot WordPress or simulate CSRF/capability runtime failures.
+- Cron / runtime option writers outside the admin UI were inventoried as out of
+  scope for this admin-handler story.
 
 ## Rollback considerations
 
-- Revert the merge commit on `agentops/implement-L0OJiW_IwpCZ` to restore
-  the pre-resolution conflicted state (not recommended).
-- Closing PR #32 without merging leaves `main` unchanged (preferred if
-  treating #32 as superseded/blocked documentation only).
+- Revert the new test + audit/handoff files; production code is unchanged so
+  runtime behavior is unaffected by rollback.
 
 ## Remaining risks
 
-- Until the control plane pushes the updated branch, GitHub may still show
-  PR #32 as conflicted.
-- Issue #20 (AICAC-2) remains open and unimplemented; humans may confuse
-  conflict resolution with AICAC-2 delivery.
+- F-AICAC-3-2 remains for Product/Quality to accept or schedule defense-in-depth.
+- If someone adds a new `handl_aicac_action` without updating the test’s known
+  list / nonce adjacency, CI should fail — Quality should confirm that lock holds.
 
 ## Requested next action
 
-Quality: confirm PR #32 is mergeable after publish, then recommend closing
-as superseded/no product delta (or allow a no-op merge). Close issue #38
-once conflicts are gone on GitHub. Product: re-queue AICAC-2 (#20) now that
-AICAC-1 exists on main.
+Quality and Release Gate: review `aicac-3-authz-coverage.md` findings
+(F-AICAC-3-1..3), confirm no confirmed gap requiring a fix story, and decide
+whether to open a follow-up for defense-in-depth re-checks (F-AICAC-3-2).
 
 ---
 
 STATUS: READY  
-WORK_ITEM: #38  
-COMPLETED: Merged main into PR #32 head; resolved all conflicts; refreshed #38 handoffs; composer test OK (31/62); AICAC-2 scope not expanded  
-EVIDENCE: implementation-plan.md, decisions.md, test-results.md, developer-handoff.md; `composer test` OK (31 tests, 62 assertions); conflict markers cleared; diff vs main handoff-only  
-DECISIONS: Prefer main product/test tree; merge (not rebase); conflict-resolution only (no AICAC-2); refresh #38 handoffs  
-RISKS: Branch must be published by control plane; PR #32 product-redundant; #20 still needs a fresh implement job  
-NEXT_ACTION: Quality verify PR #32 mergeable after publish; close as superseded or no-op merge; close #38; Product re-queue AICAC-2 (#20)  
+WORK_ITEM: #21 / AICAC-3  
+COMPLETED: Enumerated all admin mutating handlers with file:line; mapped nonce+capability (shared wrapper; Settings API not found); documented findings without fixing; locked inventory in AdminAuthzCoverageTest; composer test OK (42/131)  
+EVIDENCE: aicac-3-authz-coverage.md; tests/Unit/AdminAuthzCoverageTest.php; implementation-plan.md; decisions.md; test-results.md; developer-handoff.md; `composer test` OK (42 tests, 131 assertions)  
+DECISIONS: Verification-only (no product authz fix); shared render_page manage_options gate counts as capability coverage; Settings API = not found; static source test locks inventory  
+RISKS: Informational F-AICAC-3-2 (private mutators lack local re-checks); static tests ≠ full WP CSRF simulation  
+NEXT_ACTION: Quality review aicac-3-authz-coverage.md findings and accept or open follow-up for F-AICAC-3-2  
 NEXT_OWNER: QUALITY
