@@ -1,62 +1,41 @@
-# Implementation Plan — Issue #38 (Resolve PR #32 conflicts)
+# Implementation Plan — AICAC-3 (#21)
 
 ## Work item
 
-**Issue:** https://github.com/handldigital/ai-not/issues/38  
-**Target:** Resolve merge conflicts on https://github.com/handldigital/ai-not/pull/32  
-**PR head:** `agentops/implement-L0OJiW_IwpCZ` (`e75d445` Implement #20 — AICAC-2 blocked)  
-**Base:** `main` (includes AICAC-1 via PR #34 / #35, plus PR #37 conflict-resolution for #33)
+**Issue:** #21 — AICAC-3: Verify authorization (nonce + capability) coverage on all admin state-mutating handlers  
+**Scope:** `includes/class-handl-aicac-admin.php` (settings/save surface)  
+**Constraint:** Findings are documented for Quality and Release Gate — **do not fix** authz gaps under this story.
 
 ## Objective
 
-Make PR #32 mergeable against current `main` without regressing the
-AICAC-1 suite already on `main`. Do **not** expand into unapproved
-AICAC-2 product scope under this conflict-resolution issue.
+Produce a complete, testable inventory of every settings-save / action handler in the admin class, identify the nonce and capability mechanism for each (including shared wrappers; Settings API if any), and emit severity + failure-scenario findings for any handler lacking checks. Route those findings to Quality; leave production plugin behavior unchanged except for verification evidence (static unit test + audit artifact).
 
 ## Approach (smallest correct change)
 
-1. Merge `main` into the PR #32 head branch.
-2. Resolve add/add conflicts in AgentOps artifacts by rewriting them for
-   issue #38 (keep main’s runtime product/test tree).
-3. Prefer main’s `.agentops-runner-log.json` (runtime noise).
-4. Re-run `composer test` to confirm the merged tree matches main’s green suite.
-
-## Conflict inventory
-
-| File | Resolution |
-|------|------------|
-| `.agentops-result.json` | Rewrite for issue #38 job outcome |
-| `.agentops-runner-log.json` | Keep **main** |
-| `implementation-plan.md` | Rewrite for issue #38 |
-| `decisions.md` | Rewrite for issue #38 |
-| `test-results.md` | Rewrite with post-merge command evidence |
-| `developer-handoff.md` | Rewrite for issue #38 |
-
-Auto-merged from main (no conflict markers):
-
-- `composer.json`, `composer.lock`, `phpunit.xml.dist`
-- `tests/**` (PolicyEvaluate, OperationsFamily, ModelForceResolveRoute)
-- `.github/workflows/phpunit.yml`
-- `.github/workflows/release.yml` (test/vendor excludes)
-- `.gitignore`
+1. Static-read `class-handl-aicac-admin.php` and related includes for alternate entry points (`wp_ajax_*`, `admin_post_*`, `register_setting`).
+2. Enumerate every POST `handl_aicac_action` dispatch and every private mutator it calls, with file:line.
+3. Map capability (`current_user_can` / menu capability) and nonce (`check_admin_referer` / form `wp_nonce_field`) per handler; record **not found** explicitly where absent.
+4. Classify gaps (if any) with severity + concrete failure scenario; otherwise document that the sparse match count is explained by a shared wrapper.
+5. Add a PHPUnit static-source test that locks the inventory and fails if a new POST action branch appears without a matching nonce check, or if the shared capability gate disappears.
+6. Do **not** add defense-in-depth re-checks or otherwise “fix” findings in production code under this story.
 
 ## Acceptance-criteria mapping
 
 | Criterion | Implementation | Test / evidence |
 |-----------|----------------|-----------------|
-| PR #32 conflicts resolved | Merge commit on PR head with no conflict markers | `git status` clean; no `<<<<<<<` |
-| No regression of AICAC-1 suite | Keep main’s test harness and suite | `composer test` → OK |
-| PR becomes mergeable vs main | Branch contains merge of current main | Diff vs main is handoff-only |
+| Every settings-save/action handler enumerated with file:line | `aicac-3-authz-coverage.md` inventory table | `AdminAuthzCoverageTest` asserts known action keys + dispatch line anchors |
+| Nonce/capability mechanism identified per handler (shared wrappers / Settings API / not found) | Coverage matrix in audit artifact | Test asserts shared `manage_options` gate, per-action `check_admin_referer`, and Settings API = not found |
+| Handlers without checks → severity + concrete failure scenario | Findings section in audit + developer-handoff | Quality reviews findings; no silent omission |
+| Findings routed through Quality, not fixed under this story | No production authz code changes | Diff limited to audit + test + AgentOps handoffs |
 
 ## Risks
 
-- PR #32 originally tracked blocked AICAC-2 (#20). After conflict resolution
-  the unique product diff vs main is empty; Product/Human should close or
-  no-op-merge #32 and re-queue AICAC-2 (#20) as a fresh implement job.
-- Credential-free workspace cannot push; control plane must publish the
-  updated PR head.
+- Static source tests can drift if dispatch is refactored into helpers; inventory comments in the test must stay aligned with the audit.
+- Credential-free workspace cannot push; control plane publishes the branch for Quality review.
+- Informational defense-in-depth notes must not be misread as confirmed CVEs.
 
 ## Out of scope
 
-- Implementing AICAC-2 (php -l, PHPCS/WPCS, release.yml CI documentation).
-- Closing or merging PR #32 / issue #20 (Quality / Product / Human).
+- Adding nonce/capability re-checks inside private mutators.
+- Changing cron / runtime policy mutation paths outside the admin HTTP surface.
+- Implementing AICAC-1/2 work or unrelated refactors.

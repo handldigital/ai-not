@@ -1,66 +1,52 @@
-# Test Results — Issue #38 (Resolve PR #32 conflicts)
+# Test Results — AICAC-3 (#21)
 
 ## Environment
 
 - Date: 2026-08-07
-- Branch: `pr-32` → `agentops/implement-L0OJiW_IwpCZ` (merge commit `bab5518`)
+- Branch: `main` (local implement workspace; control plane publishes)
+- Work item: #21 / AICAC-3
 - PHP: 8.2.28 (`/home/ubuntu/php-runtime/php`)
-- Composer: available via `~/.local/bin/composer`
-- PHPUnit: 9.6.35 (from `composer.lock`)
+- Composer / PHPUnit: 9.6.35 (from `composer.lock`)
 
 ## Commands executed
 
 ```bash
-git fetch origin pull/32/head:pr-32
-git fetch origin main
-git checkout pr-32
-git merge origin/main   # conflicts in AgentOps artifacts only
-# resolve conflicts; rewrite handoffs for #38; keep main runner log
+export PATH="/home/ubuntu/php-runtime:$PATH:/home/ubuntu/.local/bin:$PATH"
 composer install --no-interaction
 composer test
-php -l handl-ai-connector-access-control.php
-find includes -name '*.php' -print0 | xargs -0 -n1 php -l
-rg -n '^(<<<<<<<|=======|>>>>>>>)'   # clean
-git diff --stat origin/main...HEAD
+php -l tests/Unit/AdminAuthzCoverageTest.php
+php -l includes/class-handl-aicac-admin.php
 ```
 
 ## Results
 
 ### `composer install --no-interaction`
 
-Success. Installed 28 packages from lock file (including PHPUnit 9.6.35).
+Success. Lock file packages installed (including PHPUnit 9.6.35).
 
 ### `composer test`
 
 ```
 PHPUnit 9.6.35 by Sebastian Bergmann and contributors.
 
-...............................                                   31 / 31 (100%)
+..........................................                        42 / 42 (100%)
 
-Time: 00:00.002, Memory: 6.00 MB
+Time: 00:00.008, Memory: 10.00 MB
 
-OK (31 tests, 62 assertions)
+OK (42 tests, 131 assertions)
 ```
 
 Exit code: **0**
 
+Breakdown:
+
+- Existing AICAC-1 suite: PolicyEvaluate / OperationsFamily / ModelForceResolveRoute (unchanged)
+- New: `AdminAuthzCoverageTest` — shared `manage_options` gate, four per-action `check_admin_referer` checks, Settings API not found, no AJAX/admin-post hooks, private mutators, combined match count = 5
+
 ### Syntax lint (`php -l`)
 
-No syntax errors detected in `handl-ai-connector-access-control.php` and all `includes/*.php` files.
-
-### Conflict marker scan
-
-No `<<<<<<<` / `=======` / `>>>>>>>` markers remain.
-
-### Diff vs `origin/main`
-
-Handoff / AgentOps artifact files only (no production plugin code delta):
-
-- `.agentops-result.json`
-- `decisions.md`
-- `developer-handoff.md`
-- `implementation-plan.md`
-- `test-results.md`
+- `tests/Unit/AdminAuthzCoverageTest.php` — No syntax errors detected
+- `includes/class-handl-aicac-admin.php` — No syntax errors detected
 
 ## Failures
 
@@ -68,5 +54,6 @@ None.
 
 ## Notes
 
-- Pre-merge PR #32 was artifact-only (blocked AICAC-2). Merging `main` brought in the AICAC-1 suite; suite green matches main.
-- AICAC-2 product work (PHPCS / expanded CI gate / release docs) was **not** executed under issue #38.
+- No production authz code was modified; verification is inventory + static lock test.
+- Formatter / PHPCS / WPCS are not configured in this repo (AICAC-2 still separate); not claimed as run.
+- Full handler matrix and findings: `aicac-3-authz-coverage.md`.
