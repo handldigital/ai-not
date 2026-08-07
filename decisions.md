@@ -1,71 +1,39 @@
-# Decisions — AICAC-1
+# Decisions — Issue #36 (Resolve PR #33 conflicts)
 
-## D0: No further production diff this cycle
+## D1: Prefer main’s AICAC-1 suite over PR #33’s earlier draft
 
-**Decision:** Treat AICAC-1 as complete on `main` (PR #34 / `b73f4b6`);
-re-verify with `composer test` and refresh handoff artifacts only.
+**Decision:** On every add/add conflict for test/config files, keep the
+`main` version.
 
-**Why:** This implement job was queued against issue #19 after a prior
-AgentOps implement already landed the harness, suite, and CI workflow.
-Re-implementing would duplicate scope and risk unrelated churn.
+**Why:**
+- `main` already merged AICAC-1 via PR #34 (`b73f4b6`) and follow-up PR #35.
+- Main’s `PolicyEvaluateTest` is a strict superset of PR #33’s (adds
+  `tool_armed` and `audit_only` coverage).
+- Main also adds `OperationsFamilyTest`, `phpunit.yml`, and release zip
+  excludes that PR #33 lacked.
+- Reverting to the PR #33 19-test suite would regress coverage already on main.
 
-## D1: Lightweight PHPUnit stubs instead of wp-phpunit
+## D2: Merge main into PR head (do not rewrite history)
 
-**Decision:** Unit-test `Policy::evaluate()`, `Operations::*`, and
-`Model_Force::resolve_route()` under PHPUnit 9 with a minimal bootstrap
-(`ABSPATH` + `sanitize_text_field` / `__` stubs), not a full WordPress
-test install.
+**Decision:** Resolve conflicts with a merge commit on
+`agentops/implement-yh1aNLkXZhj1`, not a force-push rebase.
 
-**Why:** Acceptance criteria allow “wp-phpunit or equivalent.” Pure
-decision methods need only a policy array / operation string. Full WP core
-+ DB would slow first CI runs without improving branch coverage for this
-story. Stubs are the smallest reversible harness.
+**Why:** AgentOps / bot branches may be referenced elsewhere; merge is the
+safest reversible update for an open draft PR. Control plane publishes;
+we do not force-push.
 
-**Trade-off:** Sanitization stubs may diverge from core on exotic strings.
-Decision-engine branching does not depend on those edges.
+## D3: Refresh handoff artifacts for #36; do not preserve stale AICAC-1 copy
 
-## D2: PHPUnit 9.6 (not 10+)
+**Decision:** Replace conflicted `implementation-plan.md`, `decisions.md`,
+`test-results.md`, and `developer-handoff.md` with issue #36 content.
 
-**Decision:** Require `phpunit/phpunit: ^9.6`.
+**Why:** Those files are AgentOps process artifacts, not product runtime.
+Keeping either side’s AICAC-1 narrative would mis-describe this job.
 
-**Why:** Plugin declares `Requires PHP: 7.4`. PHPUnit 10+ needs PHP 8.1+.
-PHPUnit 9 keeps the suite conceptually aligned with the declared minimum.
+## D4: No production plugin code changes
 
-## D3: CI uses PHP 8.2
+**Decision:** Do not modify `includes/*`, the main plugin bootstrap, or
+runtime options as part of conflict resolution.
 
-**Decision:** `.github/workflows/phpunit.yml` runs on PHP 8.2 (same as the
-AgentOps validation image / lockfile platform).
-
-**Why:** `composer.lock` resolves modern PHPUnit 9 transitive deps that
-prefer PHP 8.x. One green PR job satisfies the release-evidence AC; a 7.4
-matrix can be added later without changing the suite.
-
-## D4: New `phpunit.yml` workflow (do not alter release trigger)
-
-**Decision:** Add a dedicated workflow for PR/push to `main`; leave
-`release.yml` tag-triggered publish path intact aside from packaging excludes.
-
-**Why:** Product handoff: release.yml only builds/publishes a tagged zip —
-CI for tests is a new job/workflow, not a modification of the release path.
-
-## D5: Exclude test tooling from release zip
-
-**Decision:** `release.yml` rsync excludes `vendor/`, `tests/`, Composer
-files, `phpunit.xml.dist`, and `*.md`.
-
-**Why:** Prevents shipping PHPUnit/vendor into the WordPress.org plugin zip.
-
-## D6: AICAC-2 stays out of this PR
-
-**Decision:** Do not persist wp_mail / cron failures in this change.
-
-**Why:** Product explicitly split P2 into AICAC-2 so it does not block the
-PHPUnit harness / CI evidence for AICAC-1.
-
-## D7: Cover all evaluate() reason branches including tool_armed
-
-**Decision:** Add deny-at-arming tests (`tool_armed`) and
-`OperationsFamilyTest` in addition to prior allow/deny/kill-switch coverage.
-
-**Why:** AC requires at least one test per decision-logic branch;
-`evaluate()` documents five reasons including `tool_armed`.
+**Why:** Approved scope is conflict resolution only. Product behavior for
+AICAC-1 is already on `main`.
