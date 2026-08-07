@@ -1,45 +1,31 @@
-# Decisions — AICAC-3 (#21)
+# Decisions — AICAC-102 (#23)
 
-## D1: Verification-only; do not remediate under this story
+## D1: Full replace (not merge) for confirmed import
 
-**Decision:** Document authz coverage and findings; leave production
-`class-handl-aicac-admin.php` (and related includes) unchanged except for
-adding a static PHPUnit lock and the audit artifact.
+**Decision:** Confirmed import atomically replaces the entire `Plugin::OPTION_KEY` value via `Policy::save_policy`, after stripping export metadata. UI copy documents “full replace.”
 
-**Why:** Acceptance criteria explicitly route findings through Quality and
-Release Gate and forbid fixing gaps under AICAC-3. Changing nonce/capability
-placement would expand unapproved product scope.
+**Why:** Product default for AC3; avoids ambiguous per-key merge semantics across environments. Agencies promoting a known-good ruleset expect the target to match the source, including empty rulesets used as an explicit reset (with preview).
 
-## D2: Treat shared `render_page` gate as valid capability coverage
+## D2: Flat export schema with top-level metadata
 
-**Decision:** Count `current_user_can( 'manage_options' )` at
-`render_page` L70 (plus `add_options_page` menu capability) as the
-capability mechanism for every POST mutator, rather than requiring each
-private helper to re-check.
+**Decision:** Export is a single JSON object: current policy keys plus required `plugin_version` and `exported_at` at the top level (not nested under a `policy` wrapper).
 
-**Why:** All mutating POST branches execute only after that gate inside the
-same method; private helpers have no other call sites. WordPress also
-enforces the menu capability before invoking the page callback. Requiring
-duplicate checks would be a defense-in-depth product change (see finding
-F-AICAC-3-2), not a current coverage failure.
+**Why:** Matches AC1 wording (“full current policy option, plus …”). Required-key validation (AC4) checks those two metadata fields. Unknown keys beyond meta + known policy keys are ignored with a notice (AC5).
 
-## D3: Settings API = explicit “not found”
+## D3: Pure `Policy_Transfer` helpers; write only through `Policy::save_policy`
 
-**Decision:** Record Settings API implicit nonce/capability handling as
-**not found** for every handler.
+**Decision:** Parse/diff/build live in `Policy_Transfer`; admin handlers never `update_option` the policy directly. Confirm calls `Policy::save_policy` (same sanitize path as `handle_save_rules`).
 
-**Why:** The plugin never calls `register_setting` / `settings_fields`;
-saves are custom POST + `check_admin_referer`. Stating “not found” satisfies
-the acceptance criterion’s distinct outcome requirement.
+**Why:** Story dependency forbids a bypass write path. Keeps unit tests free of WordPress option I/O while still locking the confirm→`save_policy` wiring in `AdminAuthzCoverageTest`.
 
-## D4: Encode inventory in a static source unit test
+## D4: Preview via per-user transient; upload-only
 
-**Decision:** Add `tests/Unit/AdminAuthzCoverageTest.php` that reads the
-admin class source and asserts shared gate, per-action nonces, match count
-(5), private mutators, and absence of Settings API / AJAX / admin-post
-hooks.
+**Decision:** Valid upload stores pending policy in a user-scoped transient (15 min); confirm reads it. No server filesystem path input; max upload size 1MB.
 
-**Why:** Makes the acceptance criteria reproducible without a full WordPress
-install, and fails CI if a new `handl_aicac_action` branch appears without an
-adjacent `check_admin_referer`. Complements the human-readable
-`aicac-3-authz-coverage.md` inventory for Quality.
+**Why:** Separates preview (no write) from confirm (write); avoids posting large JSON back in a hidden field; satisfies permissions/security constraints.
+
+## D5: AC6 secrets confirmation
+
+**Decision:** Ship without an export denylist. Known policy keys contain no API keys, passwords, or credentials. `alert_email` is an operator contact address (not a secret) and is part of the shared policy option, so it is included in full-replace transfer.
+
+**Why:** Grep + unit test over `known_policy_keys()`; if secrets are added later they must be excluded from `build_export`.

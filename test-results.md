@@ -1,59 +1,61 @@
-# Test Results — AICAC-3 (#21)
+# Test Results — AICAC-102 (#23)
 
 ## Environment
 
+- OS: Linux (AgentOps credential-free workspace)
+- PHP: `/home/ubuntu/php-runtime/php` → PHP 8.2.28 CLI
+- Composer: `/home/ubuntu/.local/bin/composer`
+- PHPUnit: 9.6.35 (via `composer test`)
 - Date: 2026-08-07
-- Branch: `main` (local implement workspace; control plane publishes)
-- Work item: #21 / AICAC-3
-- PHP: 8.2.28 (`/home/ubuntu/php-runtime/php`)
-- Composer / PHPUnit: 9.6.35 (from `composer.lock`)
 
 ## Commands executed
 
 ```bash
-export PATH="/home/ubuntu/php-runtime:$PATH:/home/ubuntu/.local/bin:$PATH"
+export PATH="/home/ubuntu/php-runtime:$PATH"
 composer install --no-interaction
 composer test
-php -l tests/Unit/AdminAuthzCoverageTest.php
+php -l includes/class-handl-aicac-policy-transfer.php
 php -l includes/class-handl-aicac-admin.php
+php -l includes/class-handl-aicac-plugin.php
+php -l handl-ai-connector-access-control.php
 ```
 
 ## Results
-
-### `composer install --no-interaction`
-
-Success. Lock file packages installed (including PHPUnit 9.6.35).
 
 ### `composer test`
 
 ```
 PHPUnit 9.6.35 by Sebastian Bergmann and contributors.
 
-..........................................                        42 / 42 (100%)
+........................................................          56 / 56 (100%)
 
-Time: 00:00.008, Memory: 10.00 MB
+Time: 00:00.011, Memory: 12.00 MB
 
-OK (42 tests, 131 assertions)
+OK (56 tests, 233 assertions)
 ```
 
-Exit code: **0**
+### `php -l`
 
-Breakdown:
+All checked files: no syntax errors detected.
 
-- Existing AICAC-1 suite: PolicyEvaluate / OperationsFamily / ModelForceResolveRoute (unchanged)
-- New: `AdminAuthzCoverageTest` — shared `manage_options` gate, four per-action `check_admin_referer` checks, Settings API not found, no AJAX/admin-post hooks, private mutators, combined match count = 5
+## Failures / retries
 
-### Syntax lint (`php -l`)
+1. Initial `AdminAuthzCoverageTest::test_import_confirm_uses_policy_save_policy` failed because the confirm method **docblock** contained the substring `Policy::save_policy` inside the preview→confirm slice. Assertion tightened to `Policy::save_policy(` (call site). Re-run: OK.
 
-- `tests/Unit/AdminAuthzCoverageTest.php` — No syntax errors detected
-- `includes/class-handl-aicac-admin.php` — No syntax errors detected
+## Not run (environment)
 
-## Failures
+- Full WordPress integration / browser CSRF simulation (not available in this workspace; static authz lock + pure transfer unit tests cover AC logic)
+- Formatter / PHPCS (not configured in this repo)
+- Dependency security audit (no Composer production deps beyond PHP)
 
-None.
+## Coverage notes
 
-## Notes
-
-- No production authz code was modified; verification is inventory + static lock test.
-- Formatter / PHPCS / WPCS are not configured in this repo (AICAC-2 still separate); not claimed as run.
-- Full handler matrix and findings: `aicac-3-authz-coverage.md`.
+| AC | Evidence |
+|----|----------|
+| AC1 | `PolicyTransferTest::test_build_export_includes_policy_plus_metadata` |
+| AC2 | `PolicyTransferTest::test_diff_policies_reports_added_changed_removed_sections`; preview handler has no `save_policy(` |
+| AC3 | Confirm handler → `Policy::save_policy(`; UI documents full replace |
+| AC4 | `test_parse_import_rejects_*` |
+| AC5 | `test_parse_import_ignores_unknown_fields` |
+| AC6 | `test_export_contains_no_secret_field_names` |
+| Authz | Updated `AdminAuthzCoverageTest` (7 mutating actions + shared `manage_options`) |

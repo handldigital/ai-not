@@ -2,10 +2,11 @@
 /**
  * Static verification that admin state-mutating handlers keep nonce + capability coverage.
  *
- * AICAC-3 (#21): locks the inventory of POST action dispatches in
- * class-handl-aicac-admin.php. Does not exercise WordPress runtime authz —
- * it fails if a new handl_aicac_action branch appears without a matching
- * check_admin_referer, or if the shared manage_options gate is removed.
+ * Originally AICAC-3 (#21); extended for AICAC-102 transfer actions.
+ * Locks the inventory of POST action dispatches in class-handl-aicac-admin.php.
+ * Does not exercise WordPress runtime authz — it fails if a new handl_aicac_action
+ * branch appears without a matching check_admin_referer, or if the shared
+ * manage_options gate is removed.
  *
  * @package HandL_AICAC
  */
@@ -22,6 +23,17 @@ final class AdminAuthzCoverageTest extends TestCase {
 
 	/** @var list<string> */
 	private array $lines;
+
+	/** @var list<string> */
+	private array $known_actions = array(
+		'quick_rule',
+		'send_denial_digest',
+		'undo_quick_rule',
+		'save',
+		'export_rules',
+		'import_rules_preview',
+		'import_rules_confirm',
+	);
 
 	protected function setUp(): void {
 		$path = HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php';
@@ -109,6 +121,18 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'action'       => 'save',
 				'nonce_action' => 'handl_aicac_save_policy',
 			),
+			array(
+				'action'       => 'export_rules',
+				'nonce_action' => 'handl_aicac_export_rules',
+			),
+			array(
+				'action'       => 'import_rules_preview',
+				'nonce_action' => 'handl_aicac_import_rules',
+			),
+			array(
+				'action'       => 'import_rules_confirm',
+				'nonce_action' => 'handl_aicac_import_rules_confirm',
+			),
 		);
 	}
 
@@ -131,7 +155,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 
 		$this->assertNotNull(
 			$action_line,
-			"Dispatch for action '{$action}' not found — update AICAC-3 inventory if intentional"
+			"Dispatch for action '{$action}' not found — update authz inventory if intentional"
 		);
 
 		$nonce_line = $this->first_line_matching(
@@ -156,19 +180,20 @@ final class AdminAuthzCoverageTest extends TestCase {
 	}
 
 	/**
-	 * Combined match count stays aligned with shared-wrapper design (1 cap + 4 nonces).
+	 * Combined match count: 1 shared capability + one check_admin_referer per mutating action.
 	 */
 	public function test_combined_capability_and_nonce_verify_match_count(): void {
 		preg_match_all( '/\bcurrent_user_can\s*\(/', $this->source, $cap );
 		preg_match_all( '/\bcheck_admin_referer\s*\(/', $this->source, $nonce );
 		preg_match_all( '/\bwp_verify_nonce\s*\(/', $this->source, $verify );
 
-		$combined = count( $cap[0] ) + count( $nonce[0] ) + count( $verify[0] );
+		$expected_nonces = count( $this->mutating_action_provider() );
+		$combined        = count( $cap[0] ) + count( $nonce[0] ) + count( $verify[0] );
 
 		$this->assertSame( 1, count( $cap[0] ), 'Expected exactly one current_user_can in admin class' );
-		$this->assertSame( 4, count( $nonce[0] ), 'Expected exactly four check_admin_referer calls' );
+		$this->assertSame( $expected_nonces, count( $nonce[0] ), 'Expected one check_admin_referer per mutating action' );
 		$this->assertSame( 0, count( $verify[0] ), 'wp_verify_nonce should remain unused (check_admin_referer covers CSRF)' );
-		$this->assertSame( 5, $combined, 'AICAC-3 premise: five combined matches under shared-wrapper design' );
+		$this->assertSame( 1 + $expected_nonces, $combined, 'Shared-wrapper design: 1 capability + N action nonces' );
 	}
 
 	/**
@@ -184,12 +209,15 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'apply_kill_switch_settings_from_post',
 				'apply_model_force_settings_from_post',
 				'apply_log_settings_from_post',
+				'handle_export_rules',
+				'handle_import_rules_preview',
+				'handle_import_rules_confirm',
 			) as $method
 		) {
 			$this->assertMatchesRegularExpression(
 				'/\bprivate\s+function\s+' . preg_quote( $method, '/' ) . '\s*\(/',
 				$this->source,
-				"Mutator {$method} must stay private (or update AICAC-3 findings if intentional)"
+				"Mutator {$method} must stay private (or update authz inventory if intentional)"
 			);
 		}
 	}
@@ -198,7 +226,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 	 * Inventory completeness: every string compared as handl_aicac_action must be known.
 	 */
 	public function test_no_unknown_handl_aicac_action_string_literals_in_dispatch(): void {
-		$known = array( 'quick_rule', 'send_denial_digest', 'undo_quick_rule', 'save' );
+		$known = $this->known_actions;
 		$found = array();
 
 		foreach ( $this->lines as $line ) {
@@ -208,10 +236,6 @@ final class AdminAuthzCoverageTest extends TestCase {
 			if ( preg_match_all( '/[\'"]([a-z0-9_]+)[\'"]/', $line, $m ) ) {
 				foreach ( $m[1] as $token ) {
 					if ( in_array( $token, $known, true ) ) {
-						$found[ $token ] = true;
-					} elseif ( in_array( $token, array( 'handl_aicac_action', 'handl_aicac_nonce' ), true ) ) {
-						continue;
-					} elseif ( preg_match( '/^(quick_rule|send_denial_digest|undo_quick_rule|save)$/', $token ) ) {
 						$found[ $token ] = true;
 					}
 				}
@@ -225,6 +249,44 @@ final class AdminAuthzCoverageTest extends TestCase {
 				"Known action '{$action}' missing from source references"
 			);
 		}
+	}
+
+	/**
+	 * Import path must call Policy::save_policy (reuse sanitize path; no bypass).
+	 */
+	public function test_import_confirm_uses_policy_save_policy(): void {
+		$preview_pos = strpos( $this->source, 'function handle_import_rules_preview' );
+		$confirm_pos = strpos( $this->source, 'function handle_import_rules_confirm' );
+		$this->assertNotFalse( $preview_pos );
+		$this->assertNotFalse( $confirm_pos );
+		$this->assertGreaterThan( $preview_pos, $confirm_pos );
+
+		$preview_body = substr( $this->source, $preview_pos, $confirm_pos - $preview_pos );
+		$confirm_body = substr( $this->source, $confirm_pos, 2500 );
+
+		$this->assertStringNotContainsString(
+			'Policy::save_policy(',
+			$preview_body,
+			'Preview must not write policy'
+		);
+		$this->assertStringContainsString(
+			'Policy::save_policy(',
+			$confirm_body,
+			'Confirmed import must write through Policy::save_policy'
+		);
+	}
+
+	/**
+	 * Upload-only: no server path input field for import.
+	 */
+	public function test_import_uses_file_upload_not_path_input(): void {
+		$this->assertStringContainsString( 'enctype="multipart/form-data"', $this->source );
+		$this->assertStringContainsString( 'name="handl_aicac_import_file"', $this->source );
+		$this->assertStringContainsString( 'type="file"', $this->source );
+		$this->assertDoesNotMatchRegularExpression(
+			'/name=[\'"]handl_aicac_import_(path|server_path|filepath)[\'"]/',
+			$this->source
+		);
 	}
 
 	/**

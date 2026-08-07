@@ -1,41 +1,48 @@
-# Implementation Plan — AICAC-3 (#21)
+# Implementation Plan — AICAC-102 (#23)
 
 ## Work item
 
-**Issue:** #21 — AICAC-3: Verify authorization (nonce + capability) coverage on all admin state-mutating handlers  
-**Scope:** `includes/class-handl-aicac-admin.php` (settings/save surface)  
-**Constraint:** Findings are documented for Quality and Release Gate — **do not fix** authz gaps under this story.
+**Issue:** #23 — AICAC-102: Export and import policy/rules configuration as JSON  
+**Scope:** Rules-tab transfer UI + pure transfer/validate/diff helpers; write via existing `Policy::save_policy` sanitization.  
+**Out of scope:** Cross-site sync, push-to-all-sites (AICAC-105), audit-log export (AICAC-101), WP-CLI bulk import (AICAC-103).
 
 ## Objective
 
-Produce a complete, testable inventory of every settings-save / action handler in the admin class, identify the nonce and capability mechanism for each (including shared wrappers; Settings API if any), and emit severity + failure-scenario findings for any handler lacking checks. Route those findings to Quality; leave production plugin behavior unchanged except for verification evidence (static unit test + audit artifact).
+Let a `manage_options` admin download the current `Plugin::OPTION_KEY` policy as JSON (with `plugin_version` / `exported_at`), upload a prior export, preview added/changed/removed governance fields, and confirm a full-replace import that reuses the same sanitize path as Rules save — rejecting invalid JSON without mutating live policy.
 
 ## Approach (smallest correct change)
 
-1. Static-read `class-handl-aicac-admin.php` and related includes for alternate entry points (`wp_ajax_*`, `admin_post_*`, `register_setting`).
-2. Enumerate every POST `handl_aicac_action` dispatch and every private mutator it calls, with file:line.
-3. Map capability (`current_user_can` / menu capability) and nonce (`check_admin_referer` / form `wp_nonce_field`) per handler; record **not found** explicitly where absent.
-4. Classify gaps (if any) with severity + concrete failure scenario; otherwise document that the sparse match count is explained by a shared wrapper.
-5. Add a PHPUnit static-source test that locks the inventory and fails if a new POST action branch appears without a matching nonce check, or if the shared capability gate disappears.
-6. Do **not** add defense-in-depth re-checks or otherwise “fix” findings in production code under this story.
+1. Add `includes/class-handl-aicac-policy-transfer.php` with pure helpers: build export payload, parse/validate upload JSON, strip unknown fields, compute AC2 diff sections, prepare array for `Policy::save_policy`.
+2. Wire Rules-tab UI: Download form; Import upload → preview (transient) → confirm; document full-replace in UI.
+3. Dispatch POST actions in `Admin::render_page` after the existing `manage_options` gate: `export_rules`, `import_rules_preview`, `import_rules_confirm` — each with `check_admin_referer`; upload-only; ~1MB size cap.
+4. Confirm no secrets/credentials in the policy option before shipping (AC6).
+5. Unit-test transfer parse/diff/unknown-field behavior; update `AdminAuthzCoverageTest` for new mutating actions.
+6. Minor version bump + changelog documenting JSON schema metadata fields.
 
 ## Acceptance-criteria mapping
 
 | Criterion | Implementation | Test / evidence |
 |-----------|----------------|-----------------|
-| Every settings-save/action handler enumerated with file:line | `aicac-3-authz-coverage.md` inventory table | `AdminAuthzCoverageTest` asserts known action keys + dispatch line anchors |
-| Nonce/capability mechanism identified per handler (shared wrappers / Settings API / not found) | Coverage matrix in audit artifact | Test asserts shared `manage_options` gate, per-action `check_admin_referer`, and Settings API = not found |
-| Handlers without checks → severity + concrete failure scenario | Findings section in audit + developer-handoff | Quality reviews findings; no silent omission |
-| Findings routed through Quality, not fixed under this story | No production authz code changes | Diff limited to audit + test + AgentOps handoffs |
+| AC1 Download includes full policy + `plugin_version` + `exported_at` | `Policy_Transfer::build_export` + admin export handler | Unit: export shape; manual download path exists on Rules |
+| AC2 Valid upload shows preview of added/changed/removed (plugins, operations, kill-switch, denied-tools, model-force) before write | `Policy_Transfer::diff_policies` + preview UI; write only on confirm | Unit: diff cases; preview action does not call `save_policy` |
+| AC3 Confirmed import full-replaces via sanitize path + success notice | Confirm → `Policy::save_policy`; UI documents full replace | Unit: `policy_for_save` strips meta; success redirect query arg |
+| AC4 Invalid JSON / missing required keys → error, live policy unchanged | `parse_import` rejects; no save on failure | Unit: invalid JSON, missing keys |
+| AC5 Unknown fields ignored with notice listing them | parse strips unknown; notice on preview/confirm | Unit: unknown keys listed in `ignored` |
+| AC6 No secrets exported | Static confirm: option has no API keys/credentials | Documented in decisions + handoff |
+| Security: manage_options, nonce, upload-only, 1MB | Shared gate + per-action nonces; `$_FILES` only | Authz coverage test updated |
 
 ## Risks
 
-- Static source tests can drift if dispatch is refactored into helpers; inventory comments in the test must stay aligned with the audit.
-- Credential-free workspace cannot push; control plane publishes the branch for Quality review.
-- Informational defense-in-depth notes must not be misread as confirmed CVEs.
+- Full replace overwrites Activity-tab fields stored in the same option (log/alerts/rates) when present in the export — intentional and documented in UI.
+- `AdminAuthzCoverageTest` match counts change with new handlers; AICAC-3 inventory text may lag the test until refreshed.
+- Credential-free workspace: no push; control plane publishes for Quality.
 
-## Out of scope
+## Files
 
-- Adding nonce/capability re-checks inside private mutators.
-- Changing cron / runtime policy mutation paths outside the admin HTTP surface.
-- Implementing AICAC-1/2 work or unrelated refactors.
+- `includes/class-handl-aicac-policy-transfer.php` (new)
+- `includes/class-handl-aicac-admin.php` (UI + handlers)
+- `includes/class-handl-aicac-plugin.php` (require transfer class)
+- `handl-ai-connector-access-control.php` / `readme.txt` (version + changelog)
+- `tests/Unit/PolicyTransferTest.php` (new)
+- `tests/Unit/AdminAuthzCoverageTest.php` (extend inventory)
+- `tests/bootstrap.php` (load transfer class)
