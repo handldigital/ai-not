@@ -1,10 +1,10 @@
-# Test Results — AICAC-104 (#25)
+# Test Results — AICAC-104 (#25) Quality remediation
 
 ## Environment
 
 - Date: 2026-08-07
-- Branch: `main` (local implement workspace; control plane publishes)
-- Work item: #25 / AICAC-104
+- Branch: `agentops/implement-Lm-yiEpMabB9` (from PR #45 @ 9666e8f)
+- Work item: #25 / AICAC-104 — remediate Quality P2/P3
 - PHP: 8.2.28 (`/home/ubuntu/php-runtime/php`)
 - Composer / PHPUnit: 9.6.35 (from `composer.lock`)
 
@@ -13,56 +13,73 @@
 ```bash
 export PATH="/home/ubuntu/php-runtime:$PATH:/home/ubuntu/.local/bin:$PATH"
 composer install --no-interaction
+# Negative proof for P2: inject unknown posted_action literal, expect failure
+composer test -- --filter test_no_unknown_handl_aicac_action_string_literals_in_dispatch
+git checkout -- includes/class-handl-aicac-admin.php
 composer test
-php -l includes/class-handl-aicac-alerts.php
-php -l includes/class-handl-aicac-admin.php
-php -l includes/class-handl-aicac-policy.php
-php -l tests/Unit/AlertsWebhookTest.php
-php -l tests/bootstrap.php
+php -l tests/Unit/AdminAuthzCoverageTest.php
+git diff --check
 ```
 
 ## Results
 
-### `composer install --no-interaction`
+### P2 negative proof (unknown literal injected)
 
-Success. Lock file packages installed (including PHPUnit 9.6.35).
+Injected temporary branch:
 
-### `composer test` (final)
+```php
+if ( 'totally_new_mutating_action' === $posted_action ) {
+    check_admin_referer( 'handl_aicac_fake', 'handl_aicac_nonce' );
+}
+```
+
+```
+There was 1 failure:
+
+1) HandL\AICAC\Tests\Unit\AdminAuthzCoverageTest::test_no_unknown_handl_aicac_action_string_literals_in_dispatch
+Unknown handl_aicac_action/posted_action string literals must be added to mutating_action_provider (and nonce coverage): 'totally_new_mutating_action' @ L127
+Failed asserting that two arrays are identical.
+--- Expected
++++ Actual
+@@ @@
+-Array &0 ()
++Array &0 (
++    0 => 'totally_new_mutating_action'
++)
+
+FAILURES!
+Tests: 1, Assertions: 3, Failures: 1.
+```
+
+Admin source restored with `git checkout -- includes/class-handl-aicac-admin.php`.
+
+### `composer test` (clean tree)
 
 ```
 PHPUnit 9.6.35 by Sebastian Bergmann and contributors.
 
 .....................................................             53 / 53 (100%)
 
-Time: 00:00.010, Memory: 10.00 MB
+Time: 00:00.011, Memory: 10.00 MB
 
-OK (53 tests, 205 assertions)
+OK (53 tests, 206 assertions)
 ```
 
-Exit code: **0**
-
-Breakdown:
-
-- Existing suites: PolicyEvaluate / OperationsFamily / ModelForceResolveRoute / AdminAuthzCoverage (nonce count updated for `send_test_webhook`)
-- New: `AlertsWebhookTest` — sanitize/validate (AC6), privacy field set (AC1), empty URL no POST (AC2), failure containment (AC3), deferred flush (AC4), test payload labeling + immediate test send (AC5), digest payload shape
-
-### Intermediate failure (fixed before handoff)
-
-First `composer test` run after implementation: 2 errors — missing `wp_date` stub in `tests/bootstrap.php` while formatting email body during flush. Added stub; re-ran to green (above).
+Exit code: **0** (assertion count 205 → 206: unknown-empty assert).
 
 ### Syntax lint (`php -l`)
 
-- `includes/class-handl-aicac-alerts.php` — No syntax errors detected
-- `includes/class-handl-aicac-admin.php` — No syntax errors detected
-- `includes/class-handl-aicac-policy.php` — No syntax errors detected
-- `tests/Unit/AlertsWebhookTest.php` — No syntax errors detected
-- `tests/bootstrap.php` — No syntax errors detected
+- `tests/Unit/AdminAuthzCoverageTest.php` — No syntax errors detected
+
+### `git diff --check` (P3)
+
+Exit code: **0** (no trailing whitespace in working tree / touched Markdown).
 
 ## Failures
 
-None on final run.
+None on the clean tree. Intentional failure only during P2 negative proof (restored).
 
 ## Notes
 
 - Formatter / PHPCS / WPCS are not configured in this repo; not claimed as run.
-- No live Slack/Teams endpoint was called from this credential-free workspace; HTTP behavior is stubbed in unit tests.
+- Staging smoke tests and human production approval were **not** executed (outside agent authority; remain open release-gate items).

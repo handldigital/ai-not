@@ -1,43 +1,36 @@
-# Implementation Plan — AICAC-104 (#25)
+# Implementation Plan — AICAC-104 (#25) Quality remediation
 
 ## Work item
 
-**Issue:** #25 — AICAC-104: Outgoing webhook channel for denial alerts (Slack/Teams-compatible)  
-**Scope:** Denial-alert delivery in `class-handl-aicac-alerts.php` + Activity audit settings UI/save in `class-handl-aicac-admin.php` + policy sanitize/persist + Privacy/`readme.txt` + minor version bump.  
-**Spec source:** Issue body; product-handoff § AICAC-104 (copied from approved product scan — not present in this workspace at job start).
+**Issue:** #25 / AICAC-104 (PR #45)
+**Scope:** Remediate Quality and Release Gate findings on the existing webhook PR — not new product scope.
+**Trigger:** Product unblock triage set `NEXT_OWNER=DEVELOPER` with `STATUS: CHANGES_REQUESTED`.
 
 ## Objective
 
-Add an optional admin-configured HTTP(S) webhook URL alongside denial email alerts. When set, the same denial trigger/rate-limit/digest path also POSTs a generic JSON payload (privacy-scoped like email) via `wp_remote_post`, without changing allow/deny or adding latency on the filter path.
+Close blocking P2 (authz inventory test gap) and batch P3 (Markdown trailing whitespace) with evidence so Quality can re-review. Staging smoke tests and human production approval remain process gates outside agent authority.
 
 ## Approach (smallest correct change)
 
-1. Policy key `alert_webhook_url` — sanitize to `http`/`https` only; empty clears the channel.
-2. Extend `Alerts`: resolve URL, build JSON from existing `summarize_event` fields, `safe_wp_remote_post` (try/catch, 2xx-only success, `redirection => 0`), fire from immediate + digest paths after the same gates as email; no POST when URL empty.
-3. Keep deferred shutdown flush for production denials (AC4). Test button POSTs immediately and bypasses rate limit (AC5).
-4. Admin Activity settings: Webhook URL field + inline reject notice on invalid save (AC6) + “Send test webhook” form (nonce + `manage_options` shared gate).
-5. Update `AdminAuthzCoverageTest` for the new mutating action.
-6. Unit-test sanitize/validate, payload field set, empty-URL no-POST, failure containment stubs, digest mode mirroring.
-7. Bump to **1.0.15**; document Privacy/Data egress + changelog.
+1. **P2:** Rewrite `AdminAuthzCoverageTest::test_no_unknown_handl_aicac_action_string_literals_in_dispatch` so any quoted token on a `handl_aicac_action` / `posted_action` line that is not in the known mutating-action inventory (or a tiny non-action allowlist) fails the test. Derive `$known` from `mutating_action_provider()` to avoid inventory drift.
+2. **P3:** Remove Markdown two-space hard-break trailing whitespace in `developer-handoff.md` and `implementation-plan.md` so `git diff --check` is clean.
+3. Prove P2 with a temporary unknown action injection (expect failure), restore source, then run full `composer test`.
+4. Document remaining release-gate items (staging smoke + human production approval) as open HUMAN process risks — do not waive.
 
 ## Acceptance-criteria mapping
 
 | Criterion | Implementation | Test / evidence |
 |-----------|----------------|-----------------|
-| AC1 POST same field set as email | Immediate (+ digest) webhook body from `summarize_event` | `AlertsWebhookTest` asserts payload keys; no prompt/user |
-| AC2 no URL → no POST | `resolve_webhook` empty short-circuit | Test stubs `wp_remote_post` not called |
-| AC3 non-2xx/timeout contained | `safe_wp_remote_post` try/catch + code check | Test WP_Error / 500 → false, no throw |
-| AC4 deferred to shutdown | Reuse `hook_flush` / `flush_deferred` | Source/assert production path only queues then flush |
-| AC5 Send test webhook | Admin action `send_test_webhook` → `Alerts::send_test_webhook` | Authz coverage lock; method sets `test: true` |
-| AC6 http/https validate; reject inline | `validate_webhook_url_input` + admin notice; prior URL kept | Unit cases for ftp/javascript/empty/valid |
-| Digest mirrors email mode | `send_digest` also POSTs when URL set | Test digest payload shape |
+| P2: test rejects unknown `handl_aicac_action` / `posted_action` literals | Assert `array_keys($unknown) === []`; known set from provider | Inject `totally_new_mutating_action` → fail @ L127; clean tree → pass |
+| P3: no trailing whitespace in touched Markdown | Strip trailing spaces on STATUS / plan header lines | `git diff --check` exit 0 |
+| Release gate: staging smoke + human prod approval | No code change (outside agent authority) | Documented as remaining risks / NEXT notes |
 
 ## Risks
 
-- Admin-supplied outbound URL is SSRF-adjacent (same trust model as `alert_email`); mitigate with scheme allowlist + `wp_remote_post` + no redirect follow.
-- Dual-channel digest retry after email failure may re-POST webhook (documented limitation; email clear semantics unchanged).
-- Credential-free workspace cannot push; control plane publishes.
+- Non-action allowlist includes `hidden` (HTML `type="hidden"` on form lines). A future quoted token that is not an action and not allowlisted will correctly fail CI until allowlisted or the scanner is narrowed.
+- SSRF-adjacent admin webhook URL and dual-channel digest retry remain from the original PR (not in this remediation scope).
+- Staging smoke + human production approval still block merge/release until HUMAN records them.
 
 ## Out of scope
 
-- Weekly report webhook; Slack/Teams Block Kit templating; separate webhook on/off toggle.
+- New product features; waiving Quality findings; deploying; staging smoke execution; production approval.

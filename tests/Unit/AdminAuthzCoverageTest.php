@@ -5,7 +5,8 @@
  * AICAC-3 (#21): locks the inventory of POST action dispatches in
  * class-handl-aicac-admin.php. Does not exercise WordPress runtime authz —
  * it fails if a new handl_aicac_action branch appears without a matching
- * check_admin_referer, or if the shared manage_options gate is removed.
+ * check_admin_referer, if an unknown action/posted_action literal is introduced
+ * without updating the known inventory, or if the shared manage_options gate is removed.
  *
  * @package HandL_AICAC
  */
@@ -199,28 +200,59 @@ final class AdminAuthzCoverageTest extends TestCase {
 	}
 
 	/**
-	 * Inventory completeness: every string compared as handl_aicac_action must be known.
+	 * Inventory completeness: every string compared as handl_aicac_action / posted_action
+	 * must be in the known set. Unknown literals fail so a new mutating branch cannot
+	 * ship without updating this inventory (and the nonce-adjacency data provider).
 	 */
 	public function test_no_unknown_handl_aicac_action_string_literals_in_dispatch(): void {
-		$known = array( 'quick_rule', 'send_denial_digest', 'send_test_webhook', 'undo_quick_rule', 'save' );
-		$found = array();
+		$known = array_map(
+			static function ( array $row ): string {
+				return $row['action'];
+			},
+			$this->mutating_action_provider()
+		);
 
-		foreach ( $this->lines as $line ) {
+		// Non-action quoted identifiers that legitimately appear on the same lines
+		// (POST field names; HTML type="hidden" on form value= inputs).
+		$non_action_tokens = array( 'handl_aicac_action', 'handl_aicac_nonce', 'hidden' );
+
+		$found   = array();
+		$unknown = array();
+
+		foreach ( $this->lines as $idx => $line ) {
 			if ( ! preg_match( '/handl_aicac_action|posted_action/', $line ) ) {
 				continue;
 			}
-			if ( preg_match_all( '/[\'"]([a-z0-9_]+)[\'"]/', $line, $m ) ) {
-				foreach ( $m[1] as $token ) {
-					if ( in_array( $token, $known, true ) ) {
-						$found[ $token ] = true;
-					} elseif ( in_array( $token, array( 'handl_aicac_action', 'handl_aicac_nonce' ), true ) ) {
-						continue;
-					} elseif ( preg_match( '/^(quick_rule|send_denial_digest|send_test_webhook|undo_quick_rule|save)$/', $token ) ) {
-						$found[ $token ] = true;
-					}
+			if ( ! preg_match_all( '/[\'"]([a-z0-9_]+)[\'"]/', $line, $m ) ) {
+				continue;
+			}
+			foreach ( $m[1] as $token ) {
+				if ( in_array( $token, $known, true ) ) {
+					$found[ $token ] = true;
+					continue;
 				}
+				if ( in_array( $token, $non_action_tokens, true ) ) {
+					continue;
+				}
+				$unknown[ $token ] = $idx + 1;
 			}
 		}
+
+		$this->assertSame(
+			array(),
+			array_keys( $unknown ),
+			'Unknown handl_aicac_action/posted_action string literals must be added to mutating_action_provider (and nonce coverage): '
+			. implode(
+				', ',
+				array_map(
+					static function ( string $token, int $line ): string {
+						return "'{$token}' @ L{$line}";
+					},
+					array_keys( $unknown ),
+					array_values( $unknown )
+				)
+			)
+		);
 
 		foreach ( $known as $action ) {
 			$this->assertArrayHasKey(

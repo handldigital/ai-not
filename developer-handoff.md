@@ -1,98 +1,91 @@
-# Developer Handoff — AICAC-104 (#25)
+# Developer Handoff — AICAC-104 (#25) Quality remediation
 
 ## Work item ID
 
-Issue #25 — AICAC-104: Outgoing webhook channel for denial alerts (Slack/Teams-compatible)
+Issue #25 — AICAC-104 (PR #45): Remediate Quality P2/P3 findings
 
 ## Summary of behavior implemented
 
-Added optional `alert_webhook_url` (http/https) beside denial email settings on Activity. When configured and `alert_on_deny` is on, denials that pass the existing rate-limit/digest path also POST generic JSON (same privacy-scoped fields as email) via `wp_remote_post`, deferred to shutdown. Empty URL leaves email-only behavior. Failures are contained. “Send test webhook” posts a labeled test payload immediately (bypasses rate limit). Invalid URLs are rejected with an inline admin error and not stored. Version **1.0.15**; Privacy/Data + changelog updated.
+Closed Quality’s blocking P2 by making `AdminAuthzCoverageTest::test_no_unknown_handl_aicac_action_string_literals_in_dispatch` fail on any unknown `handl_aicac_action` / `posted_action` string literal (known set derived from `mutating_action_provider`; non-action allowlist for field names + HTML `hidden`). Closed P3 by removing Markdown trailing whitespace so `git diff --check` is clean. Did not waive staging smoke or human production approval — those remain HUMAN release-gate items. Webhook product behavior from the prior implement pass is unchanged.
 
 ## Files changed
 
-- `includes/class-handl-aicac-alerts.php` — sanitize/validate, payloads, safe POST, immediate/digest/test delivery
-- `includes/class-handl-aicac-policy.php` — persist `alert_webhook_url`
-- `includes/class-handl-aicac-admin.php` — UI field, reject notice, test action + nonce
-- `tests/Unit/AlertsWebhookTest.php` — AC coverage
-- `tests/Unit/AdminAuthzCoverageTest.php` — `send_test_webhook` inventory
-- `tests/bootstrap.php` — WP HTTP / mail / option stubs for alerts tests
-- `handl-ai-connector-access-control.php`, `readme.txt` — 1.0.15 + Privacy/changelog
-- `aicac-3-authz-coverage.md` — note fifth nonce
-- `implementation-plan.md`, `decisions.md`, `test-results.md`, `developer-handoff.md`, `.agentops-result.json`
+- `tests/Unit/AdminAuthzCoverageTest.php` — reject unknown action literals (P2)
+- `developer-handoff.md`, `implementation-plan.md` — trailing whitespace removed (P3) + remediation docs
+- `decisions.md` — D6
+- `test-results.md`, `.agentops-result.json`
+
+**Unchanged:** production PHP (`class-handl-aicac-admin.php`, alerts, policy), webhook feature behavior, version 1.0.15.
 
 ## Acceptance-criteria-to-test mapping
 
 | Criterion | Evidence |
 |-----------|----------|
-| AC1 same field set / path-only / no prompt or user | `AlertsWebhookTest::test_summary_fields_match_email_privacy_scope`, `test_maybe_notify_defers_webhook_until_shutdown_flush` |
-| AC2 no URL → no POST; email unchanged | `test_no_webhook_post_when_url_empty_email_path_still_runs`, empty-URL cases in `test_safe_wp_remote_post_*` |
-| AC3 non-2xx/timeout contained | `test_safe_wp_remote_post_success_and_failure_contained` |
-| AC4 deferred to shutdown | `test_maybe_notify_defers_webhook_until_shutdown_flush` |
-| AC5 test button / labeled test / bypass rate limit | Admin action + `test_test_payload_is_labeled_as_test`, `test_send_test_webhook_*`; authz lock |
-| AC6 http/https validate; reject inline | `test_sanitize_*`, `test_validate_*`; admin notice on reject |
-| Digest mirrors email mode | `send_digest` POSTs when URL set; `test_digest_payload_includes_summaries` |
+| P2: unknown `handl_aicac_action` / `posted_action` literals fail CI | Test asserts empty `$unknown`; negative proof with `totally_new_mutating_action` failed @ L127; clean `composer test` OK (53/206) |
+| P3: Markdown lint-clean line breaks | `git diff --check` exit 0 on touched files |
+| Staging smoke + human prod approval recorded | Not satisfied here — documented remaining risks; requires HUMAN |
 
 ## Commands executed
 
 ```bash
 composer install --no-interaction
+composer test -- --filter test_no_unknown_handl_aicac_action_string_literals_in_dispatch  # fail under injection
+git checkout -- includes/class-handl-aicac-admin.php
 composer test
-php -l includes/class-handl-aicac-alerts.php
-php -l includes/class-handl-aicac-admin.php
-php -l includes/class-handl-aicac-policy.php
-php -l tests/Unit/AlertsWebhookTest.php
-php -l tests/bootstrap.php
+php -l tests/Unit/AdminAuthzCoverageTest.php
+git diff --check
 ```
 
 ## Test results
 
 ```
-OK (53 tests, 205 assertions)
+OK (53 tests, 206 assertions)
+git diff --check → exit 0
 ```
 
 Full capture: `test-results.md`.
 
 ## Data or schema changes
 
-- Policy option key `alert_webhook_url` (string URL or empty) inside existing `handl_aicac_policy` option. No new options table keys. No migration required (absent key → empty).
+None in this remediation.
 
 ## Configuration changes
 
-- None beyond the stored policy field and UI on Activity audit settings.
+None.
 
 ## Security considerations
 
-- `manage_options` required (shared admin gate + new nonce `handl_aicac_send_test_webhook`).
-- Scheme allowlist http/https; `wp_remote_post` with `redirection => 0`.
-- Admin-supplied outbound URL — same trust model as alert email recipient (documented in code + readme).
-- Payload omits prompt preview and user identity (path-only URI).
+- P2 closes the AICAC-3 inventory regression hole: a new mutating admin action cannot pass CI without updating the known set (and thus the nonce-adjacency data provider).
+- Non-action allowlist is minimal (`handl_aicac_action`, `handl_aicac_nonce`, `hidden`); unexpected quoted tokens fail closed.
+- No authz controls weakened; no secrets introduced.
+- Prior PR risks unchanged: SSRF-adjacent admin webhook URL; possible duplicate webhook on digest retry after email failure.
 
 ## Known limitations
 
-- No Slack/Teams-specific Block Kit formatting (generic JSON only).
-- Weekly report is not delivered to the webhook.
-- If email is configured and fails while webhook succeeds, digest retry may POST the webhook again (email clear semantics preserved).
+- Static source scan does not boot WordPress or simulate CSRF at runtime.
+- Staging smoke and human production approval are not agent-executable in this credential-free workspace.
 
 ## Rollback considerations
 
-- Revert to prior release / remove `alert_webhook_url` usage; empty URL disables the channel without uninstall. Stored URL in policy is inert if code is rolled back.
+- Revert the test + doc commits; production runtime behavior is unaffected by this remediation alone.
 
 ## Remaining risks
 
-- SSRF-adjacent admin URL still requires Quality security review of scheme/redirect choices.
-- Live Slack/Teams acceptance not exercised in this workspace (stubs only).
+- Staging smoke test record and explicit human production approval still required before merge/release.
+- SSRF-adjacent admin-configurable webhook URL still needs Quality security review (carry-over).
+- Dual-channel digest retry may re-POST webhook after email failure (carry-over).
 
 ## Requested next action
 
-Quality and Release Gate: review AC1–AC6 against `AlertsWebhookTest` + admin UI, confirm Privacy/Data wording, and approve merge of 1.0.15 webhook channel.
+Quality and Release Gate: re-verify P2/P3 fixes with the evidence above; keep release blocked until HUMAN records staging smoke + production approval.
 
 ---
 
-STATUS: READY  
-WORK_ITEM: #25 / AICAC-104  
-COMPLETED: Webhook URL setting + deferred JSON POST on denial alert path (immediate/digest), test button, http(s) validation with inline reject, Privacy/readme 1.0.15, unit tests green (53/205)  
-EVIDENCE: implementation-plan.md; decisions.md; test-results.md; developer-handoff.md; `composer test` OK (53 tests, 205 assertions)  
-DECISIONS: Channel on existing trigger; generic JSON from summarize_event; wp_remote_post no redirects; invalid URL keeps prior; email clear/rate semantics preserved  
-RISKS: SSRF-adjacent admin URL; possible duplicate webhook on digest retry after email failure; no live endpoint verification here  
-NEXT_ACTION: Quality review AC mapping and security posture, then release gate  
+STATUS: READY
+WORK_ITEM: #25 / AICAC-104 (PR #45)
+COMPLETED: P2 fixed (unknown handl_aicac_action/posted_action literals fail AdminAuthzCoverageTest; negative proof + clean 53/206); P3 fixed (git diff --check clean); staging smoke + human prod approval left open for HUMAN
+EVIDENCE: implementation-plan.md; decisions.md (D6); test-results.md; developer-handoff.md; composer test OK (53 tests, 206 assertions); inject proof failure for totally_new_mutating_action; git diff --check exit 0
+DECISIONS: D6 — do not waive P2; unknown literals must fail CI; known set from mutating_action_provider; release-gate process items remain HUMAN
+RISKS: Staging smoke + human production approval unrecorded; SSRF-adjacent webhook URL; possible duplicate webhook on digest retry
+NEXT_ACTION: Quality re-review P2/P3 evidence; HUMAN record staging smoke + production approval before merge/release
 NEXT_OWNER: QUALITY
