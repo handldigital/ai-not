@@ -1,71 +1,62 @@
-# Implementation Plan — AICAC-2
+# Implementation Plan — Issue #38 (Resolve PR #32 conflicts)
 
-**Work item:** AICAC-2 — Add CI quality gate (lint + test) before release packaging  
-**Issue:** #20  
-**Status:** BLOCKED (precondition unmet)  
-**Date:** 2026-08-07
+## Work item
 
-## Story sources
+**Issue:** https://github.com/handldigital/ai-not/issues/38  
+**Target:** Resolve merge conflicts on https://github.com/handldigital/ai-not/pull/32  
+**PR head:** `agentops/implement-L0OJiW_IwpCZ` (`e75d445` Implement #20 — AICAC-2 blocked)  
+**Base:** `main` (includes AICAC-1 via PR #34 / #35, plus PR #37 conflict-resolution for #33)
 
-- Issue body (AgentOps task) and audit backlog at sibling workspace `AHF0uaV32MDu/backlog.yaml` (AICAC-2).
-- No `product-handoff.md` was present in this workspace at job start.
+## Objective
 
-## Acceptance criteria (approved)
+Make PR #32 mergeable against current `main` without regressing the
+AICAC-1 suite already on `main`. Do **not** expand into unapproved
+AICAC-2 product scope under this conflict-resolution issue.
 
-| ID | Criterion |
-|----|-----------|
-| AC1 | `.github/workflows/ci.yml` (or similar) runs `php -l` over `includes/` and the root plugin file on every push/PR to `main`. |
-| AC2 | Same workflow runs PHPCS against WordPress Coding Standards; fails on errors (warnings may be non-blocking, documented). |
-| AC3 | Same workflow runs the PHPUnit suite from AICAC-1 and fails on any test failure. |
-| AC4 | `.gitignore` covers at minimum `vendor/`, `dist/`, `.DS_Store`, and `node_modules/`. |
-| AC5 | `release.yml` documented as depending on CI passing on `main` for the tagged commit; branch-protection notes in `decisions.md` if applicable. |
+## Approach (smallest correct change)
 
-## Preconditions (from backlog)
+1. Merge `main` into the PR #32 head branch.
+2. Resolve add/add conflicts in AgentOps artifacts by rewriting them for
+   issue #38 (keep main’s runtime product/test tree).
+3. Prefer main’s `.agentops-runner-log.json` (runtime noise).
+4. Re-run `composer test` to confirm the merged tree matches main’s green suite.
 
-- AICAC-1 test suite exists and is runnable via a single command (`composer test` or equivalent).
+## Conflict inventory
 
-## Inspection results
+| File | Resolution |
+|------|------------|
+| `.agentops-result.json` | Rewrite for issue #38 job outcome |
+| `.agentops-runner-log.json` | Keep **main** |
+| `implementation-plan.md` | Rewrite for issue #38 |
+| `decisions.md` | Rewrite for issue #38 |
+| `test-results.md` | Rewrite with post-merge command evidence |
+| `developer-handoff.md` | Rewrite for issue #38 |
 
-Verified on `main` @ `3c36f1f`:
+Auto-merged from main (no conflict markers):
 
-- No `composer.json`, `phpunit.xml`, `phpunit.xml.dist`, or `tests/` directory.
-- No references to PHPUnit / `WP_UnitTestCase` / `wp-phpunit` in the tree.
-- Only CI workflow is `.github/workflows/release.yml` (tag → zip → GitHub Release; no lint/test).
-- No `.gitignore`.
+- `composer.json`, `composer.lock`, `phpunit.xml.dist`
+- `tests/**` (PolicyEvaluate, OperationsFamily, ModelForceResolveRoute)
+- `.github/workflows/phpunit.yml`
+- `.github/workflows/release.yml` (test/vendor excludes)
+- `.gitignore`
 
-**Conclusion:** AICAC-1 has not landed. AC3 cannot be implemented without expanding into unapproved AICAC-1 scope. Shipping CI that invokes a missing test suite would fail every push/PR.
+## Acceptance-criteria mapping
 
-## Proposed approach (when unblocked)
+| Criterion | Implementation | Test / evidence |
+|-----------|----------------|-----------------|
+| PR #32 conflicts resolved | Merge commit on PR head with no conflict markers | `git status` clean; no `<<<<<<<` |
+| No regression of AICAC-1 suite | Keep main’s test harness and suite | `composer test` → OK |
+| PR becomes mergeable vs main | Branch contains merge of current main | Diff vs main is handoff-only |
 
-Do **not** implement until Product confirms AICAC-1 is merged (or explicitly expands this issue to include AICAC-1).
+## Risks
 
-1. Add `.gitignore` (`vendor/`, `dist/`, `.DS_Store`, `node_modules/`).
-2. Add `.github/workflows/ci.yml` on `push`/`pull_request` to `main` with jobs/steps:
-   - Checkout + PHP setup
-   - `composer install` (dev deps from AICAC-1)
-   - `php -l` over root plugin file + `includes/**/*.php` (+ `uninstall.php` if desired for consistency)
-   - PHPCS with WordPress Coding Standards; errors fail the job; document warning policy
-   - `composer test` (or documented AICAC-1 command); fail on test failure
-3. Comment `release.yml` (and note in `decisions.md`) that releases assume the tagged commit already passed CI on `main`; branch protection / required checks need a human repo admin.
-4. Exclude `vendor/`, `dist/`, `.github/`, tests, and tooling from the release zip if not already covered (verify against current `rsync` excludes).
+- PR #32 originally tracked blocked AICAC-2 (#20). After conflict resolution
+  the unique product diff vs main is empty; Product/Human should close or
+  no-op-merge #32 and re-queue AICAC-2 (#20) as a fresh implement job.
+- Credential-free workspace cannot push; control plane must publish the
+  updated PR head.
 
-## AC → implementation → test mapping (deferred)
+## Out of scope
 
-| AC | Implementation step | Verification |
-|----|---------------------|--------------|
-| AC1 | `ci.yml` lint step | Workflow YAML review + dry-run / CI run on PR |
-| AC2 | `ci.yml` PHPCS step + ruleset | Same; document warning vs error policy in `decisions.md` |
-| AC3 | `ci.yml` PHPUnit step | Requires AICAC-1; run suite in CI and capture log |
-| AC4 | Root `.gitignore` | File content review |
-| AC5 | Comments on `release.yml` + `decisions.md` | Diff review; note human-owned branch protection |
-
-## Risks if implemented now without AICAC-1
-
-- Broken main CI (no `composer test` target).
-- Scope creep into AICAC-1 (unapproved).
-- PHPCS against current codebase may produce a large error baseline; needs a ruleset strategy after lint tooling lands (may need a follow-up to fix or baseline — out of AICAC-2 unless Product says otherwise).
-
-## Out of scope (per backlog)
-
-- WP.org SVN deployment automation.
-- Configuring GitHub branch protection (repo-admin / human).
+- Implementing AICAC-2 (php -l, PHPCS/WPCS, release.yml CI documentation).
+- Closing or merging PR #32 / issue #20 (Quality / Product / Human).

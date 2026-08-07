@@ -1,22 +1,40 @@
-# Decisions — AICAC-2
+# Decisions — Issue #38 (Resolve PR #32 conflicts)
 
-## D-1 — 2026-08-07 — Block AICAC-2; do not implement without AICAC-1
+## D1: Prefer main’s AICAC-1 tree; rewrite AgentOps artifacts only
 
-**Decision:** Stop implementation and return the work item to Product. Do not add a CI workflow, `.gitignore`, or release documentation under this job while AICAC-1 is absent.
+**Decision:** Accept all auto-merged product/test/CI files from `main`.
+Resolve every add/add conflict in AgentOps markdown/JSON by writing
+issue #38 content (or keeping main’s runner log).
 
 **Why:**
+- PR #32’s only commits were blocked AICAC-2 handoffs when AICAC-1 was
+  absent on `main@3c36f1f`.
+- `main` now has AICAC-1 (composer + PHPUnit + `phpunit.yml` + `.gitignore`).
+- Keeping PR #32’s stale “BLOCKED / no suite” narrative would mis-describe
+  both the repo and this job.
 
-- Backlog precondition: “AICAC-1 test suite exists and is runnable via a single command.”
-- AC3 requires running that PHPUnit suite in CI and failing on test failure.
-- Repo inspection on `main` @ `3c36f1f` found no Composer/PHPUnit harness, test directory, or test references.
-- Operating rules forbid expanding into unapproved product scope (AICAC-1) and forbid guessing when requirements/preconditions conflict.
+## D2: Merge main into PR head (do not rewrite history)
 
-**Impact:** Issue #20 remains open pending AICAC-1 delivery (or an explicit Product decision to combine/resequence). No code changes were made for AICAC-2 in this job.
+**Decision:** Resolve conflicts with a merge commit on
+`agentops/implement-L0OJiW_IwpCZ`, not a force-push rebase.
 
-## D-2 — 2026-08-07 — Branch protection remains human-owned
+**Why:** AgentOps / bot branches may be referenced elsewhere; merge is the
+safest reversible update for an open draft PR. Control plane publishes;
+we do not force-push.
 
-**Decision:** When AICAC-2 is unblocked, document required CI status checks in `decisions.md` / workflow comments only; do not attempt to configure GitHub branch protection from this credential-free AgentOps workspace.
+## D3: Do not implement AICAC-2 under issue #38
 
-**Why:** Developer agents here cannot use GitHub credentials or push remotes; branch protection is a repo-admin action outside the codebase.
+**Decision:** Conflict resolution only. No new lint workflow, PHPCS
+config, or release.yml documentation for AICAC-2 acceptance criteria.
 
-**Impact:** Edge case from backlog remains: a tag can still be pushed on a commit that never passed CI until a human enables required checks / protection on `main`.
+**Why:** Approved work item #38 is “Resolve conflict #32”. Expanding into
+issue #20 / AICAC-2 would be unapproved product scope. AICAC-1 landing
+unblocks a **new** AICAC-2 implement job; it does not expand #38.
+
+## D4: No production plugin code changes
+
+**Decision:** Do not modify `includes/*`, the main plugin bootstrap, or
+runtime options as part of conflict resolution.
+
+**Why:** Approved scope is conflict resolution only. Product behavior for
+AICAC-1 is already on `main`; AICAC-2 is deferred.

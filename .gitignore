@@ -1,0 +1,9 @@
+vendor/
+composer.phar
+.phpunit.result.cache
+.DS_Store
+node_modules/
+dist/
+*.log
+.agentops-meta.json
+.agentops-result.json
