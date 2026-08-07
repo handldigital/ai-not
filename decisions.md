@@ -1,5 +1,14 @@
 # Decisions — AICAC-1
 
+## D0: No further production diff this cycle
+
+**Decision:** Treat AICAC-1 as complete on `main` (PR #34 / `b73f4b6`);
+re-verify with `composer test` and refresh handoff artifacts only.
+
+**Why:** This implement job was queued against issue #19 after a prior
+AgentOps implement already landed the harness, suite, and CI workflow.
+Re-implementing would duplicate scope and risk unrelated churn.
+
 ## D1: Lightweight PHPUnit stubs instead of wp-phpunit
 
 **Decision:** Unit-test `Policy::evaluate()`, `Operations::*`, and
