@@ -1,20 +1,34 @@
-# Test Results — Issue #36 (Resolve PR #33 conflicts)
+# Test Results — Issue #38 (Resolve PR #32 conflicts)
 
 ## Environment
 
-- **Date:** 2026-08-07
-- **OS:** Linux (AgentOps workspace)
-- **PHP:** PHP 8.2.28 (cli) via `/home/ubuntu/php-runtime/php`
-- **Composer:** `~/.local/bin/composer`
-- **PHPUnit:** 9.6.35 (from `composer.lock`)
-- **Working directory:** repo root on PR #33 head after merging `main`
+- Date: 2026-08-07
+- Branch: `pr-32` → `agentops/implement-L0OJiW_IwpCZ` (merge commit `bab5518`)
+- PHP: 8.2.28 (`/home/ubuntu/php-runtime/php`)
+- Composer: available via `~/.local/bin/composer`
+- PHPUnit: 9.6.35 (from `composer.lock`)
 
 ## Commands executed
 
+```bash
+git fetch origin pull/32/head:pr-32
+git fetch origin main
+git checkout pr-32
+git merge origin/main   # conflicts in AgentOps artifacts only
+# resolve conflicts; rewrite handoffs for #38; keep main runner log
+composer install --no-interaction
+composer test
+php -l handl-ai-connector-access-control.php
+find includes -name '*.php' -print0 | xargs -0 -n1 php -l
+rg -n '^(<<<<<<<|=======|>>>>>>>)'   # clean
+git diff --stat origin/main...HEAD
+```
+
+## Results
+
 ### `composer install --no-interaction`
 
-Exit code: **0**  
-Installed 28 packages from lock file (phpunit/phpunit 9.6.35).
+Success. Installed 28 packages from lock file (including PHPUnit 9.6.35).
 
 ### `composer test`
 
@@ -23,36 +37,36 @@ PHPUnit 9.6.35 by Sebastian Bergmann and contributors.
 
 ...............................                                   31 / 31 (100%)
 
-Time: 00:00.003, Memory: 6.00 MB
+Time: 00:00.002, Memory: 6.00 MB
 
 OK (31 tests, 62 assertions)
 ```
 
-**Exit code:** 0
+Exit code: **0**
 
-## Suite breakdown (post-merge = main suite)
+### Syntax lint (`php -l`)
 
-| File | Tests | Focus |
-|------|-------|--------|
-| `tests/Unit/PolicyEvaluateTest.php` | 18 | default-allow, explicit deny/allow, capability_family, unknown_operation, kill-switch + exceptions, tool_armed, audit_only, empty policy |
-| `tests/Unit/OperationsFamilyTest.php` | 9* | family maps, TTS-before-text, inference, capability normalize |
-| `tests/Unit/ModelForceResolveRouteTest.php` | 4 | pin / unattributed / no_rule |
+No syntax errors detected in `handl-ai-connector-access-control.php` and all `includes/*.php` files.
 
-\* Includes data-provider cases counted by PHPUnit as separate tests.
+### Conflict marker scan
 
-**Total:** 31 tests, 62 assertions — all passed.
+No `<<<<<<<` / `=======` / `>>>>>>>` markers remain.
 
-## Conflict-resolution verification
+### Diff vs `origin/main`
 
-- No remaining `<<<<<<<` / `=======` / `>>>>>>>` markers in product or handoff files after resolution.
-- Kept main’s `PolicyEvaluateTest` (includes `tool_armed` + `audit_only`).
-- Kept main’s `.gitignore`, CI workflow, `OperationsFamilyTest`, release excludes.
+Handoff / AgentOps artifact files only (no production plugin code delta):
 
-## Formatter / linter / type checker / build
-
-- No project PHP CS / Psalm / PHPStan config present; not run.
-- No production plugin PHP changes in this conflict-resolution job.
+- `.agentops-result.json`
+- `decisions.md`
+- `developer-handoff.md`
+- `implementation-plan.md`
+- `test-results.md`
 
 ## Failures
 
 None.
+
+## Notes
+
+- Pre-merge PR #32 was artifact-only (blocked AICAC-2). Merging `main` brought in the AICAC-1 suite; suite green matches main.
+- AICAC-2 product work (PHPCS / expanded CI gate / release docs) was **not** executed under issue #38.
