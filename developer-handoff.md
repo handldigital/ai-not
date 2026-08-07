@@ -1,58 +1,65 @@
-# Developer Handoff — AICAC-3 (#21)
+# Developer Handoff — AICAC-101 (#22)
 
 ## Work item ID
 
-Issue #21 — AICAC-3: Verify authorization (nonce + capability) coverage on all admin state-mutating handlers
+Issue #22 — AICAC-101: CSV export of the retained audit log
 
 ## Summary of behavior implemented
 
-Completed a verification-only pass of `includes/class-handl-aicac-admin.php`.
-Every settings-save / action handler is enumerated with file:line; each has an
-identified capability mechanism (shared `manage_options` gate + menu cap) and
-nonce mechanism (`check_admin_referer` per action). Settings API implicit
-handling is explicitly **not found**. No confirmed missing checks on current
-handlers; one **Informational** defense-in-depth finding is filed for Quality.
-Production admin authz code was **not** changed. Added a static PHPUnit lock
-and the audit artifact `aicac-3-authz-coverage.md`.
+Activity tab gains an **Export CSV** control. With ≥1 retained log row, a
+`manage_options`-gated POST (`export_csv` + `handl_aicac_export_csv` nonce)
+downloads an RFC 4180 `.csv` of all retained rows matching active
+`parse_log_filters` filters (newest first; not capped at the table’s 50-row
+window). Zero retained rows disables the control with “No log entries yet.”
+`direct_http` rows include host/URI; chatty-host collapsed rows export as one
+row with aggregate `count`. Version bumped to **1.0.15**.
 
 ## Files changed
 
-- `aicac-3-authz-coverage.md` — full handler inventory, mechanism matrix, findings
-- `tests/Unit/AdminAuthzCoverageTest.php` — static source coverage lock
+- `includes/class-handl-aicac-log-csv.php` — new CSV builder
+- `includes/class-handl-aicac-admin.php` — export UI, dispatch, `handle_export_csv`
+- `includes/class-handl-aicac-plugin.php` — require Log_Csv
+- `tests/Unit/LogCsvExportTest.php` — AC coverage unit tests
+- `tests/Unit/AdminAuthzCoverageTest.php` — inventory + empty-state lock
+- `tests/bootstrap.php` — load Cost + Log_Csv
+- `handl-ai-connector-access-control.php`, `readme.txt` — 1.0.15 + changelog
+- `aicac-3-authz-coverage.md` — amended for H5 `export_csv`
 - `implementation-plan.md`, `decisions.md`, `test-results.md`, `developer-handoff.md`
-- `.agentops-result.json`
-
-**Unchanged:** `includes/class-handl-aicac-admin.php` and all other production plugin PHP.
 
 ## Acceptance-criteria-to-test mapping
 
-| Acceptance criterion | Evidence |
-|----------------------|----------|
-| Every settings-save/action handler enumerated with file:line | `aicac-3-authz-coverage.md` H1–H5 + private helper table; `AdminAuthzCoverageTest` action provider |
-| Nonce/capability per handler (shared wrappers / Settings API / not found) | Coverage matrix in audit; tests for L70 gate, menu cap, four nonces, Settings API not found |
-| Handlers without checks → severity + failure scenario | F-AICAC-3-1 (none/covered); F-AICAC-3-2 (Informational, private helpers); F-AICAC-3-3 (Settings API N/A) |
-| Findings routed to Quality, not fixed under this story | No production authz edits; NEXT_OWNER=QUALITY |
+| AC | Evidence |
+|----|----------|
+| AC1 columns for retained rows | `LogCsvExportTest::test_headers_cover_log_table_data_columns`, `test_prompt_preview_with_comma_is_quoted_in_document` |
+| AC2 filters limit export | `test_active_filters_limit_exported_rows`, `test_handle_export_csv_uses_log_option_and_filters` |
+| AC3 empty → disabled + reason | `AdminAuthzCoverageTest::test_export_csv_empty_state_is_disabled_with_reason` |
+| AC4 header first | `test_document_starts_with_header_row` |
+| AC5 RFC 4180 | `test_rfc4180_escapes_comma_quote_and_newline`, prompt fixture |
+| AC6 POST nonce/cap | `AdminAuthzCoverageTest` `export_csv` / `handl_aicac_export_csv`; shared `manage_options` gate |
+| Edge direct_http / count | `test_direct_http_collapsed_row_exports_host_uri_and_count`, `test_collapsed_row_stays_one_line_not_expanded` |
 
 ## Commands executed
 
 ```bash
+export PATH="/home/ubuntu/php-runtime:$PATH"
 composer install --no-interaction
-composer test
-php -l tests/Unit/AdminAuthzCoverageTest.php
+php -l includes/class-handl-aicac-log-csv.php
 php -l includes/class-handl-aicac-admin.php
+php -l includes/class-handl-aicac-plugin.php
+composer test
 ```
 
 ## Test results
 
 ```
-OK (42 tests, 131 assertions)
+OK (52 tests, 190 assertions)
 ```
 
-Full capture: `test-results.md`.
+See `test-results.md`.
 
 ## Data or schema changes
 
-None.
+None. Read-only of `Plugin::LOG_OPTION_KEY`; no new options.
 
 ## Configuration changes
 
@@ -60,42 +67,38 @@ None.
 
 ## Security considerations
 
-- Verification concludes current admin POST mutators are gated by `manage_options`
-  and per-action nonces; the original “5 matches” scan matches shared-wrapper design.
-- Informational residual: private mutators do not re-verify; a future alternate
-  entry point without checks would be dangerous (F-AICAC-3-2).
-- No secrets introduced; no authz controls weakened.
+- Requires `manage_options` (shared `render_page` gate) + per-action nonce.
+- Does not widen the data surface beyond fields already retained/rendered in wp-admin (uses stored `prompt_preview`, not raw prompts).
+- No external telemetry / phone-home.
+- Invalid nonce / missing cap → WordPress `check_admin_referer` / `wp_die` before any file body.
 
 ## Known limitations
 
-- Static tests do not boot WordPress or simulate CSRF/capability runtime failures.
-- Cron / runtime option writers outside the admin UI were inventoried as out of
-  scope for this admin-handler story.
+- No date-range filter exists in `parse_log_filters` today; AC2 “date range, etc.” means current filters only.
+- Export includes all matching retained rows (may exceed the 50 shown in the table) — intentional; UI note when filters active.
+- Unit tests do not boot WordPress or assert HTTP `Content-Disposition` headers at runtime.
 
 ## Rollback considerations
 
-- Revert the new test + audit/handoff files; production code is unchanged so
-  runtime behavior is unaffected by rollback.
+- Revert the listed files / bump version back; no migration to undo.
+- Removing the action leaves prior admin behavior intact.
 
 ## Remaining risks
 
-- F-AICAC-3-2 remains for Product/Quality to accept or schedule defense-in-depth.
-- If someone adds a new `handl_aicac_action` without updating the test’s known
-  list / nonce adjacency, CI should fail — Quality should confirm that lock holds.
+- Large ring buffers (up to 1000 rows with long prompt previews) stream in one response; acceptable for current caps but watch memory if limits rise later.
+- AICAC-3 inventory counts changed; Quality should treat amended `aicac-3-authz-coverage.md` as current.
 
 ## Requested next action
 
-Quality and Release Gate: review `aicac-3-authz-coverage.md` findings
-(F-AICAC-3-1..3), confirm no confirmed gap requiring a fix story, and decide
-whether to open a follow-up for defense-in-depth re-checks (F-AICAC-3-2).
+Quality and Release Gate: review AC mapping, re-run `composer test`, and spot-check Activity Export CSV in a WP admin with sample AI Client + `direct_http` rows.
 
 ---
 
 STATUS: READY  
-WORK_ITEM: #21 / AICAC-3  
-COMPLETED: Enumerated all admin mutating handlers with file:line; mapped nonce+capability (shared wrapper; Settings API not found); documented findings without fixing; locked inventory in AdminAuthzCoverageTest; composer test OK (42/131)  
-EVIDENCE: aicac-3-authz-coverage.md; tests/Unit/AdminAuthzCoverageTest.php; implementation-plan.md; decisions.md; test-results.md; developer-handoff.md; `composer test` OK (42 tests, 131 assertions)  
-DECISIONS: Verification-only (no product authz fix); shared render_page manage_options gate counts as capability coverage; Settings API = not found; static source test locks inventory  
-RISKS: Informational F-AICAC-3-2 (private mutators lack local re-checks); static tests ≠ full WP CSRF simulation  
-NEXT_ACTION: Quality review aicac-3-authz-coverage.md findings and accept or open follow-up for F-AICAC-3-2  
+WORK_ITEM: #22 / AICAC-101  
+COMPLETED: Activity Export CSV (filtered retained rows, RFC 4180, empty-state disable, POST nonce/cap); unit + authz tests; 1.0.15 changelog; composer test OK (52/190)  
+EVIDENCE: implementation-plan.md; decisions.md; test-results.md; developer-handoff.md; tests/Unit/LogCsvExportTest.php; `composer test` OK (52 tests, 190 assertions)  
+DECISIONS: Log_Csv helper; export all filtered retained rows (not 50-row UI cap); disable only when stored count=0; host/count columns; extend AICAC-3 inventory  
+RISKS: No WP runtime download test in CI; large prompt previews within 1000-row cap  
+NEXT_ACTION: Quality review AICAC-101 implementation and validation evidence  
 NEXT_OWNER: QUALITY
