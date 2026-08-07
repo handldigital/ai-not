@@ -1,0 +1,7 @@
+vendor/
+composer.phar
+.phpunit.result.cache
+.DS_Store
+node_modules/
+dist/
+*.log
