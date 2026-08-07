@@ -127,9 +127,9 @@ final class PolicyEvaluateTest extends TestCase {
 	 */
 	public function test_unknown_operation_fallback_inherit_allows(): void {
 		$policy = array(
-			'default'            => 'allow',
-			'plugins'            => array(),
-			'unknown_operation'  => 'inherit',
+			'default'           => 'allow',
+			'plugins'           => array(),
+			'unknown_operation' => 'inherit',
 		);
 
 		$result = Policy::evaluate( $policy, 'any/plugin.php', 'is_supported_for_music_generation' );
@@ -173,9 +173,9 @@ final class PolicyEvaluateTest extends TestCase {
 	 */
 	public function test_kill_switch_blocks_all_with_empty_exceptions(): void {
 		$policy = array(
-			'default'                 => 'allow',
-			'kill_switch'             => true,
-			'kill_switch_exceptions'  => array(),
+			'default'                => 'allow',
+			'kill_switch'            => true,
+			'kill_switch_exceptions' => array(),
 		);
 
 		$result = Policy::evaluate( $policy, 'any/plugin.php', 'generate_text' );
@@ -229,6 +229,49 @@ final class PolicyEvaluateTest extends TestCase {
 	}
 
 	/**
+	 * F2 deny-at-arming: armed tool on the deny list blocks the prompt.
+	 */
+	public function test_tool_armed_deny_blocks_allowed_plugin(): void {
+		$policy = array(
+			'default'      => 'allow',
+			'plugins'      => array( 'ok/plugin.php' => 'allow' ),
+			'denied_tools' => array( 'core/edit-post' ),
+		);
+
+		$result = Policy::evaluate(
+			$policy,
+			'ok/plugin.php',
+			'generate_text',
+			array( 'core/edit-post', 'core/get-post' )
+		);
+
+		$this->assertTrue( $result['prevent'] );
+		$this->assertSame( 'tool_armed', $result['reason'] );
+		$this->assertSame( array( 'core/edit-post' ), $result['matched_tools'] );
+	}
+
+	/**
+	 * Tool matching is case-insensitive; audit trail keeps armed casing.
+	 */
+	public function test_tool_armed_deny_is_case_insensitive(): void {
+		$policy = array(
+			'default'      => 'allow',
+			'denied_tools' => array( 'Core/Edit-Post' ),
+		);
+
+		$result = Policy::evaluate(
+			$policy,
+			'ok/plugin.php',
+			'generate_text',
+			array( 'core/edit-post' )
+		);
+
+		$this->assertTrue( $result['prevent'] );
+		$this->assertSame( 'tool_armed', $result['reason'] );
+		$this->assertSame( array( 'core/edit-post' ), $result['matched_tools'] );
+	}
+
+	/**
 	 * Unattributed caller (null plugin) uses default — allow when default-allow.
 	 */
 	public function test_unattributed_caller_uses_default_allow(): void {
@@ -265,5 +308,19 @@ final class PolicyEvaluateTest extends TestCase {
 		$result = Policy::evaluate( array(), 'any/plugin.php', 'generate_text' );
 
 		$this->assertFalse( $result['prevent'] );
+	}
+
+	/**
+	 * Learn mode (audit_only) never blocks via should_prevent, even when evaluate would deny.
+	 */
+	public function test_audit_only_should_prevent_never_blocks(): void {
+		$policy = array(
+			'default'    => 'deny',
+			'audit_only' => true,
+			'plugins'    => array(),
+		);
+
+		$this->assertFalse( Policy::should_prevent( $policy, 'any/plugin.php', 'generate_text' ) );
+		$this->assertTrue( Policy::would_prevent( $policy, 'any/plugin.php', 'generate_text' ) );
 	}
 }

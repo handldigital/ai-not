@@ -1,59 +1,61 @@
-# Implementation Plan — AICAC-1
+# Implementation Plan — Issue #36 (Resolve PR #33 conflicts)
 
 ## Work item
 
-**AICAC-1:** Establish automated PHPUnit test suite for policy/enforcement logic
+**Issue:** https://github.com/handldigital/ai-not/issues/36  
+**Target:** Resolve merge conflicts on https://github.com/handldigital/ai-not/pull/33  
+**PR head:** `agentops/implement-yh1aNLkXZhj1` (`bae0f09` Implement #19)  
+**Base:** `main` (includes PR #34 / #35 — AICAC-1 already landed)
 
-## Goal
+## Objective
 
-Add a Composer-driven PHPUnit harness and unit tests that cover every required allow/deny branch in `Policy::evaluate()`, plus model-force route matching named in the story’s desired behavior.
+Make PR #33 mergeable against current `main` without regressing the
+AICAC-1 suite already on `main`.
 
-## Approach (smallest architecture)
+## Approach (smallest correct change)
 
-1. Add `composer.json` with PHPUnit as a dev dependency and a `test` script (`vendor/bin/phpunit`).
-2. Add `phpunit.xml.dist` and `tests/bootstrap.php`.
-3. Bootstrap defines `ABSPATH` and minimal WordPress stubs (`sanitize_text_field`, etc.) so production classes load without a full WordPress install.
-4. Autoload / require `Operations`, `Policy`, and `Model_Force` for pure unit tests against `Policy::evaluate()` and `Model_Force::resolve_route()`.
-5. Do **not** introduce wp-phpunit / WP_UnitTestCase in this increment — those need WordPress core + DB and are out of scope for a local single-command policy unit suite. Documented in `decisions.md`.
-6. Document the run command in `readme.txt` (Developer notes) or a short TESTING note in developer handoff; keep product surface unchanged beyond a minimal “Development” note if needed.
+1. Merge `main` into the PR #33 head branch.
+2. Resolve add/add conflicts by keeping **main’s** versions for shared
+   implementation files (main is a strict superset of the PR #33 suite).
+3. Refresh AgentOps handoff artifacts for this conflict-resolution job.
+4. Re-run `composer test` to confirm the merged tree matches main’s green suite.
 
-## Files to add
+## Conflict inventory
 
-| File | Purpose |
-|------|---------|
-| `composer.json` | PHPUnit + `test` script |
-| `composer.lock` | Locked deps (from `composer update`) |
-| `.gitignore` | Ignore `vendor/`, Composer artifacts |
-| `phpunit.xml.dist` | Suite config |
-| `tests/bootstrap.php` | ABSPATH + WP stubs + class requires |
-| `tests/Unit/PolicyEvaluateTest.php` | Policy allow/deny branches |
-| `tests/Unit/ModelForceResolveRouteTest.php` | Model-force route matching |
-| `implementation-plan.md` | This plan |
-| `decisions.md` | Technical decisions |
-| `test-results.md` | Command evidence |
-| `developer-handoff.md` | Review handoff |
+| File | Resolution |
+|------|------------|
+| `tests/Unit/PolicyEvaluateTest.php` | Keep **main** (adds `tool_armed` + `audit_only` tests) |
+| `.gitignore` | Keep **main** (also ignores `.agentops-meta.json` / `.agentops-result.json`) |
+| `.agentops-runner-log.json` | Keep **main** (runtime log noise) |
+| `implementation-plan.md` | Rewrite for issue #36 |
+| `decisions.md` | Rewrite for issue #36 |
+| `test-results.md` | Rewrite with post-merge command evidence |
+| `developer-handoff.md` | Rewrite for issue #36 |
 
-## Acceptance criteria → implementation → tests
+Auto-merged / already from main (no conflict markers):
 
-| AC | Implementation | Test |
-|----|----------------|------|
-| `composer.json` defines `test` script running PHPUnit | `"scripts": { "test": "phpunit" }` | Verified by running `composer test` |
-| default-allow | N/A (existing engine) | `test_default_allow_permits_unknown_plugin` |
-| explicit deny | N/A | `test_explicit_plugin_deny` |
-| per-capability-family override | N/A | `test_family_deny_overrides_plugin_allow`; allow other family on same plugin |
-| unknown-operation fallback inherit/allow/deny | N/A | three tests for inherit/allow/deny |
-| kill-switch with exceptions | N/A | deny all; exception falls through; empty exceptions |
-| Tests pass via one documented command | `composer test` | Captured in `test-results.md` |
-| Evidence for Quality | `test-results.md` + handoff | Artifact |
+- `.github/workflows/phpunit.yml` (new on main)
+- `.github/workflows/release.yml` (test/vendor excludes)
+- `tests/Unit/OperationsFamilyTest.php` (new on main)
+
+## Acceptance-criteria mapping
+
+| Criterion | Implementation | Test / evidence |
+|-----------|----------------|-----------------|
+| PR #33 conflicts resolved | Merge commit on PR head with no conflict markers | `git status` clean; no `<<<<<<<` |
+| No regression of AICAC-1 suite | Keep main’s 31-test suite | `composer test` → OK (31/62) |
+| PR becomes mergeable vs main | Branch contains merge of current main | Diff vs main is handoff-only / empty of product code |
 
 ## Risks
 
-- Stubbed WP helpers could diverge from core behavior for edge sanitization — acceptable for decision-engine unit tests; CI story (AICAC-2) can later add optional integration jobs.
-- PHP not present in bare AgentOps images — document install prerequisite (`php-cli`, `composer`).
+- PR #33 is superseded by merged PR #34/#35 for issue #19; after conflict
+  resolution the unique product diff vs main is empty. Closing or merging
+  PR #33 as a no-op merge is a Product/Human decision.
+- Credential-free workspace cannot push; control plane must publish the
+  updated PR head branch.
 
 ## Out of scope
 
-- Admin UI / JS tests
-- Shadow-AI detector
-- Full WordPress integration / DB bootstrap
-- CI workflow (AICAC-2)
+- Re-implementing AICAC-1 features already on main.
+- Closing or merging PR #33 (Quality / Human).
+- AICAC-2 observability work.

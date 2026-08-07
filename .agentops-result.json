@@ -1,5 +1,5 @@
 {
-  "summary": "STATUS: READY\nWORK_ITEM: AICAC-1\nCOMPLETED: PHPUnit harness + policy/model-force unit tests; composer test passes (19/19)\nEVIDENCE: implementation-plan.md, decisions.md, test-results.md, developer-handoff.md; command composer test → OK (19 tests, 41 assertions)\nDECISIONS: Lightweight stubs over wp-phpunit; PHPUnit 9 for PHP 7.4; include Model_Force route tests; no production code changes\nRISKS: No WP integration suite yet; CI gate is AICAC-2\nNEXT_ACTION: Quality review and reproduce composer test\nNEXT_OWNER: QUALITY",
+  "summary": "STATUS: READY\nWORK_ITEM: #36\nCOMPLETED: Merged main into PR #33 head; resolved all conflicts preferring main’s AICAC-1 suite; composer test OK (31/62)\nEVIDENCE: implementation-plan.md, decisions.md, test-results.md, developer-handoff.md; composer test OK (31 tests, 62 assertions); conflict markers cleared\nDECISIONS: Prefer main over PR #33 draft; merge (not rebase); refresh #36 handoffs; no production code changes\nRISKS: Branch must be published by control plane; PR #33 is product-redundant vs main\nNEXT_ACTION: Quality verify PR #33 mergeable after publish; close as superseded or no-op merge; close #36\nNEXT_OWNER: QUALITY",
   "reviewPassed": false,
   "findings": "",
   "issuesCreated": []

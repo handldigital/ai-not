@@ -1,34 +1,39 @@
-# Decisions — AICAC-1
+# Decisions — Issue #36 (Resolve PR #33 conflicts)
 
-## D1: Lightweight PHPUnit stubs instead of wp-phpunit / WP_UnitTestCase
+## D1: Prefer main’s AICAC-1 suite over PR #33’s earlier draft
 
-**Decision:** Unit-test `Policy::evaluate()` and `Model_Force::resolve_route()` under PHPUnit 9 with a minimal bootstrap (`ABSPATH` + `sanitize_text_field` / `__` stubs), not a full WordPress test install.
+**Decision:** On every add/add conflict for test/config files, keep the
+`main` version.
 
 **Why:**
-- Acceptance criteria require a single local command covering policy allow/deny branches; those methods are pure given a policy array.
-- wp-phpunit needs WordPress core checkout, DB, and heavier CI setup — deferred to a later story if integration coverage is needed.
-- Desired behavior mentioned “wp-phpunit or WP_UnitTestCase”; AC does not require that scaffold. Stubs satisfy AC with the smallest reversible harness.
+- `main` already merged AICAC-1 via PR #34 (`b73f4b6`) and follow-up PR #35.
+- Main’s `PolicyEvaluateTest` is a strict superset of PR #33’s (adds
+  `tool_armed` and `audit_only` coverage).
+- Main also adds `OperationsFamilyTest`, `phpunit.yml`, and release zip
+  excludes that PR #33 lacked.
+- Reverting to the PR #33 19-test suite would regress coverage already on main.
 
-**Trade-off:** Sanitization stubs may diverge from WordPress core edge cases. Decision-engine branching does not depend on those edges.
+## D2: Merge main into PR head (do not rewrite history)
 
-## D2: PHPUnit 9.6 (not 10+)
+**Decision:** Resolve conflicts with a merge commit on
+`agentops/implement-yh1aNLkXZhj1`, not a force-push rebase.
 
-**Decision:** Require `phpunit/phpunit: ^9.6`.
+**Why:** AgentOps / bot branches may be referenced elsewhere; merge is the
+safest reversible update for an open draft PR. Control plane publishes;
+we do not force-push.
 
-**Why:** Plugin declares `Requires PHP: 7.4`. PHPUnit 10+ needs PHP 8.1+. PHPUnit 9 keeps the suite runnable on the declared minimum.
+## D3: Refresh handoff artifacts for #36; do not preserve stale AICAC-1 copy
 
-## D3: Include Model_Force route tests beyond formal AC bullets
+**Decision:** Replace conflicted `implementation-plan.md`, `decisions.md`,
+`test-results.md`, and `developer-handoff.md` with issue #36 content.
 
-**Decision:** Add `ModelForceResolveRouteTest` covering pinned plugin, unattributed gap, unattributed force opt-in, and no_rule.
+**Why:** Those files are AgentOps process artifacts, not product runtime.
+Keeping either side’s AICAC-1 narrative would mis-describe this job.
 
-**Why:** Story desired_behavior explicitly names model-force route matching alongside the policy engine. Cost is four small pure-unit tests; no production code change.
+## D4: No production plugin code changes
 
-## D4: Do not modify production plugin code for testability
+**Decision:** Do not modify `includes/*`, the main plugin bootstrap, or
+runtime options as part of conflict resolution.
 
-**Decision:** No production changes to Policy / Model_Force / visibility of private methods.
-
-**Why:** AC permissions_security says do not weaken controls to make code testable. Public `evaluate()` / `resolve_route()` already expose the decision surface.
-
-## D5: Documented command is `composer test`
-
-**Decision:** Single documented command is `composer test` (maps to `vendor/bin/phpunit` via composer scripts). Requires `composer install` once and PHP 7.4+ with xml/dom extensions.
+**Why:** Approved scope is conflict resolution only. Product behavior for
+AICAC-1 is already on `main`.

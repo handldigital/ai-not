@@ -5,3 +5,5 @@ composer.phar
 node_modules/
 dist/
 *.log
+.agentops-meta.json
+.agentops-result.json
