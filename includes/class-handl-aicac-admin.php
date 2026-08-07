@@ -25,6 +25,9 @@ final class Admin {
 		'plugin'    => '',
 	);
 
+	/** Set when Activity save rejects an invalid webhook URL (AC6). */
+	private bool $webhook_url_rejected = false;
+
 	private static ?Admin $instance = null;
 
 	public static function instance(): Admin {
@@ -121,6 +124,20 @@ final class Admin {
 				wp_safe_redirect( $redirect );
 				exit;
 			}
+			if ( 'send_test_webhook' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_send_test_webhook', 'handl_aicac_nonce' );
+				$ok = Alerts::send_test_webhook( Policy::get_policy() );
+				$redirect = add_query_arg(
+					array(
+						'page'                       => 'handl-ai-connector-access-control',
+						'handl_aicac_tab'            => 'activity',
+						'handl_aicac_webhook_tested' => $ok ? '1' : '0',
+					),
+					admin_url( 'options-general.php' )
+				);
+				wp_safe_redirect( $redirect );
+				exit;
+			}
 			if ( 'undo_quick_rule' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_undo_quick_rule', 'handl_aicac_nonce' );
 				$this->handle_undo_quick_rule();
@@ -130,6 +147,7 @@ final class Admin {
 		$saved       = false;
 		$quick_saved = isset( $_GET['handl_aicac_quick_saved'] ) && '1' === (string) $_GET['handl_aicac_quick_saved'];
 		$digest_sent = isset( $_GET['handl_aicac_digest_sent'] ) && '1' === (string) $_GET['handl_aicac_digest_sent'];
+		$webhook_tested = isset( $_GET['handl_aicac_webhook_tested'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['handl_aicac_webhook_tested'] ) ) : '';
 		$blocked_ok  = isset( $_GET['handl_aicac_blocked'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['handl_aicac_blocked'] ) ) : '';
 		$undo_rule   = isset( $_GET['handl_aicac_undo_rule'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['handl_aicac_undo_rule'] ) ) : '';
 		$undone      = isset( $_GET['handl_aicac_undone'] ) && '1' === (string) $_GET['handl_aicac_undone'];
@@ -169,11 +187,19 @@ final class Admin {
 		if ( $saved ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Saved.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
+		if ( $this->webhook_url_rejected ) {
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Webhook URL was not saved: enter a valid http:// or https:// URL (or leave blank to disable).', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
 		if ( $quick_saved ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Plugin rule updated.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $digest_sent ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Denial digest send attempted (queue cleared only if mail succeeded).', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		if ( '1' === $webhook_tested ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Test webhook accepted (HTTP 2xx).', 'handl-ai-connector-access-control' ) . '</p></div>';
+		} elseif ( '0' === $webhook_tested ) {
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Test webhook failed (non-2xx, timeout, or missing URL). The sample payload is labeled as a test and does not count toward rate limits.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $undone ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Plugin rule restored.', 'handl-ai-connector-access-control' ) . '</p></div>';
@@ -1262,6 +1288,22 @@ final class Admin {
 		submit_button( __( 'Save audit settings', 'handl-ai-connector-access-control' ) );
 		echo '</form>';
 
+		$webhook_saved = Alerts::resolve_webhook( $policy );
+		if ( '' !== $webhook_saved ) {
+			echo '<form method="post" style="margin-bottom:1.5em;">';
+			wp_nonce_field( 'handl_aicac_send_test_webhook', 'handl_aicac_nonce' );
+			echo '<input type="hidden" name="handl_aicac_action" value="send_test_webhook" />';
+			echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
+			submit_button(
+				__( 'Send test webhook', 'handl-ai-connector-access-control' ),
+				'secondary',
+				'submit',
+				false
+			);
+			echo '<p class="description" style="display:inline;margin-left:8px;">' . esc_html__( 'POSTs a sample JSON payload labeled as a test to the saved Webhook URL immediately (bypasses rate limiting). Not a real denial.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '</form>';
+		}
+
 		$pending_digest = count( Alerts::pending_digest_rows() );
 		if ( $pending_digest > 0 && ! empty( $policy['alert_on_deny'] ) ) {
 			echo '<form method="post" style="margin-bottom:1.5em;">';
@@ -1732,9 +1774,10 @@ final class Admin {
 		echo '</tr>';
 
 		// F3: denial alerts.
-		$alert_on   = ! empty( $policy['alert_on_deny'] );
-		$alert_mode = Alerts::sanitize_mode( $policy['alert_mode'] ?? 'immediate' );
+		$alert_on    = ! empty( $policy['alert_on_deny'] );
+		$alert_mode  = Alerts::sanitize_mode( $policy['alert_mode'] ?? 'immediate' );
 		$alert_email = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
+		$alert_hook  = Alerts::sanitize_webhook_url( $policy['alert_webhook_url'] ?? '' );
 		$pending     = count( Alerts::pending_digest_rows() );
 
 		echo '<tr>';
@@ -1746,6 +1789,9 @@ final class Admin {
 		echo '<p style="margin-top:8px;"><label for="handl-aicac-alert-email">' . esc_html__( 'Recipient', 'handl-ai-connector-access-control' ) . '</label><br />';
 		echo '<input type="email" class="regular-text" id="handl-aicac-alert-email" name="handl_aicac_alert_email" value="' . esc_attr( $alert_email ) . '" placeholder="' . esc_attr( (string) get_option( 'admin_email' ) ) . '" />';
 		echo '<br /><span class="description">' . esc_html__( 'Leave empty to use the site admin email.', 'handl-ai-connector-access-control' ) . '</span></p>';
+		echo '<p style="margin-top:8px;"><label for="handl-aicac-alert-webhook">' . esc_html__( 'Webhook URL', 'handl-ai-connector-access-control' ) . '</label><br />';
+		echo '<input type="url" class="regular-text" id="handl-aicac-alert-webhook" name="handl_aicac_alert_webhook_url" value="' . esc_attr( $alert_hook ) . '" placeholder="https://" pattern="https?://.*" inputmode="url" autocomplete="off" />';
+		echo '<br /><span class="description">' . esc_html__( 'Optional. When set, denial alerts that would email also POST JSON to this http(s) URL (Slack/Teams-compatible incoming webhook). Same trigger, rate limit, and digest mode as email — path-only fields, no prompt preview or user identity. Leave empty to disable.', 'handl-ai-connector-access-control' ) . '</span></p>';
 		echo '<p style="margin-top:8px;">';
 		echo '<label><input type="radio" name="handl_aicac_alert_mode" value="immediate" ' . checked( $alert_mode, 'immediate', false ) . ' /> ';
 		echo esc_html__( 'Immediate (rate-limited to 20/hour; overflow and failed sends drain via hourly cron)', 'handl-ai-connector-access-control' ) . '</label><br />';
@@ -2111,6 +2157,17 @@ final class Admin {
 		$policy['alert_on_deny'] = ! empty( $posted_alert );
 		$policy['alert_mode']    = Alerts::sanitize_mode( filter_input( INPUT_POST, 'handl_aicac_alert_mode', FILTER_UNSAFE_RAW ) );
 		$policy['alert_email']   = Alerts::sanitize_email( filter_input( INPUT_POST, 'handl_aicac_alert_email', FILTER_UNSAFE_RAW ) );
+
+		$webhook_check = Alerts::validate_webhook_url_input(
+			filter_input( INPUT_POST, 'handl_aicac_alert_webhook_url', FILTER_UNSAFE_RAW )
+		);
+		if ( $webhook_check['ok'] ) {
+			$policy['alert_webhook_url'] = $webhook_check['url'];
+		} else {
+			// AC6: reject invalid values inline — do not store; keep prior sanitized URL.
+			$this->webhook_url_rejected  = true;
+			$policy['alert_webhook_url'] = Alerts::sanitize_webhook_url( $policy['alert_webhook_url'] ?? '' );
+		}
 
 		// F7: persist weekly preference only on divergence from the rendered state.
 		// Provenance = what the checkbox showed; unchecked checkbox posts absence.

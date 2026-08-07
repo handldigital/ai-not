@@ -1,41 +1,43 @@
-# Implementation Plan — AICAC-3 (#21)
+# Implementation Plan — AICAC-104 (#25)
 
 ## Work item
 
-**Issue:** #21 — AICAC-3: Verify authorization (nonce + capability) coverage on all admin state-mutating handlers  
-**Scope:** `includes/class-handl-aicac-admin.php` (settings/save surface)  
-**Constraint:** Findings are documented for Quality and Release Gate — **do not fix** authz gaps under this story.
+**Issue:** #25 — AICAC-104: Outgoing webhook channel for denial alerts (Slack/Teams-compatible)  
+**Scope:** Denial-alert delivery in `class-handl-aicac-alerts.php` + Activity audit settings UI/save in `class-handl-aicac-admin.php` + policy sanitize/persist + Privacy/`readme.txt` + minor version bump.  
+**Spec source:** Issue body; product-handoff § AICAC-104 (copied from approved product scan — not present in this workspace at job start).
 
 ## Objective
 
-Produce a complete, testable inventory of every settings-save / action handler in the admin class, identify the nonce and capability mechanism for each (including shared wrappers; Settings API if any), and emit severity + failure-scenario findings for any handler lacking checks. Route those findings to Quality; leave production plugin behavior unchanged except for verification evidence (static unit test + audit artifact).
+Add an optional admin-configured HTTP(S) webhook URL alongside denial email alerts. When set, the same denial trigger/rate-limit/digest path also POSTs a generic JSON payload (privacy-scoped like email) via `wp_remote_post`, without changing allow/deny or adding latency on the filter path.
 
 ## Approach (smallest correct change)
 
-1. Static-read `class-handl-aicac-admin.php` and related includes for alternate entry points (`wp_ajax_*`, `admin_post_*`, `register_setting`).
-2. Enumerate every POST `handl_aicac_action` dispatch and every private mutator it calls, with file:line.
-3. Map capability (`current_user_can` / menu capability) and nonce (`check_admin_referer` / form `wp_nonce_field`) per handler; record **not found** explicitly where absent.
-4. Classify gaps (if any) with severity + concrete failure scenario; otherwise document that the sparse match count is explained by a shared wrapper.
-5. Add a PHPUnit static-source test that locks the inventory and fails if a new POST action branch appears without a matching nonce check, or if the shared capability gate disappears.
-6. Do **not** add defense-in-depth re-checks or otherwise “fix” findings in production code under this story.
+1. Policy key `alert_webhook_url` — sanitize to `http`/`https` only; empty clears the channel.
+2. Extend `Alerts`: resolve URL, build JSON from existing `summarize_event` fields, `safe_wp_remote_post` (try/catch, 2xx-only success, `redirection => 0`), fire from immediate + digest paths after the same gates as email; no POST when URL empty.
+3. Keep deferred shutdown flush for production denials (AC4). Test button POSTs immediately and bypasses rate limit (AC5).
+4. Admin Activity settings: Webhook URL field + inline reject notice on invalid save (AC6) + “Send test webhook” form (nonce + `manage_options` shared gate).
+5. Update `AdminAuthzCoverageTest` for the new mutating action.
+6. Unit-test sanitize/validate, payload field set, empty-URL no-POST, failure containment stubs, digest mode mirroring.
+7. Bump to **1.0.15**; document Privacy/Data egress + changelog.
 
 ## Acceptance-criteria mapping
 
 | Criterion | Implementation | Test / evidence |
 |-----------|----------------|-----------------|
-| Every settings-save/action handler enumerated with file:line | `aicac-3-authz-coverage.md` inventory table | `AdminAuthzCoverageTest` asserts known action keys + dispatch line anchors |
-| Nonce/capability mechanism identified per handler (shared wrappers / Settings API / not found) | Coverage matrix in audit artifact | Test asserts shared `manage_options` gate, per-action `check_admin_referer`, and Settings API = not found |
-| Handlers without checks → severity + concrete failure scenario | Findings section in audit + developer-handoff | Quality reviews findings; no silent omission |
-| Findings routed through Quality, not fixed under this story | No production authz code changes | Diff limited to audit + test + AgentOps handoffs |
+| AC1 POST same field set as email | Immediate (+ digest) webhook body from `summarize_event` | `AlertsWebhookTest` asserts payload keys; no prompt/user |
+| AC2 no URL → no POST | `resolve_webhook` empty short-circuit | Test stubs `wp_remote_post` not called |
+| AC3 non-2xx/timeout contained | `safe_wp_remote_post` try/catch + code check | Test WP_Error / 500 → false, no throw |
+| AC4 deferred to shutdown | Reuse `hook_flush` / `flush_deferred` | Source/assert production path only queues then flush |
+| AC5 Send test webhook | Admin action `send_test_webhook` → `Alerts::send_test_webhook` | Authz coverage lock; method sets `test: true` |
+| AC6 http/https validate; reject inline | `validate_webhook_url_input` + admin notice; prior URL kept | Unit cases for ftp/javascript/empty/valid |
+| Digest mirrors email mode | `send_digest` also POSTs when URL set | Test digest payload shape |
 
 ## Risks
 
-- Static source tests can drift if dispatch is refactored into helpers; inventory comments in the test must stay aligned with the audit.
-- Credential-free workspace cannot push; control plane publishes the branch for Quality review.
-- Informational defense-in-depth notes must not be misread as confirmed CVEs.
+- Admin-supplied outbound URL is SSRF-adjacent (same trust model as `alert_email`); mitigate with scheme allowlist + `wp_remote_post` + no redirect follow.
+- Dual-channel digest retry after email failure may re-POST webhook (documented limitation; email clear semantics unchanged).
+- Credential-free workspace cannot push; control plane publishes.
 
 ## Out of scope
 
-- Adding nonce/capability re-checks inside private mutators.
-- Changing cron / runtime policy mutation paths outside the admin HTTP surface.
-- Implementing AICAC-1/2 work or unrelated refactors.
+- Weekly report webhook; Slack/Teams Block Kit templating; separate webhook on/off toggle.

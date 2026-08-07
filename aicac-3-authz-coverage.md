@@ -17,7 +17,7 @@ All admin HTTP state mutations for this plugin enter through a **single options-
 | Settings API | — | **not found** (no `register_setting` / `settings_fields` / `options.php` save flow) |
 | AJAX / `admin_post_*` | — | **not found** in `class-handl-aicac-admin.php` (or other includes for this UI) |
 
-The issue’s “only 5 combined matches” signal is explained by this consolidation: **1×** `current_user_can` + **4×** `check_admin_referer` covering every mutating POST action. That count alone is **not** evidence of missing coverage.
+The issue’s historical “only 5 combined matches” signal (AICAC-3) was explained by consolidation: **1×** `current_user_can` + **4×** `check_admin_referer`. **AICAC-104** added `send_test_webhook` → inventory is now **1×** capability + **5×** nonces (locked in `AdminAuthzCoverageTest`). That count alone is **not** evidence of missing coverage.
 
 GET / `$_REQUEST` query args used in this file (`handl_aicac_tab`, filters, flash flags) only affect rendering; they do **not** persist policy.
 

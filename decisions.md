@@ -1,45 +1,31 @@
-# Decisions — AICAC-3 (#21)
+# Decisions — AICAC-104 (#25)
 
-## D1: Verification-only; do not remediate under this story
+## D1: Additional delivery channel on the existing denial-alert trigger
 
-**Decision:** Document authz coverage and findings; leave production
-`class-handl-aicac-admin.php` (and related includes) unchanged except for
-adding a static PHPUnit lock and the audit artifact.
+**Decision:** Webhook rides `Alerts::maybe_notify_denial` / immediate flush / digest cron — not a separate on/off toggle or trigger.
 
-**Why:** Acceptance criteria explicitly route findings through Quality and
-Release Gate and forbid fixing gaps under AICAC-3. Changing nonce/capability
-placement would expand unapproved product scope.
+**Why:** Spec requires the same `alert_on_deny`, rate-limit, and immediate/digest mode as email. Reusing the validated path avoids divergent flood guards.
 
-## D2: Treat shared `render_page` gate as valid capability coverage
+## D2: Generic JSON payload from `summarize_event` fields
 
-**Decision:** Count `current_user_can( 'manage_options' )` at
-`render_page` L70 (plus `add_options_page` menu capability) as the
-capability mechanism for every POST mutator, rather than requiring each
-private helper to re-check.
+**Decision:** POST `{ source, event, site, site_url, …summary fields }`; digest uses `event=denial_digest` + `denials[]`. No Slack Block Kit / Teams Adaptive Cards.
 
-**Why:** All mutating POST branches execute only after that gate inside the
-same method; private helpers have no other call sites. WordPress also
-enforces the menu capability before invoking the page callback. Requiring
-duplicate checks would be a defense-in-depth product change (see finding
-F-AICAC-3-2), not a current coverage failure.
+**Why:** Spec excludes provider-specific templating; email field set is the privacy contract.
 
-## D3: Settings API = explicit “not found”
+## D3: `wp_remote_post` with `redirection => 0`, scheme allowlist
 
-**Decision:** Record Settings API implicit nonce/capability handling as
-**not found** for every handler.
+**Decision:** Sanitize to http/https only; POST via WP HTTP API; do not follow redirects; contain WP_Error / non-2xx / Throwable like `safe_wp_mail`.
 
-**Why:** The plugin never calls `register_setting` / `settings_fields`;
-saves are custom POST + `check_admin_referer`. Stating “not found” satisfies
-the acceptance criterion’s distinct outcome requirement.
+**Why:** Admin-supplied URL is SSRF-adjacent under the same trust model as `alert_email`; mitigations match the Permissions/security section.
 
-## D4: Encode inventory in a static source unit test
+## D4: Invalid webhook URL rejected without overwriting prior value
 
-**Decision:** Add `tests/Unit/AdminAuthzCoverageTest.php` that reads the
-admin class source and asserts shared gate, per-action nonces, match count
-(5), private mutators, and absence of Settings API / AJAX / admin-post
-hooks.
+**Decision:** `validate_webhook_url_input` on Activity save; on failure set admin error notice and keep the previously stored sanitized URL (empty clears intentionally).
 
-**Why:** Makes the acceptance criteria reproducible without a full WordPress
-install, and fails CI if a new `handl_aicac_action` branch appears without an
-adjacent `check_admin_referer`. Complements the human-readable
-`aicac-3-authz-coverage.md` inventory for Quality.
+**Why:** AC6 forbids silently storing invalid values; clearing a good URL on a typo would be worse than keeping prior.
+
+## D5: Email clear/rate semantics preserved when both channels configured
+
+**Decision:** Rate slot / digest queue clear still keyed primarily off email success when a recipient exists; webhook-only installs use webhook success. Document that digest retry after email failure may re-POST the webhook.
+
+**Why:** “Email path unchanged” (AC2) when webhook is absent; dual-channel edge is an accepted limitation vs inventing per-row delivery receipts.

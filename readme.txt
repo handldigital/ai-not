@@ -4,7 +4,7 @@ Tags: ai, governance, security, handl, ai client
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.14
+Stable tag: 1.0.15
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -24,7 +24,7 @@ Default behavior is **allow**.
 
 **Emergency kill switch** blocks all AI Client calls except plugins you list as exceptions.
 
-**Denial email alerts** (opt-in) notify an admin when enforcement blocks a prompt — immediate (rate-limited) or hourly digest. **Weekly report email** mails Dashboard aggregates (coverage, denials, estimated spend, pins) via the same `wp_mail` path; selected by default; reports are sent only while logging or learn mode is on, and it is always toggleable. **Estimated $** on the audit log and in the weekly report is a rough token × rate placeholder, not billing. When WordPress disables AI site-wide via `wp_supports_ai`, an honesty banner explains why the audit log may be empty.
+**Denial email alerts** (opt-in) notify an admin when enforcement blocks a prompt — immediate (rate-limited) or hourly digest. An optional **Webhook URL** on the same settings posts the same privacy-scoped JSON to an http(s) endpoint (Slack/Teams-compatible) on the same trigger, rate limit, and digest mode. **Weekly report email** mails Dashboard aggregates (coverage, denials, estimated spend, pins) via the same `wp_mail` path; selected by default; reports are sent only while logging or learn mode is on, and it is always toggleable. **Estimated $** on the audit log and in the weekly report is a rough token × rate placeholder, not billing. When WordPress disables AI site-wide via `wp_supports_ai`, an honesty banner explains why the audit log may be empty.
 
 **EXPERIMENTAL per-plugin model force** (Rules tab; empty force fields = off) can pin allowed AI Client generations to a provider/model **per detected caller**. Pins follow the nearest plugin frame on the PHP backtrace (best-effort) — not who initiated the call, and **not a spend guarantee**. Unattributed calls (cron, REST bootstraps, shared libraries, MU plugins, etc.) run unforced by default; admins can opt into an explicit unattributed target via the same “Unknown operations”-style control. Force relies on unsupported shallow-clone behaviour in the AI Client prevent hook, verifies the final route with exact provider/model matching before the provider call, and fail-closes on mismatch. Prefer official core routing filters when available.
 
@@ -34,7 +34,7 @@ Caller attribution is best-effort and is determined by inspecting the PHP call s
 
 == Privacy / Data ==
 
-By default this plugin does **not** send data to any external service. Features that store or transmit call metadata are **opt-in** (logging, denial alerts) or **default-on only while logging/learn mode is on** (weekly report) — each has an explicit Settings toggle.
+By default this plugin does **not** send data to any external service. Features that store or transmit call metadata are **opt-in** (logging, denial alerts / webhook) or **default-on only while logging/learn mode is on** (weekly report) — each has an explicit Settings toggle.
 
 If you enable **recent-call logging** in Settings → HandL AI Connector Access Control, it stores a local log in the WordPress options table containing:
 
@@ -63,6 +63,8 @@ If you enable **denial email alerts**, the plugin sends a message via WordPress 
 - Request path only (query string is stripped before mail; full URI stays in the local log if logging is enabled)
 
 Alert mail does **not** include prompt preview or user identity. Digest rows waiting to send are stored in a local options queue (path-only URI) and are removed when alerts are turned off or the plugin is uninstalled.
+
+If you also set a **Webhook URL** (Activity → denial alert settings), the plugin POSTs a generic JSON body with the **same fields** as the email alert to that http(s) URL whenever a denial alert would fire (same `alert_on_deny` gate, rate limit, and immediate/digest mode — not a separate toggle). Delivery uses WordPress `wp_remote_post` (timeouts/non-2xx are contained like `wp_mail` failures and never change allow/deny). The URL is an intentional admin-supplied outbound integration (same trust model as the alert recipient). Empty URL means no webhook POST is attempted. A **Send test webhook** control posts a sample payload clearly labeled as a test (bypasses rate limiting). Weekly report email is **not** sent to the webhook in this release.
 
 If you enable the **weekly report email** (Activity tab), the plugin sends one message per week via WordPress `wp_mail` with Dashboard-style **aggregates** from the retained local log. This is the first surface where retained log data can leave the WordPress site (through your site’s mail transport into an inbox). The weekly report includes only:
 
@@ -104,6 +106,12 @@ No. It pins the route for calls we attribute to that plugin’s nearest stack fr
 5. Activity — OBSERVE direct_http rows contrasted with governed AI Client decisions.
 
 == Changelog ==
+
+= 1.0.15 =
+* AICAC-104: Optional denial-alert Webhook URL (http/https) alongside email — same trigger, rate limit, and immediate/digest mode.
+* Generic JSON POST via wp_remote_post (path-only fields; no prompt preview or user identity); failures contained like wp_mail.
+* Send test webhook button (sample payload labeled as a test; bypasses rate limiting).
+* Privacy / Data documents the opt-in webhook egress surface.
 
 = 1.0.14 =
 * F7: Weekly report email — Dashboard aggregates via wp_mail on a weekly cron (coverage, denials, estimated spend, pins).
