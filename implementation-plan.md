@@ -1,41 +1,43 @@
-# Implementation Plan — AICAC-3 (#21)
+# Implementation Plan — AICAC-103 (#24)
 
 ## Work item
 
-**Issue:** #21 — AICAC-3: Verify authorization (nonce + capability) coverage on all admin state-mutating handlers  
-**Scope:** `includes/class-handl-aicac-admin.php` (settings/save surface)  
-**Constraint:** Findings are documented for Quality and Release Gate — **do not fix** authz gaps under this story.
+**Issue:** #24 — AICAC-103: WP-CLI command to list and set per-plugin allow/deny rules  
+**Spec:** `product-handoff.md` § AICAC-103  
+**Scope:** Core per-plugin × capability-family allow/deny/inherit matrix via WP-CLI only.
 
 ## Objective
 
-Produce a complete, testable inventory of every settings-save / action handler in the admin class, identify the nonce and capability mechanism for each (including shared wrappers; Settings API if any), and emit severity + failure-scenario findings for any handler lacking checks. Route those findings to Quality; leave production plugin behavior unchanged except for verification evidence (static unit test + audit artifact).
+Add `wp aicac rule list` and `wp aicac rule set <plugin-basename> <family> <allow|deny|inherit>` that read/write through the same `Policy::sanitize_operations` + `Policy::save_policy` path used by `Admin::handle_save_rules`, with no parallel write logic and no bulk import (AICAC-102).
 
 ## Approach (smallest correct change)
 
-1. Static-read `class-handl-aicac-admin.php` and related includes for alternate entry points (`wp_ajax_*`, `admin_post_*`, `register_setting`).
-2. Enumerate every POST `handl_aicac_action` dispatch and every private mutator it calls, with file:line.
-3. Map capability (`current_user_can` / menu capability) and nonce (`check_admin_referer` / form `wp_nonce_field`) per handler; record **not found** explicitly where absent.
-4. Classify gaps (if any) with severity + concrete failure scenario; otherwise document that the sparse match count is explained by a shared wrapper.
-5. Add a PHPUnit static-source test that locks the inventory and fails if a new POST action branch appears without a matching nonce check, or if the shared capability gate disappears.
-6. Do **not** add defense-in-depth re-checks or otherwise “fix” findings in production code under this story.
+1. Add `Policy::apply_family_rule_to_policy()` — pure mutate of `operations[basename][family]`, then `sanitize_operations` (inherit clears the field). Invalid family/rule → failure without mutation semantics for callers.
+2. Add `Policy::set_family_rule()` — `get_policy` → apply → `save_policy` (same persistence path as Rules save).
+3. Add `Policy::family_rule_rows_for_plugins()` — rows for every installed plugin (`get_plugins()` shape, including inactive), family columns as `allow`/`deny`/`inherit`.
+4. Add `includes/class-handl-aicac-cli.php` behind `defined( 'WP_CLI' ) && WP_CLI`, register `aicac rule` with `list` / `set` subcommands.
+5. Load CLI from `Plugin::init()` when WP-CLI is present.
+6. Unit-test apply/list helpers and CLI arg validation without requiring a full WP-CLI binary.
+7. Minor version bump + `readme.txt` changelog / command docs.
 
 ## Acceptance-criteria mapping
 
-| Criterion | Implementation | Test / evidence |
-|-----------|----------------|-----------------|
-| Every settings-save/action handler enumerated with file:line | `aicac-3-authz-coverage.md` inventory table | `AdminAuthzCoverageTest` asserts known action keys + dispatch line anchors |
-| Nonce/capability mechanism identified per handler (shared wrappers / Settings API / not found) | Coverage matrix in audit artifact | Test asserts shared `manage_options` gate, per-action `check_admin_referer`, and Settings API = not found |
-| Handlers without checks → severity + concrete failure scenario | Findings section in audit + developer-handoff | Quality reviews findings; no silent omission |
-| Findings routed through Quality, not fixed under this story | No production authz code changes | Diff limited to audit + test + AgentOps handoffs |
+| Criterion | Implementation | Test |
+|-----------|----------------|------|
+| AC1 list table/json for every Rules-tab plugin with family state | CLI `list` + `family_rule_rows_for_plugins` | Unit: rows cover all plugins; inherit default; `--format=json` path asserted via formatter helper / row shape |
+| AC2 set validates basename+family, writes via sanitize/save, exit 0 + confirmation | CLI `set` → `set_family_rule` / `apply_family_rule_to_policy` | Unit: apply writes deny; confirmation message builder; basename must be in known plugin map |
+| AC3 unrecognized plugin/family → non-zero, no write | CLI validates before write | Unit: invalid plugin/family return error, policy unchanged |
+| AC4 missing args → WP-CLI usage, non-zero, no write | Declared positional args on `set` | Documented; WP-CLI enforces (no custom write on incomplete invoke) |
+| AC5 single-field set only | No bulk/import subcommands | Static: only `list`/`set` registered |
 
 ## Risks
 
-- Static source tests can drift if dispatch is refactored into helpers; inventory comments in the test must stay aligned with the audit.
-- Credential-free workspace cannot push; control plane publishes the branch for Quality review.
-- Informational defense-in-depth notes must not be misread as confirmed CVEs.
+- Full WP-CLI integration cannot be executed end-to-end in this credential-free unit-test workspace; Quality should smoke-test `wp aicac rule list|set` on a WP install with WP-CLI.
+- `save_policy` side effects (cron schedule helpers) remain unchanged; CLI must not fork a lighter write path.
+- Example basename `acme-plugin` in the story is shorthand; real keys are WordPress plugin basenames (`dir/file.php`) as used by the Rules tab.
 
 ## Out of scope
 
-- Adding nonce/capability re-checks inside private mutators.
-- Changing cron / runtime policy mutation paths outside the admin HTTP surface.
-- Implementing AICAC-1/2 work or unrelated refactors.
+- Kill-switch, model-force, denied-tools, alerts CLI.
+- Bulk JSON import (AICAC-102).
+- Plugin-level (outer gate) allow/deny via CLI — story is family matrix only.

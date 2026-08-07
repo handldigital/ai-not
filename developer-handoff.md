@@ -1,101 +1,95 @@
-# Developer Handoff — AICAC-3 (#21)
+# Developer Handoff — AICAC-103 (#24)
 
 ## Work item ID
 
-Issue #21 — AICAC-3: Verify authorization (nonce + capability) coverage on all admin state-mutating handlers
+Issue #24 — AICAC-103: WP-CLI command to list and set per-plugin allow/deny rules
 
 ## Summary of behavior implemented
 
-Completed a verification-only pass of `includes/class-handl-aicac-admin.php`.
-Every settings-save / action handler is enumerated with file:line; each has an
-identified capability mechanism (shared `manage_options` gate + menu cap) and
-nonce mechanism (`check_admin_referer` per action). Settings API implicit
-handling is explicitly **not found**. No confirmed missing checks on current
-handlers; one **Informational** defense-in-depth finding is filed for Quality.
-Production admin authz code was **not** changed. Added a static PHPUnit lock
-and the audit artifact `aicac-3-authz-coverage.md`.
+Added WP-CLI commands `wp aicac rule list` (table default, `--format=json`) and `wp aicac rule set <plugin> <family> <allow|deny|inherit>`. List covers every installed plugin from `get_plugins()` (active and inactive) with family-level state. Set validates basename against that set and family against `Operations::families()`, then persists via `Policy::apply_family_rule_to_policy()` → `sanitize_operations()` → `save_policy()` (same sanitize/save path as `Admin::handle_save_rules`). No bulk import. Plugin version bumped to 1.0.15; FAQ + changelog document the commands.
 
 ## Files changed
 
-- `aicac-3-authz-coverage.md` — full handler inventory, mechanism matrix, findings
-- `tests/Unit/AdminAuthzCoverageTest.php` — static source coverage lock
+- `includes/class-handl-aicac-cli.php` — new CLI command class (`aicac rule` list/set)
+- `includes/class-handl-aicac-policy.php` — `apply_family_rule_to_policy`, `set_family_rule`, `family_rule_rows_for_plugins`
+- `includes/class-handl-aicac-plugin.php` — load/register CLI when `WP_CLI` is defined
+- `handl-ai-connector-access-control.php` — version 1.0.15
+- `readme.txt` — stable tag, FAQ, changelog
+- `tests/Unit/FamilyRuleCliTest.php` — unit coverage for AC helpers
+- `product-handoff.md` — copied story source for reviewers
 - `implementation-plan.md`, `decisions.md`, `test-results.md`, `developer-handoff.md`
-- `.agentops-result.json`
-
-**Unchanged:** `includes/class-handl-aicac-admin.php` and all other production plugin PHP.
 
 ## Acceptance-criteria-to-test mapping
 
-| Acceptance criterion | Evidence |
-|----------------------|----------|
-| Every settings-save/action handler enumerated with file:line | `aicac-3-authz-coverage.md` H1–H5 + private helper table; `AdminAuthzCoverageTest` action provider |
-| Nonce/capability per handler (shared wrappers / Settings API / not found) | Coverage matrix in audit; tests for L70 gate, menu cap, four nonces, Settings API not found |
-| Handlers without checks → severity + failure scenario | F-AICAC-3-1 (none/covered); F-AICAC-3-2 (Informational, private helpers); F-AICAC-3-3 (Settings API N/A) |
-| Findings routed to Quality, not fixed under this story | No production authz edits; NEXT_OWNER=QUALITY |
+| Criterion | Evidence |
+|-----------|----------|
+| AC1 list every known plugin family state; table / `--format=json` | `family_rule_rows_for_plugins` tests; CLI `list_` uses table or `WP_CLI::print_value` json |
+| AC2 set validates + writes via sanitize/save + confirmation | `test_apply_family_rule_sets_deny`; `set_confirmation_message`; `set_family_rule` → `save_policy` |
+| AC3 unrecognized plugin/family → error, no write | `test_cli_validate_rejects_*`; `test_apply_family_rule_rejects_unknown_family` |
+| AC4 missing required args → WP-CLI usage, no write | Declared `<plugin> <family> <rule>` positionals on `set`; defensive count check |
+| AC5 single-field only | `test_cli_public_subcommands_are_list_and_set_only` |
 
 ## Commands executed
 
 ```bash
+export PATH="/home/ubuntu/php-runtime:$PATH"
 composer install --no-interaction
 composer test
-php -l tests/Unit/AdminAuthzCoverageTest.php
-php -l includes/class-handl-aicac-admin.php
+php -l includes/class-handl-aicac-cli.php
+php -l includes/class-handl-aicac-policy.php
+php -l includes/class-handl-aicac-plugin.php
+php -l tests/Unit/FamilyRuleCliTest.php
+php -l handl-ai-connector-access-control.php
 ```
 
 ## Test results
 
 ```
-OK (42 tests, 131 assertions)
+OK (54 tests, 158 assertions)
 ```
 
 Full capture: `test-results.md`.
 
 ## Data or schema changes
 
-None.
+None. Reuses existing `handl_aicac_policy` option `operations` map shape.
 
 ## Configuration changes
 
-None.
+None (runtime feature gated on WP-CLI presence).
 
 ## Security considerations
 
-- Verification concludes current admin POST mutators are gated by `manage_options`
-  and per-action nonces; the original “5 matches” scan matches shared-wrapper design.
-- Informational residual: private mutators do not re-verify; a future alternate
-  entry point without checks would be dangerous (F-AICAC-3-2).
-- No secrets introduced; no authz controls weakened.
+- CLI trust model: shell/WP-CLI access (no extra capability gate), per story.
+- Writes cannot bypass UI family allowlist: only `Operations::families()`; invalid keys dropped by `sanitize_operations`.
+- No secrets logged; confirmation messages use basename/family/rule only.
 
 ## Known limitations
 
-- Static tests do not boot WordPress or simulate CSRF/capability runtime failures.
-- Cron / runtime option writers outside the admin UI were inventoried as out of
-  scope for this admin-handler story.
+- End-to-end `wp` binary not exercised in this workspace — Quality should smoke-test list/set on a WP install.
+- Plugin-level (outer gate) allow/deny is not exposed on CLI (family matrix only).
+- Story example `acme-plugin` is shorthand; operators must pass full basename `dir/file.php`.
 
 ## Rollback considerations
 
-- Revert the new test + audit/handoff files; production code is unchanged so
-  runtime behavior is unaffected by rollback.
+- Revert the listed files / version bump. Existing options remain valid; unused CLI registration has no effect when code is removed.
 
 ## Remaining risks
 
-- F-AICAC-3-2 remains for Product/Quality to accept or schedule defense-in-depth.
-- If someone adds a new `handl_aicac_action` without updating the test’s known
-  list / nonce adjacency, CI should fail — Quality should confirm that lock holds.
+- Live WP-CLI arg parsing / `format_items` behavior needs install smoke (especially `@subcommand list` / `list_` mapping).
+- Uninstalled plugins with leftover option rows are not listable/settable (intentional Rules-tab parity).
 
 ## Requested next action
 
-Quality and Release Gate: review `aicac-3-authz-coverage.md` findings
-(F-AICAC-3-1..3), confirm no confirmed gap requiring a fix story, and decide
-whether to open a follow-up for defense-in-depth re-checks (F-AICAC-3-2).
+Quality and Release Gate: review diff + `FamilyRuleCliTest`, then smoke `wp aicac rule list`, `list --format=json`, successful `set`, invalid plugin/family (non-zero, no write), and missing-arg usage on a WordPress + WP-CLI environment.
 
 ---
 
 STATUS: READY  
-WORK_ITEM: #21 / AICAC-3  
-COMPLETED: Enumerated all admin mutating handlers with file:line; mapped nonce+capability (shared wrapper; Settings API not found); documented findings without fixing; locked inventory in AdminAuthzCoverageTest; composer test OK (42/131)  
-EVIDENCE: aicac-3-authz-coverage.md; tests/Unit/AdminAuthzCoverageTest.php; implementation-plan.md; decisions.md; test-results.md; developer-handoff.md; `composer test` OK (42 tests, 131 assertions)  
-DECISIONS: Verification-only (no product authz fix); shared render_page manage_options gate counts as capability coverage; Settings API = not found; static source test locks inventory  
-RISKS: Informational F-AICAC-3-2 (private mutators lack local re-checks); static tests ≠ full WP CSRF simulation  
-NEXT_ACTION: Quality review aicac-3-authz-coverage.md findings and accept or open follow-up for F-AICAC-3-2  
+WORK_ITEM: #24 / AICAC-103  
+COMPLETED: WP-CLI `aicac rule list|set` via Policy sanitize/save path; inactive-plugin parity; unit tests; v1.0.15 readme; composer test OK (54/158)  
+EVIDENCE: implementation-plan.md; decisions.md; test-results.md; developer-handoff.md; tests/Unit/FamilyRuleCliTest.php; `composer test` OK (54 tests, 158 assertions); php -l clean on touched PHP  
+DECISIONS: Shared apply+sanitize+save_policy; known plugins=get_plugins() incl. inactive; full basename required; unit helpers only (no live wp)  
+RISKS: No live WP-CLI smoke in workspace; list_→list mapping should be verified on install  
+NEXT_ACTION: Quality review + WP-CLI smoke of list/set success and error paths  
 NEXT_OWNER: QUALITY

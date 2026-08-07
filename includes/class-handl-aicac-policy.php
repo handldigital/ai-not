@@ -837,6 +837,113 @@ final class Policy {
 	}
 
 	/**
+	 * Apply one capability-family rule onto a policy array (no persistence).
+	 *
+	 * Used by Rules save (via sanitize_operations on the full map) and by WP-CLI
+	 * `aicac rule set` so both share the same validation constraints: only
+	 * Operations::families() keys and allow|deny (inherit clears the field).
+	 *
+	 * @param array<string,mixed> $policy
+	 * @return array<string,mixed>|false Updated policy, or false when args are invalid.
+	 */
+	public static function apply_family_rule_to_policy( array $policy, string $plugin_basename, string $family, string $rule ) {
+		$plugin_basename = sanitize_text_field( $plugin_basename );
+		$family          = sanitize_text_field( $family );
+		$rule            = sanitize_text_field( $rule );
+
+		if ( '' === $plugin_basename ) {
+			return false;
+		}
+		if ( ! in_array( $family, Operations::families(), true ) ) {
+			return false;
+		}
+		if ( 'inherit' === $rule ) {
+			$rule = '';
+		}
+		if ( '' !== $rule && 'allow' !== $rule && 'deny' !== $rule ) {
+			return false;
+		}
+
+		$operations = is_array( $policy['operations'] ?? null ) ? (array) $policy['operations'] : array();
+		$row        = isset( $operations[ $plugin_basename ] ) && is_array( $operations[ $plugin_basename ] )
+			? (array) $operations[ $plugin_basename ]
+			: array();
+
+		if ( '' === $rule ) {
+			unset( $row[ $family ] );
+		} else {
+			$row[ $family ] = $rule;
+		}
+
+		if ( empty( $row ) ) {
+			unset( $operations[ $plugin_basename ] );
+		} else {
+			$operations[ $plugin_basename ] = $row;
+		}
+
+		$policy['operations'] = self::sanitize_operations( $operations );
+
+		return $policy;
+	}
+
+	/**
+	 * Set allow/deny/inherit for one plugin × capability family.
+	 * Persists through save_policy() (same path as Admin::handle_save_rules).
+	 *
+	 * @param string $rule allow|deny|inherit (empty string also means inherit).
+	 */
+	public static function set_family_rule( string $plugin_basename, string $family, string $rule ): bool {
+		$policy = self::apply_family_rule_to_policy( self::get_policy(), $plugin_basename, $family, $rule );
+		if ( false === $policy ) {
+			return false;
+		}
+		self::save_policy( $policy );
+
+		return true;
+	}
+
+	/**
+	 * Build list rows for every installed plugin (Rules-tab plugin set).
+	 *
+	 * Inactive plugins are included — matching the Rules tab, which lists all
+	 * get_plugins() entries and still shows prior family rules when deactivated.
+	 *
+	 * @param array<string,array<string,mixed>> $plugins Output of get_plugins().
+	 * @param array<string,mixed>               $policy  Policy option (or get_policy()).
+	 * @param array<string,bool|string>         $active  Map of active plugin basenames (is_plugin_active keys).
+	 * @return list<array<string,string>>
+	 */
+	public static function family_rule_rows_for_plugins( array $plugins, array $policy, array $active = array() ): array {
+		$operations = self::sanitize_operations( $policy['operations'] ?? array() );
+		$families   = Operations::families();
+		$rows       = array();
+
+		foreach ( $plugins as $basename => $data ) {
+			$basename = sanitize_text_field( (string) $basename );
+			if ( '' === $basename ) {
+				continue;
+			}
+			$name = isset( $data['Name'] ) ? (string) $data['Name'] : $basename;
+			$ops  = isset( $operations[ $basename ] ) && is_array( $operations[ $basename ] )
+				? $operations[ $basename ]
+				: array();
+
+			$row = array(
+				'plugin' => $basename,
+				'name'   => $name,
+				'status' => isset( $active[ $basename ] ) ? 'active' : 'inactive',
+			);
+			foreach ( $families as $family ) {
+				$rule = isset( $ops[ $family ] ) ? (string) $ops[ $family ] : '';
+				$row[ $family ] = ( 'allow' === $rule || 'deny' === $rule ) ? $rule : 'inherit';
+			}
+			$rows[] = $row;
+		}
+
+		return $rows;
+	}
+
+	/**
 	 * Idle seconds after last activity before a new direct_http row is started
 	 * for the same collapse key (sliding idle timeout — not a fixed bucket).
 	 * Board F6 design question 2026-07-31: deliberate YES to collapse.

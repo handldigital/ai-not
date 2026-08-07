@@ -4,7 +4,7 @@ Tags: ai, governance, security, handl, ai client
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.14
+Stable tag: 1.0.15
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -95,6 +95,13 @@ No. It is best-effort and may be unknown or ambiguous for some execution paths (
 = Does experimental model force guarantee cost control per plugin? =
 No. It pins the route for calls we attribute to that plugin’s nearest stack frame. Unattributed calls are unforced by default (configurable). Misattribution can apply another plugin’s pin without failing closed — existence of a resolved plugin is not proof it is the right one.
 
+= Can I manage rules with WP-CLI? =
+Yes. With WP-CLI available and this plugin active:
+
+`wp aicac rule list` — table of every installed plugin (active and inactive) with family-level allow/deny/inherit state. Use `--format=json` for machine-readable output.
+
+`wp aicac rule set <plugin-basename> <family> <allow|deny|inherit>` — set one capability-family cell (text, image, speech, tts, video). Writes through the same sanitized policy path as the Rules tab. Plugin basename must match an installed plugin file (e.g. `acme-plugin/acme-plugin.php`), including inactive plugins.
+
 == Screenshots ==
 
 1. Dashboard — coverage of known AI activity (through the AI Client vs outside), safety, estimated spend, and block-that-one.
@@ -104,6 +111,11 @@ No. It pins the route for calls we attribute to that plugin’s nearest stack fr
 5. Activity — OBSERVE direct_http rows contrasted with governed AI Client decisions.
 
 == Changelog ==
+
+= 1.0.15 =
+* WP-CLI: `wp aicac rule list` and `wp aicac rule set <plugin> <family> <allow|deny|inherit>` for the per-plugin × capability-family matrix.
+* List supports table (default) and `--format=json`; includes inactive installed plugins (same set as the Rules tab).
+* Set validates plugin basename and family, persists via Policy::sanitize_operations + save_policy (same path as Rules save). No bulk import in this release.
 
 = 1.0.14 =
 * F7: Weekly report email — Dashboard aggregates via wp_mail on a weekly cron (coverage, denials, estimated spend, pins).

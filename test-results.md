@@ -1,59 +1,52 @@
-# Test Results — AICAC-3 (#21)
+# Test Results — AICAC-103 (#24)
 
 ## Environment
 
+- OS: Linux (AgentOps credential-free workspace)
+- PHP: `/home/ubuntu/php-runtime/php` → PHP 8.2.28 CLI
+- Composer: `/home/ubuntu/.local/bin/composer`
+- PHPUnit: 9.6.35 (via `composer test`)
 - Date: 2026-08-07
-- Branch: `main` (local implement workspace; control plane publishes)
-- Work item: #21 / AICAC-3
-- PHP: 8.2.28 (`/home/ubuntu/php-runtime/php`)
-- Composer / PHPUnit: 9.6.35 (from `composer.lock`)
 
 ## Commands executed
 
 ```bash
-export PATH="/home/ubuntu/php-runtime:$PATH:/home/ubuntu/.local/bin:$PATH"
+export PATH="/home/ubuntu/php-runtime:$PATH"
 composer install --no-interaction
 composer test
-php -l tests/Unit/AdminAuthzCoverageTest.php
-php -l includes/class-handl-aicac-admin.php
+php -l includes/class-handl-aicac-cli.php
+php -l includes/class-handl-aicac-policy.php
+php -l includes/class-handl-aicac-plugin.php
+php -l tests/Unit/FamilyRuleCliTest.php
+php -l handl-ai-connector-access-control.php
 ```
 
 ## Results
 
-### `composer install --no-interaction`
-
-Success. Lock file packages installed (including PHPUnit 9.6.35).
-
-### `composer test`
+### composer test
 
 ```
 PHPUnit 9.6.35 by Sebastian Bergmann and contributors.
 
-..........................................                        42 / 42 (100%)
+......................................................            54 / 54 (100%)
 
-Time: 00:00.008, Memory: 10.00 MB
+Time: 00:00.009, Memory: 10.00 MB
 
-OK (42 tests, 131 assertions)
+OK (54 tests, 158 assertions)
 ```
 
-Exit code: **0**
+Includes new `tests/Unit/FamilyRuleCliTest.php` (12 tests) plus prior suites.
 
-Breakdown:
+### php -l
 
-- Existing AICAC-1 suite: PolicyEvaluate / OperationsFamily / ModelForceResolveRoute (unchanged)
-- New: `AdminAuthzCoverageTest` — shared `manage_options` gate, four per-action `check_admin_referer` checks, Settings API not found, no AJAX/admin-post hooks, private mutators, combined match count = 5
-
-### Syntax lint (`php -l`)
-
-- `tests/Unit/AdminAuthzCoverageTest.php` — No syntax errors detected
-- `includes/class-handl-aicac-admin.php` — No syntax errors detected
+All listed files: `No syntax errors detected`.
 
 ## Failures
 
 None.
 
-## Notes
+## Not executed (documented gap)
 
-- No production authz code was modified; verification is inventory + static lock test.
-- Formatter / PHPCS / WPCS are not configured in this repo (AICAC-2 still separate); not claimed as run.
-- Full handler matrix and findings: `aicac-3-authz-coverage.md`.
+- Live `wp aicac rule list` / `wp aicac rule set` against a WordPress install (no WP-CLI/WordPress runtime in this workspace).
+- Formatter/linter beyond `php -l` (repo has no PHPCS/Psalm config in scope).
+- Dependency vulnerability audit (no Composer security audit required by story; not run).
