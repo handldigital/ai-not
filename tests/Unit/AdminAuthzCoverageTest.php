@@ -109,6 +109,10 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'action'       => 'save',
 				'nonce_action' => 'handl_aicac_save_policy',
 			),
+			array(
+				'action'       => 'export_csv',
+				'nonce_action' => 'handl_aicac_export_csv',
+			),
 		);
 	}
 
@@ -156,7 +160,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 	}
 
 	/**
-	 * Combined match count stays aligned with shared-wrapper design (1 cap + 4 nonces).
+	 * Combined match count stays aligned with shared-wrapper design (1 cap + 5 nonces).
 	 */
 	public function test_combined_capability_and_nonce_verify_match_count(): void {
 		preg_match_all( '/\bcurrent_user_can\s*\(/', $this->source, $cap );
@@ -166,9 +170,9 @@ final class AdminAuthzCoverageTest extends TestCase {
 		$combined = count( $cap[0] ) + count( $nonce[0] ) + count( $verify[0] );
 
 		$this->assertSame( 1, count( $cap[0] ), 'Expected exactly one current_user_can in admin class' );
-		$this->assertSame( 4, count( $nonce[0] ), 'Expected exactly four check_admin_referer calls' );
+		$this->assertSame( 5, count( $nonce[0] ), 'Expected exactly five check_admin_referer calls' );
 		$this->assertSame( 0, count( $verify[0] ), 'wp_verify_nonce should remain unused (check_admin_referer covers CSRF)' );
-		$this->assertSame( 5, $combined, 'AICAC-3 premise: five combined matches under shared-wrapper design' );
+		$this->assertSame( 6, $combined, 'Shared-wrapper design: one capability + five action nonces' );
 	}
 
 	/**
@@ -179,6 +183,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array(
 				'handle_save_rules',
 				'handle_save_log',
+				'handle_export_csv',
 				'handle_quick_rule_redirect',
 				'handle_undo_quick_rule',
 				'apply_kill_switch_settings_from_post',
@@ -198,7 +203,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 	 * Inventory completeness: every string compared as handl_aicac_action must be known.
 	 */
 	public function test_no_unknown_handl_aicac_action_string_literals_in_dispatch(): void {
-		$known = array( 'quick_rule', 'send_denial_digest', 'undo_quick_rule', 'save' );
+		$known = array( 'quick_rule', 'send_denial_digest', 'undo_quick_rule', 'save', 'export_csv' );
 		$found = array();
 
 		foreach ( $this->lines as $line ) {
@@ -211,7 +216,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 						$found[ $token ] = true;
 					} elseif ( in_array( $token, array( 'handl_aicac_action', 'handl_aicac_nonce' ), true ) ) {
 						continue;
-					} elseif ( preg_match( '/^(quick_rule|send_denial_digest|undo_quick_rule|save)$/', $token ) ) {
+					} elseif ( preg_match( '/^(quick_rule|send_denial_digest|undo_quick_rule|save|export_csv)$/', $token ) ) {
 						$found[ $token ] = true;
 					}
 				}
@@ -225,6 +230,20 @@ final class AdminAuthzCoverageTest extends TestCase {
 				"Known action '{$action}' missing from source references"
 			);
 		}
+	}
+
+	/**
+	 * AICAC-101: empty retained log disables export with a visible reason.
+	 */
+	public function test_export_csv_empty_state_is_disabled_with_reason(): void {
+		$this->assertMatchesRegularExpression(
+			'/Export CSV[\s\S]*?disabled[\s\S]*?No log entries yet\./',
+			$this->source
+		);
+		$this->assertMatchesRegularExpression(
+			'/wp_nonce_field\s*\(\s*[\'"]handl_aicac_export_csv[\'"]/',
+			$this->source
+		);
 	}
 
 	/**

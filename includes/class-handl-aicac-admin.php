@@ -125,6 +125,10 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_undo_quick_rule', 'handl_aicac_nonce' );
 				$this->handle_undo_quick_rule();
 			}
+			if ( 'export_csv' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_export_csv', 'handl_aicac_nonce' );
+				$this->handle_export_csv();
+			}
 		}
 
 		$saved       = false;
@@ -1287,6 +1291,7 @@ final class Admin {
 
 		echo '<h2>' . esc_html__( 'Recent calls', 'handl-ai-connector-access-control' ) . '</h2>';
 		$this->render_log_filters( $log_filters, $filter_options, $plugins );
+		$this->render_log_export_control( $stored_count, $log_filters );
 
 		$log_newest_first = array_reverse( $log );
 		$matching_count   = 0;
@@ -1634,6 +1639,38 @@ final class Admin {
 		foreach ( $this->log_filters_to_query_args( $filters ) as $key => $value ) {
 			echo '<input type="hidden" name="' . esc_attr( $key ) . '" value="' . esc_attr( $value ) . '" />';
 		}
+	}
+
+	/**
+	 * Export CSV control for the Activity log (AICAC-101).
+	 *
+	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $log_filters
+	 */
+	private function render_log_export_control( int $stored_count, array $log_filters ): void {
+		echo '<div class="handl-aicac-log-export" style="margin:0 0 1em;">';
+		echo '<form method="post" style="display:inline-block;margin:0;">';
+		wp_nonce_field( 'handl_aicac_export_csv', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="export_csv" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
+		$this->render_log_filter_hiddens( $log_filters );
+
+		if ( $stored_count > 0 ) {
+			submit_button(
+				__( 'Export CSV', 'handl-ai-connector-access-control' ),
+				'secondary',
+				'submit',
+				false
+			);
+			if ( $this->log_filters_active( $log_filters ) ) {
+				echo ' <span class="description">' . esc_html__( 'Exports all retained rows matching the current filters (not limited to the 50 newest rows in the table).', 'handl-ai-connector-access-control' ) . '</span>';
+			}
+		} else {
+			echo '<button type="button" class="button" disabled="disabled">' . esc_html__( 'Export CSV', 'handl-ai-connector-access-control' ) . '</button>';
+			echo ' <span class="description">' . esc_html__( 'No log entries yet.', 'handl-ai-connector-access-control' ) . '</span>';
+		}
+
+		echo '</form>';
+		echo '</div>';
 	}
 
 	/**
@@ -2356,6 +2393,65 @@ final class Admin {
 		$this->apply_log_settings_from_post( $policy );
 
 		Policy::save_policy( $policy );
+	}
+
+	/**
+	 * Stream filtered retained audit log as CSV download (AICAC-101).
+	 *
+	 * Capability is enforced by render_page; nonce verified at the export_csv branch.
+	 * Does not return — exits after sending the file.
+	 */
+	private function handle_export_csv(): void {
+		$log = get_option( Plugin::LOG_OPTION_KEY );
+		if ( ! is_array( $log ) ) {
+			$log = array();
+		}
+
+		$policy = Policy::get_policy();
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		$plugins = get_plugins();
+
+		$filters          = $this->log_filters;
+		$matching         = array();
+		$user_ids         = array();
+		$log_newest_first = array_reverse( $log );
+
+		foreach ( $log_newest_first as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			if ( ! $this->log_row_matches_filters( $row, $filters ) ) {
+				continue;
+			}
+			$matching[] = $row;
+			if ( isset( $row['user_id'] ) ) {
+				$uid = (int) $row['user_id'];
+				if ( $uid > 0 ) {
+					$user_ids[ $uid ] = true;
+				}
+			}
+		}
+
+		$user_labels = array();
+		foreach ( array_keys( $user_ids ) as $uid ) {
+			$user = get_userdata( (int) $uid );
+			if ( $user ) {
+				$user_labels[ (int) $uid ] = (string) $user->display_name;
+			} else {
+				$user_labels[ (int) $uid ] = '#' . (int) $uid;
+			}
+		}
+
+		$csv      = Log_Csv::document( $matching, $policy, $plugins, $user_labels );
+		$filename = 'handl-aicac-audit-log-' . gmdate( 'Y-m-d' ) . '.csv';
+
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+		header( 'X-Content-Type-Options: nosniff' );
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- binary CSV download body.
+		echo $csv;
+		exit;
 	}
 
 	private function render_option( string $value, string $current, string $label ): void {

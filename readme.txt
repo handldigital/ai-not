@@ -4,7 +4,7 @@ Tags: ai, governance, security, handl, ai client
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.14
+Stable tag: 1.0.15
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,11 @@ No. It pins the route for calls we attribute to that plugin’s nearest stack fr
 5. Activity — OBSERVE direct_http rows contrasted with governed AI Client decisions.
 
 == Changelog ==
+
+= 1.0.15 =
+* Activity: Export CSV downloads retained (and filtered) audit-log rows for compliance beyond the ring-buffer window.
+* Export is a manage_options POST with nonce verification; RFC 4180 quoting for prompt previews and other special characters.
+* Empty log disables the Export control with an on-screen reason.
 
 = 1.0.14 =
 * F7: Weekly report email — Dashboard aggregates via wp_mail on a weekly cron (coverage, denials, estimated spend, pins).
