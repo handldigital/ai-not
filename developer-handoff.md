@@ -1,26 +1,26 @@
-# Developer Handoff — AICAC-3 (#21)
+# Developer Handoff — #22 (PR #42 coverage-lock remediation)
 
 ## Work item ID
 
-Issue #21 — AICAC-3: Verify authorization (nonce + capability) coverage on all admin state-mutating handlers
+Issue #22 — Remediate Quality P2 on PR #42 (origin #21 / AICAC-3)
 
 ## Summary of behavior implemented
 
-Completed a verification-only pass of `includes/class-handl-aicac-admin.php`.
-Every settings-save / action handler is enumerated with file:line; each has an
-identified capability mechanism (shared `manage_options` gate + menu cap) and
-nonce mechanism (`check_admin_referer` per action). Settings API implicit
-handling is explicitly **not found**. No confirmed missing checks on current
-handlers; one **Informational** defense-in-depth finding is filed for Quality.
-Production admin authz code was **not** changed. Added a static PHPUnit lock
-and the audit artifact `aicac-3-authz-coverage.md`.
+Fixed the static authz coverage lock so newly added `handl_aicac_action`
+dispatch branches are detected. Discovery now parses comparison literals
+against `$posted_action` / `$_POST['handl_aicac_action']` and asserts the
+discovered set **equals** `APPROVED_DISPATCH_ACTIONS`. A fixture regression
+proves an unknown action (`delete_all`) is discovered and breaks equality.
+Provider actions are also locked to the same approved constant. Production
+admin authz code was **not** changed. F-AICAC-3-2 remains Informational /
+no-action.
 
 ## Files changed
 
-- `aicac-3-authz-coverage.md` — full handler inventory, mechanism matrix, findings
-- `tests/Unit/AdminAuthzCoverageTest.php` — static source coverage lock
-- `implementation-plan.md`, `decisions.md`, `test-results.md`, `developer-handoff.md`
-- `.agentops-result.json`
+- `tests/Unit/AdminAuthzCoverageTest.php` — set-equality coverage lock, discovery helper, unknown-action regression, provider↔approved lock
+- `implementation-plan.md` — #22 plan and AC mapping
+- `decisions.md` — D5 recorded
+- `test-results.md`, `developer-handoff.md`, `.agentops-result.json`
 
 **Unchanged:** `includes/class-handl-aicac-admin.php` and all other production plugin PHP.
 
@@ -28,10 +28,11 @@ and the audit artifact `aicac-3-authz-coverage.md`.
 
 | Acceptance criterion | Evidence |
 |----------------------|----------|
-| Every settings-save/action handler enumerated with file:line | `aicac-3-authz-coverage.md` H1–H5 + private helper table; `AdminAuthzCoverageTest` action provider |
-| Nonce/capability per handler (shared wrappers / Settings API / not found) | Coverage matrix in audit; tests for L70 gate, menu cap, four nonces, Settings API not found |
-| Handlers without checks → severity + failure scenario | F-AICAC-3-1 (none/covered); F-AICAC-3-2 (Informational, private helpers); F-AICAC-3-3 (Settings API N/A) |
-| Findings routed to Quality, not fixed under this story | No production authz edits; NEXT_OWNER=QUALITY |
+| Discover dispatch literals from source | `discover_dispatch_action_literals()` |
+| Discovered set equals approved set | `test_no_unknown_handl_aicac_action_string_literals_in_dispatch` |
+| Regression for unknown action | `test_dispatch_literal_discovery_detects_unknown_action` (`delete_all` fixture) |
+| No production authz changes | Diff limited to test + AgentOps artifacts |
+| F-AICAC-3-2 Informational / no-action | No mutator edits; D2 / D5 |
 
 ## Commands executed
 
@@ -45,7 +46,7 @@ php -l includes/class-handl-aicac-admin.php
 ## Test results
 
 ```
-OK (42 tests, 131 assertions)
+OK (44 tests, 135 assertions)
 ```
 
 Full capture: `test-results.md`.
@@ -60,42 +61,41 @@ None.
 
 ## Security considerations
 
-- Verification concludes current admin POST mutators are gated by `manage_options`
-  and per-action nonces; the original “5 matches” scan matches shared-wrapper design.
-- Informational residual: private mutators do not re-verify; a future alternate
-  entry point without checks would be dangerous (F-AICAC-3-2).
-- No secrets introduced; no authz controls weakened.
+- Strengthens the static inventory lock that prevents silent drift when a new
+  mutating POST action is added without updating the AICAC-3 approved set /
+  nonce adjacency tests.
+- Does not weaken authentication, authorization, validation, or types.
+- F-AICAC-3-2 (private mutators rely on caller authorization) unchanged —
+  still defense-in-depth / Informational; no current exploit path.
 
 ## Known limitations
 
-- Static tests do not boot WordPress or simulate CSRF/capability runtime failures.
-- Cron / runtime option writers outside the admin UI were inventoried as out of
-  scope for this admin-handler story.
+- Discovery is pattern-based (strict `===` comparisons). Alternate comparison
+  styles would require updating the helper patterns.
+- Static tests still do not boot WordPress or simulate CSRF/capability failures.
 
 ## Rollback considerations
 
-- Revert the new test + audit/handoff files; production code is unchanged so
-  runtime behavior is unaffected by rollback.
+- Revert the test + AgentOps artifact changes; production runtime is unaffected.
 
 ## Remaining risks
 
-- F-AICAC-3-2 remains for Product/Quality to accept or schedule defense-in-depth.
-- If someone adds a new `handl_aicac_action` without updating the test’s known
-  list / nonce adjacency, CI should fail — Quality should confirm that lock holds.
+- If dispatch is refactored into helpers or non-`===` comparisons, discovery
+  patterns must be updated with the inventory.
+- F-AICAC-3-2 remains for Product/Quality disposition on defense-in-depth.
 
 ## Requested next action
 
-Quality and Release Gate: review `aicac-3-authz-coverage.md` findings
-(F-AICAC-3-1..3), confirm no confirmed gap requiring a fix story, and decide
-whether to open a follow-up for defense-in-depth re-checks (F-AICAC-3-2).
+Quality and Release Gate: re-review PR #42 focusing on the corrected coverage
+lock and unknown-action regression; confirm P2 is resolved.
 
 ---
 
 STATUS: READY  
-WORK_ITEM: #21 / AICAC-3  
-COMPLETED: Enumerated all admin mutating handlers with file:line; mapped nonce+capability (shared wrapper; Settings API not found); documented findings without fixing; locked inventory in AdminAuthzCoverageTest; composer test OK (42/131)  
-EVIDENCE: aicac-3-authz-coverage.md; tests/Unit/AdminAuthzCoverageTest.php; implementation-plan.md; decisions.md; test-results.md; developer-handoff.md; `composer test` OK (42 tests, 131 assertions)  
-DECISIONS: Verification-only (no product authz fix); shared render_page manage_options gate counts as capability coverage; Settings API = not found; static source test locks inventory  
-RISKS: Informational F-AICAC-3-2 (private mutators lack local re-checks); static tests ≠ full WP CSRF simulation  
-NEXT_ACTION: Quality review aicac-3-authz-coverage.md findings and accept or open follow-up for F-AICAC-3-2  
+WORK_ITEM: #22 (PR #42, origin #21 / AICAC-3)  
+COMPLETED: Fixed dispatch literal coverage lock to assert discovered ≡ approved; added delete_all discovery regression and provider↔approved lock; composer test OK (44/135); production admin authz unchanged; F-AICAC-3-2 left Informational  
+EVIDENCE: tests/Unit/AdminAuthzCoverageTest.php; implementation-plan.md; decisions.md (D5); test-results.md; developer-handoff.md; `composer test` OK (44 tests, 135 assertions)  
+DECISIONS: D5 — discover dispatch literals and assert set equality; test-only fix; F-AICAC-3-2 no-action per D2  
+RISKS: Pattern-based discovery may need updates if comparison style is refactored; F-AICAC-3-2 still Informational  
+NEXT_ACTION: Quality re-review of PR #42 coverage-lock fix and unknown-action regression  
 NEXT_OWNER: QUALITY
