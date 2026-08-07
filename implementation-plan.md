@@ -1,41 +1,52 @@
-# Implementation Plan — AICAC-3 (#21)
+# Implementation Plan — AICAC-105 (#26)
 
 ## Work item
 
-**Issue:** #21 — AICAC-3: Verify authorization (nonce + capability) coverage on all admin state-mutating handlers  
-**Scope:** `includes/class-handl-aicac-admin.php` (settings/save surface)  
-**Constraint:** Findings are documented for Quality and Release Gate — **do not fix** authz gaps under this story.
+**Issue:** #26 — AICAC-105: Network admin read-only rollup of per-site AI Client denial activity (multisite)  
+**Scope:** New network-admin UI + pure rollup helpers; minor version bump; readme note  
+**Out of scope:** Network-level policy writes, bulk apply, single-site behavior changes
 
 ## Objective
 
-Produce a complete, testable inventory of every settings-save / action handler in the admin class, identify the nonce and capability mechanism for each (including shared wrappers; Settings API if any), and emit severity + failure-scenario findings for any handler lacking checks. Route those findings to Quality; leave production plugin behavior unchanged except for verification evidence (static unit test + audit artifact).
+Give network admins a read-only Network Admin page that lists sites where this plugin is active, with per-site kill-switch, learn/logging state, denial count in the retained log window, last-activity timestamp, and a link to that site’s Activity tab — without changing single-site installs.
 
 ## Approach (smallest correct change)
 
-1. Static-read `class-handl-aicac-admin.php` and related includes for alternate entry points (`wp_ajax_*`, `admin_post_*`, `register_setting`).
-2. Enumerate every POST `handl_aicac_action` dispatch and every private mutator it calls, with file:line.
-3. Map capability (`current_user_can` / menu capability) and nonce (`check_admin_referer` / form `wp_nonce_field`) per handler; record **not found** explicitly where absent.
-4. Classify gaps (if any) with severity + concrete failure scenario; otherwise document that the sparse match count is explained by a shared wrapper.
-5. Add a PHPUnit static-source test that locks the inventory and fails if a new POST action branch appears without a matching nonce check, or if the shared capability gate disappears.
-6. Do **not** add defense-in-depth re-checks or otherwise “fix” findings in production code under this story.
+1. Add `includes/class-handl-aicac-network-admin.php` with a `Network_Admin` singleton.
+2. Register the page only when `is_multisite()` (hook `network_admin_menu`, capability `manage_network_options`).
+3. Paginate `get_sites()` at **50 sites per page** (documented constant); for each site on the page, skip if the plugin is not active (network-active or site `active_plugins`); otherwise `switch_to_blog` / `restore_current_blog` (try/finally) to read `Plugin::OPTION_KEY` and `Plugin::LOG_OPTION_KEY`.
+4. Build rows from raw options (not `Policy::get_policy()`) to avoid loading alert/weekly/force side paths for a read-only rollup.
+5. Link each row to `get_admin_url( $blog_id, 'options-general.php?page=…&handl_aicac_tab=activity' )`.
+6. When `wp_supports_ai` exists and returns false on that site, show **AI disabled** instead of a bare denial count.
+7. No POST/forms that mutate policy (AC5).
+8. Wire `Network_Admin::instance()->init()` from `Plugin::init()`.
+9. Minor bump `1.0.14` → `1.1.0`; changelog + Description note that multisite rollup is read-only.
+10. Unit-test pure helpers (denial count, newest ts, row summary, pagination math, basename) and static source locks (multisite gate, capability, no mutators, SITES_PER_PAGE=50).
 
 ## Acceptance-criteria mapping
 
 | Criterion | Implementation | Test / evidence |
 |-----------|----------------|-----------------|
-| Every settings-save/action handler enumerated with file:line | `aicac-3-authz-coverage.md` inventory table | `AdminAuthzCoverageTest` asserts known action keys + dispatch line anchors |
-| Nonce/capability mechanism identified per handler (shared wrappers / Settings API / not found) | Coverage matrix in audit artifact | Test asserts shared `manage_options` gate, per-action `check_admin_referer`, and Settings API = not found |
-| Handlers without checks → severity + concrete failure scenario | Findings section in audit + developer-handoff | Quality reviews findings; no silent omission |
-| Findings routed through Quality, not fixed under this story | No production authz code changes | Diff limited to audit + test + AgentOps handoffs |
+| AC1: Non-multisite → no menu/page | `Network_Admin::init()` returns before `add_action` when `! is_multisite()` | Static/source + unit stub: init without multisite does not register menu |
+| AC2: List URL, kill, logging/learn, denials, newest ts | `collect_page_rows` + `summarize_site_data` | Unit tests for summary fields from fixture policy/log |
+| AC3: Inactive sites omitted | `is_plugin_active_on_site` filter before switch | Unit test: inactive → not included when building from site list fixtures |
+| AC4: Link to site Activity tab | `activity_admin_url( $blog_id )` via `get_admin_url` | Unit test asserts path/query shape |
+| AC5: Read-only | Render table + pagination GET only; no policy forms | Static test: no `handl_aicac_action` / `update_option` in network-admin class |
+| AC6: Cap 50 | `Network_Admin::SITES_PER_PAGE = 50`; paginate `get_sites` | Constant asserted; pagination offset helper tested; documented in UI + decisions |
+| Edge: `wp_supports_ai` false | Row `ai_disabled` → display “AI disabled” | Unit test summary marks ai_disabled and suppresses misleading zero presentation |
 
 ## Risks
 
-- Static source tests can drift if dispatch is refactored into helpers; inventory comments in the test must stay aligned with the audit.
-- Credential-free workspace cannot push; control plane publishes the branch for Quality review.
-- Informational defense-in-depth notes must not be misread as confirmed CVEs.
+- Large networks: pagination is over **network sites** (50/request), not “active-only” count — a page may show fewer than 50 rows when many sites lack the plugin; documented.
+- `switch_to_blog` must always restore — try/finally mitigates early returns.
+- Credential-free workspace: no live multisite smoke test; Quality must verify on a real network.
 
-## Out of scope
+## Files to touch
 
-- Adding nonce/capability re-checks inside private mutators.
-- Changing cron / runtime policy mutation paths outside the admin HTTP surface.
-- Implementing AICAC-1/2 work or unrelated refactors.
+- `includes/class-handl-aicac-network-admin.php` (new)
+- `includes/class-handl-aicac-plugin.php` (require + init)
+- `handl-ai-connector-access-control.php` (version)
+- `readme.txt` (stable tag, description, changelog)
+- `tests/Unit/NetworkAdminRollupTest.php` (new)
+- `tests/bootstrap.php` (require network-admin class for pure helpers)
+- AgentOps artifacts: `implementation-plan.md`, `decisions.md`, `test-results.md`, `developer-handoff.md`, `product-handoff.md`

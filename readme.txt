@@ -4,7 +4,7 @@ Tags: ai, governance, security, handl, ai client
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.14
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,6 +15,8 @@ Control which plugins may execute prompts via the WordPress AI Client.
 HandL AI Connector Access Control lets administrators allow/deny AI Client prompt execution on a per-plugin basis using the `wp_ai_client_prevent_prompt` filter introduced with the WordPress AI Client.
 
 Default behavior is **allow**.
+
+**Multisite (read-only network rollup):** On WordPress multisite, network administrators get a Network Admin → Settings page listing sites where this plugin is active (kill switch, logging/learn mode, retained denial count, last activity) with links into each site’s Activity tab. This release does **not** enforce or bulk-edit policy from the network screen — governance remains per-site.
 
 **Per-plugin × capability matrix** (Rules tab) refines access by family — Text, Image, Speech, TTS, Video — so you can allow text generation while denying image generation for the same plugin. Support checks (`is_supported_for_*`) and matching `generate_*` methods share the same family rule. Unknown operations (music, embeddings, generic methods) use a configurable fallback (inherit / allow / deny).
 
@@ -104,6 +106,14 @@ No. It pins the route for calls we attribute to that plugin’s nearest stack fr
 5. Activity — OBSERVE direct_http rows contrasted with governed AI Client decisions.
 
 == Changelog ==
+
+= 1.1.0 =
+* AICAC-105: Read-only Network Admin rollup for multisite — lists sites where the plugin is active with kill-switch, logging/learn mode, retained denial count, and last activity.
+* Each row links to that site’s own Activity tab (no inline cross-site policy view).
+* Visible only on multisite; requires `manage_network_options`. Single-site installs unchanged.
+* Paginated at 50 network sites per page to bound `switch_to_blog()` work on large networks.
+* Sites with AI disabled via `wp_supports_ai` show “AI disabled” instead of a misleading zero denial count.
+* No network-level policy writes or bulk apply in this release.
 
 = 1.0.14 =
 * F7: Weekly report email — Dashboard aggregates via wp_mail on a weekly cron (coverage, denials, estimated spend, pins).

@@ -38,6 +38,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-analytics.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
 
 		Policy::instance()->init();
 		Alerts::instance()->init();
@@ -45,6 +46,7 @@ final class Plugin {
 		Model_Force::instance()->init();
 		Shadow_AI::instance()->init();
 		Admin::instance()->init();
+		Network_Admin::instance()->init();
 	}
 
 	/**
