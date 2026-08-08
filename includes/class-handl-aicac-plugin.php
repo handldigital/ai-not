@@ -48,6 +48,11 @@ final class Plugin {
 		Shadow_AI::instance()->init();
 		Admin::instance()->init();
 		Network_Admin::instance()->init();
+
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
+			CLI::register();
+		}
 	}
 
 	/**
