@@ -1,6 +1,6 @@
 <?php
 /**
- * Denial email alerts and digests (opt-in).
+ * Denial email / webhook alerts and digests (opt-in).
  *
  * @package HandL_AICAC
  */
@@ -12,16 +12,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Loud attributed denial notifications via wp_mail.
+ * Loud attributed denial notifications via wp_mail and optional webhook POST.
  *
  * Observability only — never influences allow/deny.
  *
- * Mail work is deferred to shutdown so the AI Client denial *filter* path
- * does not block on SMTP. That is not the same as releasing the HTTP
- * connection early — typical FastCGI holds the client open until shutdown
- * finishes unless something calls fastcgi_finish_request() (WordPress does
- * not by default). Outbound copies use path-only URIs; full request URIs
- * remain in the local audit log only.
+ * Mail and webhook work is deferred to shutdown so the AI Client denial
+ * *filter* path does not block on SMTP or HTTP. That is not the same as
+ * releasing the HTTP connection early — typical FastCGI holds the client
+ * open until shutdown finishes unless something calls
+ * fastcgi_finish_request() (WordPress does not by default). Outbound copies
+ * use path-only URIs; full request URIs remain in the local audit log only.
+ *
+ * Webhook URL is an intentional admin-supplied outbound integration (same
+ * trust model as the configurable wp_mail recipient). Scheme is restricted
+ * to http/https; delivery uses wp_remote_post (WP HTTP API) with redirects
+ * disabled.
  */
 final class Alerts {
 	public const DIGEST_OPTION_KEY = 'handl_aicac_denial_digest_queue';
@@ -164,6 +169,81 @@ final class Alerts {
 	}
 
 	/**
+	 * Sanitize webhook URL: http/https only. Empty input → empty string.
+	 * Invalid non-empty input also yields '' (use validate_webhook_url_input
+	 * when rejecting with an inline error is required).
+	 *
+	 * @param mixed $raw
+	 */
+	public static function sanitize_webhook_url( $raw ): string {
+		$raw = trim( (string) $raw );
+		if ( '' === $raw ) {
+			return '';
+		}
+
+		// esc_url_raw with scheme allowlist drops javascript:, data:, ftp:, etc.
+		$url = esc_url_raw( $raw, array( 'http', 'https' ) );
+		if ( '' === $url ) {
+			return '';
+		}
+
+		$parts = wp_parse_url( $url );
+		if ( ! is_array( $parts ) || empty( $parts['scheme'] ) || empty( $parts['host'] ) ) {
+			return '';
+		}
+
+		$scheme = strtolower( (string) $parts['scheme'] );
+		if ( 'http' !== $scheme && 'https' !== $scheme ) {
+			return '';
+		}
+
+		return $url;
+	}
+
+	/**
+	 * Validate admin webhook URL input for save (AC6).
+	 *
+	 * Empty is valid (clears the channel). Non-empty must sanitize to http(s).
+	 *
+	 * @param mixed $raw
+	 * @return array{ok:bool,url:string,error:string}
+	 */
+	public static function validate_webhook_url_input( $raw ): array {
+		$trimmed = trim( (string) $raw );
+		if ( '' === $trimmed ) {
+			return array(
+				'ok'    => true,
+				'url'   => '',
+				'error' => '',
+			);
+		}
+
+		$url = self::sanitize_webhook_url( $trimmed );
+		if ( '' === $url ) {
+			return array(
+				'ok'    => false,
+				'url'   => '',
+				'error' => 'invalid',
+			);
+		}
+
+		return array(
+			'ok'    => true,
+			'url'   => $url,
+			'error' => '',
+		);
+	}
+
+	/**
+	 * Configured webhook URL, or empty when unset/invalid.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	public static function resolve_webhook( array $policy ): string {
+		return self::sanitize_webhook_url( $policy['alert_webhook_url'] ?? '' );
+	}
+
+	/**
 	 * Register a single shutdown flush for this request.
 	 */
 	private static function hook_flush(): void {
@@ -242,28 +322,45 @@ final class Alerts {
 			return;
 		}
 
-		$to = self::resolve_email( $policy );
-		if ( '' === $to ) {
+		$to  = self::resolve_email( $policy );
+		$url = self::resolve_webhook( $policy );
+		if ( '' === $to && '' === $url ) {
 			return;
 		}
 
 		$summary = self::summarize_event( $event );
-		$subject = sprintf(
-			/* translators: %s: site name */
-			__( '[%s] HandL AICAC denied an AI Client call', 'handl-ai-connector-access-control' ),
-			wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES )
-		);
+		$mail_ok = null;
+		$hook_ok = null;
 
-		$body  = __( 'HandL AI Connector Access Control blocked an AI Client prompt.', 'handl-ai-connector-access-control' ) . "\n\n";
-		$body .= self::format_summary_lines( $summary );
-		$body .= "\n" . __( 'This message was sent by HandL AICAC (not by the calling plugin). Review rules under Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' ) . "\n";
-		$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=log' ) . "\n";
+		if ( '' !== $to ) {
+			$subject = sprintf(
+				/* translators: %s: site name */
+				__( '[%s] HandL AICAC denied an AI Client call', 'handl-ai-connector-access-control' ),
+				wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES )
+			);
 
-		// record_send only on true; false/Throwable → queue so the denial is not silently lost
-		// and does not burn a rate slot (Frink live: pre_wp_mail → false still rate_count++ on 488b0df).
-		if ( self::safe_wp_mail( $to, $subject, $body ) ) {
+			$body  = __( 'HandL AI Connector Access Control blocked an AI Client prompt.', 'handl-ai-connector-access-control' ) . "\n\n";
+			$body .= self::format_summary_lines( $summary );
+			$body .= "\n" . __( 'This message was sent by HandL AICAC (not by the calling plugin). Review rules under Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' ) . "\n";
+			$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=log' ) . "\n";
+
+			// record_send only on true; false/Throwable → queue so the denial is not silently lost
+			// and does not burn a rate slot (Frink live: pre_wp_mail → false still rate_count++ on 488b0df).
+			$mail_ok = self::safe_wp_mail( $to, $subject, $body );
+		}
+
+		if ( '' !== $url ) {
+			$hook_ok = self::safe_wp_remote_post( $url, self::build_immediate_webhook_payload( $summary ) );
+		}
+
+		$delivered = ( true === $mail_ok ) || ( null === $mail_ok && true === $hook_ok );
+		if ( $delivered ) {
 			self::record_send();
-		} else {
+		}
+
+		// Preserve email-path semantics: failed mail still queues for digest drain.
+		// Webhook-only failure also queues so the denial is not silently lost.
+		if ( false === $mail_ok || ( null === $mail_ok && false === $hook_ok ) ) {
 			self::queue_digest_row( $event );
 		}
 	}
@@ -282,49 +379,90 @@ final class Alerts {
 			return;
 		}
 
-		$to = self::resolve_email( $policy );
-		if ( '' === $to ) {
+		$to  = self::resolve_email( $policy );
+		$url = self::resolve_webhook( $policy );
+		if ( '' === $to && '' === $url ) {
 			return;
 		}
 
 		$count   = count( $queue );
-		$subject = sprintf(
-			/* translators: 1: site name, 2: denial count */
-			__( '[%1$s] HandL AICAC denial digest (%2$d)', 'handl-ai-connector-access-control' ),
-			wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
-			$count
-		);
+		$mail_ok = null;
+		$hook_ok = null;
 
-		$body  = sprintf(
-			/* translators: %d: number of denials in this digest */
-			__( 'HandL AI Connector Access Control blocked %d AI Client prompt(s) since the last digest.', 'handl-ai-connector-access-control' ),
-			$count
-		) . "\n\n";
+		if ( '' !== $to ) {
+			$subject = sprintf(
+				/* translators: 1: site name, 2: denial count */
+				__( '[%1$s] HandL AICAC denial digest (%2$d)', 'handl-ai-connector-access-control' ),
+				wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
+				$count
+			);
 
-		$shown = 0;
-		foreach ( $queue as $row ) {
-			if ( ! is_array( $row ) ) {
-				continue;
+			$body  = sprintf(
+				/* translators: %d: number of denials in this digest */
+				__( 'HandL AI Connector Access Control blocked %d AI Client prompt(s) since the last digest.', 'handl-ai-connector-access-control' ),
+				$count
+			) . "\n\n";
+
+			$shown = 0;
+			foreach ( $queue as $row ) {
+				if ( ! is_array( $row ) ) {
+					continue;
+				}
+				++$shown;
+				if ( $shown > 50 ) {
+					$body .= sprintf(
+						/* translators: %d: remaining rows not listed */
+						__( "…and %d more (see the audit log).\n", 'handl-ai-connector-access-control' ),
+						$count - 50
+					);
+					break;
+				}
+				$body .= '--- #' . $shown . " ---\n";
+				$body .= self::format_summary_lines( $row ) . "\n";
 			}
-			++$shown;
-			if ( $shown > 50 ) {
-				$body .= sprintf(
-					/* translators: %d: remaining rows not listed */
-					__( "…and %d more (see the audit log).\n", 'handl-ai-connector-access-control' ),
-					$count - 50
-				);
-				break;
-			}
-			$body .= '--- #' . $shown . " ---\n";
-			$body .= self::format_summary_lines( $row ) . "\n";
+
+			$body .= __( 'This digest was sent by HandL AICAC. Review rules under Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' ) . "\n";
+			$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=log' ) . "\n";
+
+			$mail_ok = self::safe_wp_mail( $to, $subject, $body );
 		}
 
-		$body .= __( 'This digest was sent by HandL AICAC. Review rules under Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' ) . "\n";
-		$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=log' ) . "\n";
+		if ( '' !== $url ) {
+			$hook_ok = self::safe_wp_remote_post( $url, self::build_digest_webhook_payload( $queue ) );
+		}
 
-		if ( self::safe_wp_mail( $to, $subject, $body ) ) {
+		// Email path unchanged when configured: clear only on mail success.
+		// Webhook-only installs clear when the POST succeeds.
+		$cleared = ( true === $mail_ok ) || ( null === $mail_ok && true === $hook_ok );
+		if ( $cleared ) {
 			update_option( self::DIGEST_OPTION_KEY, array(), false );
 		}
+	}
+
+	/**
+	 * Admin "Send test webhook" — immediate POST, bypasses rate limiting.
+	 * Payload is clearly labeled as a test (not a real denial).
+	 *
+	 * @param array<string,mixed> $policy
+	 * @return bool True when the endpoint returned 2xx.
+	 */
+	public static function send_test_webhook( array $policy ): bool {
+		$url = self::resolve_webhook( $policy );
+		if ( '' === $url ) {
+			return false;
+		}
+
+		return self::safe_wp_remote_post( $url, self::build_test_webhook_payload() );
+	}
+
+	/**
+	 * Privacy-scoped summary fields used by email and webhook (AC1).
+	 *
+	 * @param array<string,mixed> $event
+	 * @return array<string,mixed>
+	 */
+	public static function summarize_event_public( array $event ): array {
+		return self::summarize_event( $event );
 	}
 
 	/**
@@ -339,6 +477,133 @@ final class Alerts {
 		} catch ( \Throwable $e ) {
 			return false;
 		}
+	}
+
+	/**
+	 * Contained webhook POST (AC3): never throws; non-2xx / WP_Error / timeout → false.
+	 * Does not follow redirects (SSRF-adjacent admin URL — intentional outbound).
+	 *
+	 * @param array<string,mixed> $payload
+	 */
+	public static function safe_wp_remote_post( string $url, array $payload ): bool {
+		$url = self::sanitize_webhook_url( $url );
+		if ( '' === $url ) {
+			return false;
+		}
+
+		$body = wp_json_encode( $payload );
+		if ( ! is_string( $body ) || '' === $body ) {
+			return false;
+		}
+
+		try {
+			$response = wp_remote_post(
+				$url,
+				array(
+					'timeout'     => 5,
+					'redirection' => 0,
+					'blocking'    => true,
+					'headers'     => array(
+						'Content-Type' => 'application/json; charset=utf-8',
+					),
+					'body'        => $body,
+				)
+			);
+		} catch ( \Throwable $e ) {
+			return false;
+		}
+
+		if ( is_wp_error( $response ) ) {
+			return false;
+		}
+
+		$code = (int) wp_remote_retrieve_response_code( $response );
+		return $code >= 200 && $code < 300;
+	}
+
+	/**
+	 * @param array<string,mixed> $summary From summarize_event().
+	 * @return array<string,mixed>
+	 */
+	public static function build_immediate_webhook_payload( array $summary ): array {
+		return array_merge(
+			array(
+				'source'  => 'handl-aicac',
+				'event'   => 'denial',
+				'site'     => wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
+				'site_url' => home_url( '/' ),
+			),
+			self::summary_fields_for_json( $summary )
+		);
+	}
+
+	/**
+	 * @param list<mixed> $queue Digest rows (already summarized).
+	 * @return array<string,mixed>
+	 */
+	public static function build_digest_webhook_payload( array $queue ): array {
+		$denials = array();
+		foreach ( $queue as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$denials[] = self::summary_fields_for_json( $row );
+			if ( count( $denials ) >= 50 ) {
+				break;
+			}
+		}
+
+		return array(
+			'source'   => 'handl-aicac',
+			'event'    => 'denial_digest',
+			'site'     => wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
+			'site_url' => home_url( '/' ),
+			'count'    => count( $queue ),
+			'denials'  => $denials,
+		);
+	}
+
+	/**
+	 * Sample payload for the admin test button (AC5) — clearly labeled as a test.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public static function build_test_webhook_payload(): array {
+		return array(
+			'source'   => 'handl-aicac',
+			'event'    => 'test',
+			'test'     => true,
+			'message'  => 'HandL AICAC test webhook — this is not a real denial.',
+			'site'     => wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
+			'site_url' => home_url( '/' ),
+			'ts'       => time(),
+		);
+	}
+
+	/**
+	 * Same field set the email alert includes (no prompt preview, no user identity).
+	 *
+	 * @param array<string,mixed> $summary
+	 * @return array<string,mixed>
+	 */
+	public static function summary_fields_for_json( array $summary ): array {
+		$matched = array();
+		if ( isset( $summary['matched_tools'] ) && is_array( $summary['matched_tools'] ) ) {
+			$matched = array_values( array_map( 'strval', $summary['matched_tools'] ) );
+		}
+
+		return array(
+			'ts'                => isset( $summary['ts'] ) ? (int) $summary['ts'] : 0,
+			'plugin'            => isset( $summary['plugin'] ) ? (string) $summary['plugin'] : '',
+			'operation'         => isset( $summary['operation'] ) ? (string) $summary['operation'] : '',
+			'capability_family' => isset( $summary['capability_family'] ) ? (string) $summary['capability_family'] : '',
+			'denial_reason'     => isset( $summary['denial_reason'] ) ? (string) $summary['denial_reason'] : '',
+			'matched_tools'     => $matched,
+			'provider'          => isset( $summary['provider'] ) ? (string) $summary['provider'] : '',
+			'model'             => isset( $summary['model'] ) ? (string) $summary['model'] : '',
+			'model_inferred'    => ! empty( $summary['model_inferred'] ),
+			'uri'               => isset( $summary['uri'] ) ? (string) $summary['uri'] : '',
+		);
 	}
 
 	/**
