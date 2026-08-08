@@ -2,11 +2,12 @@
 /**
  * Static verification that admin state-mutating handlers keep nonce + capability coverage.
  *
- * AICAC-3 (#21 / #22) plus AICAC-102 transfer actions and AICAC-104 test webhook: locks the inventory of POST
- * action dispatches in class-handl-aicac-admin.php. Does not exercise WordPress
- * runtime authz — it fails if a new handl_aicac_action branch appears without
- * updating the approved inventory (and without a matching check_admin_referer),
- * or if the shared manage_options gate is removed.
+ * AICAC-3 (#21 / #22) plus AICAC-102 transfer actions, AICAC-104 test webhook,
+ * and AICAC-25 test email: locks the inventory of POST action dispatches in
+ * class-handl-aicac-admin.php. Does not exercise WordPress runtime authz — it
+ * fails if a new handl_aicac_action branch appears without updating the approved
+ * inventory (and without a matching check_admin_referer), or if the shared
+ * manage_options gate is removed.
  *
  * @package HandL_AICAC
  */
@@ -32,6 +33,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 		'quick_rule',
 		'save',
 		'send_denial_digest',
+		'send_test_email',
 		'send_test_webhook',
 		'undo_quick_rule',
 	);
@@ -122,6 +124,10 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array(
 				'action'       => 'send_test_webhook',
 				'nonce_action' => 'handl_aicac_send_test_webhook',
+			),
+			array(
+				'action'       => 'send_test_email',
+				'nonce_action' => 'handl_aicac_send_test_email',
 			),
 			array(
 				'action'       => 'undo_quick_rule',
