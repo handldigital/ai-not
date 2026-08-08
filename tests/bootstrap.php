@@ -52,3 +52,4 @@ if ( ! function_exists( '__' ) ) {
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-operations.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-model-force.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-transfer.php';
