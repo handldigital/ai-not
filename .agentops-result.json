@@ -1,6 +1,0 @@
-{
-  "summary": "STATUS: READY\nWORK_ITEM: #23 / AICAC-102\nCOMPLETED: Rules JSON export/import with preview+confirm full replace via Policy::save_policy; AC1–AC6 covered by unit + authz locks; version 1.0.15\nEVIDENCE: implementation-plan.md; decisions.md; test-results.md; developer-handoff.md; composer test OK (56 tests, 233 assertions); php -l clean on changed PHP\nDECISIONS: Full replace; flat export + metadata; Policy_Transfer + save_policy only; transient preview; no secret denylist needed today\nRISKS: Full replace spans shared option fields; AICAC-3 markdown inventory stale vs updated PHPUnit lock\nNEXT_ACTION: Quality review AICAC-102 against AC1–AC6 and reproduce validation\nNEXT_OWNER: QUALITY",
-  "reviewPassed": false,
-  "findings": "",
-  "issuesCreated": []
-}
