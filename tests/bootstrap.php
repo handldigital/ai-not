@@ -108,6 +108,17 @@ if ( ! function_exists( '__' ) ) {
 	}
 }
 
+
+if ( ! function_exists( 'is_multisite' ) ) {
+	/**
+	 * Default false so Network_Admin::init() is a no-op in unit tests (AC1).
+	 * Tests may flip $GLOBALS['handl_aicac_test_is_multisite'].
+	 */
+	function is_multisite(): bool {
+		return ! empty( $GLOBALS['handl_aicac_test_is_multisite'] );
+	}
+}
+
 if ( ! function_exists( 'esc_url_raw' ) ) {
 	/**
 	 * Minimal esc_url_raw: keep http(s) URLs; drop others when allowlisted.
@@ -250,13 +261,19 @@ if ( ! function_exists( 'delete_option' ) ) {
 
 if ( ! function_exists( 'add_action' ) ) {
 	/**
-	 * @param string   $hook Hook.
-	 * @param callable $callback Callback.
-	 * @param int      $priority Priority.
-	 * @param int      $accepted_args Args.
+	 * Capture hooks for Network_Admin init tests.
+	 *
+	 * @param string   $hook          Hook name.
+	 * @param callable $callback      Callback.
+	 * @param int      $priority      Priority.
+	 * @param int      $accepted_args Accepted args.
 	 */
 	function add_action( $hook, $callback, $priority = 10, $accepted_args = 1 ): bool {
-		unset( $hook, $callback, $priority, $accepted_args );
+		unset( $callback, $priority, $accepted_args );
+		if ( ! isset( $GLOBALS['handl_aicac_test_added_actions'] ) || ! is_array( $GLOBALS['handl_aicac_test_added_actions'] ) ) {
+			$GLOBALS['handl_aicac_test_added_actions'] = array();
+		}
+		$GLOBALS['handl_aicac_test_added_actions'][] = (string) $hook;
 		return true;
 	}
 }
@@ -319,3 +336,5 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-model-force.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-transfer.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alerts.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
