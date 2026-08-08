@@ -43,3 +43,18 @@ hooks.
 install, and fails CI if a new `handl_aicac_action` branch appears without an
 adjacent `check_admin_referer`. Complements the human-readable
 `aicac-3-authz-coverage.md` inventory for Quality.
+
+## D5: Coverage lock must assert discovered ≡ approved (#22)
+
+**Decision:** Fix `test_no_unknown_handl_aicac_action_string_literals_in_dispatch`
+so it discovers dispatch action literals from source (comparison patterns
+against `$posted_action` / `$_POST['handl_aicac_action']`) and asserts that
+set equals the approved inventory. Add a fixture regression proving an
+unknown action such as `delete_all` is discovered and breaks equality.
+Do **not** change production admin authz code. Leave F-AICAC-3-2 as
+Informational / no-action (D2).
+
+**Why:** Quality P2 showed the prior test only asserted each approved literal
+still appears; unknown branches were ignored, so the class-level “fails on a
+new branch” claim did not hold for this test. Set equality + a discovery
+regression closes that hole with a test-only change.
