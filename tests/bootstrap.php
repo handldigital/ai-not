@@ -336,5 +336,6 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-model-force.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-transfer.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alerts.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-differentiator-messaging.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
