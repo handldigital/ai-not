@@ -5,5 +5,17 @@ composer.phar
 node_modules/
 dist/
 *.log
+
+# AgentOps / agent working artifacts — never commit (workspace-only)
 .agentops-meta.json
 .agentops-result.json
+.agentops-runner-log.json
+.agentops*
+implementation-plan.md
+decisions.md
+developer-handoff.md
+test-results.md
+product-handoff.md
+research.md
+backlog.yaml
+aicac-3-authz-coverage.md

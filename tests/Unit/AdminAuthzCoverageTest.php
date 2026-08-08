@@ -2,11 +2,11 @@
 /**
  * Static verification that admin state-mutating handlers keep nonce + capability coverage.
  *
- * AICAC-3 (#21): locks the inventory of POST action dispatches in
- * class-handl-aicac-admin.php. Does not exercise WordPress runtime authz —
- * it fails if a new handl_aicac_action branch appears without a matching
- * check_admin_referer, if an unknown action/posted_action literal is introduced
- * without updating the known inventory, or if the shared manage_options gate is removed.
+ * AICAC-3 (#21 / #22) plus AICAC-104 test webhook: locks the inventory of POST
+ * action dispatches in class-handl-aicac-admin.php. Does not exercise WordPress
+ * runtime authz — it fails if a new handl_aicac_action branch appears without
+ * updating the approved inventory (and without a matching check_admin_referer),
+ * or if the shared manage_options gate is removed.
  *
  * @package HandL_AICAC
  */
@@ -18,6 +18,20 @@ namespace HandL\AICAC\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 
 final class AdminAuthzCoverageTest extends TestCase {
+
+	/**
+	 * Approved POST handl_aicac_action dispatch inventory.
+	 * Keep in sync with mutating_action_provider().
+	 *
+	 * @var list<string>
+	 */
+	private const APPROVED_DISPATCH_ACTIONS = array(
+		'quick_rule',
+		'save',
+		'send_denial_digest',
+		'send_test_webhook',
+		'undo_quick_rule',
+	);
 
 	private string $source;
 
@@ -118,6 +132,23 @@ final class AdminAuthzCoverageTest extends TestCase {
 	}
 
 	/**
+	 * Provider actions must match the approved dispatch inventory exactly.
+	 */
+	public function test_mutating_action_provider_matches_approved_inventory(): void {
+		$from_provider = array();
+		foreach ( $this->mutating_action_provider() as $row ) {
+			$from_provider[] = $row['action'];
+		}
+		sort( $from_provider );
+		$approved = self::APPROVED_DISPATCH_ACTIONS;
+		$this->assertSame(
+			$approved,
+			$from_provider,
+			'mutating_action_provider actions must equal APPROVED_DISPATCH_ACTIONS'
+		);
+	}
+
+	/**
 	 * Each known mutating POST action must check_admin_referer with its nonce action.
 	 *
 	 * @dataProvider mutating_action_provider
@@ -136,7 +167,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 
 		$this->assertNotNull(
 			$action_line,
-			"Dispatch for action '{$action}' not found — update AICAC-3 inventory if intentional"
+			"Dispatch for action '{$action}' not found — update authz inventory if intentional"
 		);
 
 		$nonce_line = $this->first_line_matching(
@@ -161,19 +192,20 @@ final class AdminAuthzCoverageTest extends TestCase {
 	}
 
 	/**
-	 * Combined match count stays aligned with shared-wrapper design (1 cap + 5 nonces).
+	 * Combined match count: 1 shared capability + one check_admin_referer per mutating action.
 	 */
 	public function test_combined_capability_and_nonce_verify_match_count(): void {
 		preg_match_all( '/\bcurrent_user_can\s*\(/', $this->source, $cap );
 		preg_match_all( '/\bcheck_admin_referer\s*\(/', $this->source, $nonce );
 		preg_match_all( '/\bwp_verify_nonce\s*\(/', $this->source, $verify );
 
-		$combined = count( $cap[0] ) + count( $nonce[0] ) + count( $verify[0] );
+		$expected_nonces = count( $this->mutating_action_provider() );
+		$combined        = count( $cap[0] ) + count( $nonce[0] ) + count( $verify[0] );
 
 		$this->assertSame( 1, count( $cap[0] ), 'Expected exactly one current_user_can in admin class' );
-		$this->assertSame( 5, count( $nonce[0] ), 'Expected exactly five check_admin_referer calls' );
+		$this->assertSame( $expected_nonces, count( $nonce[0] ), 'Expected one check_admin_referer per mutating action' );
 		$this->assertSame( 0, count( $verify[0] ), 'wp_verify_nonce should remain unused (check_admin_referer covers CSRF)' );
-		$this->assertSame( 6, $combined, 'Shared-wrapper design: one capability + five nonces after AICAC-104 test webhook' );
+		$this->assertSame( 1 + $expected_nonces, $combined, 'Shared-wrapper design: 1 capability + N action nonces' );
 	}
 
 	/**
@@ -194,73 +226,87 @@ final class AdminAuthzCoverageTest extends TestCase {
 			$this->assertMatchesRegularExpression(
 				'/\bprivate\s+function\s+' . preg_quote( $method, '/' ) . '\s*\(/',
 				$this->source,
-				"Mutator {$method} must stay private (or update AICAC-3 findings if intentional)"
+				"Mutator {$method} must stay private (or update authz inventory if intentional)"
 			);
 		}
 	}
 
 	/**
-	 * Inventory completeness: every string compared as handl_aicac_action / posted_action
-	 * must be in the known set. Unknown literals fail so a new mutating branch cannot
-	 * ship without updating this inventory (and the nonce-adjacency data provider).
+	 * Inventory completeness: discovered dispatch literals must equal the approved set.
+	 *
+	 * Unlike a one-way “approved ⊆ found” check, set equality fails when a new
+	 * branch (e.g. delete_all) appears without updating APPROVED_DISPATCH_ACTIONS.
 	 */
 	public function test_no_unknown_handl_aicac_action_string_literals_in_dispatch(): void {
-		$known = array_map(
-			static function ( array $row ): string {
-				return $row['action'];
-			},
-			$this->mutating_action_provider()
-		);
-
-		// Non-action quoted identifiers that legitimately appear on the same lines
-		// (POST field names; HTML type="hidden" on form value= inputs).
-		$non_action_tokens = array( 'handl_aicac_action', 'handl_aicac_nonce', 'hidden' );
-
-		$found   = array();
-		$unknown = array();
-
-		foreach ( $this->lines as $idx => $line ) {
-			if ( ! preg_match( '/handl_aicac_action|posted_action/', $line ) ) {
-				continue;
-			}
-			if ( ! preg_match_all( '/[\'"]([a-z0-9_]+)[\'"]/', $line, $m ) ) {
-				continue;
-			}
-			foreach ( $m[1] as $token ) {
-				if ( in_array( $token, $known, true ) ) {
-					$found[ $token ] = true;
-					continue;
-				}
-				if ( in_array( $token, $non_action_tokens, true ) ) {
-					continue;
-				}
-				$unknown[ $token ] = $idx + 1;
-			}
-		}
+		$discovered = $this->discover_dispatch_action_literals( $this->source );
+		$approved   = self::APPROVED_DISPATCH_ACTIONS;
 
 		$this->assertSame(
-			array(),
-			array_keys( $unknown ),
-			'Unknown handl_aicac_action/posted_action string literals must be added to mutating_action_provider (and nonce coverage): '
-			. implode(
-				', ',
-				array_map(
-					static function ( string $token, int $line ): string {
-						return "'{$token}' @ L{$line}";
-					},
-					array_keys( $unknown ),
-					array_values( $unknown )
-				)
-			)
+			$approved,
+			$discovered,
+			'Discovered handl_aicac_action dispatch literals must equal the approved inventory'
+		);
+	}
+
+	/**
+	 * Regression: discovery must surface unknown action branches so equality can fail.
+	 */
+	public function test_dispatch_literal_discovery_detects_unknown_action(): void {
+		$fixture = <<<'PHP'
+			if ( isset( $_POST['handl_aicac_action'] ) ) {
+				$posted_action = sanitize_key( wp_unslash( (string) $_POST['handl_aicac_action'] ) );
+				if ( 'quick_rule' === $posted_action ) {
+					check_admin_referer( 'handl_aicac_quick_rule', 'handl_aicac_nonce' );
+				}
+				if ( 'delete_all' === $posted_action ) {
+					// Hypothetical uninventoried branch — must be discovered.
+				}
+			}
+			if ( isset( $_POST['handl_aicac_action'] ) && 'save' === $_POST['handl_aicac_action'] ) {
+				check_admin_referer( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
+			}
+		PHP;
+
+		$discovered = $this->discover_dispatch_action_literals( $fixture );
+
+		$this->assertContains(
+			'delete_all',
+			$discovered,
+			'Discovery must include unknown dispatch literal delete_all'
+		);
+		$this->assertNotSame(
+			self::APPROVED_DISPATCH_ACTIONS,
+			$discovered,
+			'Unknown action must make discovered set differ from approved inventory'
+		);
+	}
+
+	/**
+	 * Discover action string literals compared in handl_aicac_action dispatch branches.
+	 *
+	 * @return list<string> Sorted unique action keys.
+	 */
+	private function discover_dispatch_action_literals( string $source ): array {
+		$found    = array();
+		$patterns = array(
+			'/[\'"]([a-z0-9_]+)[\'"]\s*===\s*\$posted_action\b/',
+			'/\$posted_action\s*===\s*[\'"]([a-z0-9_]+)[\'"]/',
+			'/[\'"]([a-z0-9_]+)[\'"]\s*===\s*\$_POST\s*\[\s*[\'"]handl_aicac_action[\'"]\s*\]/',
+			'/\$_POST\s*\[\s*[\'"]handl_aicac_action[\'"]\s*\]\s*===\s*[\'"]([a-z0-9_]+)[\'"]/',
 		);
 
-		foreach ( $known as $action ) {
-			$this->assertArrayHasKey(
-				$action,
-				$found,
-				"Known action '{$action}' missing from source references"
-			);
+		foreach ( $patterns as $pattern ) {
+			if ( preg_match_all( $pattern, $source, $matches ) ) {
+				foreach ( $matches[1] as $token ) {
+					$found[ $token ] = true;
+				}
+			}
 		}
+
+		$keys = array_keys( $found );
+		sort( $keys );
+
+		return $keys;
 	}
 
 	/**
