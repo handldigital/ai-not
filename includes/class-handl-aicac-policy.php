@@ -656,8 +656,9 @@ final class Policy {
 		}
 		$policy['denied_tools'] = self::sanitize_denied_tools( $tools_raw ?? array() );
 
-		// F3: denial alerts + estimated-$ rates (observability only).
+		// F3: denial / shadow-AI alerts + estimated-$ rates (observability only).
 		$policy['alert_on_deny']     = (bool) ( $policy['alert_on_deny'] ?? false );
+		$policy['alert_on_shadow']   = (bool) ( $policy['alert_on_shadow'] ?? false );
 		$policy['alert_mode']        = Alerts::sanitize_mode( $policy['alert_mode'] ?? 'immediate' );
 		$policy['alert_email']       = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
 		$policy['alert_webhook_url'] = Alerts::sanitize_webhook_url( $policy['alert_webhook_url'] ?? '' );
@@ -754,6 +755,7 @@ final class Policy {
 		unset( $policy['denied_abilities'] );
 
 		$policy['alert_on_deny']     = ! empty( $policy['alert_on_deny'] );
+		$policy['alert_on_shadow']   = ! empty( $policy['alert_on_shadow'] );
 		$policy['alert_mode']        = Alerts::sanitize_mode( $policy['alert_mode'] ?? 'immediate' );
 		$policy['alert_email']       = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
 		$policy['alert_webhook_url'] = Alerts::sanitize_webhook_url( $policy['alert_webhook_url'] ?? '' );
@@ -803,9 +805,12 @@ final class Policy {
 		$schedule_policy['weekly_report_enabled'] = $weekly_for_schedule;
 		Weekly_Report::maybe_schedule( $schedule_policy );
 
-		// Issue 7: disabling alerts must not leave denial metadata queued.
-		if ( empty( $policy['alert_on_deny'] ) ) {
+		// Issue 7 / AICAC-SHADOW-ALERT: disabling alert types must not leave
+		// their metadata queued; keep the other type's rows when still enabled.
+		if ( empty( $policy['alert_on_deny'] ) && empty( $policy['alert_on_shadow'] ) ) {
 			Alerts::clear_digest_queue();
+		} else {
+			Alerts::prune_digest_queue( $policy );
 		}
 	}
 
@@ -1004,9 +1009,15 @@ final class Policy {
 
 		$is_direct_http = isset( $event['channel'] ) && 'direct_http' === (string) $event['channel'];
 		if ( $is_direct_http && self::collapse_direct_http_into_log( $log, $event ) ) {
+			// Chatty-cluster collapse: no new pair in the retained window → no alert.
 			update_option( Plugin::LOG_OPTION_KEY, $log, false );
 			return;
 		}
+
+		// First observation for this pair in the current retained window only.
+		// Also covers mid-cluster toggle-on: an existing row (even outside the
+		// idle window) counts as already seen — no alert storm.
+		$shadow_alert_eligible = $is_direct_http && ! self::log_has_direct_http_pair( $log, $event );
 
 		if ( $is_direct_http && ! isset( $event['count'] ) ) {
 			$event['count'] = 1;
@@ -1019,6 +1030,49 @@ final class Policy {
 		}
 
 		update_option( Plugin::LOG_OPTION_KEY, $log, false );
+
+		if ( $shadow_alert_eligible ) {
+			Alerts::maybe_notify_shadow( $event, $policy );
+		}
+	}
+
+	/**
+	 * Whether the retained log already has a direct_http row for this pair
+	 * (attributed plugin+host, or unattributed file+host).
+	 *
+	 * @param array<int,mixed>    $log
+	 * @param array<string,mixed> $event
+	 */
+	public static function log_has_direct_http_pair( array $log, array $event ): bool {
+		$host   = isset( $event['host'] ) ? (string) $event['host'] : '';
+		$plugin = ( isset( $event['plugin'] ) && is_string( $event['plugin'] ) ) ? (string) $event['plugin'] : '';
+		$file   = ( isset( $event['file'] ) && is_string( $event['file'] ) ) ? (string) $event['file'] : '';
+
+		foreach ( $log as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			if ( ! isset( $row['channel'] ) || 'direct_http' !== (string) $row['channel'] ) {
+				continue;
+			}
+			$row_host = isset( $row['host'] ) ? (string) $row['host'] : '';
+			if ( $row_host !== $host ) {
+				continue;
+			}
+			$row_plugin = ( isset( $row['plugin'] ) && is_string( $row['plugin'] ) ) ? (string) $row['plugin'] : '';
+			if ( $row_plugin !== $plugin ) {
+				continue;
+			}
+			if ( '' === $plugin ) {
+				$row_file = ( isset( $row['file'] ) && is_string( $row['file'] ) ) ? (string) $row['file'] : '';
+				if ( $row_file !== $file ) {
+					continue;
+				}
+			}
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
