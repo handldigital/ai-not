@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 final class Admin {
-	private const LOG_FILTER_UNKNOWN = '__unknown__';
+	private const LOG_FILTER_UNKNOWN = Audit_Export::FILTER_UNKNOWN;
 
 	/**
 	 * @var array{decision:string,operation:string,provider:string,model:string,plugin:string}
@@ -175,6 +175,10 @@ final class Admin {
 			if ( 'export_rules' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_export_rules', 'handl_aicac_nonce' );
 				$this->handle_export_rules();
+			}
+			if ( 'export_log' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_export_log', 'handl_aicac_nonce' );
+				$this->handle_export_log();
 			}
 			if ( 'import_rules_preview' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_import_rules', 'handl_aicac_nonce' );
@@ -1528,6 +1532,20 @@ final class Admin {
 		echo '<h2>' . esc_html__( 'Recent calls', 'handl-ai-connector-access-control' ) . '</h2>';
 		$this->render_log_filters( $log_filters, $filter_options, $plugins );
 
+		echo '<form method="post" style="margin:0 0 1em;">';
+		wp_nonce_field( 'handl_aicac_export_log', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="export_log" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
+		$this->render_log_filter_hiddens( $log_filters );
+		submit_button(
+			__( 'Download CSV', 'handl-ai-connector-access-control' ),
+			'secondary',
+			'submit',
+			false
+		);
+		echo ' <span class="description">' . esc_html__( 'Exports every retained row matching the current filters (same columns as the table; not limited to the 50 on-screen rows).', 'handl-ai-connector-access-control' ) . '</span>';
+		echo '</form>';
+
 		$log_newest_first = array_reverse( $log );
 		$matching_count   = 0;
 		$rows_to_show     = array();
@@ -1884,25 +1902,7 @@ final class Admin {
 	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $filters
 	 */
 	private function log_row_matches_filters( array $row, array $filters ): bool {
-		foreach ( array( 'decision', 'operation', 'provider', 'model', 'plugin' ) as $field ) {
-			if ( '' === $filters[ $field ] ) {
-				continue;
-			}
-
-			$value = $this->get_log_row_field( $row, $field );
-			if ( self::LOG_FILTER_UNKNOWN === $filters[ $field ] ) {
-				if ( '' !== $value ) {
-					return false;
-				}
-				continue;
-			}
-
-			if ( $filters[ $field ] !== $value ) {
-				return false;
-			}
-		}
-
-		return true;
+		return Audit_Export::row_matches_filters( $row, $filters );
 	}
 
 	/**
@@ -1927,23 +1927,14 @@ final class Admin {
 	 * @param array<string,mixed> $row
 	 */
 	private function get_log_row_field( array $row, string $field ): string {
-		if ( 'model' === $field ) {
-			return $this->get_log_row_model( $row );
-		}
-
-		return isset( $row[ $field ] ) ? (string) $row[ $field ] : '';
+		return Audit_Export::row_field( $row, $field );
 	}
 
 	/**
 	 * @param array<string,mixed> $row
 	 */
 	private function get_log_row_model( array $row ): string {
-		$model = isset( $row['model'] ) ? (string) $row['model'] : '';
-		if ( '' === $model && ! empty( $row['model_preferences'] ) && is_array( $row['model_preferences'] ) ) {
-			$model = implode( ', ', array_map( 'strval', $row['model_preferences'] ) );
-		}
-
-		return $model;
+		return Audit_Export::row_model( $row );
 	}
 
 	/**
@@ -3325,6 +3316,48 @@ final class Admin {
 		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
 		header( 'Content-Length: ' . (string) strlen( $payload ) );
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- raw JSON download body.
+		echo $payload;
+		exit;
+	}
+
+	/**
+	 * Stream the currently filtered retained audit log as CSV (AICAC-26).
+	 *
+	 * Capability + nonce are enforced by the render_page dispatch above.
+	 * Exports every matching retained row (≤ log_limit / 1000), not the 50-row UI page.
+	 */
+	private function handle_export_log(): void {
+		$policy  = Policy::get_policy();
+		$log     = get_option( Plugin::LOG_OPTION_KEY );
+		$log     = is_array( $log ) ? $log : array();
+		$plugins = function_exists( 'get_plugins' ) ? get_plugins() : array();
+		if ( ! is_array( $plugins ) ) {
+			$plugins = array();
+		}
+
+		$user_labels = array();
+		foreach ( $log as $row ) {
+			if ( ! is_array( $row ) || empty( $row['user_id'] ) ) {
+				continue;
+			}
+			$uid = (int) $row['user_id'];
+			if ( $uid < 1 || isset( $user_labels[ $uid ] ) ) {
+				continue;
+			}
+			$user = get_userdata( $uid );
+			$user_labels[ $uid ] = ( $user && isset( $user->display_name ) )
+				? (string) $user->display_name
+				: '';
+		}
+
+		$payload  = Audit_Export::build_csv( $log, $this->log_filters, $plugins, $policy, $user_labels );
+		$filename = 'handl-aicac-audit-' . gmdate( 'Ymd-His' ) . '.csv';
+
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+		header( 'Content-Length: ' . (string) strlen( $payload ) );
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- raw CSV download body.
 		echo $payload;
 		exit;
 	}
