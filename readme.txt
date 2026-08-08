@@ -87,7 +87,7 @@ By default, this plugin does **not** send data to any external service.
 
 == Privacy / Data ==
 
-By default this plugin does **not** send data to any external service. Features that store or transmit call metadata are **opt-in** (logging, denial alerts / webhook) or **default-on only while logging/learn mode is on** (weekly report) — each has an explicit Settings toggle.
+By default this plugin does **not** send data to any external service. Features that store or transmit call metadata are **opt-in** (logging, denial alerts / webhook, shadow-AI observe alerts) or **default-on only while logging/learn mode is on** (weekly report) — each has an explicit Settings toggle.
 
 If you enable **recent-call logging** in Settings → HandL AI Connector Access Control, it stores a local log in the WordPress options table containing:
 
@@ -118,7 +118,16 @@ If you enable **denial email alerts**, the plugin sends a message via WordPress 
 
 Alert mail does **not** include prompt preview or user identity. Digest rows waiting to send are stored in a local options queue (path-only URI) and are removed when alerts are turned off or the plugin is uninstalled.
 
-If you also set a **Webhook URL** (Activity → denial alert settings), the plugin POSTs a generic JSON body with the **same fields** as the email alert to that http(s) URL whenever a denial alert would fire (same `alert_on_deny` gate, rate limit, and immediate/digest mode — not a separate toggle). Delivery uses WordPress `wp_remote_post` (timeouts/non-2xx are contained like `wp_mail` failures and never change allow/deny). The URL is an intentional admin-supplied outbound integration (same trust model as the alert recipient). Empty URL means no webhook POST is attempted. A **Send test webhook** control posts a sample payload clearly labeled as a test (bypasses rate limiting). Weekly report email is **not** sent to the webhook in this release.
+If you enable **shadow-AI email alerts** (Activity tab; off by default), the plugin sends a message via WordPress `wp_mail` the first time a given attributed plugin+host (or unattributed file+host) pair appears as a `direct_http` observe row in the retained log window — immediate rate-limited mail, or the same hourly digest queue, using the same recipient and mode as denial alerts. Messages are explicitly labeled **observe / not blocked** and include:
+
+- Timestamp
+- Best-effort calling plugin, file, or method
+- Request host
+- Path only (query string stripped — same redaction as denial alerts)
+
+Shadow-AI alerts do **not** block HTTP and are **not** posted to the webhook. They require logging or learn mode, and are suppressed when AI is disabled site-wide via `wp_supports_ai`. Chatty-cluster collapse (~5 minutes idle) and the retained-window pair check prevent duplicate alerts for the same pair.
+
+If you also set a **Webhook URL** (Activity → denial alert settings), the plugin POSTs a generic JSON body with the **same fields** as the denial email alert to that http(s) URL whenever a denial alert would fire (same `alert_on_deny` gate, rate limit, and immediate/digest mode — not a separate toggle). Delivery uses WordPress `wp_remote_post` (timeouts/non-2xx are contained like `wp_mail` failures and never change allow/deny). The URL is an intentional admin-supplied outbound integration (same trust model as the alert recipient). Empty URL means no webhook POST is attempted. A **Send test webhook** control posts a sample payload clearly labeled as a test (bypasses rate limiting). Weekly report email and shadow-AI observe alerts are **not** sent to the webhook in this release.
 
 If you enable the **weekly report email** (Activity tab), the plugin sends one message per week via WordPress `wp_mail` with Dashboard-style **aggregates** from the retained local log. This is the first surface where retained log data can leave the WordPress site (through your site’s mail transport into an inbox). The weekly report includes only:
 
@@ -167,6 +176,9 @@ Yes. With WP-CLI available and this plugin active:
 5. Activity — OBSERVE direct_http rows contrasted with governed AI Client decisions.
 
 == Changelog ==
+
+= Unreleased =
+* Opt-in shadow-AI email alerts (off by default) for the first direct-HTTP observe per plugin+host in the retained window — immediate or hourly summary; labeled observe / not blocked; email-only.
 
 = 1.2.0 =
 * Rewrote the WordPress.org listing in plain language so site owners can quickly understand what the plugin does.
