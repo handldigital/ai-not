@@ -97,6 +97,13 @@ No. It is best-effort and may be unknown or ambiguous for some execution paths (
 = Does experimental model force guarantee cost control per plugin? =
 No. It pins the route for calls we attribute to that plugin’s nearest stack frame. Unattributed calls are unforced by default (configurable). Misattribution can apply another plugin’s pin without failing closed — existence of a resolved plugin is not proof it is the right one.
 
+= Can I manage rules with WP-CLI? =
+Yes. With WP-CLI available and this plugin active:
+
+`wp aicac rule list` — table of every installed plugin (active and inactive) with family-level allow/deny/inherit state. Use `--format=json` for machine-readable output.
+
+`wp aicac rule set <plugin-basename> <family> <allow|deny|inherit>` — set one capability-family cell (text, image, speech, tts, video). Writes through the same sanitized policy path as the Rules tab. Plugin basename must match an installed plugin file (e.g. `acme-plugin/acme-plugin.php`), including inactive plugins.
+
 == Screenshots ==
 
 1. Dashboard — coverage of known AI activity (through the AI Client vs outside), safety, estimated spend, and block-that-one.
@@ -112,6 +119,9 @@ No. It pins the route for calls we attribute to that plugin’s nearest stack fr
 * Generic JSON POST via wp_remote_post (path-only fields; no prompt preview or user identity); failures contained like wp_mail.
 * Send test webhook button (sample payload labeled as a test; bypasses rate limiting).
 * Privacy / Data documents the opt-in webhook egress surface.
+* WP-CLI: `wp aicac rule list` and `wp aicac rule set <plugin> <family> <allow|deny|inherit>` for the per-plugin × capability-family matrix.
+* List supports table (default) and `--format=json`; includes inactive installed plugins (same set as the Rules tab).
+* Set validates plugin basename and family, persists via Policy::sanitize_operations + save_policy (same path as Rules save). No bulk import in this release.
 * AICAC-102: Export / import Rules as JSON on the Rules tab (Download rules / Import with preview + confirm).
 * Export includes the full policy option plus `plugin_version` and `exported_at` for forward compatibility.
 * Import is a documented full replace through the same sanitize/save path as Rules save; invalid JSON is rejected without changing live policy; unknown newer fields are ignored with a notice.
