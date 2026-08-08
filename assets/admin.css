@@ -663,3 +663,26 @@
 	font-size: 11px;
 	color: #646970;
 }
+
+/* AICAC-11: beyond Connector Approvals callout (Dashboard) */
+.handl-aicac-beyond-ca {
+	margin: 0 0 16px;
+	padding: 12px 14px;
+	border-left: 4px solid #2271b1;
+	background: #f0f6fc;
+	max-width: 1200px;
+	box-sizing: border-box;
+}
+
+.handl-aicac-beyond-ca__title {
+	margin: 0 0 6px;
+}
+
+.handl-aicac-beyond-ca__body {
+	margin: 0 0 6px;
+}
+
+.handl-aicac-beyond-ca__coexist {
+	margin: 0;
+}
+

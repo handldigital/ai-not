@@ -270,7 +270,8 @@ final class Admin {
 		echo '<img src="' . esc_url( $icon_src ) . '" alt="" width="40" height="40" style="border-radius:8px;" loading="lazy" decoding="async" />';
 		echo esc_html__( 'HandL AI Access', 'handl-ai-connector-access-control' );
 		echo '</h1>';
-		echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be driving estimated spend, and block a plugin with one click. The default is Allow.', 'handl-ai-connector-access-control' ) . '</p>';
+echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be driving estimated spend, and block a plugin with one click. The default is Allow.', 'handl-ai-connector-access-control' );
+		echo ' ' . esc_html( Differentiator_Messaging::page_subtitle_addition() ) . '</p>';
 
 		$this->render_tabs( $tab, $plugin_status_filter, $plugin_access_filter, $this->log_filters );
 
@@ -503,7 +504,8 @@ final class Admin {
 		$unforced_n    = Model_Force::count_unforced_unattributed( $log );
 
 		echo '<h2>' . esc_html__( 'Plugin rules', 'handl-ai-connector-access-control' ) . '</h2>';
-		echo '<p class="description">' . esc_html__( 'Plugin rules set the main access level. AI type columns can refine an allowed plugin, such as allowing text but blocking images. A plugin-level Deny blocks every AI type. Model routing is experimental, uses best-effort plugin detection, and does not guarantee spend. Leave both route fields blank to disable it.', 'handl-ai-connector-access-control' ) . '</p>';
+echo '<p class="description">' . esc_html__( 'Plugin rules set the main access level. AI type columns can refine an allowed plugin, such as allowing text but blocking images. A plugin-level Deny blocks every AI type. Model routing is experimental, uses best-effort plugin detection, and does not guarantee spend. Leave both route fields blank to disable it.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description handl-aicac-beyond-ca-rules">' . esc_html( Differentiator_Messaging::rules_note() ) . '</p>';
 		if ( $unforced_n > 0 && ! empty( $force_map ) ) {
 			echo '<div class="notice notice-warning inline"><p>';
 			echo esc_html(
@@ -809,6 +811,17 @@ final class Admin {
 	}
 
 	/**
+	 * AICAC-11: Dashboard callout naming HandL differentiators vs Connector Approvals.
+	 */
+	private function render_beyond_connector_approvals_callout(): void {
+		echo '<div class="handl-aicac-beyond-ca" role="note">';
+		echo '<p class="handl-aicac-beyond-ca__title"><strong>' . esc_html( Differentiator_Messaging::headline() ) . '</strong></p>';
+		echo '<p class="handl-aicac-beyond-ca__body">' . esc_html( Differentiator_Messaging::body() ) . '</p>';
+		echo '<p class="handl-aicac-beyond-ca__coexist description">' . esc_html( Differentiator_Messaging::coexistence() ) . '</p>';
+		echo '</div>';
+	}
+
+	/**
 	 * F5 Dashboard — answers: Am I safe? What's spending? Block that one.
 	 *
 	 * @param array<int,mixed> $log
@@ -912,6 +925,9 @@ final class Admin {
 		);
 
 		echo '<div class="handl-aicac-tab-panel handl-aicac-dashboard">';
+
+		// AICAC-11: name differentiators vs WordPress AI Connector Approvals (Dashboard-primary).
+		$this->render_beyond_connector_approvals_callout();
 
 		// --- Coverage tile (Δ1 + Δ5) ---
 		echo '<div class="postbox handl-aicac-tile handl-aicac-tile--coverage">';
