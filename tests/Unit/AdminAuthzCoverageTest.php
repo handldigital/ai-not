@@ -2,7 +2,7 @@
 /**
  * Static verification that admin state-mutating handlers keep nonce + capability coverage.
  *
- * AICAC-3 (#21 / #22) plus AICAC-104 test webhook: locks the inventory of POST
+ * AICAC-3 (#21 / #22) plus AICAC-102 transfer actions and AICAC-104 test webhook: locks the inventory of POST
  * action dispatches in class-handl-aicac-admin.php. Does not exercise WordPress
  * runtime authz — it fails if a new handl_aicac_action branch appears without
  * updating the approved inventory (and without a matching check_admin_referer),
@@ -26,6 +26,9 @@ final class AdminAuthzCoverageTest extends TestCase {
 	 * @var list<string>
 	 */
 	private const APPROVED_DISPATCH_ACTIONS = array(
+		'export_rules',
+		'import_rules_confirm',
+		'import_rules_preview',
 		'quick_rule',
 		'save',
 		'send_denial_digest',
@@ -128,6 +131,18 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'action'       => 'save',
 				'nonce_action' => 'handl_aicac_save_policy',
 			),
+			array(
+				'action'       => 'export_rules',
+				'nonce_action' => 'handl_aicac_export_rules',
+			),
+			array(
+				'action'       => 'import_rules_preview',
+				'nonce_action' => 'handl_aicac_import_rules',
+			),
+			array(
+				'action'       => 'import_rules_confirm',
+				'nonce_action' => 'handl_aicac_import_rules_confirm',
+			),
 		);
 	}
 
@@ -221,6 +236,9 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'apply_kill_switch_settings_from_post',
 				'apply_model_force_settings_from_post',
 				'apply_log_settings_from_post',
+				'handle_export_rules',
+				'handle_import_rules_preview',
+				'handle_import_rules_confirm',
 			) as $method
 		) {
 			$this->assertMatchesRegularExpression(
@@ -278,6 +296,44 @@ final class AdminAuthzCoverageTest extends TestCase {
 			self::APPROVED_DISPATCH_ACTIONS,
 			$discovered,
 			'Unknown action must make discovered set differ from approved inventory'
+		);
+	}
+
+	/**
+	 * Import path must call Policy::save_policy (reuse sanitize path; no bypass).
+	 */
+	public function test_import_confirm_uses_policy_save_policy(): void {
+		$preview_pos = strpos( $this->source, 'function handle_import_rules_preview' );
+		$confirm_pos = strpos( $this->source, 'function handle_import_rules_confirm' );
+		$this->assertNotFalse( $preview_pos );
+		$this->assertNotFalse( $confirm_pos );
+		$this->assertGreaterThan( $preview_pos, $confirm_pos );
+
+		$preview_body = substr( $this->source, $preview_pos, $confirm_pos - $preview_pos );
+		$confirm_body = substr( $this->source, $confirm_pos, 2500 );
+
+		$this->assertStringNotContainsString(
+			'Policy::save_policy(',
+			$preview_body,
+			'Preview must not write policy'
+		);
+		$this->assertStringContainsString(
+			'Policy::save_policy(',
+			$confirm_body,
+			'Confirmed import must write through Policy::save_policy'
+		);
+	}
+
+	/**
+	 * Upload-only: no server path input field for import.
+	 */
+	public function test_import_uses_file_upload_not_path_input(): void {
+		$this->assertStringContainsString( 'enctype="multipart/form-data"', $this->source );
+		$this->assertStringContainsString( 'name="handl_aicac_import_file"', $this->source );
+		$this->assertStringContainsString( 'type="file"', $this->source );
+		$this->assertDoesNotMatchRegularExpression(
+			'/name=[\'"]handl_aicac_import_(path|server_path|filepath)[\'"]/',
+			$this->source
 		);
 	}
 

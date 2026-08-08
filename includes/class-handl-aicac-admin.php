@@ -142,6 +142,18 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_undo_quick_rule', 'handl_aicac_nonce' );
 				$this->handle_undo_quick_rule();
 			}
+			if ( 'export_rules' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_export_rules', 'handl_aicac_nonce' );
+				$this->handle_export_rules();
+			}
+			if ( 'import_rules_preview' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_import_rules', 'handl_aicac_nonce' );
+				$this->handle_import_rules_preview();
+			}
+			if ( 'import_rules_confirm' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_import_rules_confirm', 'handl_aicac_nonce' );
+				$this->handle_import_rules_confirm();
+			}
 		}
 
 		$saved       = false;
@@ -151,6 +163,10 @@ final class Admin {
 		$blocked_ok  = isset( $_GET['handl_aicac_blocked'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['handl_aicac_blocked'] ) ) : '';
 		$undo_rule   = isset( $_GET['handl_aicac_undo_rule'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['handl_aicac_undo_rule'] ) ) : '';
 		$undone      = isset( $_GET['handl_aicac_undone'] ) && '1' === (string) $_GET['handl_aicac_undone'];
+		$imported_ok = isset( $_GET['handl_aicac_imported'] ) && '1' === (string) $_GET['handl_aicac_imported'];
+		$import_err  = isset( $_GET['handl_aicac_import_error'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_import_error'] ) ) : '';
+		$import_ignored_q = isset( $_GET['handl_aicac_import_ignored'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['handl_aicac_import_ignored'] ) ) : '';
+		$show_import_preview = isset( $_GET['handl_aicac_import_preview'] ) && '1' === (string) $_GET['handl_aicac_import_preview'];
 
 		if ( isset( $_POST['handl_aicac_action'] ) && 'save' === $_POST['handl_aicac_action'] ) {
 			check_admin_referer( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
@@ -203,6 +219,32 @@ final class Admin {
 		}
 		if ( $undone ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Plugin rule restored.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		if ( $imported_ok ) {
+			echo '<div class="notice notice-success is-dismissible"><p>';
+			echo esc_html__( 'Rules imported. The policy option was fully replaced with the uploaded configuration.', 'handl-ai-connector-access-control' );
+			echo ' <a href="' . esc_url(
+				add_query_arg(
+					array(
+						'page'            => 'handl-ai-connector-access-control',
+						'handl_aicac_tab' => 'rules',
+					),
+					admin_url( 'options-general.php' )
+				)
+			) . '">' . esc_html__( 'Back to Rules', 'handl-ai-connector-access-control' ) . '</a>';
+			echo '</p></div>';
+			if ( '' !== $import_ignored_q ) {
+				$ignored_list = array_filter( array_map( 'trim', explode( ',', $import_ignored_q ) ) );
+				if ( ! empty( $ignored_list ) ) {
+					echo '<div class="notice notice-warning is-dismissible"><p>';
+					echo esc_html__( 'Ignored unknown fields from a newer export:', 'handl-ai-connector-access-control' );
+					echo ' <code>' . esc_html( implode( ', ', $ignored_list ) ) . '</code>';
+					echo '</p></div>';
+				}
+			}
+		}
+		if ( '' !== $import_err ) {
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $this->import_error_message( $import_err ) ) . '</p></div>';
 		}
 		if ( '' !== $blocked_ok ) {
 			$blocked_label = isset( $plugins[ $blocked_ok ]['Name'] ) ? (string) $plugins[ $blocked_ok ]['Name'] : $blocked_ok;
@@ -456,6 +498,9 @@ final class Admin {
 			false,
 			array( 'form' => $rules_form_id )
 		);
+
+		$this->render_rules_transfer_section( $policy, $show_import_preview );
+
 		echo '</div>'; // .handl-aicac-tab-panel
 		echo '</div>'; // .wrap
 	}
@@ -2777,4 +2822,284 @@ final class Admin {
 
 		return $html;
 	}
+
+	/**
+	 * Rules-tab export / import (AICAC-102).
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function render_rules_transfer_section( array $policy, bool $show_preview ): void {
+		echo '<hr />';
+		echo '<h2>' . esc_html__( 'Export / import rules', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<p class="description">' . esc_html__( 'Download the current policy option as JSON, or upload a previous export. Import fully replaces the live policy option (default, plugin rules, capability families, kill switch, denied tools, model-force pins, and other fields stored in the same option). The audit log is not included.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		echo '<form method="post" style="margin-bottom:1em;">';
+		wp_nonce_field( 'handl_aicac_export_rules', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="export_rules" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		submit_button( __( 'Download rules (JSON)', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+		echo '</form>';
+
+		echo '<form method="post" enctype="multipart/form-data" style="margin-bottom:1em;">';
+		wp_nonce_field( 'handl_aicac_import_rules', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="import_rules_preview" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		echo '<p>';
+		echo '<label for="handl-aicac-import-file"><strong>' . esc_html__( 'Import rules (JSON)', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
+		echo '<input type="file" id="handl-aicac-import-file" name="handl_aicac_import_file" accept="application/json,.json" required />';
+		echo '</p>';
+		echo '<p class="description">' . esc_html__( 'Upload only (max ~1MB). You will preview added/changed/removed rules before anything is written.', 'handl-ai-connector-access-control' ) . '</p>';
+		submit_button( __( 'Upload and preview', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+		echo '</form>';
+
+		if ( ! $show_preview ) {
+			return;
+		}
+
+		$user_id = get_current_user_id();
+		$pending = get_transient( Policy_Transfer::preview_transient_key( $user_id ) );
+		if ( ! is_array( $pending ) || ! isset( $pending['policy'] ) || ! is_array( $pending['policy'] ) ) {
+			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Import preview expired or was not found. Upload the file again.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			return;
+		}
+
+		$incoming = $pending['policy'];
+		$ignored  = isset( $pending['ignored'] ) && is_array( $pending['ignored'] ) ? $pending['ignored'] : array();
+		$diff     = Policy_Transfer::diff_policies( $policy, $incoming );
+		$lines    = Policy_Transfer::format_diff_lines( $diff );
+
+		echo '<div class="handl-aicac-import-preview" style="border:1px solid #c3c4c7;padding:12px 16px;background:#fff;max-width:52em;">';
+		echo '<h3>' . esc_html__( 'Import preview', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<p><strong>' . esc_html__( 'Mode: full replace', 'handl-ai-connector-access-control' ) . '</strong> — ';
+		echo esc_html__( 'Confirming will atomically replace the entire policy option with the uploaded configuration (after the same sanitization used when saving Rules).', 'handl-ai-connector-access-control' );
+		echo '</p>';
+
+		if ( ! empty( $ignored ) ) {
+			echo '<div class="notice notice-warning inline"><p>';
+			echo esc_html__( 'Unknown fields from a newer export will be ignored:', 'handl-ai-connector-access-control' );
+			echo ' <code>' . esc_html( implode( ', ', array_map( 'strval', $ignored ) ) ) . '</code>';
+			echo '</p></div>';
+		}
+
+		echo '<ul style="margin-left:1.2em;list-style:disc;">';
+		foreach ( $lines as $line ) {
+			echo '<li>' . esc_html( $line ) . '</li>';
+		}
+		echo '</ul>';
+
+		$empty_ruleset = empty( $incoming['plugins'] )
+			&& empty( $incoming['operations'] )
+			&& empty( $incoming['denied_tools'] )
+			&& empty( $incoming['denied_abilities'] )
+			&& empty( $incoming['model_force_plugins'] )
+			&& empty( $incoming['kill_switch'] );
+		if ( $empty_ruleset ) {
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'This export has an empty ruleset (no per-plugin rules, family settings, denied tools, model-force pins, or kill switch). Confirming is a legitimate reset path.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+
+		echo '<form method="post">';
+		wp_nonce_field( 'handl_aicac_import_rules_confirm', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="import_rules_confirm" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		submit_button( __( 'Confirm import (full replace)', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
+		echo '</form>';
+		echo '</div>';
+	}
+
+	/**
+	 * Stream current policy as a JSON download (AC1).
+	 */
+	private function handle_export_rules(): void {
+		$policy  = Policy::get_policy();
+		$export  = Policy_Transfer::build_export(
+			$policy,
+			defined( 'HANDL_AICAC_VERSION' ) ? (string) HANDL_AICAC_VERSION : '',
+			gmdate( 'c' )
+		);
+		$payload = Policy_Transfer::encode_export( $export );
+		$filename = 'handl-aicac-rules-' . gmdate( 'Ymd-His' ) . '.json';
+
+		nocache_headers();
+		header( 'Content-Type: application/json; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+		header( 'Content-Length: ' . (string) strlen( $payload ) );
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- raw JSON download body.
+		echo $payload;
+		exit;
+	}
+
+	/**
+	 * Validate upload and stash preview; no policy write (AC2/AC4).
+	 */
+	private function handle_import_rules_preview(): void {
+		$redirect_base = array(
+			'page'            => 'handl-ai-connector-access-control',
+			'handl_aicac_tab' => 'rules',
+		);
+
+		if ( empty( $_FILES['handl_aicac_import_file'] ) || ! is_array( $_FILES['handl_aicac_import_file'] ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'no_file' ) ),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		$file = $_FILES['handl_aicac_import_file'];
+		$err  = isset( $file['error'] ) ? (int) $file['error'] : UPLOAD_ERR_NO_FILE;
+		if ( UPLOAD_ERR_NO_FILE === $err ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'empty' ) ),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+		if ( UPLOAD_ERR_OK !== $err ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'upload_failed' ) ),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		$size = isset( $file['size'] ) ? (int) $file['size'] : 0;
+		if ( $size <= 0 ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'empty' ) ),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+		if ( $size > Policy_Transfer::MAX_UPLOAD_BYTES ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'too_large' ) ),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		$tmp = isset( $file['tmp_name'] ) ? (string) $file['tmp_name'] : '';
+		if ( '' === $tmp || ! is_uploaded_file( $tmp ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'upload_failed' ) ),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local upload tmp only.
+		$raw = file_get_contents( $tmp );
+		if ( ! is_string( $raw ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'upload_failed' ) ),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		$parsed = Policy_Transfer::parse_import( $raw );
+		if ( empty( $parsed['ok'] ) ) {
+			$code = isset( $parsed['error'] ) ? (string) $parsed['error'] : 'invalid_json';
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge( $redirect_base, array( 'handl_aicac_import_error' => $code ) ),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		$user_id = get_current_user_id();
+		set_transient(
+			Policy_Transfer::preview_transient_key( $user_id ),
+			array(
+				'policy'         => $parsed['policy'],
+				'ignored'        => $parsed['ignored'],
+				'plugin_version' => $parsed['plugin_version'],
+				'exported_at'    => $parsed['exported_at'],
+			),
+			Policy_Transfer::PREVIEW_TTL
+		);
+
+		wp_safe_redirect(
+			add_query_arg(
+				array_merge( $redirect_base, array( 'handl_aicac_import_preview' => '1' ) ),
+				admin_url( 'options-general.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * Confirm pending import: full replace via Policy::save_policy (AC3).
+	 */
+	private function handle_import_rules_confirm(): void {
+		$redirect_base = array(
+			'page'            => 'handl-ai-connector-access-control',
+			'handl_aicac_tab' => 'rules',
+		);
+
+		$user_id = get_current_user_id();
+		$key     = Policy_Transfer::preview_transient_key( $user_id );
+		$pending = get_transient( $key );
+		if ( ! is_array( $pending ) || ! isset( $pending['policy'] ) || ! is_array( $pending['policy'] ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'preview_expired' ) ),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		$for_save = Policy_Transfer::policy_for_save( $pending['policy'] );
+		Policy::save_policy( $for_save );
+		delete_transient( $key );
+
+		$args = array( 'handl_aicac_imported' => '1' );
+		$ignored = isset( $pending['ignored'] ) && is_array( $pending['ignored'] ) ? $pending['ignored'] : array();
+		if ( ! empty( $ignored ) ) {
+			$args['handl_aicac_import_ignored'] = implode( ',', array_map( 'strval', $ignored ) );
+		}
+
+		wp_safe_redirect(
+			add_query_arg(
+				array_merge( $redirect_base, $args ),
+				admin_url( 'options-general.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * Map import error codes to admin-facing messages (AC4).
+	 */
+	private function import_error_message( string $code ): string {
+		$messages = array(
+			'empty'                => __( 'Import rejected: the uploaded file was empty. Live policy was not changed.', 'handl-ai-connector-access-control' ),
+			'no_file'              => __( 'Import rejected: no file was uploaded. Live policy was not changed.', 'handl-ai-connector-access-control' ),
+			'upload_failed'        => __( 'Import rejected: the upload failed. Live policy was not changed.', 'handl-ai-connector-access-control' ),
+			'too_large'            => __( 'Import rejected: file exceeds the 1MB size limit. Live policy was not changed.', 'handl-ai-connector-access-control' ),
+			'invalid_json'         => __( 'Import rejected: the file is not valid JSON. Live policy was not changed.', 'handl-ai-connector-access-control' ),
+			'missing_required_keys'=> __( 'Import rejected: required keys plugin_version and exported_at are missing. Live policy was not changed.', 'handl-ai-connector-access-control' ),
+			'preview_expired'      => __( 'Import rejected: the preview expired. Upload the file again. Live policy was not changed.', 'handl-ai-connector-access-control' ),
+		);
+
+		return $messages[ $code ] ?? __( 'Import rejected. Live policy was not changed.', 'handl-ai-connector-access-control' );
+	}
 }
+

@@ -112,6 +112,10 @@ No. It pins the route for calls we attribute to that plugin’s nearest stack fr
 * Generic JSON POST via wp_remote_post (path-only fields; no prompt preview or user identity); failures contained like wp_mail.
 * Send test webhook button (sample payload labeled as a test; bypasses rate limiting).
 * Privacy / Data documents the opt-in webhook egress surface.
+* AICAC-102: Export / import Rules as JSON on the Rules tab (Download rules / Import with preview + confirm).
+* Export includes the full policy option plus `plugin_version` and `exported_at` for forward compatibility.
+* Import is a documented full replace through the same sanitize/save path as Rules save; invalid JSON is rejected without changing live policy; unknown newer fields are ignored with a notice.
+* Does not export the audit log; no secrets/credentials are stored in the policy option.
 
 = 1.0.14 =
 * F7: Weekly report email — Dashboard aggregates via wp_mail on a weekly cron (coverage, denials, estimated spend, pins).
