@@ -1,6 +1,0 @@
-{
-  "summary": "STATUS: READY\nWORK_ITEM: #26 / AICAC-105\nCOMPLETED: Read-only network rollup (multisite-only) with 50-site pagination, Activity links, AI-disabled honesty, unit/static tests; version 1.1.0; composer test OK (54/182)\nEVIDENCE: implementation-plan.md; decisions.md; test-results.md; developer-handoff.md; product-handoff.md; composer test OK (54 tests, 182 assertions); php -l clean on touched PHP\nDECISIONS: Separate Network_Admin class; paginate network sites at 50; raw option reads; Dashboard denial semantics; manage_network_options; minor bump 1.1.0\nRISKS: No live multisite smoke in workspace; sparse networks may show sparse pages; Quality must verify cross-site Activity links\nNEXT_ACTION: Quality review + multisite smoke test of Network Admin rollup\nNEXT_OWNER: QUALITY",
-  "reviewPassed": false,
-  "findings": "",
-  "issuesCreated": []
-}
