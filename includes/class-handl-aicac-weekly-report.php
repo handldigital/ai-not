@@ -108,6 +108,16 @@ final class Weekly_Report {
 	}
 
 	/**
+	 * Admin "Send test email" for the weekly-report path (same recipient rules).
+	 *
+	 * @param array<string,mixed> $policy
+	 * @return array{ok:bool,status:string,to:string}
+	 */
+	public static function send_test_email( array $policy ): array {
+		return Alerts::send_test_email( $policy, 'weekly_report' );
+	}
+
+	/**
 	 * Cron entry point.
 	 */
 	public function send_report(): void {
