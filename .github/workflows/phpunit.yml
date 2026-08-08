@@ -19,6 +19,40 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Forbid AgentOps internal artifacts in git
+        run: |
+          set -euo pipefail
+          forbidden=(
+            .agentops-meta.json
+            .agentops-result.json
+            .agentops-runner-log.json
+            implementation-plan.md
+            decisions.md
+            developer-handoff.md
+            test-results.md
+            product-handoff.md
+            research.md
+            backlog.yaml
+            aicac-3-authz-coverage.md
+          )
+          bad=0
+          for f in "${forbidden[@]}"; do
+            if git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
+              echo "::error::Forbidden AgentOps artifact is tracked: $f"
+              bad=1
+            fi
+          done
+          # Also block any other .agentops* path that might get added later.
+          while IFS= read -r tracked; do
+            echo "::error::Forbidden AgentOps artifact is tracked: $tracked"
+            bad=1
+          done < <(git ls-files '.agentops*' || true)
+          if [[ "$bad" -ne 0 ]]; then
+            echo "AgentOps working files must stay local/gitignored. Remove them from the commit."
+            exit 1
+          fi
+          echo "OK: no AgentOps internal artifacts tracked."
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
