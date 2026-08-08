@@ -116,6 +116,10 @@ Yes. With WP-CLI available and this plugin active:
 * WP-CLI: `wp aicac rule list` and `wp aicac rule set <plugin> <family> <allow|deny|inherit>` for the per-plugin × capability-family matrix.
 * List supports table (default) and `--format=json`; includes inactive installed plugins (same set as the Rules tab).
 * Set validates plugin basename and family, persists via Policy::sanitize_operations + save_policy (same path as Rules save). No bulk import in this release.
+* AICAC-102: Export / import Rules as JSON on the Rules tab (Download rules / Import with preview + confirm).
+* Export includes the full policy option plus `plugin_version` and `exported_at` for forward compatibility.
+* Import is a documented full replace through the same sanitize/save path as Rules save; invalid JSON is rejected without changing live policy; unknown newer fields are ignored with a notice.
+* Does not export the audit log; no secrets/credentials are stored in the policy option.
 
 = 1.0.14 =
 * F7: Weekly report email — Dashboard aggregates via wp_mail on a weekly cron (coverage, denials, estimated spend, pins).
