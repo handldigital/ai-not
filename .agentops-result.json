@@ -1,6 +1,0 @@
-{
-  "summary": "STATUS: READY\nWORK_ITEM: #24 / AICAC-103\nCOMPLETED: WP-CLI `aicac rule list|set` via Policy sanitize/save path; inactive-plugin parity; unit tests; v1.0.15 readme; composer test OK (54/158)\nEVIDENCE: implementation-plan.md; decisions.md; test-results.md; developer-handoff.md; tests/Unit/FamilyRuleCliTest.php; composer test OK (54 tests, 158 assertions); php -l clean on touched PHP\nDECISIONS: Shared apply+sanitize+save_policy; known plugins=get_plugins() incl. inactive; full basename required; unit helpers only (no live wp)\nRISKS: No live WP-CLI smoke in workspace; list_→list mapping should be verified on install\nNEXT_ACTION: Quality review + WP-CLI smoke of list/set success and error paths\nNEXT_OWNER: QUALITY",
-  "reviewPassed": false,
-  "findings": "",
-  "issuesCreated": []
-}
