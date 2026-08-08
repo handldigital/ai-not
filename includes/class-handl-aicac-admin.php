@@ -145,6 +145,29 @@ final class Admin {
 				wp_safe_redirect( $redirect );
 				exit;
 			}
+			if ( 'send_test_email' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_send_test_email', 'handl_aicac_nonce' );
+				$channel = Alerts::sanitize_test_email_channel(
+					isset( $_POST['handl_aicac_test_email_channel'] )
+						? wp_unslash( (string) $_POST['handl_aicac_test_email_channel'] )
+						: 'denial_alert'
+				);
+				if ( '' === $channel ) {
+					$channel = 'denial_alert';
+				}
+				$result = Alerts::send_test_email( Policy::get_policy(), $channel );
+				$redirect = add_query_arg(
+					array(
+						'page'                       => 'handl-ai-connector-access-control',
+						'handl_aicac_tab'            => 'activity',
+						'handl_aicac_test_email'     => (string) $result['status'],
+						'handl_aicac_test_email_to'  => (string) $result['to'],
+					),
+					admin_url( 'options-general.php' )
+				);
+				wp_safe_redirect( $redirect );
+				exit;
+			}
 			if ( 'undo_quick_rule' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_undo_quick_rule', 'handl_aicac_nonce' );
 				$this->handle_undo_quick_rule();
@@ -171,6 +194,10 @@ final class Admin {
 		$quick_saved = isset( $_GET['handl_aicac_quick_saved'] ) && '1' === (string) $_GET['handl_aicac_quick_saved'];
 		$digest_sent = isset( $_GET['handl_aicac_digest_sent'] ) && '1' === (string) $_GET['handl_aicac_digest_sent'];
 		$webhook_tested = isset( $_GET['handl_aicac_webhook_tested'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['handl_aicac_webhook_tested'] ) ) : '';
+		$test_email_status = isset( $_GET['handl_aicac_test_email'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_test_email'] ) ) : '';
+		$test_email_to     = isset( $_GET['handl_aicac_test_email_to'] )
+			? Alerts::sanitize_email( wp_unslash( (string) $_GET['handl_aicac_test_email_to'] ) )
+			: '';
 		$blocked_ok  = isset( $_GET['handl_aicac_blocked'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['handl_aicac_blocked'] ) ) : '';
 		$undo_rule   = isset( $_GET['handl_aicac_undo_rule'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['handl_aicac_undo_rule'] ) ) : '';
 		$undone      = isset( $_GET['handl_aicac_undone'] ) && '1' === (string) $_GET['handl_aicac_undone'];
@@ -249,6 +276,27 @@ final class Admin {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Test webhook sent successfully (HTTP 2xx).', 'handl-ai-connector-access-control' ) . '</p></div>';
 		} elseif ( '0' === $webhook_tested ) {
 			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Test webhook failed. Check the URL and try again. The test does not count toward rate limits.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		if ( 'sent' === $test_email_status ) {
+			echo '<div class="notice notice-success is-dismissible"><p>';
+			if ( '' !== $test_email_to ) {
+				echo esc_html(
+					sprintf(
+						/* translators: %s: recipient email address */
+						__( 'Test email sent to %s. This confirms wp_mail accepted the message; it does not prove inbox delivery.', 'handl-ai-connector-access-control' ),
+						$test_email_to
+					)
+				);
+			} else {
+				echo esc_html__( 'Test email sent to the configured recipient. This confirms wp_mail accepted the message; it does not prove inbox delivery.', 'handl-ai-connector-access-control' );
+			}
+			echo '</p></div>';
+		} elseif ( 'failed' === $test_email_status ) {
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Test email failed: wp_mail returned false. Delivery was not claimed — check your site mail / SMTP configuration.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		} elseif ( 'rate_limited' === $test_email_status ) {
+			echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__( 'Please wait before sending another test email (rate limited).', 'handl-ai-connector-access-control' ) . '</p></div>';
+		} elseif ( 'no_recipient' === $test_email_status || 'invalid_channel' === $test_email_status ) {
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Test email could not be sent: no valid recipient is available (configure a denial-alert recipient or set the site admin email).', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $undone ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Plugin rule restored.', 'handl-ai-connector-access-control' ) . '</p></div>';
@@ -1415,6 +1463,20 @@ final class Admin {
 
 		echo '<div class="handl-aicac-tab-panel handl-aicac-log-wrap">';
 
+		// Detached POST forms so "Send test email" can sit next to fields without nesting forms.
+		echo '<form method="post" id="handl-aicac-test-email-denial" style="display:none;" hidden>';
+		wp_nonce_field( 'handl_aicac_send_test_email', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="send_test_email" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
+		echo '<input type="hidden" name="handl_aicac_test_email_channel" value="denial_alert" />';
+		echo '</form>';
+		echo '<form method="post" id="handl-aicac-test-email-weekly" style="display:none;" hidden>';
+		wp_nonce_field( 'handl_aicac_send_test_email', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="send_test_email" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
+		echo '<input type="hidden" name="handl_aicac_test_email_channel" value="weekly_report" />';
+		echo '</form>';
+
 		echo '<form method="post" style="margin-bottom:1.5em;">';
 		wp_nonce_field( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
 		echo '<input type="hidden" name="handl_aicac_action" value="save" />';
@@ -1955,7 +2017,18 @@ final class Admin {
 		echo '<p class="description">' . esc_html__( 'Emails identify HandL AI Access as the sender, so you can distinguish a blocked call from a plugin error.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<p style="margin-top:8px;"><label for="handl-aicac-alert-email">' . esc_html__( 'Recipient email', 'handl-ai-connector-access-control' ) . '</label><br />';
 		echo '<input type="email" class="regular-text" id="handl-aicac-alert-email" name="handl_aicac_alert_email" value="' . esc_attr( $alert_email ) . '" placeholder="' . esc_attr( (string) get_option( 'admin_email' ) ) . '" />';
-		echo '<br /><span class="description">' . esc_html__( 'Leave empty to use the site admin email.', 'handl-ai-connector-access-control' ) . '</span></p>';
+		echo ' ';
+		submit_button(
+			__( 'Send test email', 'handl-ai-connector-access-control' ),
+			'secondary',
+			'submit',
+			false,
+			array(
+				'form'  => 'handl-aicac-test-email-denial',
+				'id'    => 'handl-aicac-send-test-denial-email',
+			)
+		);
+		echo '<br /><span class="description">' . esc_html__( 'Leave empty to use the site admin email. Test sends use the already-saved recipient (or admin email) — not an unsaved value typed above.', 'handl-ai-connector-access-control' ) . '</span></p>';
 		echo '<p style="margin-top:8px;"><label for="handl-aicac-alert-webhook">' . esc_html__( 'Webhook URL', 'handl-ai-connector-access-control' ) . '</label><br />';
 		echo '<input type="url" class="regular-text" id="handl-aicac-alert-webhook" name="handl_aicac_alert_webhook_url" value="' . esc_attr( $alert_hook ) . '" placeholder="https://" pattern="https?://.*" inputmode="url" autocomplete="off" />';
 		echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same blocked-call alert as JSON to an http:// or https:// webhook, such as Slack or Teams. It follows the email schedule and rate limit. It includes request paths, but not prompt text or user identity. Leave blank to disable.', 'handl-ai-connector-access-control' ) . '</span></p>';
@@ -1990,6 +2063,19 @@ final class Admin {
 		echo esc_html__( 'Email a weekly summary of AI coverage, blocked calls, estimated spend, and model-routing activity', 'handl-ai-connector-access-control' ) . '</label>';
 		echo '<p class="description">' . esc_html__( 'Selected by default. It sends only while logging or Learn mode is on. Clear the checkbox and save to turn it off.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'Uses the blocked-call alert recipient, or the site admin email. Includes totals and plugin names only. It does not include prompt text, user names, or request paths. The email shows the date range it covers.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p style="margin-top:8px;">';
+		submit_button(
+			__( 'Send test email', 'handl-ai-connector-access-control' ),
+			'secondary',
+			'submit',
+			false,
+			array(
+				'form' => 'handl-aicac-test-email-weekly',
+				'id'   => 'handl-aicac-send-test-weekly-email',
+			)
+		);
+		echo ' <span class="description">' . esc_html__( 'Sends a clearly labeled test message to the saved denial-alert recipient (or site admin email). Rate-limited against rapid repeats.', 'handl-ai-connector-access-control' ) . '</span>';
+		echo '</p>';
 		echo '</td>';
 		echo '</tr>';
 
