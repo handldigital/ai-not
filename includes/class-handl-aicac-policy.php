@@ -663,6 +663,7 @@ final class Policy {
 		$policy['alert_webhook_url'] = Alerts::sanitize_webhook_url( $policy['alert_webhook_url'] ?? '' );
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate( $policy['est_usd_input_per_m'] ?? Cost::DEFAULT_INPUT_PER_M, Cost::DEFAULT_INPUT_PER_M );
 		$policy['est_usd_output_per_m'] = Cost::sanitize_rate( $policy['est_usd_output_per_m'] ?? Cost::DEFAULT_OUTPUT_PER_M, Cost::DEFAULT_OUTPUT_PER_M );
+		$policy['est_usd_provider_rates'] = Cost::sanitize_provider_rates( $policy['est_usd_provider_rates'] ?? array() );
 
 		// F7: weekly report preference — staged selected-by-default until first explicit choice.
 		// Delivery still requires logging/learn (Weekly_Report::is_active). Key absence ≠ off.
@@ -759,6 +760,7 @@ final class Policy {
 		$policy['alert_webhook_url'] = Alerts::sanitize_webhook_url( $policy['alert_webhook_url'] ?? '' );
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate( $policy['est_usd_input_per_m'] ?? Cost::DEFAULT_INPUT_PER_M, Cost::DEFAULT_INPUT_PER_M );
 		$policy['est_usd_output_per_m'] = Cost::sanitize_rate( $policy['est_usd_output_per_m'] ?? Cost::DEFAULT_OUTPUT_PER_M, Cost::DEFAULT_OUTPUT_PER_M );
+		$policy['est_usd_provider_rates'] = Cost::sanitize_provider_rates( $policy['est_usd_provider_rates'] ?? array() );
 
 		// F7 weekly key: store only an explicit choice. Key absence keeps the staged default.
 		// Activity form sets _weekly_report_write; other save paths preserve raw presence so a
