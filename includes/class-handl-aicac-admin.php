@@ -2631,16 +2631,16 @@ final class Admin {
 		echo '<td>';
 		echo '<label><input type="checkbox" name="handl_aicac_role_gate_enabled" value="1" form="' . esc_attr( $form_id ) . '" ' . checked( $enabled, true, false ) . ' id="handl-aicac-role-gate-enabled" /> ';
 		echo esc_html__( 'Only selected WordPress roles may start AI Client calls', 'handl-ai-connector-access-control' ) . '</label>';
-		echo '<p class="description">' . esc_html__( 'Default is off (all roles). When on, signed-in users with an unchecked role are blocked (logged and alerted as “role”). Cron, WP-CLI, and other no-user requests are not limited by this setting.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Off by default, so every role is allowed. When enabled, users with an unselected role are blocked. Blocks appear in the log and alerts as “role not allowed.” Cron, WP-CLI, and requests without a signed-in user are not limited.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		echo '<div class="' . esc_attr( $list_class ) . '" id="handl-aicac-role-gate-wrap" style="margin-top:10px;max-width:28em;">';
 		echo '<p class="handl-aicac-role-gate__heading" id="handl-aicac-role-gate-heading"><strong>' . esc_html__( 'Allowed roles', 'handl-ai-connector-access-control' ) . '</strong></p>';
-		echo '<p class="description handl-aicac-role-gate__state" id="handl-aicac-role-gate-state"' . ( $enabled ? ' hidden' : '' ) . '>' . esc_html__( 'Not active while the role limit is off.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description handl-aicac-role-gate__state" id="handl-aicac-role-gate-state"' . ( $enabled ? ' hidden' : '' ) . '>' . esc_html__( 'This list applies only while Limit by role is on.', 'handl-ai-connector-access-control' ) . '</p>';
 		if ( $enabled && empty( $allowed ) ) {
-			echo '<p class="description" style="color:#b32d2e;"><strong>' . esc_html__( 'Warning: no roles selected — every signed-in user will be blocked.', 'handl-ai-connector-access-control' ) . '</strong></p>';
+			echo '<p class="description" style="color:#b32d2e;"><strong>' . esc_html__( 'No roles selected. Every signed-in user will be blocked.', 'handl-ai-connector-access-control' ) . '</strong></p>';
 		}
 		if ( empty( $available ) ) {
-			echo '<p class="description">' . esc_html__( 'No roles available to list on this site.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'No WordPress roles are available on this site.', 'handl-ai-connector-access-control' ) . '</p>';
 		} else {
 			echo '<div class="handl-aicac-role-gate__list" role="group" aria-labelledby="handl-aicac-role-gate-heading" aria-describedby="handl-aicac-role-gate-state">';
 			$i = 0;
@@ -2852,7 +2852,7 @@ final class Admin {
 		}
 		$user_role = isset( $row['user_role'] ) ? (string) $row['user_role'] : '';
 		if ( '' !== $user_role ) {
-			echo '<br /><span class="description handl-aicac-user-role" style="font-size:11px;">' . esc_html__( 'role', 'handl-ai-connector-access-control' ) . ' <code>' . esc_html( $user_role ) . '</code></span>';
+			echo '<br /><span class="description handl-aicac-user-role" style="font-size:11px;">' . esc_html__( 'Role:', 'handl-ai-connector-access-control' ) . ' <code>' . esc_html( $user_role ) . '</code></span>';
 		}
 		$matched = array();
 		if ( isset( $row['matched_tools'] ) && is_array( $row['matched_tools'] ) ) {

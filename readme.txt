@@ -122,7 +122,7 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = 1.1.2 =
-* AICAC-UI-COPY: Plain-language admin UI and email copy (Krusty-signed deck #89).
+* Rewrote admin screens and emails in clearer, shorter language.
 
 = 1.1.1 =
 * AICAC-ROLE: Optional per-role gate on the Rules tab — checklist of WordPress roles allowed to initiate AI Client operations (default off = all roles).
