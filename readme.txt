@@ -53,7 +53,7 @@ If you enable **recent-call logging** in Settings → HandL AI Connector Access 
 - Full request URI (including query string, kept only on this site) for AI Client admin-request context
 - For **direct-HTTP AI observations** only: request **host** and **path** (query string stripped). No request body, no Authorization headers, no API keys. Channel label `direct_http` and matched provider id when known.
 
-Logs are kept as a **single shared entry-based ring buffer** (default 200 entries, configurable 20–1000) for both AI Client rows and direct-HTTP AI observations. There is **no time-based TTL**—older rows drop only when the buffer is full. Repeated direct-HTTP **calls** from the same attributed plugin + host (or the same unattributed file + host) that stay active within ~5 minutes of idle time are collapsed into one row whose `count` is the number of HTTP **calls** (same unit as AI Client rows). Active clusters move to the newest slot so a chatty bypass does not erase the rest of the log, and the log does not drop the chatty cluster ahead of idle rows.
+Logs are kept as a **single shared entry-based ring buffer** (default 200 entries, configurable 20–1000) for both AI Client rows and direct-HTTP AI observations. An optional **maximum log age (days)** setting also drops rows older than the threshold on the next read or append; when both the count cap and the time-based TTL apply, the stricter limit wins. Leave maximum age empty for entry-count-only retention. Repeated direct-HTTP **calls** from the same attributed plugin + host (or the same unattributed file + host) that stay active within ~5 minutes of idle time are collapsed into one row whose `count` is the number of HTTP **calls** (same unit as AI Client rows). Active clusters move to the newest slot so a chatty bypass does not erase the rest of the log, and the log does not drop the chatty cluster ahead of idle rows.
 
 If you enable **denial email alerts**, the plugin sends a message via WordPress `wp_mail` when enforcement blocks a prompt (immediate rate-limited mail, or an hourly digest). The recipient is the address you configure, or the site `admin_email` if left empty — that may be any address you enter, and mail is delivered through whatever transport your site uses (core PHP mail or an SMTP / transactional-mail plugin). Alert messages include:
 
@@ -117,6 +117,7 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = 1.1.0 =
+* AICAC-TTL: Optional maximum log age (days) on Activity — time-based prune on read/append in addition to the entry-count ring buffer; empty field keeps entry-count-only retention.
 * AICAC-105: Read-only Network Admin rollup for multisite — lists sites where the plugin is active with kill-switch, logging/learn mode, retained denial count, and last activity.
 * Each row links to that site’s own Activity tab (no inline cross-site policy view).
 * Visible only on multisite; requires `manage_network_options`. Single-site installs unchanged.

@@ -26,6 +26,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 	 * @var list<string>
 	 */
 	private const APPROVED_DISPATCH_ACTIONS = array(
+		'bulk_plugin_rules',
 		'export_rules',
 		'import_rules_confirm',
 		'import_rules_preview',
@@ -112,6 +113,10 @@ final class AdminAuthzCoverageTest extends TestCase {
 	public function mutating_action_provider(): array {
 		return array(
 			array(
+				'action'       => 'bulk_plugin_rules',
+				'nonce_action' => 'handl_aicac_save_policy',
+			),
+			array(
 				'action'       => 'quick_rule',
 				'nonce_action' => 'handl_aicac_quick_rule',
 			),
@@ -185,20 +190,16 @@ final class AdminAuthzCoverageTest extends TestCase {
 			"Dispatch for action '{$action}' not found — update authz inventory if intentional"
 		);
 
-		$nonce_line = $this->first_line_matching(
-			'/check_admin_referer\s*\(\s*[\'"]' . preg_quote( $nonce_action, '/' ) . '[\'"]/'
+		$nonce_line = $this->first_line_matching_at_or_after(
+			'/check_admin_referer\s*\(\s*[\'"]' . preg_quote( $nonce_action, '/' ) . '[\'"]/',
+			$action_line
 		);
 		$this->assertNotNull(
 			$nonce_line,
-			"check_admin_referer( '{$nonce_action}' ) not found for action '{$action}'"
+			"check_admin_referer( '{$nonce_action}' ) not found at/after action '{$action}'"
 		);
 
 		// Nonce check should be at or immediately after the action branch (within 5 lines).
-		$this->assertGreaterThanOrEqual(
-			$action_line,
-			$nonce_line,
-			"Nonce for '{$action}' appears before its action branch"
-		);
 		$this->assertLessThanOrEqual(
 			5,
 			$nonce_line - $action_line,
@@ -231,6 +232,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array(
 				'handle_save_rules',
 				'handle_save_log',
+				'handle_bulk_plugin_rules',
 				'handle_quick_rule_redirect',
 				'handle_undo_quick_rule',
 				'apply_kill_switch_settings_from_post',
@@ -372,6 +374,22 @@ final class AdminAuthzCoverageTest extends TestCase {
 		foreach ( $this->lines as $idx => $line ) {
 			if ( preg_match( $pattern, $line ) ) {
 				return $idx + 1;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * @return ?int 1-based line number at or after $min_line
+	 */
+	private function first_line_matching_at_or_after( string $pattern, int $min_line ): ?int {
+		foreach ( $this->lines as $idx => $line ) {
+			$line_no = $idx + 1;
+			if ( $line_no < $min_line ) {
+				continue;
+			}
+			if ( preg_match( $pattern, $line ) ) {
+				return $line_no;
 			}
 		}
 		return null;
