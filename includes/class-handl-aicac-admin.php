@@ -845,11 +845,10 @@ final class Admin {
 		echo '<div class="inside">';
 		if ( $est_any ) {
 			echo '<p class="handl-aicac-spend-total"><strong>$' . esc_html( number_format_i18n( $est_total, 2 ) ) . '</strong> ';
-			echo '<span class="description">' . esc_html__( 'est. · default rates', 'handl-ai-connector-access-control' );
-			if ( ! Cost::using_default_rates( $policy ) ) {
-				echo ' ' . esc_html__( '(custom rates)', 'handl-ai-connector-access-control' );
-			}
-			echo '</span></p>';
+			$rate_label = Cost::using_default_rates( $policy )
+				? __( 'est. · default rates', 'handl-ai-connector-access-control' )
+				: __( 'est. · custom rates', 'handl-ai-connector-access-control' );
+			echo '<span class="description">' . esc_html( $rate_label ) . '</span></p>';
 			echo '<table class="widefat striped handl-aicac-tile-table"><thead><tr>';
 			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '<th class="column-num">' . esc_html__( 'Est. $', 'handl-ai-connector-access-control' ) . '</th>';
@@ -2790,7 +2789,7 @@ final class Admin {
 			: __( 'Rough estimate from configured rates × tokens. Not a bill.', 'handl-ai-connector-access-control' );
 		$label          = $using_defaults
 			? __( 'est. · default rates', 'handl-ai-connector-access-control' )
-			: __( 'est.', 'handl-ai-connector-access-control' );
+			: __( 'est. · custom rates', 'handl-ai-connector-access-control' );
 
 		return '<span class="handl-aicac-est-cost" title="' . esc_attr( $title ) . '">'
 			. esc_html( Cost::format_usd( $usd ) )
