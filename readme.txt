@@ -170,6 +170,7 @@ Yes. With WP-CLI available and this plugin active:
 
 = 1.2.0 =
 * Rewrote the WordPress.org listing in plain language so site owners can quickly understand what the plugin does.
+* Rewrote admin screens and emails in clearer, shorter language.
 * Added optional rates for each AI provider when calculating estimated spend. Estimates are not bills.
 * Added an optional maximum age for Activity entries, alongside the entry limit.
 * Select multiple plugins on the Rules tab and set them to Allow or Deny together.
@@ -178,6 +179,7 @@ Yes. With WP-CLI available and this plugin active:
 * Send optional blocked-call alerts to a webhook. The payload follows the same privacy limits as email alerts, and you can send a test.
 * Use WP-CLI to list and set per-plugin AI type rules.
 * Export and import Rules as JSON with a preview and confirmation. The Activity log is not included.
+
 
 = 1.0.14 =
 * F7: Weekly report email — Dashboard aggregates via wp_mail on a weekly cron (coverage, denials, estimated spend, pins).

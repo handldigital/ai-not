@@ -48,7 +48,7 @@ final class Operations {
 			self::FAMILY_TEXT   => __( 'Text', 'handl-ai-connector-access-control' ),
 			self::FAMILY_IMAGE  => __( 'Image', 'handl-ai-connector-access-control' ),
 			self::FAMILY_SPEECH => __( 'Speech', 'handl-ai-connector-access-control' ),
-			self::FAMILY_TTS    => __( 'TTS', 'handl-ai-connector-access-control' ),
+			self::FAMILY_TTS    => __( 'Text to speech', 'handl-ai-connector-access-control' ),
 			self::FAMILY_VIDEO  => __( 'Video', 'handl-ai-connector-access-control' ),
 		);
 	}

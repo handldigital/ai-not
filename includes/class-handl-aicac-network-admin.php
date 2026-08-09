@@ -47,8 +47,8 @@ final class Network_Admin {
 	public function register_menu(): void {
 		add_submenu_page(
 			'settings.php',
-			__( 'HandL AI Connector Access Control', 'handl-ai-connector-access-control' ),
-			__( 'HandL AI Connector Access Control', 'handl-ai-connector-access-control' ),
+			__( 'HandL AI Access', 'handl-ai-connector-access-control' ),
+			__( 'HandL AI Access', 'handl-ai-connector-access-control' ),
 			'manage_network_options',
 			self::PAGE_SLUG,
 			array( $this, 'render_page' )
@@ -73,12 +73,12 @@ final class Network_Admin {
 		$rows = $this->collect_page_rows( $page );
 
 		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__( 'HandL AI Connector Access Control — Network', 'handl-ai-connector-access-control' ) . '</h1>';
-		echo '<p class="description">' . esc_html__( 'Read-only rollup of sites where this plugin is active. Open a site’s Activity tab for detail. Policy changes are not available from this screen.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<h1>' . esc_html__( 'HandL AI Access: Network', 'handl-ai-connector-access-control' ) . '</h1>';
+		echo '<p class="description">' . esc_html__( 'Read-only overview of sites where this plugin is active. Open a site’s Activity tab for details. Change rules inside each site.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<p class="description">';
 		printf(
 			/* translators: %d: sites processed per page */
-			esc_html__( 'Shows up to %d network sites per page (inactive installs are omitted from the table).', 'handl-ai-connector-access-control' ),
+			esc_html__( 'Shows up to %d sites per page. Sites without the active plugin are not shown.', 'handl-ai-connector-access-control' ),
 			(int) self::SITES_PER_PAGE
 		);
 		echo '</p>';
@@ -88,9 +88,9 @@ final class Network_Admin {
 			if ( $total_sites < 1 ) {
 				echo esc_html__( 'This network has no sites yet.', 'handl-ai-connector-access-control' );
 			} elseif ( 1 === $page ) {
-				echo esc_html__( 'No sites in this network have HandL AI Connector Access Control active yet.', 'handl-ai-connector-access-control' );
+				echo esc_html__( 'No sites on this network have HandL AI Access active yet.', 'handl-ai-connector-access-control' );
 			} else {
-				echo esc_html__( 'No sites with the plugin active on this page of the network.', 'handl-ai-connector-access-control' );
+				echo esc_html__( 'No active HandL AI Access sites on this page.', 'handl-ai-connector-access-control' );
 			}
 			echo '</p></div>';
 		} else {
@@ -108,9 +108,9 @@ final class Network_Admin {
 		echo '<table class="widefat striped">';
 		echo '<thead><tr>';
 		echo '<th scope="col">' . esc_html__( 'Site', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th scope="col">' . esc_html__( 'Kill switch', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th scope="col">' . esc_html__( 'Logging / learn mode', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th scope="col">' . esc_html__( 'Denials (retained)', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Emergency stop', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Logging / Learn mode', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Blocked calls in log', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th scope="col">' . esc_html__( 'Last activity', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th scope="col">' . esc_html__( 'Activity', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead><tbody>';
@@ -169,7 +169,7 @@ final class Network_Admin {
 		echo '<div class="tablenav bottom"><div class="tablenav-pages">';
 		printf(
 			/* translators: 1: current page, 2: total pages, 3: total network sites */
-			esc_html__( 'Page %1$d of %2$d (%3$d network sites)', 'handl-ai-connector-access-control' ),
+			esc_html__( 'Page %1$d of %2$d. %3$d sites total.', 'handl-ai-connector-access-control' ),
 			$page,
 			$total_pages,
 			$total_sites
