@@ -46,6 +46,18 @@
 	display: none;
 }
 
+.handl-aicac-bulk-nav {
+	margin: 8px 0 0;
+	height: auto;
+	padding: 0;
+}
+
+.handl-aicac-rules-matrix .check-column {
+	width: 2.2em;
+	padding: 8px 0 8px 3px;
+	vertical-align: middle;
+}
+
 .handl-aicac-log-meta {
 	margin: 0 0 12px;
 	color: #646970;

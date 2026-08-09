@@ -810,6 +810,54 @@ final class Policy {
 	}
 
 	/**
+	 * Apply allow|deny to selected installed plugins only (AICAC-BULK).
+	 *
+	 * Does not touch capability-family rules, model-force pins, or unselected
+	 * plugin entries. Unknown / not-installed basenames are skipped (no fatal).
+	 *
+	 * @param array<string,mixed>               $policy             Current policy.
+	 * @param list<string>|array<int|string,mixed> $selected_basenames Posted checkbox values.
+	 * @param string                            $rule               'allow' or 'deny'.
+	 * @param array<string,mixed>               $installed_plugins  get_plugins()-shaped map (keys = basenames).
+	 * @return array{policy:array<string,mixed>,updated:int,skipped:int}|false False when $rule is invalid.
+	 */
+	public static function apply_bulk_plugin_rules( array $policy, array $selected_basenames, string $rule, array $installed_plugins ) {
+		$rule = sanitize_text_field( $rule );
+		if ( 'allow' !== $rule && 'deny' !== $rule ) {
+			return false;
+		}
+
+		$plugins = isset( $policy['plugins'] ) && is_array( $policy['plugins'] )
+			? $policy['plugins']
+			: array();
+
+		$updated = 0;
+		$skipped = 0;
+
+		foreach ( $selected_basenames as $raw ) {
+			$basename = sanitize_text_field( (string) $raw );
+			if ( '' === $basename ) {
+				++$skipped;
+				continue;
+			}
+			if ( ! array_key_exists( $basename, $installed_plugins ) ) {
+				++$skipped;
+				continue;
+			}
+			$plugins[ $basename ] = $rule;
+			++$updated;
+		}
+
+		$policy['plugins'] = $plugins;
+
+		return array(
+			'policy'  => $policy,
+			'updated' => $updated,
+			'skipped' => $skipped,
+		);
+	}
+
+	/**
 	 * Set allow/deny for one plugin (quick action from Activity / Dashboard).
 	 * Empty $rule clears the explicit rule (inherit Default) — used by undo.
 	 */

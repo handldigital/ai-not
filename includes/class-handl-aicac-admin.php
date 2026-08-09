@@ -28,6 +28,13 @@ final class Admin {
 	/** Set when Activity save rejects an invalid webhook URL (AC6). */
 	private bool $webhook_url_rejected = false;
 
+	/**
+	 * AICAC-BULK result for Rules-tab inline notices.
+	 *
+	 * @var null|array{status:string,updated?:int}
+	 */
+	private ?array $bulk_result = null;
+
 	private static ?Admin $instance = null;
 
 	public static function instance(): Admin {
@@ -154,6 +161,10 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_import_rules_confirm', 'handl_aicac_nonce' );
 				$this->handle_import_rules_confirm();
 			}
+			if ( 'bulk_plugin_rules' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
+				$this->handle_bulk_plugin_rules();
+			}
 		}
 
 		$saved       = false;
@@ -205,6 +216,30 @@ final class Admin {
 		}
 		if ( $this->webhook_url_rejected ) {
 			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Webhook URL was not saved: enter a valid http:// or https:// URL (or leave blank to disable).', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		if ( is_array( $this->bulk_result ) ) {
+			$status = (string) ( $this->bulk_result['status'] ?? '' );
+			if ( 'empty' === $status ) {
+				echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__( 'No plugins selected. Bulk allow/deny made no changes.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			} elseif ( 'invalid' === $status ) {
+				echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Choose Set to Allow or Set to Deny, then Apply.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			} elseif ( 'ok' === $status ) {
+				$n = (int) ( $this->bulk_result['updated'] ?? 0 );
+				echo '<div class="notice notice-success is-dismissible"><p>';
+				echo esc_html(
+					sprintf(
+						/* translators: %d: number of plugins updated */
+						_n(
+							'Updated AI access for %d selected plugin.',
+							'Updated AI access for %d selected plugins.',
+							$n,
+							'handl-ai-connector-access-control'
+						),
+						$n
+					)
+				);
+				echo '</p></div>';
+			}
 		}
 		if ( $quick_saved ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Plugin rule updated.', 'handl-ai-connector-access-control' ) . '</p></div>';
@@ -311,10 +346,19 @@ final class Admin {
 		echo '<div class="handl-aicac-tab-panel">';
 
 		$rules_form_id = 'handl-aicac-rules-save';
+		$bulk_form_id  = 'handl-aicac-bulk-rules';
 
 		echo '<form method="post" id="' . esc_attr( $rules_form_id ) . '" class="handl-aicac-rules-save-form">';
 		wp_nonce_field( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
 		echo '<input type="hidden" name="handl_aicac_action" value="save" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		echo '<input type="hidden" name="handl_aicac_status" value="' . esc_attr( $plugin_status_filter ) . '" />';
+		echo '<input type="hidden" name="handl_aicac_access" value="' . esc_attr( $plugin_access_filter ) . '" />';
+		echo '</form>';
+
+		echo '<form method="post" id="' . esc_attr( $bulk_form_id ) . '" class="handl-aicac-rules-save-form">';
+		wp_nonce_field( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="bulk_plugin_rules" />';
 		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
 		echo '<input type="hidden" name="handl_aicac_status" value="' . esc_attr( $plugin_status_filter ) . '" />';
 		echo '<input type="hidden" name="handl_aicac_access" value="' . esc_attr( $plugin_access_filter ) . '" />';
@@ -379,8 +423,24 @@ final class Admin {
 			echo '</p></div>';
 		}
 		$this->render_plugin_rules_filters( $plugin_status_filter, $plugin_access_filter );
+
+		echo '<div class="tablenav top handl-aicac-bulk-nav">';
+		echo '<div class="alignleft actions bulkactions">';
+		echo '<label for="handl-aicac-bulk-action" class="screen-reader-text">' . esc_html__( 'Select bulk action', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<select name="handl_aicac_bulk_action" id="handl-aicac-bulk-action" form="' . esc_attr( $bulk_form_id ) . '">';
+		echo '<option value="-1">' . esc_html__( 'Bulk actions', 'handl-ai-connector-access-control' ) . '</option>';
+		echo '<option value="allow">' . esc_html__( 'Set to Allow', 'handl-ai-connector-access-control' ) . '</option>';
+		echo '<option value="deny">' . esc_html__( 'Set to Deny', 'handl-ai-connector-access-control' ) . '</option>';
+		echo '</select> ';
+		echo '<input type="submit" class="button action" form="' . esc_attr( $bulk_form_id ) . '" value="' . esc_attr__( 'Apply', 'handl-ai-connector-access-control' ) . '" />';
+		echo '</div>';
+		echo '<br class="clear" />';
+		echo '</div>';
+
 		echo '<table class="widefat striped handl-aicac-rules-matrix">';
 		echo '<thead><tr>';
+		echo '<td id="cb" class="manage-column column-cb check-column"><label class="screen-reader-text" for="handl-aicac-bulk-select-all">' . esc_html__( 'Select all', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<input id="handl-aicac-bulk-select-all" type="checkbox" /></td>';
 		echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Status', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'AI access', 'handl-ai-connector-access-control' ) . '</th>';
@@ -429,6 +489,18 @@ final class Admin {
 			$force_m   = (string) ( $force_row['model'] ?? '' );
 
 			echo '<tr>';
+			echo '<th scope="row" class="check-column">';
+			echo '<label class="screen-reader-text" for="handl-aicac-bulk-cb-' . esc_attr( md5( $basename ) ) . '">';
+			echo esc_html(
+				sprintf(
+					/* translators: %s: plugin name */
+					__( 'Select %s', 'handl-ai-connector-access-control' ),
+					$name
+				)
+			);
+			echo '</label>';
+			echo '<input type="checkbox" class="handl-aicac-bulk-cb" id="handl-aicac-bulk-cb-' . esc_attr( md5( $basename ) ) . '" name="handl_aicac_bulk_plugins[]" value="' . esc_attr( $basename ) . '" form="' . esc_attr( $bulk_form_id ) . '" />';
+			echo '</th>';
 			echo '<td><strong>' . esc_html( $name ) . '</strong>';
 			if ( '' !== $force_p && '' !== $force_m && $unforced_n > 0 ) {
 				echo '<br /><span class="description handl-aicac-unforced-hint" style="font-size:11px;">';
@@ -490,6 +562,12 @@ final class Admin {
 
 		echo '</tbody>';
 		echo '</table>';
+
+		echo '<script>';
+		echo '(function(){var all=document.getElementById("handl-aicac-bulk-select-all");if(!all)return;';
+		echo 'all.addEventListener("change",function(){document.querySelectorAll(".handl-aicac-rules-matrix tbody input.handl-aicac-bulk-cb").forEach(function(cb){cb.checked=all.checked;});});';
+		echo '})();';
+		echo '</script>';
 
 		submit_button(
 			__( 'Save changes', 'handl-ai-connector-access-control' ),
@@ -1926,6 +2004,53 @@ final class Admin {
 		$this->apply_model_force_settings_from_post( $policy );
 
 		Policy::save_policy( $policy );
+	}
+
+	/**
+	 * AICAC-BULK: set allow/deny for checked plugin rows only.
+	 *
+	 * Reuses handl_aicac_save_policy nonce + manage_options page gate.
+	 * Does not rewrite capability-family or model-force maps.
+	 */
+	private function handle_bulk_plugin_rules(): void {
+		$posted_action = filter_input( INPUT_POST, 'handl_aicac_bulk_action', FILTER_UNSAFE_RAW );
+		$rule          = sanitize_text_field( (string) $posted_action );
+		if ( 'allow' !== $rule && 'deny' !== $rule ) {
+			$this->bulk_result = array( 'status' => 'invalid' );
+			return;
+		}
+
+		$posted = filter_input( INPUT_POST, 'handl_aicac_bulk_plugins', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		$selected = is_array( $posted ) ? $posted : array();
+		if ( empty( $selected ) ) {
+			$this->bulk_result = array( 'status' => 'empty' );
+			return;
+		}
+
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		$installed = function_exists( 'get_plugins' ) ? get_plugins() : array();
+		if ( ! is_array( $installed ) ) {
+			$installed = array();
+		}
+
+		$policy = Policy::get_policy();
+		$result = Policy::apply_bulk_plugin_rules( $policy, $selected, $rule, $installed );
+		if ( false === $result ) {
+			$this->bulk_result = array( 'status' => 'invalid' );
+			return;
+		}
+
+		if ( 0 === (int) $result['updated'] ) {
+			// All selections invalid/removed — treat as no-op notice, no save.
+			$this->bulk_result = array( 'status' => 'empty' );
+			return;
+		}
+
+		Policy::save_policy( $result['policy'] );
+		$this->bulk_result = array(
+			'status'  => 'ok',
+			'updated' => (int) $result['updated'],
+		);
 	}
 
 	/**
