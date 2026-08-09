@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: HandL AI Connector Access Control
- * Description: Control which plugins may execute prompts via the WordPress AI Client.
+ * Description: Lets administrators allow/deny which plugins may use the WordPress AI Client. Defaults to allow, with opt-in logging and best-effort attribution.
  * Version: 1.1.0
  * Author: Haktan Suren
  * Requires at least: 7.0
