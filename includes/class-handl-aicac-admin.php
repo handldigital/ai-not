@@ -195,10 +195,8 @@ final class Admin {
 		$plugins = get_plugins();
 		$active  = array_flip( (array) get_option( 'active_plugins', array() ) );
 
-		$log = get_option( Plugin::LOG_OPTION_KEY );
-		if ( ! is_array( $log ) ) {
-			$log = array();
-		}
+		// Read path applies TTL + entry-count retention and persists when rows drop.
+		$log = Policy::get_retained_log();
 
 		$icon_src = add_query_arg( 'ver', HANDL_AICAC_VERSION, HANDL_AICAC_URL . 'assets/icon-128x128.png' );
 
@@ -311,6 +309,20 @@ final class Admin {
 			echo '<div class="notice notice-warning"><p><strong>' . esc_html__( 'AI is disabled site-wide via wp_supports_ai.', 'handl-ai-connector-access-control' ) . '</strong> ';
 			echo esc_html( $why ) . ' ';
 			echo esc_html__( 'WordPress short-circuits prompts before HandL AICAC’s prevent filter runs, so this plugin’s audit log will be empty or incomplete for those calls — that is expected, not a broken install.', 'handl-ai-connector-access-control' );
+			echo '</p></div>';
+		}
+
+		// Distinct empty-window honesty when TTL pruned everything (not the same as wp_supports_ai).
+		$max_age_days = Policy::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
+		if ( null !== $max_age_days && 0 === count( $log ) && ( ! empty( $policy['log_enabled'] ) || ! empty( $policy['audit_only'] ) ) ) {
+			echo '<div class="notice notice-info"><p><strong>' . esc_html__( 'Retained audit log is empty for the current time window.', 'handl-ai-connector-access-control' ) . '</strong> ';
+			echo esc_html(
+				sprintf(
+					/* translators: %d: maximum log age in days */
+					__( 'Maximum log age is set to %d day(s): older rows were pruned by time-based retention. This is separate from site-wide AI disable via wp_supports_ai (which prevents calls from being logged at all).', 'handl-ai-connector-access-control' ),
+					$max_age_days
+				)
+			);
 			echo '</p></div>';
 		}
 
@@ -1137,10 +1149,11 @@ final class Admin {
 				'<p class="handl-aicac-insights-meta">%s</p>',
 				esc_html(
 					sprintf(
-						/* translators: 1: stored entry count, 2: retention limit (entries) */
-						__( 'Based on %1$d of %2$d stored entries (entry-based retention; no TTL).', 'handl-ai-connector-access-control' ),
+						/* translators: 1: stored entry count, 2: retention limit (entries), 3: retention mode phrase */
+						__( 'Based on %1$d of %2$d stored entries (%3$s).', 'handl-ai-connector-access-control' ),
 						$stored_count,
-						$log_limit_policy
+						$log_limit_policy,
+						$this->retention_mode_phrase( $policy )
 					)
 				)
 			);
@@ -1468,23 +1481,26 @@ final class Admin {
 			}
 		}
 
+		$retention_phrase = $this->retention_mode_phrase( $policy );
 		echo '<p class="handl-aicac-log-meta">';
 		if ( $this->log_filters_active( $log_filters ) ) {
 			printf(
-				/* translators: 1: entries shown, 2: matching-entry count, 3: stored entry count, 4: retention limit */
-				esc_html__( 'Showing %1$d of %2$d matching entries (newest first, up to 50). %3$d of %4$d stored entries retained (entry-based; no TTL).', 'handl-ai-connector-access-control' ),
+				/* translators: 1: entries shown, 2: matching-entry count, 3: stored entry count, 4: retention limit, 5: retention mode phrase */
+				esc_html__( 'Showing %1$d of %2$d matching entries (newest first, up to 50). %3$d of %4$d stored entries retained (%5$s).', 'handl-ai-connector-access-control' ),
 				count( $rows_to_show ),
 				$matching_count,
 				(int) $stored_count,
-				(int) $log_limit_policy
+				(int) $log_limit_policy,
+				$retention_phrase
 			);
 		} else {
 			printf(
-				/* translators: 1: stored entry count, 2: retention limit, 3: rows shown in table */
-				esc_html__( 'Showing up to %3$d newest rows. %1$d of %2$d stored entries retained (entry-based; no TTL). Provider/model are read from the prompt builder when available. Input/output tokens are filled after the model responds (allowed generate_* calls only).', 'handl-ai-connector-access-control' ),
+				/* translators: 1: stored entry count, 2: retention limit, 3: rows shown in table, 4: retention mode phrase */
+				esc_html__( 'Showing up to %3$d newest rows. %1$d of %2$d stored entries retained (%4$s). Provider/model are read from the prompt builder when available. Input/output tokens are filled after the model responds (allowed generate_* calls only).', 'handl-ai-connector-access-control' ),
 				(int) $stored_count,
 				(int) $log_limit_policy,
-				count( $rows_to_show )
+				count( $rows_to_show ),
+				$retention_phrase
 			);
 		}
 		echo '</p>';
@@ -1827,6 +1843,24 @@ final class Admin {
 	}
 
 	/**
+	 * Human phrase for retention mode used in Insights / Activity meta lines.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function retention_mode_phrase( array $policy ): string {
+		$max_age = Policy::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
+		if ( null === $max_age ) {
+			return __( 'entry-based retention; no time-based TTL', 'handl-ai-connector-access-control' );
+		}
+
+		return sprintf(
+			/* translators: %d: maximum log age in days */
+			__( 'entry-count cap plus %d-day time-based TTL; stricter limit wins', 'handl-ai-connector-access-control' ),
+			$max_age
+		);
+	}
+
+	/**
 	 * @param array<string,mixed> $row
 	 */
 	private function get_log_row_field( array $row, string $field ): string {
@@ -1856,6 +1890,8 @@ final class Admin {
 		$audit_only  = ! empty( $policy['audit_only'] );
 		$log_enabled = ! empty( $policy['log_enabled'] );
 		$log_limit   = (int) ( $policy['log_limit'] ?? 200 );
+		$max_age     = Policy::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
+		$max_age_val = null === $max_age ? '' : (string) $max_age;
 
 		echo '<p class="description" style="max-width:52em;margin-bottom:1em;">';
 		echo esc_html__( 'Use this tab to observe AI Client and direct-HTTP AI activity. Learn mode logs every call without blocking. When learn mode is off, you can still log calls for troubleshooting. Enforcement lives on the Rules and Dashboard tabs.', 'handl-ai-connector-access-control' );
@@ -1891,7 +1927,15 @@ final class Admin {
 		echo '<th scope="row"><label for="handl-aicac-log-limit">' . esc_html__( 'Retain entries', 'handl-ai-connector-access-control' ) . '</label></th>';
 		echo '<td>';
 		echo '<input type="number" id="handl-aicac-log-limit" name="handl_aicac_log_limit" value="' . esc_attr( (string) $log_limit ) . '" min="20" max="1000" step="1" class="small-text" />';
-		echo ' <span class="description">' . esc_html__( '(20–1000). Oldest entries drop when full. No time-based expiry.', 'handl-ai-connector-access-control' ) . '</span>';
+		echo ' <span class="description">' . esc_html__( '(20–1000). Oldest entries drop when the count cap is full.', 'handl-ai-connector-access-control' ) . '</span>';
+		echo '</td>';
+		echo '</tr>';
+
+		echo '<tr>';
+		echo '<th scope="row"><label for="handl-aicac-log-max-age-days">' . esc_html__( 'Maximum log age (days)', 'handl-ai-connector-access-control' ) . '</label></th>';
+		echo '<td>';
+		echo '<input type="number" id="handl-aicac-log-max-age-days" name="handl_aicac_log_max_age_days" value="' . esc_attr( $max_age_val ) . '" min="1" max="3650" step="1" class="small-text" placeholder="" />';
+		echo ' <span class="description">' . esc_html__( 'Optional. Leave empty for no time-based expiry. When set, entries older than this many days are removed on the next read or append (in addition to the entry-count cap; the stricter limit wins).', 'handl-ai-connector-access-control' ) . '</span>';
 		echo '</td>';
 		echo '</tr>';
 
@@ -2358,6 +2402,14 @@ final class Admin {
 			$policy['log_limit'] = (int) $posted_log_limit;
 		}
 
+		// Empty field = TTL off. Invalid values also coerce to off via sanitize.
+		$posted_max_age = filter_input( INPUT_POST, 'handl_aicac_log_max_age_days', FILTER_UNSAFE_RAW );
+		if ( null === $posted_max_age || false === $posted_max_age || '' === trim( (string) $posted_max_age ) ) {
+			$policy['log_max_age_days'] = null;
+		} else {
+			$policy['log_max_age_days'] = Policy::sanitize_log_max_age_days( $posted_max_age );
+		}
+
 		$posted_alert = filter_input( INPUT_POST, 'handl_aicac_alert_on_deny', FILTER_UNSAFE_RAW );
 		$policy['alert_on_deny'] = ! empty( $posted_alert );
 		$policy['alert_mode']    = Alerts::sanitize_mode( filter_input( INPUT_POST, 'handl_aicac_alert_mode', FILTER_UNSAFE_RAW ) );
@@ -2620,6 +2672,8 @@ final class Admin {
 		$this->apply_log_settings_from_post( $policy );
 
 		Policy::save_policy( $policy );
+		// Apply a newly saved TTL immediately so the Activity table matches settings.
+		Policy::prune_stored_log();
 	}
 
 	private function render_option( string $value, string $current, string $label ): void {
