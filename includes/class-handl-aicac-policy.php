@@ -432,6 +432,30 @@ final class Policy {
 	 *
 	 * @return array<string,string> slug => display name
 	 */
+
+	/**
+	 * Which role checkboxes to render checked in the Rules UI.
+	 *
+	 * When the gate is ON, the checklist mirrors stored allowed_roles exactly
+	 * (empty list = none checked, matching deny-all enforcement).
+	 * When the gate is OFF and no roles are stored, default to all available
+	 * roles checked so enabling the gate starts from a full allow list.
+	 *
+	 * @param list<string>            $allowed   Stored allowed role slugs.
+	 * @param array<string,string>    $available slug => label map.
+	 * @return list<string>
+	 */
+	public static function role_gate_checked_roles( bool $enabled, array $allowed, array $available ): array {
+		$allowed = self::sanitize_allowed_roles( $allowed );
+		if ( $enabled ) {
+			return $allowed;
+		}
+		if ( empty( $allowed ) && ! empty( $available ) ) {
+			return array_keys( $available );
+		}
+		return $allowed;
+	}
+
 	public static function available_roles_for_gate(): array {
 		if ( array_key_exists( 'handl_aicac_test_available_roles', $GLOBALS ) && is_array( $GLOBALS['handl_aicac_test_available_roles'] ) ) {
 			$out = array();
@@ -804,6 +828,8 @@ final class Policy {
 		if ( $policy['log_limit'] > 1000 ) {
 			$policy['log_limit'] = 1000;
 		}
+		// Optional time-based retention (days). null = off (entry-count cap only).
+		$policy['log_max_age_days'] = self::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
 
 		$policy['operations']        = self::sanitize_operations( $policy['operations'] ?? array() );
 		$policy['unknown_operation'] = self::sanitize_unknown_operation( $policy['unknown_operation'] ?? 'inherit' );
@@ -824,6 +850,7 @@ final class Policy {
 		$policy['alert_webhook_url'] = Alerts::sanitize_webhook_url( $policy['alert_webhook_url'] ?? '' );
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate( $policy['est_usd_input_per_m'] ?? Cost::DEFAULT_INPUT_PER_M, Cost::DEFAULT_INPUT_PER_M );
 		$policy['est_usd_output_per_m'] = Cost::sanitize_rate( $policy['est_usd_output_per_m'] ?? Cost::DEFAULT_OUTPUT_PER_M, Cost::DEFAULT_OUTPUT_PER_M );
+		$policy['est_usd_provider_rates'] = Cost::sanitize_provider_rates( $policy['est_usd_provider_rates'] ?? array() );
 
 		// F7: weekly report preference — staged selected-by-default until first explicit choice.
 		// Delivery still requires logging/learn (Weekly_Report::is_active). Key absence ≠ off.
@@ -900,6 +927,121 @@ final class Policy {
 	}
 
 	/**
+	 * Optional maximum log age in whole days. Empty / invalid / < 1 → off (null).
+	 *
+	 * @param mixed $raw Posted or stored value.
+	 */
+	public static function sanitize_log_max_age_days( $raw ): ?int {
+		if ( null === $raw || false === $raw ) {
+			return null;
+		}
+		if ( is_string( $raw ) && '' === trim( $raw ) ) {
+			return null;
+		}
+		// Accept ints and digit strings; reject floats / junk.
+		if ( is_string( $raw ) && ! preg_match( '/^\s*\d+\s*$/', $raw ) ) {
+			return null;
+		}
+		$n = (int) $raw;
+		if ( $n < 1 ) {
+			return null;
+		}
+		// Soft ceiling so a typo cannot keep multi-decade windows "forever".
+		if ( $n > 3650 ) {
+			$n = 3650;
+		}
+
+		return $n;
+	}
+
+	/**
+	 * Seconds in one day (WP constant when available).
+	 */
+	public static function day_in_seconds(): int {
+		return defined( 'DAY_IN_SECONDS' ) ? (int) DAY_IN_SECONDS : 86400;
+	}
+
+	/**
+	 * Apply time-based TTL (if configured) and entry-count cap. Stricter wins:
+	 * both filters run; a row that fails either is removed.
+	 *
+	 * @param array<int,mixed>    $log
+	 * @param array<string,mixed> $policy
+	 * @param int|null            $now Unix now (injectable for tests).
+	 * @return list<array<string,mixed>|mixed>
+	 */
+	public static function apply_log_retention( array $log, array $policy, ?int $now = null ): array {
+		$now = null === $now ? time() : $now;
+		if ( $now <= 0 ) {
+			$now = time();
+		}
+
+		$max_age = self::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
+		if ( null !== $max_age ) {
+			$cutoff = $now - ( $max_age * self::day_in_seconds() );
+			$kept   = array();
+			foreach ( $log as $row ) {
+				if ( ! is_array( $row ) ) {
+					continue;
+				}
+				$ts = isset( $row['ts'] ) ? (int) $row['ts'] : 0;
+				// Untimestamped rows are kept (avoid wiping pre-ts legacy data).
+				if ( $ts > 0 && $ts < $cutoff ) {
+					continue;
+				}
+				$kept[] = $row;
+			}
+			$log = $kept;
+		}
+
+		$limit = (int) ( $policy['log_limit'] ?? 200 );
+		if ( $limit < 20 ) {
+			$limit = 20;
+		}
+		if ( $limit > 1000 ) {
+			$limit = 1000;
+		}
+		$count = count( $log );
+		if ( $count > $limit ) {
+			$log = array_slice( $log, $count - $limit );
+		}
+
+		return array_values( $log );
+	}
+
+	/**
+	 * Read the ring buffer, prune by current policy retention, persist if changed.
+	 *
+	 * @param int|null $now Injectable clock for tests.
+	 * @return list<array<string,mixed>|mixed>
+	 */
+	public static function get_retained_log( ?int $now = null ): array {
+		$log = get_option( Plugin::LOG_OPTION_KEY );
+		if ( ! is_array( $log ) ) {
+			return array();
+		}
+
+		$policy = self::get_policy();
+		$pruned = self::apply_log_retention( $log, $policy, $now );
+		// Persist only when retention actually dropped rows (cheap length/content check).
+		if ( count( $pruned ) !== count( $log ) || $pruned != $log ) { // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison -- content compare
+			update_option( Plugin::LOG_OPTION_KEY, $pruned, false );
+		}
+
+		return $pruned;
+	}
+
+	/**
+	 * Prune the stored option in place (e.g. after saving a new TTL).
+	 *
+	 * @param int|null $now Injectable clock for tests.
+	 * @return list<array<string,mixed>|mixed>
+	 */
+	public static function prune_stored_log( ?int $now = null ): array {
+		return self::get_retained_log( $now );
+	}
+
+	/**
 	 * @param array<string,mixed> $policy
 	 */
 	public static function save_policy( array $policy ): void {
@@ -922,6 +1064,22 @@ final class Policy {
 		$policy['alert_webhook_url'] = Alerts::sanitize_webhook_url( $policy['alert_webhook_url'] ?? '' );
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate( $policy['est_usd_input_per_m'] ?? Cost::DEFAULT_INPUT_PER_M, Cost::DEFAULT_INPUT_PER_M );
 		$policy['est_usd_output_per_m'] = Cost::sanitize_rate( $policy['est_usd_output_per_m'] ?? Cost::DEFAULT_OUTPUT_PER_M, Cost::DEFAULT_OUTPUT_PER_M );
+		$policy['est_usd_provider_rates'] = Cost::sanitize_provider_rates( $policy['est_usd_provider_rates'] ?? array() );
+
+		$max_age = self::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
+		if ( null === $max_age ) {
+			unset( $policy['log_max_age_days'] );
+		} else {
+			$policy['log_max_age_days'] = $max_age;
+		}
+
+		$policy['log_limit'] = (int) ( $policy['log_limit'] ?? 200 );
+		if ( $policy['log_limit'] < 20 ) {
+			$policy['log_limit'] = 20;
+		}
+		if ( $policy['log_limit'] > 1000 ) {
+			$policy['log_limit'] = 1000;
+		}
 
 		// F7 weekly key: store only an explicit choice. Key absence keeps the staged default.
 		// Activity form sets _weekly_report_write; other save paths preserve raw presence so a
@@ -970,6 +1128,54 @@ final class Policy {
 		if ( empty( $policy['alert_on_deny'] ) ) {
 			Alerts::clear_digest_queue();
 		}
+	}
+
+	/**
+	 * Apply allow|deny to selected installed plugins only (AICAC-BULK).
+	 *
+	 * Does not touch capability-family rules, model-force pins, or unselected
+	 * plugin entries. Unknown / not-installed basenames are skipped (no fatal).
+	 *
+	 * @param array<string,mixed>               $policy             Current policy.
+	 * @param list<string>|array<int|string,mixed> $selected_basenames Posted checkbox values.
+	 * @param string                            $rule               'allow' or 'deny'.
+	 * @param array<string,mixed>               $installed_plugins  get_plugins()-shaped map (keys = basenames).
+	 * @return array{policy:array<string,mixed>,updated:int,skipped:int}|false False when $rule is invalid.
+	 */
+	public static function apply_bulk_plugin_rules( array $policy, array $selected_basenames, string $rule, array $installed_plugins ) {
+		$rule = sanitize_text_field( $rule );
+		if ( 'allow' !== $rule && 'deny' !== $rule ) {
+			return false;
+		}
+
+		$plugins = isset( $policy['plugins'] ) && is_array( $policy['plugins'] )
+			? $policy['plugins']
+			: array();
+
+		$updated = 0;
+		$skipped = 0;
+
+		foreach ( $selected_basenames as $raw ) {
+			$basename = sanitize_text_field( (string) $raw );
+			if ( '' === $basename ) {
+				++$skipped;
+				continue;
+			}
+			if ( ! array_key_exists( $basename, $installed_plugins ) ) {
+				++$skipped;
+				continue;
+			}
+			$plugins[ $basename ] = $rule;
+			++$updated;
+		}
+
+		$policy['plugins'] = $plugins;
+
+		return array(
+			'policy'  => $policy,
+			'updated' => $updated,
+			'skipped' => $skipped,
+		);
 	}
 
 	/**
@@ -1158,15 +1364,23 @@ final class Policy {
 			return;
 		}
 
-		$limit = (int) ( $policy['log_limit'] ?? 200 );
-
 		$log = get_option( Plugin::LOG_OPTION_KEY );
 		if ( ! is_array( $log ) ) {
 			$log = array();
 		}
 
+		// Prune first so collapse keys and FIFO count reflect the retained window.
+		// Active shadow-AI clusters have a recent `ts` and are not dropped by TTL.
+		$event_ts = isset( $event['ts'] ) ? (int) $event['ts'] : time();
+		if ( $event_ts <= 0 ) {
+			$event_ts = time();
+		}
+		$log = self::apply_log_retention( $log, $policy, $event_ts );
+
 		$is_direct_http = isset( $event['channel'] ) && 'direct_http' === (string) $event['channel'];
 		if ( $is_direct_http && self::collapse_direct_http_into_log( $log, $event ) ) {
+			// Collapse mutates in place; re-apply entry-count (TTL already satisfied by recent ts).
+			$log = self::apply_log_retention( $log, $policy, $event_ts );
 			update_option( Plugin::LOG_OPTION_KEY, $log, false );
 			return;
 		}
@@ -1176,10 +1390,7 @@ final class Policy {
 		}
 
 		$log[] = $event;
-		$count = count( $log );
-		if ( $count > $limit ) {
-			$log = array_slice( $log, $count - $limit );
-		}
+		$log   = self::apply_log_retention( $log, $policy, $event_ts );
 
 		update_option( Plugin::LOG_OPTION_KEY, $log, false );
 	}

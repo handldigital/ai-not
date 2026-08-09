@@ -28,6 +28,13 @@ final class Admin {
 	/** Set when Activity save rejects an invalid webhook URL (AC6). */
 	private bool $webhook_url_rejected = false;
 
+	/**
+	 * AICAC-BULK result for Rules-tab inline notices.
+	 *
+	 * @var null|array{status:string,updated?:int}
+	 */
+	private ?array $bulk_result = null;
+
 	private static ?Admin $instance = null;
 
 	public static function instance(): Admin {
@@ -154,6 +161,10 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_import_rules_confirm', 'handl_aicac_nonce' );
 				$this->handle_import_rules_confirm();
 			}
+			if ( 'bulk_plugin_rules' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
+				$this->handle_bulk_plugin_rules();
+			}
 		}
 
 		$saved       = false;
@@ -184,10 +195,8 @@ final class Admin {
 		$plugins = get_plugins();
 		$active  = array_flip( (array) get_option( 'active_plugins', array() ) );
 
-		$log = get_option( Plugin::LOG_OPTION_KEY );
-		if ( ! is_array( $log ) ) {
-			$log = array();
-		}
+		// Read path applies TTL + entry-count retention and persists when rows drop.
+		$log = Policy::get_retained_log();
 
 		$icon_src = add_query_arg( 'ver', HANDL_AICAC_VERSION, HANDL_AICAC_URL . 'assets/icon-128x128.png' );
 
@@ -205,6 +214,30 @@ final class Admin {
 		}
 		if ( $this->webhook_url_rejected ) {
 			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Webhook URL was not saved: enter a valid http:// or https:// URL (or leave blank to disable).', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		if ( is_array( $this->bulk_result ) ) {
+			$status = (string) ( $this->bulk_result['status'] ?? '' );
+			if ( 'empty' === $status ) {
+				echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__( 'No plugins selected. Bulk allow/deny made no changes.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			} elseif ( 'invalid' === $status ) {
+				echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Choose Set to Allow or Set to Deny, then Apply.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			} elseif ( 'ok' === $status ) {
+				$n = (int) ( $this->bulk_result['updated'] ?? 0 );
+				echo '<div class="notice notice-success is-dismissible"><p>';
+				echo esc_html(
+					sprintf(
+						/* translators: %d: number of plugins updated */
+						_n(
+							'Updated AI access for %d selected plugin.',
+							'Updated AI access for %d selected plugins.',
+							$n,
+							'handl-ai-connector-access-control'
+						),
+						$n
+					)
+				);
+				echo '</p></div>';
+			}
 		}
 		if ( $quick_saved ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Plugin rule updated.', 'handl-ai-connector-access-control' ) . '</p></div>';
@@ -279,6 +312,20 @@ final class Admin {
 			echo '</p></div>';
 		}
 
+		// Distinct empty-window honesty when TTL pruned everything (not the same as wp_supports_ai).
+		$max_age_days = Policy::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
+		if ( null !== $max_age_days && 0 === count( $log ) && ( ! empty( $policy['log_enabled'] ) || ! empty( $policy['audit_only'] ) ) ) {
+			echo '<div class="notice notice-info"><p><strong>' . esc_html__( 'Retained audit log is empty for the current time window.', 'handl-ai-connector-access-control' ) . '</strong> ';
+			echo esc_html(
+				sprintf(
+					/* translators: %d: maximum log age in days */
+					__( 'Maximum log age is set to %d day(s): older rows were pruned by time-based retention. This is separate from site-wide AI disable via wp_supports_ai (which prevents calls from being logged at all).', 'handl-ai-connector-access-control' ),
+					$max_age_days
+				)
+			);
+			echo '</p></div>';
+		}
+
 		if ( ! empty( $policy['audit_only'] ) ) {
 			$audit_notice = esc_html__( 'Learn mode is on: calls are logged and never blocked. Per-plugin rules show as “would enforce” only. Turn off learn mode on the Activity tab when you are ready to enforce.', 'handl-ai-connector-access-control' );
 			if ( 'activity' !== $tab ) {
@@ -311,10 +358,19 @@ final class Admin {
 		echo '<div class="handl-aicac-tab-panel">';
 
 		$rules_form_id = 'handl-aicac-rules-save';
+		$bulk_form_id  = 'handl-aicac-bulk-rules';
 
 		echo '<form method="post" id="' . esc_attr( $rules_form_id ) . '" class="handl-aicac-rules-save-form">';
 		wp_nonce_field( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
 		echo '<input type="hidden" name="handl_aicac_action" value="save" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		echo '<input type="hidden" name="handl_aicac_status" value="' . esc_attr( $plugin_status_filter ) . '" />';
+		echo '<input type="hidden" name="handl_aicac_access" value="' . esc_attr( $plugin_access_filter ) . '" />';
+		echo '</form>';
+
+		echo '<form method="post" id="' . esc_attr( $bulk_form_id ) . '" class="handl-aicac-rules-save-form">';
+		wp_nonce_field( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="bulk_plugin_rules" />';
 		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
 		echo '<input type="hidden" name="handl_aicac_status" value="' . esc_attr( $plugin_status_filter ) . '" />';
 		echo '<input type="hidden" name="handl_aicac_access" value="' . esc_attr( $plugin_access_filter ) . '" />';
@@ -380,8 +436,24 @@ final class Admin {
 			echo '</p></div>';
 		}
 		$this->render_plugin_rules_filters( $plugin_status_filter, $plugin_access_filter );
+
+		echo '<div class="tablenav top handl-aicac-bulk-nav">';
+		echo '<div class="alignleft actions bulkactions">';
+		echo '<label for="handl-aicac-bulk-action" class="screen-reader-text">' . esc_html__( 'Select bulk action', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<select name="handl_aicac_bulk_action" id="handl-aicac-bulk-action" form="' . esc_attr( $bulk_form_id ) . '">';
+		echo '<option value="-1">' . esc_html__( 'Bulk actions', 'handl-ai-connector-access-control' ) . '</option>';
+		echo '<option value="allow">' . esc_html__( 'Set to Allow', 'handl-ai-connector-access-control' ) . '</option>';
+		echo '<option value="deny">' . esc_html__( 'Set to Deny', 'handl-ai-connector-access-control' ) . '</option>';
+		echo '</select> ';
+		echo '<input type="submit" class="button action" form="' . esc_attr( $bulk_form_id ) . '" value="' . esc_attr__( 'Apply', 'handl-ai-connector-access-control' ) . '" />';
+		echo '</div>';
+		echo '<br class="clear" />';
+		echo '</div>';
+
 		echo '<table class="widefat striped handl-aicac-rules-matrix">';
 		echo '<thead><tr>';
+		echo '<td id="cb" class="manage-column column-cb check-column"><label class="screen-reader-text" for="handl-aicac-bulk-select-all">' . esc_html__( 'Select all', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<input id="handl-aicac-bulk-select-all" type="checkbox" /></td>';
 		echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Status', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'AI access', 'handl-ai-connector-access-control' ) . '</th>';
@@ -430,6 +502,18 @@ final class Admin {
 			$force_m   = (string) ( $force_row['model'] ?? '' );
 
 			echo '<tr>';
+			echo '<th scope="row" class="check-column">';
+			echo '<label class="screen-reader-text" for="handl-aicac-bulk-cb-' . esc_attr( md5( $basename ) ) . '">';
+			echo esc_html(
+				sprintf(
+					/* translators: %s: plugin name */
+					__( 'Select %s', 'handl-ai-connector-access-control' ),
+					$name
+				)
+			);
+			echo '</label>';
+			echo '<input type="checkbox" class="handl-aicac-bulk-cb" id="handl-aicac-bulk-cb-' . esc_attr( md5( $basename ) ) . '" name="handl_aicac_bulk_plugins[]" value="' . esc_attr( $basename ) . '" form="' . esc_attr( $bulk_form_id ) . '" />';
+			echo '</th>';
 			echo '<td><strong>' . esc_html( $name ) . '</strong>';
 			if ( '' !== $force_p && '' !== $force_m && $unforced_n > 0 ) {
 				echo '<br /><span class="description handl-aicac-unforced-hint" style="font-size:11px;">';
@@ -491,6 +575,12 @@ final class Admin {
 
 		echo '</tbody>';
 		echo '</table>';
+
+		echo '<script>';
+		echo '(function(){var all=document.getElementById("handl-aicac-bulk-select-all");if(!all)return;';
+		echo 'all.addEventListener("change",function(){document.querySelectorAll(".handl-aicac-rules-matrix tbody input.handl-aicac-bulk-cb").forEach(function(cb){cb.checked=all.checked;});});';
+		echo '})();';
+		echo '</script>';
 
 		submit_button(
 			__( 'Save changes', 'handl-ai-connector-access-control' ),
@@ -644,7 +734,6 @@ final class Admin {
 		$pin      = Model_Force::pin_hold_stats( $log );
 		$unforced = Model_Force::count_unforced_unattributed( $log );
 		$has_pins = Model_Force::has_any_force_rules( $policy );
-		$rates    = Cost::rates_from_policy( $policy );
 
 		// Spend over retained log (AI Client rows with tokens only; direct_http has none).
 		$est_total   = 0.0;
@@ -664,7 +753,8 @@ final class Admin {
 			}
 			$in  = array_key_exists( 'input_tokens', $row ) ? (int) $row['input_tokens'] : null;
 			$out = array_key_exists( 'output_tokens', $row ) ? (int) $row['output_tokens'] : null;
-			$usd = Cost::estimate_usd( $in, $out, $rates );
+			$rates = Cost::rates_from_policy( $policy, isset( $row['provider'] ) ? (string) $row['provider'] : null );
+			$usd   = Cost::estimate_usd( $in, $out, $rates );
 			if ( null === $usd ) {
 				continue;
 			}
@@ -846,11 +936,10 @@ final class Admin {
 		echo '<div class="inside">';
 		if ( $est_any ) {
 			echo '<p class="handl-aicac-spend-total"><strong>$' . esc_html( number_format_i18n( $est_total, 2 ) ) . '</strong> ';
-			echo '<span class="description">' . esc_html__( 'est. · default rates', 'handl-ai-connector-access-control' );
-			if ( ! Cost::using_default_rates( $policy ) ) {
-				echo ' ' . esc_html__( '(custom rates)', 'handl-ai-connector-access-control' );
-			}
-			echo '</span></p>';
+			$rate_label = Cost::using_default_rates( $policy )
+				? __( 'est. · default rates', 'handl-ai-connector-access-control' )
+				: __( 'est. · custom rates', 'handl-ai-connector-access-control' );
+			echo '<span class="description">' . esc_html( $rate_label ) . '</span></p>';
 			echo '<table class="widefat striped handl-aicac-tile-table"><thead><tr>';
 			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '<th class="column-num">' . esc_html__( 'Est. $', 'handl-ai-connector-access-control' ) . '</th>';
@@ -1061,10 +1150,11 @@ final class Admin {
 				'<p class="handl-aicac-insights-meta">%s</p>',
 				esc_html(
 					sprintf(
-						/* translators: 1: stored entry count, 2: retention limit (entries) */
-						__( 'Based on %1$d of %2$d stored entries (entry-based retention; no TTL).', 'handl-ai-connector-access-control' ),
+						/* translators: 1: stored entry count, 2: retention limit (entries), 3: retention mode phrase */
+						__( 'Based on %1$d of %2$d stored entries (%3$s).', 'handl-ai-connector-access-control' ),
 						$stored_count,
-						$log_limit_policy
+						$log_limit_policy,
+						$this->retention_mode_phrase( $policy )
 					)
 				)
 			);
@@ -1392,23 +1482,26 @@ final class Admin {
 			}
 		}
 
+		$retention_phrase = $this->retention_mode_phrase( $policy );
 		echo '<p class="handl-aicac-log-meta">';
 		if ( $this->log_filters_active( $log_filters ) ) {
 			printf(
-				/* translators: 1: entries shown, 2: matching-entry count, 3: stored entry count, 4: retention limit */
-				esc_html__( 'Showing %1$d of %2$d matching entries (newest first, up to 50). %3$d of %4$d stored entries retained (entry-based; no TTL).', 'handl-ai-connector-access-control' ),
+				/* translators: 1: entries shown, 2: matching-entry count, 3: stored entry count, 4: retention limit, 5: retention mode phrase */
+				esc_html__( 'Showing %1$d of %2$d matching entries (newest first, up to 50). %3$d of %4$d stored entries retained (%5$s).', 'handl-ai-connector-access-control' ),
 				count( $rows_to_show ),
 				$matching_count,
 				(int) $stored_count,
-				(int) $log_limit_policy
+				(int) $log_limit_policy,
+				$retention_phrase
 			);
 		} else {
 			printf(
-				/* translators: 1: stored entry count, 2: retention limit, 3: rows shown in table */
-				esc_html__( 'Showing up to %3$d newest rows. %1$d of %2$d stored entries retained (entry-based; no TTL). Provider/model are read from the prompt builder when available. Input/output tokens are filled after the model responds (allowed generate_* calls only).', 'handl-ai-connector-access-control' ),
+				/* translators: 1: stored entry count, 2: retention limit, 3: rows shown in table, 4: retention mode phrase */
+				esc_html__( 'Showing up to %3$d newest rows. %1$d of %2$d stored entries retained (%4$s). Provider/model are read from the prompt builder when available. Input/output tokens are filled after the model responds (allowed generate_* calls only).', 'handl-ai-connector-access-control' ),
 				(int) $stored_count,
 				(int) $log_limit_policy,
-				count( $rows_to_show )
+				count( $rows_to_show ),
+				$retention_phrase
 			);
 		}
 		echo '</p>';
@@ -1751,6 +1844,24 @@ final class Admin {
 	}
 
 	/**
+	 * Human phrase for retention mode used in Insights / Activity meta lines.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function retention_mode_phrase( array $policy ): string {
+		$max_age = Policy::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
+		if ( null === $max_age ) {
+			return __( 'entry-based retention; no time-based TTL', 'handl-ai-connector-access-control' );
+		}
+
+		return sprintf(
+			/* translators: %d: maximum log age in days */
+			__( 'entry-count cap plus %d-day time-based TTL; stricter limit wins', 'handl-ai-connector-access-control' ),
+			$max_age
+		);
+	}
+
+	/**
 	 * @param array<string,mixed> $row
 	 */
 	private function get_log_row_field( array $row, string $field ): string {
@@ -1780,6 +1891,8 @@ final class Admin {
 		$audit_only  = ! empty( $policy['audit_only'] );
 		$log_enabled = ! empty( $policy['log_enabled'] );
 		$log_limit   = (int) ( $policy['log_limit'] ?? 200 );
+		$max_age     = Policy::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
+		$max_age_val = null === $max_age ? '' : (string) $max_age;
 
 		echo '<p class="description" style="max-width:52em;margin-bottom:1em;">';
 		echo esc_html__( 'Use this tab to observe AI Client and direct-HTTP AI activity. Learn mode logs every call without blocking. When learn mode is off, you can still log calls for troubleshooting. Enforcement lives on the Rules and Dashboard tabs.', 'handl-ai-connector-access-control' );
@@ -1815,7 +1928,15 @@ final class Admin {
 		echo '<th scope="row"><label for="handl-aicac-log-limit">' . esc_html__( 'Retain entries', 'handl-ai-connector-access-control' ) . '</label></th>';
 		echo '<td>';
 		echo '<input type="number" id="handl-aicac-log-limit" name="handl_aicac_log_limit" value="' . esc_attr( (string) $log_limit ) . '" min="20" max="1000" step="1" class="small-text" />';
-		echo ' <span class="description">' . esc_html__( '(20–1000). Oldest entries drop when full. No time-based expiry.', 'handl-ai-connector-access-control' ) . '</span>';
+		echo ' <span class="description">' . esc_html__( '(20–1000). Oldest entries drop when the count cap is full.', 'handl-ai-connector-access-control' ) . '</span>';
+		echo '</td>';
+		echo '</tr>';
+
+		echo '<tr>';
+		echo '<th scope="row"><label for="handl-aicac-log-max-age-days">' . esc_html__( 'Maximum log age (days)', 'handl-ai-connector-access-control' ) . '</label></th>';
+		echo '<td>';
+		echo '<input type="number" id="handl-aicac-log-max-age-days" name="handl_aicac_log_max_age_days" value="' . esc_attr( $max_age_val ) . '" min="1" max="3650" step="1" class="small-text" placeholder="" />';
+		echo ' <span class="description">' . esc_html__( 'Optional. Leave empty for no time-based expiry. When set, entries older than this many days are removed on the next read or append (in addition to the entry-count cap; the stricter limit wins).', 'handl-ai-connector-access-control' ) . '</span>';
 		echo '</td>';
 		echo '</tr>';
 
@@ -1872,16 +1993,52 @@ final class Admin {
 		echo '</td>';
 		echo '</tr>';
 
-		// F3: estimated $ rates (observability only).
-		$rates = Cost::rates_from_policy( $policy );
+		// F3 / AICAC-24: estimated $ rates (observability only).
+		$rates          = Cost::fallback_rates_from_policy( $policy );
+		$provider_rates = Cost::sanitize_provider_rates( $policy['est_usd_provider_rates'] ?? array() );
 		echo '<tr>';
 		echo '<th scope="row">' . esc_html__( 'Estimated cost rates', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<td>';
 		echo '<p class="description" style="margin-top:0;">' . esc_html__( 'Rough USD per 1M tokens for the audit “est. $” column only. Not billing, not enforcement — placeholders so you can scan spend-ish signal from retained logs.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p><strong>' . esc_html__( 'Global fallback', 'handl-ai-connector-access-control' ) . '</strong></p>';
 		echo '<label for="handl-aicac-est-in">' . esc_html__( 'Input (prompt) $/1M', 'handl-ai-connector-access-control' ) . '</label> ';
 		echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="handl-aicac-est-in" name="handl_aicac_est_usd_input_per_m" value="' . esc_attr( (string) $rates['input_per_m'] ) . '" /> ';
 		echo '<label for="handl-aicac-est-out" style="margin-left:12px;">' . esc_html__( 'Output (completion) $/1M', 'handl-ai-connector-access-control' ) . '</label> ';
 		echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="handl-aicac-est-out" name="handl_aicac_est_usd_output_per_m" value="' . esc_attr( (string) $rates['output_per_m'] ) . '" />';
+		echo '<p class="description">' . esc_html__( 'Used when a log row has no provider, an unknown provider, or no per-provider pair below.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p style="margin-top:12px;"><strong>' . esc_html__( 'Per-provider overrides (optional)', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		echo '<p class="description">' . esc_html__( 'Leave both fields empty to keep using the global fallback for that provider. Est. only — not billing.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<table class="widefat striped" style="max-width:36em;"><thead><tr>';
+		echo '<th>' . esc_html__( 'Provider', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Input $/1M', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Output $/1M', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '</tr></thead><tbody>';
+		foreach ( Cost::KNOWN_PROVIDERS as $provider_id ) {
+			$row_in  = isset( $provider_rates[ $provider_id ] ) ? (string) $provider_rates[ $provider_id ]['input_per_m'] : '';
+			$row_out = isset( $provider_rates[ $provider_id ] ) ? (string) $provider_rates[ $provider_id ]['output_per_m'] : '';
+			$in_id   = 'handl-aicac-est-prov-' . $provider_id . '-in';
+			$out_id  = 'handl-aicac-est-prov-' . $provider_id . '-out';
+			echo '<tr>';
+			echo '<td><code>' . esc_html( $provider_id ) . '</code></td>';
+			echo '<td><label class="screen-reader-text" for="' . esc_attr( $in_id ) . '">' . esc_html(
+				sprintf(
+					/* translators: %s: provider id */
+					__( '%s input $/1M', 'handl-ai-connector-access-control' ),
+					$provider_id
+				)
+			) . '</label>';
+			echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="' . esc_attr( $in_id ) . '" name="handl_aicac_est_usd_provider[' . esc_attr( $provider_id ) . '][input]" value="' . esc_attr( $row_in ) . '" placeholder="' . esc_attr__( 'fallback', 'handl-ai-connector-access-control' ) . '" /></td>';
+			echo '<td><label class="screen-reader-text" for="' . esc_attr( $out_id ) . '">' . esc_html(
+				sprintf(
+					/* translators: %s: provider id */
+					__( '%s output $/1M', 'handl-ai-connector-access-control' ),
+					$provider_id
+				)
+			) . '</label>';
+			echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="' . esc_attr( $out_id ) . '" name="handl_aicac_est_usd_provider[' . esc_attr( $provider_id ) . '][output]" value="' . esc_attr( $row_out ) . '" placeholder="' . esc_attr__( 'fallback', 'handl-ai-connector-access-control' ) . '" /></td>';
+			echo '</tr>';
+		}
+		echo '</tbody></table>';
 		echo '</td>';
 		echo '</tr>';
 
@@ -1928,6 +2085,53 @@ final class Admin {
 		$this->apply_model_force_settings_from_post( $policy );
 
 		Policy::save_policy( $policy );
+	}
+
+	/**
+	 * AICAC-BULK: set allow/deny for checked plugin rows only.
+	 *
+	 * Reuses handl_aicac_save_policy nonce + manage_options page gate.
+	 * Does not rewrite capability-family or model-force maps.
+	 */
+	private function handle_bulk_plugin_rules(): void {
+		$posted_action = filter_input( INPUT_POST, 'handl_aicac_bulk_action', FILTER_UNSAFE_RAW );
+		$rule          = sanitize_text_field( (string) $posted_action );
+		if ( 'allow' !== $rule && 'deny' !== $rule ) {
+			$this->bulk_result = array( 'status' => 'invalid' );
+			return;
+		}
+
+		$posted = filter_input( INPUT_POST, 'handl_aicac_bulk_plugins', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		$selected = is_array( $posted ) ? $posted : array();
+		if ( empty( $selected ) ) {
+			$this->bulk_result = array( 'status' => 'empty' );
+			return;
+		}
+
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		$installed = function_exists( 'get_plugins' ) ? get_plugins() : array();
+		if ( ! is_array( $installed ) ) {
+			$installed = array();
+		}
+
+		$policy = Policy::get_policy();
+		$result = Policy::apply_bulk_plugin_rules( $policy, $selected, $rule, $installed );
+		if ( false === $result ) {
+			$this->bulk_result = array( 'status' => 'invalid' );
+			return;
+		}
+
+		if ( 0 === (int) $result['updated'] ) {
+			// All selections invalid/removed — treat as no-op notice, no save.
+			$this->bulk_result = array( 'status' => 'empty' );
+			return;
+		}
+
+		Policy::save_policy( $result['policy'] );
+		$this->bulk_result = array(
+			'status'  => 'ok',
+			'updated' => (int) $result['updated'],
+		);
 	}
 
 	/**
@@ -2220,6 +2424,14 @@ final class Admin {
 			$policy['log_limit'] = (int) $posted_log_limit;
 		}
 
+		// Empty field = TTL off. Invalid values also coerce to off via sanitize.
+		$posted_max_age = filter_input( INPUT_POST, 'handl_aicac_log_max_age_days', FILTER_UNSAFE_RAW );
+		if ( null === $posted_max_age || false === $posted_max_age || '' === trim( (string) $posted_max_age ) ) {
+			$policy['log_max_age_days'] = null;
+		} else {
+			$policy['log_max_age_days'] = Policy::sanitize_log_max_age_days( $posted_max_age );
+		}
+
 		$posted_alert = filter_input( INPUT_POST, 'handl_aicac_alert_on_deny', FILTER_UNSAFE_RAW );
 		$policy['alert_on_deny'] = ! empty( $posted_alert );
 		$policy['alert_mode']    = Alerts::sanitize_mode( filter_input( INPUT_POST, 'handl_aicac_alert_mode', FILTER_UNSAFE_RAW ) );
@@ -2266,6 +2478,8 @@ final class Admin {
 			filter_input( INPUT_POST, 'handl_aicac_est_usd_output_per_m', FILTER_UNSAFE_RAW ),
 			Cost::DEFAULT_OUTPUT_PER_M
 		);
+		$posted_provider_rates = filter_input( INPUT_POST, 'handl_aicac_est_usd_provider', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		$policy['est_usd_provider_rates'] = Cost::sanitize_provider_rates( is_array( $posted_provider_rates ) ? $posted_provider_rates : array() );
 	}
 
 	/**
@@ -2408,12 +2622,8 @@ final class Admin {
 		$enabled  = ! empty( $policy['role_gate_enabled'] );
 		$available = Policy::available_roles_for_gate();
 		$allowed  = Policy::sanitize_allowed_roles( $policy['allowed_roles'] ?? array() );
-		// Default checklist presentation when gate has never stored a selection: all roles checked.
-		if ( empty( $allowed ) && ! empty( $available ) ) {
-			$checked = array_keys( $available );
-		} else {
-			$checked = $allowed;
-		}
+		// Gate ON: mirror stored list exactly (empty = none checked). Gate OFF + empty: all checked default.
+		$checked  = Policy::role_gate_checked_roles( $enabled, $allowed, $available );
 		$list_class = 'handl-aicac-role-gate-list' . ( $enabled ? '' : ' is-muted' );
 
 		echo '<tr>';
@@ -2536,6 +2746,8 @@ final class Admin {
 		$this->apply_log_settings_from_post( $policy );
 
 		Policy::save_policy( $policy );
+		// Apply a newly saved TTL immediately so the Activity table matches settings.
+		Policy::prune_stored_log();
 	}
 
 	private function render_option( string $value, string $current, string $label ): void {
@@ -2715,7 +2927,7 @@ final class Admin {
 		echo '</td>';
 		echo '<td class="column-tokens">' . $this->render_token_count( $input_tokens ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo '<td class="column-tokens">' . $this->render_token_count( $output_tokens, $thought_tokens ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		echo '<td class="column-tokens">' . $this->render_est_cost_cell( $input_tokens, $output_tokens, $policy ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo '<td class="column-tokens">' . $this->render_est_cost_cell( $input_tokens, $output_tokens, $policy, $provider ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo '<td>';
 		if ( $plugin ) {
 			echo '<strong>' . esc_html( $plugin_label ) . '</strong><br /><code>' . esc_html( $plugin ) . '</code>';
@@ -2816,13 +3028,14 @@ final class Admin {
 	 * Estimated USD cell — observability only; never enforcement.
 	 *
 	 * @param array<string,mixed> $policy
+	 * @param string              $provider Log-row provider id (may be empty).
 	 */
-	private function render_est_cost_cell( ?int $input_tokens, ?int $output_tokens, array $policy ): string {
+	private function render_est_cost_cell( ?int $input_tokens, ?int $output_tokens, array $policy, string $provider = '' ): string {
 		if ( null === $input_tokens && null === $output_tokens ) {
 			return '<span class="handl-aicac-muted">—</span>';
 		}
 
-		$usd = Cost::estimate_usd( $input_tokens, $output_tokens, Cost::rates_from_policy( $policy ) );
+		$usd = Cost::estimate_usd( $input_tokens, $output_tokens, Cost::rates_from_policy( $policy, $provider ) );
 		if ( null === $usd ) {
 			return '<span class="handl-aicac-muted">—</span>';
 		}
@@ -2833,7 +3046,7 @@ final class Admin {
 			: __( 'Rough estimate from configured rates × tokens. Not a bill.', 'handl-ai-connector-access-control' );
 		$label          = $using_defaults
 			? __( 'est. · default rates', 'handl-ai-connector-access-control' )
-			: __( 'est.', 'handl-ai-connector-access-control' );
+			: __( 'est. · custom rates', 'handl-ai-connector-access-control' );
 
 		return '<span class="handl-aicac-est-cost" title="' . esc_attr( $title ) . '">'
 			. esc_html( Cost::format_usd( $usd ) )

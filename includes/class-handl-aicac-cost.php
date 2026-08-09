@@ -24,41 +24,79 @@ final class Cost {
 	public const DEFAULT_OUTPUT_PER_M = 10.00;
 
 	/**
+	 * Known provider ids that accept an optional per-provider rate pair (AICAC-24).
+	 *
+	 * @var list<string>
+	 */
+	public const KNOWN_PROVIDERS = array(
+		'openai',
+		'anthropic',
+		'google',
+		'cohere',
+		'mistral',
+		'groq',
+		'together',
+		'fireworks',
+		'perplexity',
+		'xai',
+		'deepseek',
+		'openrouter',
+	);
+
+	/**
+	 * Global fallback rates from policy (ignores per-provider overrides).
+	 *
 	 * @param array<string,mixed> $policy
 	 * @return array{input_per_m:float,output_per_m:float}
 	 */
-	public static function rates_from_policy( array $policy ): array {
+	public static function fallback_rates_from_policy( array $policy ): array {
 		$in  = isset( $policy['est_usd_input_per_m'] ) ? (float) $policy['est_usd_input_per_m'] : self::DEFAULT_INPUT_PER_M;
 		$out = isset( $policy['est_usd_output_per_m'] ) ? (float) $policy['est_usd_output_per_m'] : self::DEFAULT_OUTPUT_PER_M;
-		if ( $in < 0 ) {
-			$in = 0.0;
-		}
-		if ( $out < 0 ) {
-			$out = 0.0;
-		}
-		// Cap absurd config typos.
-		if ( $in > 10000 ) {
-			$in = 10000.0;
-		}
-		if ( $out > 10000 ) {
-			$out = 10000.0;
-		}
 
 		return array(
-			'input_per_m'  => $in,
-			'output_per_m' => $out,
+			'input_per_m'  => self::clamp_rate( $in ),
+			'output_per_m' => self::clamp_rate( $out ),
 		);
 	}
 
 	/**
-	 * True when rates still match the built-in placeholders (admin has not set custom rates).
+	 * Resolve rates for an optional provider id.
+	 *
+	 * Unknown/missing provider → global fallback. Known provider with no
+	 * configured pair → global fallback. Configured pair → that pair only.
+	 *
+	 * @param array<string,mixed> $policy
+	 * @param string|null         $provider Log-row provider id (may be empty).
+	 * @return array{input_per_m:float,output_per_m:float}
+	 */
+	public static function rates_from_policy( array $policy, ?string $provider = null ): array {
+		$fallback = self::fallback_rates_from_policy( $policy );
+		$id       = self::normalize_provider_id( (string) ( $provider ?? '' ) );
+		if ( '' === $id || ! self::is_known_provider( $id ) ) {
+			return $fallback;
+		}
+
+		$map = self::sanitize_provider_rates( $policy['est_usd_provider_rates'] ?? array() );
+		if ( ! isset( $map[ $id ] ) ) {
+			return $fallback;
+		}
+
+		return $map[ $id ];
+	}
+
+	/**
+	 * True when global rates match built-in placeholders and no per-provider overrides exist.
 	 *
 	 * @param array<string,mixed> $policy
 	 */
 	public static function using_default_rates( array $policy ): bool {
-		$rates = self::rates_from_policy( $policy );
-		return abs( $rates['input_per_m'] - self::DEFAULT_INPUT_PER_M ) < 0.00001
-			&& abs( $rates['output_per_m'] - self::DEFAULT_OUTPUT_PER_M ) < 0.00001;
+		$rates = self::fallback_rates_from_policy( $policy );
+		if ( abs( $rates['input_per_m'] - self::DEFAULT_INPUT_PER_M ) >= 0.00001
+			|| abs( $rates['output_per_m'] - self::DEFAULT_OUTPUT_PER_M ) >= 0.00001 ) {
+			return false;
+		}
+
+		return empty( self::sanitize_provider_rates( $policy['est_usd_provider_rates'] ?? array() ) );
 	}
 
 	/**
@@ -72,7 +110,7 @@ final class Cost {
 		if ( null === $rates ) {
 			$rates = array(
 				'input_per_m'  => self::DEFAULT_INPUT_PER_M,
-				'output_per_m' => self::DEFAULT_OUTPUT_PER_M,
+				'output_per_m'  => self::DEFAULT_OUTPUT_PER_M,
 			);
 		}
 
@@ -108,7 +146,69 @@ final class Cost {
 		if ( ! is_numeric( $raw ) ) {
 			return $default;
 		}
-		$v = (float) $raw;
+
+		return self::clamp_rate( (float) $raw );
+	}
+
+	/**
+	 * Keep only known provider ids with a sanitized input/output pair.
+	 *
+	 * Empty / non-array input → empty map (no overrides). Unknown ids dropped.
+	 *
+	 * @param mixed $raw
+	 * @return array<string,array{input_per_m:float,output_per_m:float}>
+	 */
+	public static function sanitize_provider_rates( $raw ): array {
+		if ( ! is_array( $raw ) ) {
+			return array();
+		}
+
+		$out = array();
+		foreach ( self::KNOWN_PROVIDERS as $id ) {
+			if ( ! isset( $raw[ $id ] ) || ! is_array( $raw[ $id ] ) ) {
+				continue;
+			}
+			$row = $raw[ $id ];
+			$in_raw  = $row['input_per_m'] ?? $row['input'] ?? null;
+			$out_raw = $row['output_per_m'] ?? $row['output'] ?? null;
+			// Both empty → not configured for this provider.
+			if ( self::is_blank_rate( $in_raw ) && self::is_blank_rate( $out_raw ) ) {
+				continue;
+			}
+			$out[ $id ] = array(
+				'input_per_m'  => self::sanitize_rate( $in_raw, self::DEFAULT_INPUT_PER_M ),
+				'output_per_m' => self::sanitize_rate( $out_raw, self::DEFAULT_OUTPUT_PER_M ),
+			);
+		}
+
+		return $out;
+	}
+
+	public static function is_known_provider( string $id ): bool {
+		return in_array( $id, self::KNOWN_PROVIDERS, true );
+	}
+
+	public static function normalize_provider_id( string $provider ): string {
+		$provider = strtolower( trim( $provider ) );
+		// Strip accidental whitespace / casing only — ids are lowercase snake-ish.
+		return preg_replace( '/[^a-z0-9_-]/', '', $provider ) ?? '';
+	}
+
+	/**
+	 * @param mixed $raw
+	 */
+	private static function is_blank_rate( $raw ): bool {
+		if ( null === $raw ) {
+			return true;
+		}
+		if ( is_string( $raw ) ) {
+			return '' === trim( $raw );
+		}
+
+		return false;
+	}
+
+	private static function clamp_rate( float $v ): float {
 		if ( $v < 0 ) {
 			return 0.0;
 		}

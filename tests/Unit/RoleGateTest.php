@@ -148,4 +148,21 @@ final class RoleGateTest extends TestCase {
 		$this->assertTrue( $result['prevent'] );
 		$this->assertSame( 'kill_switch', $result['reason'] );
 	}
+
+
+	public function test_checked_roles_gate_on_empty_shows_none(): void {
+		$available = array( 'administrator' => 'Administrator', 'editor' => 'Editor' );
+		$this->assertSame( array(), Policy::role_gate_checked_roles( true, array(), $available ) );
+	}
+
+	public function test_checked_roles_gate_on_mirrors_stored(): void {
+		$available = array( 'administrator' => 'Administrator', 'editor' => 'Editor', 'author' => 'Author' );
+		$this->assertSame( array( 'administrator' ), Policy::role_gate_checked_roles( true, array( 'administrator' ), $available ) );
+	}
+
+	public function test_checked_roles_gate_off_empty_defaults_all(): void {
+		$available = array( 'administrator' => 'Administrator', 'editor' => 'Editor' );
+		$this->assertSame( array( 'administrator', 'editor' ), Policy::role_gate_checked_roles( false, array(), $available ) );
+	}
+
 }
