@@ -26,6 +26,10 @@ Default behavior is **allow**.
 
 **Emergency kill switch** blocks all AI Client calls except plugins you list as exceptions.
 
+**Optional role gate** (Rules tab) limits which WordPress roles may *initiate* AI Client operations. Default is off (all roles). When enabled, a signed-in user whose role is unchecked is denied through the normal deny path (audit log + denial alerts, reason `role`). Cron, WP-CLI, and other no-user-context requests are **not** affected by the role gate in v1. Audit rows record the initiating role slug(s) when a user context exists — not usernames.
+
+**Denial email alerts** (opt-in) notify an admin when enforcement blocks a prompt — immediate (rate-limited) or hourly digest. An optional **Webhook URL** on the same settings posts the same privacy-scoped JSON to an http(s) endpoint (Slack/Teams-compatible) on the same trigger, rate limit, and digest mode. **Weekly report email** mails Dashboard aggregates (coverage, denials, estimated spend, pins) via the same `wp_mail` path; selected by default; reports are sent only while logging or learn mode is on, and it is always toggleable. **Estimated $** on the audit log and in the weekly report is a rough token × rate placeholder, not billing. When WordPress disables AI site-wide via `wp_supports_ai`, an honesty banner explains why the audit log may be empty.
+
 **Denial email alerts** (opt-in) notify an admin when enforcement blocks a prompt — immediate (rate-limited) or hourly digest. An optional **Webhook URL** on the same settings posts the same privacy-scoped JSON to an http(s) endpoint (Slack/Teams-compatible) on the same trigger, rate limit, and digest mode. **Weekly report email** mails Dashboard aggregates (coverage, denials, estimated spend, pins) via the same `wp_mail` path; selected by default; reports are sent only while logging or learn mode is on, and it is always toggleable. **Estimated $** on the audit log and in the weekly report is a rough token × rate placeholder (optional per-provider overrides; otherwise a global fallback), not billing. When WordPress disables AI site-wide via `wp_supports_ai`, an honesty banner explains why the audit log may be empty.
 
 **EXPERIMENTAL per-plugin model force** (Rules tab; empty force fields = off) can pin allowed AI Client generations to a provider/model **per detected caller**. Pins follow the nearest plugin frame on the PHP backtrace (best-effort) — not who initiated the call, and **not a spend guarantee**. Unattributed calls (cron, REST bootstraps, shared libraries, MU plugins, etc.) run unforced by default; admins can opt into an explicit unattributed target via the same “Unknown operations”-style control. Force relies on unsupported shallow-clone behaviour in the AI Client prevent hook, verifies the final route with exact provider/model matching before the provider call, and fail-closes on mismatch. Prefer official core routing filters when available.
@@ -50,6 +54,7 @@ If you enable **recent-call logging** in Settings → HandL AI Connector Access 
 - Input and output token counts when the AI Client completes a generation (best-effort)
 - Best-effort calling plugin (plugin basename) and source file
 - Current user id and display name
+- Initiating WordPress role slug(s) when a user context exists (role gate / audit; no usernames beyond display name already listed)
 - Full request URI (including query string, kept only on this site) for AI Client admin-request context
 - For **direct-HTTP AI observations** only: request **host** and **path** (query string stripped). No request body, no Authorization headers, no API keys. Channel label `direct_http` and matched provider id when known.
 
@@ -115,6 +120,11 @@ Yes. With WP-CLI available and this plugin active:
 5. Activity — OBSERVE direct_http rows contrasted with governed AI Client decisions.
 
 == Changelog ==
+
+= 1.1.1 =
+* AICAC-ROLE: Optional per-role gate on the Rules tab — checklist of WordPress roles allowed to initiate AI Client operations (default off = all roles).
+* Deny path uses existing policy machinery with reason `role`; cron/CLI (no user context) bypass the gate in v1.
+* Audit log records initiating role slug(s) when a user context exists (no usernames/PII).
 
 = 1.1.0 =
 * AICAC-TTL: Optional maximum log age (days) on Activity — time-based prune on read/append in addition to the entry-count ring buffer; empty field keeps entry-count-only retention.
