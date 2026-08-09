@@ -152,7 +152,6 @@ final class Weekly_Report {
 		$pin      = Model_Force::pin_hold_stats( $log );
 		$unforced = Model_Force::count_unforced_unattributed( $log );
 		$has_pins = Model_Force::has_any_force_rules( $policy );
-		$rates    = Cost::rates_from_policy( $policy );
 
 		$est_total    = 0.0;
 		$est_any      = false;
@@ -172,7 +171,8 @@ final class Weekly_Report {
 			}
 			$in  = array_key_exists( 'input_tokens', $row ) ? (int) $row['input_tokens'] : null;
 			$out = array_key_exists( 'output_tokens', $row ) ? (int) $row['output_tokens'] : null;
-			$usd = Cost::estimate_usd( $in, $out, $rates );
+			$rates = Cost::rates_from_policy( $policy, isset( $row['provider'] ) ? (string) $row['provider'] : null );
+			$usd   = Cost::estimate_usd( $in, $out, $rates );
 			if ( null === $usd ) {
 				continue;
 			}

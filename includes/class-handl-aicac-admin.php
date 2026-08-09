@@ -643,7 +643,6 @@ final class Admin {
 		$pin      = Model_Force::pin_hold_stats( $log );
 		$unforced = Model_Force::count_unforced_unattributed( $log );
 		$has_pins = Model_Force::has_any_force_rules( $policy );
-		$rates    = Cost::rates_from_policy( $policy );
 
 		// Spend over retained log (AI Client rows with tokens only; direct_http has none).
 		$est_total   = 0.0;
@@ -663,7 +662,8 @@ final class Admin {
 			}
 			$in  = array_key_exists( 'input_tokens', $row ) ? (int) $row['input_tokens'] : null;
 			$out = array_key_exists( 'output_tokens', $row ) ? (int) $row['output_tokens'] : null;
-			$usd = Cost::estimate_usd( $in, $out, $rates );
+			$rates = Cost::rates_from_policy( $policy, isset( $row['provider'] ) ? (string) $row['provider'] : null );
+			$usd   = Cost::estimate_usd( $in, $out, $rates );
 			if ( null === $usd ) {
 				continue;
 			}
@@ -845,11 +845,10 @@ final class Admin {
 		echo '<div class="inside">';
 		if ( $est_any ) {
 			echo '<p class="handl-aicac-spend-total"><strong>$' . esc_html( number_format_i18n( $est_total, 2 ) ) . '</strong> ';
-			echo '<span class="description">' . esc_html__( 'est. · default rates', 'handl-ai-connector-access-control' );
-			if ( ! Cost::using_default_rates( $policy ) ) {
-				echo ' ' . esc_html__( '(custom rates)', 'handl-ai-connector-access-control' );
-			}
-			echo '</span></p>';
+			$rate_label = Cost::using_default_rates( $policy )
+				? __( 'est. · default rates', 'handl-ai-connector-access-control' )
+				: __( 'est. · custom rates', 'handl-ai-connector-access-control' );
+			echo '<span class="description">' . esc_html( $rate_label ) . '</span></p>';
 			echo '<table class="widefat striped handl-aicac-tile-table"><thead><tr>';
 			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '<th class="column-num">' . esc_html__( 'Est. $', 'handl-ai-connector-access-control' ) . '</th>';
@@ -1871,16 +1870,52 @@ final class Admin {
 		echo '</td>';
 		echo '</tr>';
 
-		// F3: estimated $ rates (observability only).
-		$rates = Cost::rates_from_policy( $policy );
+		// F3 / AICAC-24: estimated $ rates (observability only).
+		$rates          = Cost::fallback_rates_from_policy( $policy );
+		$provider_rates = Cost::sanitize_provider_rates( $policy['est_usd_provider_rates'] ?? array() );
 		echo '<tr>';
 		echo '<th scope="row">' . esc_html__( 'Estimated cost rates', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<td>';
 		echo '<p class="description" style="margin-top:0;">' . esc_html__( 'Rough USD per 1M tokens for the audit “est. $” column only. Not billing, not enforcement — placeholders so you can scan spend-ish signal from retained logs.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p><strong>' . esc_html__( 'Global fallback', 'handl-ai-connector-access-control' ) . '</strong></p>';
 		echo '<label for="handl-aicac-est-in">' . esc_html__( 'Input (prompt) $/1M', 'handl-ai-connector-access-control' ) . '</label> ';
 		echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="handl-aicac-est-in" name="handl_aicac_est_usd_input_per_m" value="' . esc_attr( (string) $rates['input_per_m'] ) . '" /> ';
 		echo '<label for="handl-aicac-est-out" style="margin-left:12px;">' . esc_html__( 'Output (completion) $/1M', 'handl-ai-connector-access-control' ) . '</label> ';
 		echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="handl-aicac-est-out" name="handl_aicac_est_usd_output_per_m" value="' . esc_attr( (string) $rates['output_per_m'] ) . '" />';
+		echo '<p class="description">' . esc_html__( 'Used when a log row has no provider, an unknown provider, or no per-provider pair below.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p style="margin-top:12px;"><strong>' . esc_html__( 'Per-provider overrides (optional)', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		echo '<p class="description">' . esc_html__( 'Leave both fields empty to keep using the global fallback for that provider. Est. only — not billing.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<table class="widefat striped" style="max-width:36em;"><thead><tr>';
+		echo '<th>' . esc_html__( 'Provider', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Input $/1M', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Output $/1M', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '</tr></thead><tbody>';
+		foreach ( Cost::KNOWN_PROVIDERS as $provider_id ) {
+			$row_in  = isset( $provider_rates[ $provider_id ] ) ? (string) $provider_rates[ $provider_id ]['input_per_m'] : '';
+			$row_out = isset( $provider_rates[ $provider_id ] ) ? (string) $provider_rates[ $provider_id ]['output_per_m'] : '';
+			$in_id   = 'handl-aicac-est-prov-' . $provider_id . '-in';
+			$out_id  = 'handl-aicac-est-prov-' . $provider_id . '-out';
+			echo '<tr>';
+			echo '<td><code>' . esc_html( $provider_id ) . '</code></td>';
+			echo '<td><label class="screen-reader-text" for="' . esc_attr( $in_id ) . '">' . esc_html(
+				sprintf(
+					/* translators: %s: provider id */
+					__( '%s input $/1M', 'handl-ai-connector-access-control' ),
+					$provider_id
+				)
+			) . '</label>';
+			echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="' . esc_attr( $in_id ) . '" name="handl_aicac_est_usd_provider[' . esc_attr( $provider_id ) . '][input]" value="' . esc_attr( $row_in ) . '" placeholder="' . esc_attr__( 'fallback', 'handl-ai-connector-access-control' ) . '" /></td>';
+			echo '<td><label class="screen-reader-text" for="' . esc_attr( $out_id ) . '">' . esc_html(
+				sprintf(
+					/* translators: %s: provider id */
+					__( '%s output $/1M', 'handl-ai-connector-access-control' ),
+					$provider_id
+				)
+			) . '</label>';
+			echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="' . esc_attr( $out_id ) . '" name="handl_aicac_est_usd_provider[' . esc_attr( $provider_id ) . '][output]" value="' . esc_attr( $row_out ) . '" placeholder="' . esc_attr__( 'fallback', 'handl-ai-connector-access-control' ) . '" /></td>';
+			echo '</tr>';
+		}
+		echo '</tbody></table>';
 		echo '</td>';
 		echo '</tr>';
 
@@ -2244,6 +2279,8 @@ final class Admin {
 			filter_input( INPUT_POST, 'handl_aicac_est_usd_output_per_m', FILTER_UNSAFE_RAW ),
 			Cost::DEFAULT_OUTPUT_PER_M
 		);
+		$posted_provider_rates = filter_input( INPUT_POST, 'handl_aicac_est_usd_provider', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		$policy['est_usd_provider_rates'] = Cost::sanitize_provider_rates( is_array( $posted_provider_rates ) ? $posted_provider_rates : array() );
 	}
 
 	/**
@@ -2633,7 +2670,7 @@ final class Admin {
 		echo '</td>';
 		echo '<td class="column-tokens">' . $this->render_token_count( $input_tokens ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo '<td class="column-tokens">' . $this->render_token_count( $output_tokens, $thought_tokens ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		echo '<td class="column-tokens">' . $this->render_est_cost_cell( $input_tokens, $output_tokens, $policy ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo '<td class="column-tokens">' . $this->render_est_cost_cell( $input_tokens, $output_tokens, $policy, $provider ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo '<td>';
 		if ( $plugin ) {
 			echo '<strong>' . esc_html( $plugin_label ) . '</strong><br /><code>' . esc_html( $plugin ) . '</code>';
@@ -2734,13 +2771,14 @@ final class Admin {
 	 * Estimated USD cell — observability only; never enforcement.
 	 *
 	 * @param array<string,mixed> $policy
+	 * @param string              $provider Log-row provider id (may be empty).
 	 */
-	private function render_est_cost_cell( ?int $input_tokens, ?int $output_tokens, array $policy ): string {
+	private function render_est_cost_cell( ?int $input_tokens, ?int $output_tokens, array $policy, string $provider = '' ): string {
 		if ( null === $input_tokens && null === $output_tokens ) {
 			return '<span class="handl-aicac-muted">—</span>';
 		}
 
-		$usd = Cost::estimate_usd( $input_tokens, $output_tokens, Cost::rates_from_policy( $policy ) );
+		$usd = Cost::estimate_usd( $input_tokens, $output_tokens, Cost::rates_from_policy( $policy, $provider ) );
 		if ( null === $usd ) {
 			return '<span class="handl-aicac-muted">—</span>';
 		}
@@ -2751,7 +2789,7 @@ final class Admin {
 			: __( 'Rough estimate from configured rates × tokens. Not a bill.', 'handl-ai-connector-access-control' );
 		$label          = $using_defaults
 			? __( 'est. · default rates', 'handl-ai-connector-access-control' )
-			: __( 'est.', 'handl-ai-connector-access-control' );
+			: __( 'est. · custom rates', 'handl-ai-connector-access-control' );
 
 		return '<span class="handl-aicac-est-cost" title="' . esc_attr( $title ) . '">'
 			. esc_html( Cost::format_usd( $usd ) )
