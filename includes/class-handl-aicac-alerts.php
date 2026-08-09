@@ -335,13 +335,13 @@ final class Alerts {
 		if ( '' !== $to ) {
 			$subject = sprintf(
 				/* translators: %s: site name */
-				__( '[%s] HandL AICAC denied an AI Client call', 'handl-ai-connector-access-control' ),
+				__( '[%s] HandL blocked an AI Client call', 'handl-ai-connector-access-control' ),
 				wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES )
 			);
 
-			$body  = __( 'HandL AI Connector Access Control blocked an AI Client prompt.', 'handl-ai-connector-access-control' ) . "\n\n";
+			$body  = __( 'HandL AI Access blocked an AI Client prompt.', 'handl-ai-connector-access-control' ) . "\n\n";
 			$body .= self::format_summary_lines( $summary );
-			$body .= "\n" . __( 'This message was sent by HandL AICAC (not by the calling plugin). Review rules under Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' ) . "\n";
+			$body .= "\n" . __( 'This alert came from HandL AI Access, not the plugin that made the call. Review your rules under Settings → HandL AI Access.', 'handl-ai-connector-access-control' ) . "\n";
 			$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=log' ) . "\n";
 
 			// record_send only on true; false/Throwable → queue so the denial is not silently lost
@@ -392,14 +392,14 @@ final class Alerts {
 		if ( '' !== $to ) {
 			$subject = sprintf(
 				/* translators: 1: site name, 2: denial count */
-				__( '[%1$s] HandL AICAC denial digest (%2$d)', 'handl-ai-connector-access-control' ),
+				__( '[%1$s] HandL blocked-call summary (%2$d)', 'handl-ai-connector-access-control' ),
 				wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
 				$count
 			);
 
 			$body  = sprintf(
 				/* translators: %d: number of denials in this digest */
-				__( 'HandL AI Connector Access Control blocked %d AI Client prompt(s) since the last digest.', 'handl-ai-connector-access-control' ),
+				__( 'Blocked AI Client prompts since the last summary: %d', 'handl-ai-connector-access-control' ),
 				$count
 			) . "\n\n";
 
@@ -412,7 +412,7 @@ final class Alerts {
 				if ( $shown > 50 ) {
 					$body .= sprintf(
 						/* translators: %d: remaining rows not listed */
-						__( "…and %d more (see the audit log).\n", 'handl-ai-connector-access-control' ),
+						__( "Plus %d more. See the Activity log. ↵", 'handl-ai-connector-access-control' ),
 						$count - 50
 					);
 					break;
@@ -421,7 +421,7 @@ final class Alerts {
 				$body .= self::format_summary_lines( $row ) . "\n";
 			}
 
-			$body .= __( 'This digest was sent by HandL AICAC. Review rules under Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' ) . "\n";
+			$body .= __( 'This summary came from HandL AI Access. Review your rules under Settings → HandL AI Access.', 'handl-ai-connector-access-control' ) . "\n";
 			$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=log' ) . "\n";
 
 			$mail_ok = self::safe_wp_mail( $to, $subject, $body );

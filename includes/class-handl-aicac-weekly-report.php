@@ -233,7 +233,7 @@ final class Weekly_Report {
 	 */
 	public static function format_window_label( int $min_ts, int $max_ts ): string {
 		if ( $min_ts <= 0 || $max_ts <= 0 ) {
-			return __( 'retained log (no timestamps yet)', 'handl-ai-connector-access-control' );
+			return __( 'saved log (no dates yet)', 'handl-ai-connector-access-control' );
 		}
 		if ( $min_ts === $max_ts ) {
 			return wp_date( 'M j, Y', $min_ts );
@@ -244,7 +244,7 @@ final class Weekly_Report {
 		if ( $y1 === $y2 ) {
 			return sprintf(
 				/* translators: 1: start date (e.g. Jul 24), 2: end date (e.g. Jul 31, 2026) */
-				__( '%1$s – %2$s', 'handl-ai-connector-access-control' ),
+				__( '%1$s to %2$s', 'handl-ai-connector-access-control' ),
 				wp_date( 'M j', $min_ts ),
 				wp_date( 'M j, Y', $max_ts )
 			);
@@ -252,7 +252,7 @@ final class Weekly_Report {
 
 		return sprintf(
 			/* translators: 1: start date with year, 2: end date with year */
-			__( '%1$s – %2$s', 'handl-ai-connector-access-control' ),
+			__( '%1$s to %2$s', 'handl-ai-connector-access-control' ),
 			wp_date( 'M j, Y', $min_ts ),
 			wp_date( 'M j, Y', $max_ts )
 		);
@@ -267,7 +267,7 @@ final class Weekly_Report {
 
 		return sprintf(
 			/* translators: 1: site name, 2: dated window */
-			__( '[%1$s] HandL AICAC weekly report (%2$s)', 'handl-ai-connector-access-control' ),
+			__( '[%1$s] HandL weekly AI report (%2$s)', 'handl-ai-connector-access-control' ),
 			$site,
 			$window
 		);
@@ -285,30 +285,30 @@ final class Weekly_Report {
 		$deny_n   = (int) ( $stats['deny_n'] ?? 0 );
 		$lines    = array();
 
-		$lines[] = __( 'HandL AI Connector Access Control — weekly report', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'HandL AI Access: weekly report', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = sprintf(
 			/* translators: %s: dated window from retained log */
-			__( 'Window: %s', 'handl-ai-connector-access-control' ),
+			__( 'Date range: %s', 'handl-ai-connector-access-control' ),
 			$window
 		);
-		$lines[] = __( 'Dates come from the retained log on this site. WP-cron may deliver this email late on low-traffic sites; the window stays accurate.', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'Dates come from this site’s saved log. WordPress may send the email late on low-traffic sites, but the date range stays accurate.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 
 		// --- Coverage (same vocabulary as Dashboard) ---
-		$lines[] = __( 'Coverage', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'AI coverage', 'handl-ai-connector-access-control' );
 		$d = (int) ( $coverage['D'] ?? 0 );
 		$m = (int) ( $coverage['M'] ?? 0 );
 		if ( $d > 0 ) {
-			$lines[] = __( 'Some AI activity on this site is outside what these rules can control', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'Some known AI activity is outside the AI Client and cannot be controlled by these rules', 'handl-ai-connector-access-control' );
 		} elseif ( $m > 0 ) {
-			$lines[] = __( 'Known AI activity in this log is flowing through the AI Client', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'All known AI activity in this log is using the AI Client', 'handl-ai-connector-access-control' );
 		} else {
-			$lines[] = __( 'No AI activity retained in the log yet', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'No AI activity in the log yet', 'handl-ai-connector-access-control' );
 		}
 		$lines[] = sprintf(
 			/* translators: 1: log entry limit, 2: human span */
-			__( 'from the last %1$s log entries · spanning %2$s', 'handl-ai-connector-access-control' ),
+			__( 'Last %1$s log entries, covering %2$s', 'handl-ai-connector-access-control' ),
 			number_format_i18n( (int) ( $coverage['log_limit'] ?? 200 ) ),
 			(string) ( $coverage['span_label'] ?? '—' )
 		);
@@ -319,59 +319,59 @@ final class Weekly_Report {
 		);
 		$lines[] = sprintf(
 			/* translators: 1: through AI Client, 2: attributed, 3: unattributed */
-			__( '— Through the AI Client: %1$s (attributed %2$s · unattributed %3$s)', 'handl-ai-connector-access-control' ),
+			__( 'Through the AI Client: %1$s (identified: %2$s; unknown: %3$s)', 'handl-ai-connector-access-control' ),
 			number_format_i18n( (int) ( $coverage['N'] ?? 0 ) ),
 			number_format_i18n( (int) ( $coverage['A'] ?? 0 ) ),
 			number_format_i18n( (int) ( $coverage['U'] ?? 0 ) )
 		);
 		$lines[] = sprintf(
 			/* translators: %s: outside AI Client call count */
-			__( '— Outside the AI Client: %s — seen, not governed by these rules', 'handl-ai-connector-access-control' ),
+			__( 'Outside the AI Client: %s (observed, not controlled)', 'handl-ai-connector-access-control' ),
 			number_format_i18n( $d )
 		);
 		$lines[] = __( 'One log entry can represent many calls from the same plugin.', 'handl-ai-connector-access-control' );
 		if ( ! empty( $coverage['saturated'] ) ) {
 			$lines[] = sprintf(
 				/* translators: %d: log entry limit */
-				__( 'Log is at its %d-entry limit; older entries have aged out.', 'handl-ai-connector-access-control' ),
+				__( 'The log reached its %d-entry limit, so older entries were removed.', 'handl-ai-connector-access-control' ),
 				(int) ( $coverage['log_limit'] ?? 200 )
 			);
 		}
 		$lines[] = '';
 
 		// --- Safety ---
-		$lines[] = __( 'Safety & control', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'Safety and control', 'handl-ai-connector-access-control' );
 		$default = ( ( $policy['default'] ?? 'allow' ) === 'deny' )
 			? __( 'Deny', 'handl-ai-connector-access-control' )
 			: __( 'Allow', 'handl-ai-connector-access-control' );
 		$learn   = ! empty( $policy['audit_only'] )
-			? __( 'Learn mode on (observation only — no deny/force)', 'handl-ai-connector-access-control' )
-			: __( 'Learn mode off (enforcing)', 'handl-ai-connector-access-control' );
+			? __( 'Learn mode on (observing only; no blocking or model routing)', 'handl-ai-connector-access-control' )
+			: __( 'Learn mode off (rules enforced)', 'handl-ai-connector-access-control' );
 		$lines[] = sprintf(
 			/* translators: 1: Allow/Deny default, 2: learn mode state */
-			__( 'Default: %1$s · %2$s', 'handl-ai-connector-access-control' ),
+			__( 'Default rule: %1$s. %2$s', 'handl-ai-connector-access-control' ),
 			$default,
 			$learn
 		);
 		if ( ! empty( $policy['kill_switch'] ) ) {
-			$lines[] = __( 'Emergency kill switch is on.', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'Emergency stop is on.', 'handl-ai-connector-access-control' );
 		}
 		$lines[] = sprintf(
 			/* translators: %d: deny count in retained log */
-			_n( '%d deny in this log window.', '%d denies in this log window.', $deny_n, 'handl-ai-connector-access-control' ),
+			_n( '%d blocked call in this log window.', '%d blocked calls in this log window.', $deny_n, 'handl-ai-connector-access-control' ),
 			$deny_n
 		);
 		$lines[] = '';
 
 		// --- Spend (estimated, not billing) ---
-		$lines[] = __( 'Spend (estimated)', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'Estimated spend', 'handl-ai-connector-access-control' );
 		if ( ! empty( $stats['est_any'] ) ) {
 			$rate_note = ! empty( $stats['using_default_rates'] )
-				? __( 'est. · default rates', 'handl-ai-connector-access-control' )
-				: __( 'est. · custom rates', 'handl-ai-connector-access-control' );
+				? __( 'estimate using default rates', 'handl-ai-connector-access-control' )
+				: __( 'estimate using custom rates', 'handl-ai-connector-access-control' );
 			$lines[]   = sprintf(
 				/* translators: 1: USD amount, 2: rate note */
-				__( 'Total: $%1$s (%2$s) — not billing', 'handl-ai-connector-access-control' ),
+				__( 'Estimated total: $%1$s (%2$s). Not billing.', 'handl-ai-connector-access-control' ),
 				number_format_i18n( (float) ( $stats['est_total'] ?? 0 ), 2 ),
 				$rate_note
 			);
@@ -384,7 +384,7 @@ final class Weekly_Report {
 					}
 					$lines[] = sprintf(
 						/* translators: 1: plugin name, 2: USD, 3: call count */
-						__( '— %1$s: $%2$s est. · %3$s calls', 'handl-ai-connector-access-control' ),
+						__( '%1$s: $%2$s estimated, %3$s calls', 'handl-ai-connector-access-control' ),
 						(string) ( $row['label'] ?? '' ),
 						number_format_i18n( (float) ( $row['usd'] ?? 0 ), 2 ),
 						number_format_i18n( (int) ( $row['calls'] ?? 0 ) )
@@ -392,17 +392,17 @@ final class Weekly_Report {
 				}
 			}
 		} else {
-			$lines[] = __( 'No token-backed estimates in the retained log yet.', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'No estimates yet. Token counts are required.', 'handl-ai-connector-access-control' );
 		}
 		$lines[] = '';
 
 		// --- Pins (quiet when none configured) ---
 		if ( ! empty( $stats['has_pins'] ) ) {
 			$pin = is_array( $stats['pin'] ?? null ) ? $stats['pin'] : array();
-			$lines[] = __( 'Did my pins hold?', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'Did model routes work?', 'handl-ai-connector-access-control' );
 			$lines[] = sprintf(
 				/* translators: 1: held count, 2: attempted count */
-				__( 'Pins held for %1$s of %2$s attempted forces', 'handl-ai-connector-access-control' ),
+				__( 'Model routes matched %1$s of %2$s attempts', 'handl-ai-connector-access-control' ),
 				number_format_i18n( (int) ( $pin['held'] ?? 0 ) ),
 				number_format_i18n( (int) ( $pin['attempted'] ?? 0 ) )
 			);
@@ -411,8 +411,8 @@ final class Weekly_Report {
 				$lines[] = sprintf(
 					/* translators: %d: unattributed never-evaluated count */
 					_n(
-						'%d call could not be attributed; pins were never evaluated for it.',
-						'%d calls could not be attributed; pins were never evaluated for them.',
+						'%d call had no detected plugin, so its model route was not checked.',
+						'%d calls had no detected plugin, so their model routes were not checked.',
 						$unforced,
 						'handl-ai-connector-access-control'
 					),
@@ -423,10 +423,10 @@ final class Weekly_Report {
 		}
 
 		// --- Privacy + manage ---
-		$lines[] = __( 'This report includes aggregate counts, estimated spend, and plugin names or plugin file identifiers only. It does not include prompt text, user names, request paths, hosts, or per-call URIs.', 'handl-ai-connector-access-control' );
-		$lines[] = __( 'This message was sent by HandL AICAC via your site’s wp_mail transport (core PHP mail or an SMTP plugin you installed).', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'This report includes totals, estimated spend, and plugin names or file identifiers. It does not include prompt text, user names, request paths, hosts, or individual call URLs.', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'Sent by HandL AI Access using your site’s email setup, such as PHP mail or an SMTP plugin.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
-		$lines[] = __( 'Manage weekly reports (opt out / change recipient):', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'Manage or turn off weekly reports:', 'handl-ai-connector-access-control' );
 		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' );
 		$lines[] = '';
 		$lines[] = __( 'Open Dashboard:', 'handl-ai-connector-access-control' );
