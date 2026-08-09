@@ -4,7 +4,7 @@ Tags: ai, governance, security, handl, ai client
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -168,35 +168,18 @@ Yes. With WP-CLI available and this plugin active:
 
 == Changelog ==
 
-= 1.1.2 =
+= 1.2.0 =
+* Rewrote the WordPress.org listing in plain language so site owners can quickly understand what the plugin does.
 * Rewrote admin screens and emails in clearer, shorter language.
+* Added optional rates for each AI provider when calculating estimated spend. Estimates are not bills.
+* Added an optional maximum age for Activity entries, alongside the entry limit.
+* Select multiple plugins on the Rules tab and set them to Allow or Deny together.
+* Limit AI Client access by WordPress role. Off by default, so every role is allowed.
+* On multisite, view sites where the plugin is active, check their status, and open each site's Activity screen. View only; no network-wide rule changes.
+* Send optional blocked-call alerts to a webhook. The payload follows the same privacy limits as email alerts, and you can send a test.
+* Use WP-CLI to list and set per-plugin AI type rules.
+* Export and import Rules as JSON with a preview and confirmation. The Activity log is not included.
 
-= 1.1.1 =
-* AICAC-ROLE: Optional per-role gate on the Rules tab — checklist of WordPress roles allowed to initiate AI Client operations (default off = all roles).
-* Deny path uses existing policy machinery with reason `role`; cron/CLI (no user context) bypass the gate in v1.
-* Audit log records initiating role slug(s) when a user context exists (no usernames/PII).
-
-= 1.1.0 =
-* AICAC-TTL: Optional maximum log age (days) on Activity — time-based prune on read/append in addition to the entry-count ring buffer; empty field keeps entry-count-only retention.
-* AICAC-105: Read-only Network Admin rollup for multisite — lists sites where the plugin is active with kill-switch, logging/learn mode, retained denial count, and last activity.
-* Each row links to that site’s own Activity tab (no inline cross-site policy view).
-* Visible only on multisite; requires `manage_network_options`. Single-site installs unchanged.
-* Paginated at 50 network sites per page to bound `switch_to_blog()` work on large networks.
-* Sites with AI disabled via `wp_supports_ai` show “AI disabled” instead of a misleading zero denial count.
-* No network-level policy writes or bulk apply in this release.
-
-= 1.0.15 =
-* AICAC-104: Optional denial-alert Webhook URL (http/https) alongside email — same trigger, rate limit, and immediate/digest mode.
-* Generic JSON POST via wp_remote_post (path-only fields; no prompt preview or user identity); failures contained like wp_mail.
-* Send test webhook button (sample payload labeled as a test; bypasses rate limiting).
-* Privacy / Data documents the opt-in webhook egress surface.
-* WP-CLI: `wp aicac rule list` and `wp aicac rule set <plugin> <family> <allow|deny|inherit>` for the per-plugin × capability-family matrix.
-* List supports table (default) and `--format=json`; includes inactive installed plugins (same set as the Rules tab).
-* Set validates plugin basename and family, persists via Policy::sanitize_operations + save_policy (same path as Rules save). No bulk import in this release.
-* AICAC-102: Export / import Rules as JSON on the Rules tab (Download rules / Import with preview + confirm).
-* Export includes the full policy option plus `plugin_version` and `exported_at` for forward compatibility.
-* Import is a documented full replace through the same sanitize/save path as Rules save; invalid JSON is rejected without changing live policy; unknown newer fields are ignored with a notice.
-* Does not export the audit log; no secrets/credentials are stored in the policy option.
 
 = 1.0.14 =
 * F7: Weekly report email — Dashboard aggregates via wp_mail on a weekly cron (coverage, denials, estimated spend, pins).
