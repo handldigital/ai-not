@@ -8,35 +8,82 @@ Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Control which plugins may execute prompts via the WordPress AI Client.
+See AI activity from WordPress plugins, decide what each plugin may do, and block unwanted prompts through the WordPress AI Client.
+
 
 == Description ==
 
-HandL AI Connector Access Control lets administrators allow/deny AI Client prompt execution on a per-plugin basis using the `wp_ai_client_prevent_prompt` filter introduced with the WordPress AI Client.
+HandL AI Connector Access Control helps you **see AI activity from WordPress plugins, decide what each plugin may do, and block unwanted prompts sent through the WordPress AI Client.**
 
-Default behavior is **allow**.
+The WordPress AI Client is a shared API that plugins can use for AI features. This plugin gives site administrators one place to see and control calls made through that API.
 
-**Multisite (read-only network rollup):** On WordPress multisite, network administrators get a Network Admin → Settings page listing sites where this plugin is active (kill switch, logging/learn mode, retained denial count, last activity) with links into each site’s Activity tab. This release does **not** enforce or bulk-edit policy from the network screen — governance remains per-site.
+Plugins are **allowed by default** until you change a rule.
 
-**Per-plugin × capability matrix** (Rules tab) refines access by family — Text, Image, Speech, TTS, Video — so you can allow text generation while denying image generation for the same plugin. Support checks (`is_supported_for_*`) and matching `generate_*` methods share the same family rule. Unknown operations (music, embeddings, generic methods) use a configurable fallback (inherit / allow / deny).
+= What it does =
 
-**AI tool arming (caller intent)** denies a prompt when it arms a blocked WordPress ability via the AI Client (`using_abilities` → `functionDeclarations`). This is not MCP visibility and does not unregister abilities site-wide. Denials are logged under this plugin’s name with the blocked ability ids.
+* Shows which plugin made an AI Client call, what type of AI task it requested, and whether it was allowed or blocked.
+* Lets you set a simple rule for each plugin: **Allow**, **Deny**, or follow the site default.
+* Lets you allow one type of AI task while blocking another. For example, a plugin may use text generation but not image generation.
+* Includes **Learn mode** so you can watch AI Client activity before you start blocking anything.
+* Includes an emergency stop for AI Client calls, with exceptions for plugins you choose.
 
-**Learn mode** (Activity tab) logs every AI Client call without blocking, so you can discover callers before enabling deny rules on the Rules tab.
+= Who it is for =
 
-**Emergency kill switch** blocks all AI Client calls except plugins you list as exceptions.
+This plugin is for WordPress site owners and administrators who want a clear view of AI activity and simple per-plugin controls. It also supports multisite, but rules are still managed one site at a time.
 
-**Optional role gate** (Rules tab) limits which WordPress roles may *initiate* AI Client operations. Default is off (all roles). When enabled, a signed-in user whose role is unchecked is denied through the normal deny path (audit log + denial alerts, reason `role`). Cron, WP-CLI, and other no-user-context requests are **not** affected by the role gate in v1. Audit rows record the initiating role slug(s) when a user context exists — not usernames.
+You do **not** need to be a developer to use the main controls.
 
-**Denial email alerts** (opt-in) notify an admin when enforcement blocks a prompt — immediate (rate-limited) or hourly digest. An optional **Webhook URL** on the same settings posts the same privacy-scoped JSON to an http(s) endpoint (Slack/Teams-compatible) on the same trigger, rate limit, and digest mode. **Weekly report email** mails Dashboard aggregates (coverage, denials, estimated spend, pins) via the same `wp_mail` path; selected by default; reports are sent only while logging or learn mode is on, and it is always toggleable. **Estimated $** on the audit log and in the weekly report is a rough token × rate placeholder, not billing. When WordPress disables AI site-wide via `wp_supports_ai`, an honesty banner explains why the audit log may be empty.
+= How it works =
 
-**Denial email alerts** (opt-in) notify an admin when enforcement blocks a prompt — immediate (rate-limited) or hourly digest. An optional **Webhook URL** on the same settings posts the same privacy-scoped JSON to an http(s) endpoint (Slack/Teams-compatible) on the same trigger, rate limit, and digest mode. **Weekly report email** mails Dashboard aggregates (coverage, denials, estimated spend, pins) via the same `wp_mail` path; selected by default; reports are sent only while logging or learn mode is on, and it is always toggleable. **Estimated $** on the audit log and in the weekly report is a rough token × rate placeholder (optional per-provider overrides; otherwise a global fallback), not billing. When WordPress disables AI site-wide via `wp_supports_ai`, an honesty banner explains why the audit log may be empty.
+1. Install the plugin and open **Settings → HandL AI Connector Access Control**.
+2. Turn on **Learn mode** to observe AI Client activity without enforcing deny rules.
+3. Review the Dashboard, then set rules for each plugin on the Rules tab.
+4. Review the optional logging, alert, and reporting settings. The weekly email option is selected by default, but it sends only while logging or Learn mode is on and can be turned off at any time.
 
-**EXPERIMENTAL per-plugin model force** (Rules tab; empty force fields = off) can pin allowed AI Client generations to a provider/model **per detected caller**. Pins follow the nearest plugin frame on the PHP backtrace (best-effort) — not who initiated the call, and **not a spend guarantee**. Unattributed calls (cron, REST bootstraps, shared libraries, MU plugins, etc.) run unforced by default; admins can opt into an explicit unattributed target via the same “Unknown operations”-style control. Force relies on unsupported shallow-clone behaviour in the AI Client prevent hook, verifies the final route with exact provider/model matching before the provider call, and fail-closes on mismatch. Prefer official core routing filters when available.
+Caller identification is **best-effort**. Calls made through cron, REST requests, shared libraries, or must-use plugins may appear as unknown.
 
-**Shadow-AI detector (observe only):** when logging or learn mode is on, the plugin watches WordPress HTTP for requests to a curated list of known AI provider hosts (OpenAI, Anthropic, Google Generative Language, Cohere, Mistral, Groq, Together, Fireworks, Perplexity, xAI, DeepSeek, OpenRouter, …). Traffic that already flows through the core AI Client is ignored. Direct bypasses are retained as `observe` rows (`channel=direct_http`) so you can see AI activity **outside** what these rules control — they do **not** block HTTP. This is a curated list, not a complete inventory of every AI host on the internet.
+= Everyday controls =
 
-Caller attribution is best-effort and is determined by inspecting the PHP call stack and mapping file paths to installed plugins. When force is configured, the retained log surfaces how many calls could not be attributed and ran unforced.
+* **Plugin rules:** Allow, deny, or use the site default for each installed plugin. You can also select several plugins and update them together.
+* **Capability rules:** Allow or deny Text, Image, Speech, TTS, or Video separately for the same plugin.
+* **Learn mode:** Log AI Client activity without enforcing deny rules, so you can watch first and block later.
+* **Emergency stop:** Block AI Client calls across the site except for plugins you list as exceptions. Exceptions still follow their normal plugin and capability rules.
+* **Blocked AI tools:** Stop a prompt when it tries to use a blocked WordPress ability or custom tool. The activity log shows which tool triggered the block.
+* **Role gate:** Optionally limit which WordPress roles may start AI Client operations. Off by default (all roles). When enabled, signed-in users whose role is unchecked are denied through the normal deny path. Cron, WP-CLI, and other no-user requests are not affected.
+
+= More controls when you need them =
+
+* **Denial alerts:** Send an optional email when a prompt is blocked, either immediately or in an hourly digest. You can also send the same privacy-scoped data to a webhook URL for services such as Slack or Teams.
+* **Weekly report:** Receive a summary of coverage, denials, estimated spend, and model-pin activity. The option is selected by default, sends only while logging or Learn mode is on, and can be turned off at any time.
+* **Estimated spend:** View a rough estimate based on token counts and the rates you provide, including optional rates by provider. This is an estimate, **not billing**.
+* **Rules export and import:** Download your rules as JSON or replace the current rules by importing a JSON file. The audit log is not included.
+* **Log retention:** Limit the activity history by number of entries and, optionally, by maximum age.
+* **Multisite overview:** Network administrators get a read-only list of sites where the plugin is active, with status and activity links for each site. This release does not provide network-wide enforcement or bulk editing.
+* **WP-CLI:** List and update capability rules from the command line when WP-CLI is available.
+
+= Honest limits =
+
+* This plugin governs AI calls made through the **WordPress AI Client**. It does not control every possible AI request made by WordPress code.
+* The **Shadow-AI detector is observe-only**. When logging or Learn mode is on, it can record direct WordPress HTTP requests to a curated list of known AI provider hosts. It does **not** block those requests, and the host list is not complete.
+* Caller identification is best-effort and may be wrong or missing.
+* **EXPERIMENTAL model force** can steer an allowed call toward a provider and model for the detected caller. It is not a spend guarantee and depends on best-effort caller identification.
+* If WordPress has disabled AI across the site, the activity log may be empty. The plugin displays a notice when this happens.
+
+= Advanced details =
+
+For developers and integrators:
+
+* Enforcement uses the WordPress AI Client prevent filter: `wp_ai_client_prevent_prompt`.
+* Capability rules apply the same family rule to support checks and matching generation methods. Unknown operations, such as music or embeddings, use a configurable inherit, allow, or deny fallback.
+* The optional role gate denies via the normal policy path with reason `role` and records initiating role slug(s) in the audit log when a user context exists (not usernames).
+* Experimental model force relies on unsupported shallow-clone behavior in the prevent hook, checks the final provider and model before the provider call, and fails closed on a mismatch. Prefer official WordPress routing filters when they become available.
+* Shadow observations store the request host and path only. They do not store the query string, request body, Authorization headers, or API keys.
+
+= Privacy =
+
+See the **Privacy / Data** section below for the complete list of information that may be stored locally or sent through optional alerts, webhooks, and reports.
+
+By default, this plugin does **not** send data to any external service.
 
 == Privacy / Data ==
 
