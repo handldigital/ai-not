@@ -51,6 +51,7 @@ final class Policy_Transfer {
 			'alert_email',
 			'est_usd_input_per_m',
 			'est_usd_output_per_m',
+			'est_usd_provider_rates',
 			'weekly_report_enabled',
 			'model_force_plugins',
 			'model_force_unattributed',
