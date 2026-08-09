@@ -121,10 +121,8 @@ final class Weekly_Report {
 			return;
 		}
 
-		$log = get_option( Plugin::LOG_OPTION_KEY );
-		if ( ! is_array( $log ) ) {
-			$log = array();
-		}
+		// Retained window includes optional time-based TTL (same as Dashboard).
+		$log = Policy::get_retained_log();
 
 		// Cron context may not have loaded plugin.php yet.
 		if ( ! function_exists( 'get_plugins' ) ) {

@@ -42,6 +42,7 @@ final class Policy_Transfer {
 			'kill_switch',
 			'kill_switch_exceptions',
 			'log_limit',
+			'log_max_age_days',
 			'operations',
 			'unknown_operation',
 			'denied_tools',

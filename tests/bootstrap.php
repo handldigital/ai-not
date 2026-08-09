@@ -333,8 +333,11 @@ if ( ! function_exists( 'wp_remote_retrieve_response_code' ) ) {
 
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-operations.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-model-force.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cost.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-analytics.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alerts.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-weekly-report.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-transfer.php';
-require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alerts.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
