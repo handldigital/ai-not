@@ -41,6 +41,8 @@ final class Policy_Transfer {
 			'audit_only',
 			'kill_switch',
 			'kill_switch_exceptions',
+			'role_gate_enabled',
+			'allowed_roles',
 			'log_limit',
 			'operations',
 			'unknown_operation',

@@ -323,7 +323,7 @@ final class Admin {
 		// Settings demoted: collapsible panel, not the first thing you see (F5 IA).
 		echo '<details class="handl-aicac-settings-panel">';
 		echo '<summary><strong>' . esc_html__( 'Settings', 'handl-ai-connector-access-control' ) . '</strong> — ';
-		echo esc_html__( 'site default, unknown operations, kill switch, tool arming, model force', 'handl-ai-connector-access-control' );
+		echo esc_html__( 'site default, unknown operations, kill switch, role gate, tool arming, model force', 'handl-ai-connector-access-control' );
 		echo '</summary>';
 		echo '<table class="form-table" role="presentation">';
 		echo '<tr>';
@@ -349,6 +349,7 @@ final class Admin {
 		echo '</td>';
 		echo '</tr>';
 		$this->render_kill_switch_settings_rows( $policy, $rules_form_id, $plugins );
+		$this->render_role_gate_settings_rows( $policy, $rules_form_id );
 		echo '</table>';
 
 		$this->render_ability_arming_settings( $policy, $rules_form_id );
@@ -1923,6 +1924,7 @@ final class Admin {
 		$policy['denied_tools'] = Policy::sanitize_denied_tools( (string) $posted_tools );
 
 		$this->apply_kill_switch_settings_from_post( $policy );
+		$this->apply_role_gate_settings_from_post( $policy );
 		$this->apply_model_force_settings_from_post( $policy );
 
 		Policy::save_policy( $policy );
@@ -2182,6 +2184,26 @@ final class Admin {
 	/**
 	 * @param array<string,mixed> $policy
 	 */
+	private function apply_role_gate_settings_from_post( array &$policy ): void {
+		$posted_enabled = filter_input( INPUT_POST, 'handl_aicac_role_gate_enabled', FILTER_UNSAFE_RAW );
+		$policy['role_gate_enabled'] = ! empty( $posted_enabled );
+
+		$roles = array();
+		$posted_roles = filter_input( INPUT_POST, 'handl_aicac_allowed_roles', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		if ( is_array( $posted_roles ) ) {
+			foreach ( $posted_roles as $role ) {
+				$role = sanitize_key( (string) $role );
+				if ( '' !== $role ) {
+					$roles[] = $role;
+				}
+			}
+		}
+		$policy['allowed_roles'] = Policy::sanitize_allowed_roles( $roles );
+	}
+
+	/**
+	 * @param array<string,mixed> $policy
+	 */
 	private function apply_log_settings_from_post( array &$policy ): void {
 		$posted_audit = filter_input( INPUT_POST, 'handl_aicac_audit_only', FILTER_UNSAFE_RAW );
 		$policy['audit_only'] = ! empty( $posted_audit );
@@ -2376,6 +2398,62 @@ final class Admin {
 	 * @param array<string,array<string,mixed>> $plugins
 	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $log_filters
 	 */
+
+	/**
+	 * Optional per-role gate: which WP roles may initiate AI Client operations.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function render_role_gate_settings_rows( array $policy, string $form_id ): void {
+		$enabled  = ! empty( $policy['role_gate_enabled'] );
+		$available = Policy::available_roles_for_gate();
+		$allowed  = Policy::sanitize_allowed_roles( $policy['allowed_roles'] ?? array() );
+		// Default checklist presentation when gate has never stored a selection: all roles checked.
+		if ( empty( $allowed ) && ! empty( $available ) ) {
+			$checked = array_keys( $available );
+		} else {
+			$checked = $allowed;
+		}
+		$list_class = 'handl-aicac-role-gate-list' . ( $enabled ? '' : ' is-muted' );
+
+		echo '<tr>';
+		echo '<th scope="row">' . esc_html__( 'Role gate', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<td>';
+		echo '<label><input type="checkbox" name="handl_aicac_role_gate_enabled" value="1" form="' . esc_attr( $form_id ) . '" ' . checked( $enabled, true, false ) . ' id="handl-aicac-role-gate-enabled" /> ';
+		echo esc_html__( 'Only allow selected WordPress roles to initiate AI Client operations', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Optional. Default is off (all roles). When enabled, requests from a signed-in user whose role is unchecked are denied through the normal deny path (logged and alerted with reason “role”). Cron, WP-CLI, and other no-user-context requests are not affected by this gate in v1.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		echo '<div class="' . esc_attr( $list_class ) . '" id="handl-aicac-role-gate-wrap" style="margin-top:10px;max-width:28em;">';
+		echo '<p class="handl-aicac-role-gate__heading" id="handl-aicac-role-gate-heading"><strong>' . esc_html__( 'Allowed roles', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		echo '<p class="description handl-aicac-role-gate__state" id="handl-aicac-role-gate-state"' . ( $enabled ? ' hidden' : '' ) . '>' . esc_html__( 'Not in effect while the role gate is off.', 'handl-ai-connector-access-control' ) . '</p>';
+		if ( $enabled && empty( $allowed ) ) {
+			echo '<p class="description" style="color:#b32d2e;"><strong>' . esc_html__( 'Warning: no roles selected — every signed-in user will be denied by the role gate.', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		}
+		if ( empty( $available ) ) {
+			echo '<p class="description">' . esc_html__( 'No roles available to list on this site.', 'handl-ai-connector-access-control' ) . '</p>';
+		} else {
+			echo '<div class="handl-aicac-role-gate__list" role="group" aria-labelledby="handl-aicac-role-gate-heading" aria-describedby="handl-aicac-role-gate-state">';
+			$i = 0;
+			foreach ( $available as $slug => $label ) {
+				++$i;
+				$id  = 'handl-aicac-role-' . (string) $i;
+				$on  = in_array( $slug, $checked, true );
+				echo '<label class="handl-aicac-role-gate__item" for="' . esc_attr( $id ) . '" style="display:block;margin:2px 0;">';
+				echo '<input type="checkbox" id="' . esc_attr( $id ) . '" name="handl_aicac_allowed_roles[]" value="' . esc_attr( $slug ) . '" form="' . esc_attr( $form_id ) . '" ' . checked( $on, true, false ) . ' /> ';
+				echo '<span>' . esc_html( $label ) . '</span> <code style="font-size:11px;">' . esc_html( $slug ) . '</code>';
+				echo '</label>';
+			}
+			echo '</div>';
+		}
+		echo '</div>';
+		echo '<script>';
+		echo '(function(){var k=document.getElementById("handl-aicac-role-gate-enabled"),w=document.getElementById("handl-aicac-role-gate-wrap"),n=document.getElementById("handl-aicac-role-gate-state");';
+		echo 'if(!k||!w)return;function s(){w.classList.toggle("is-muted",!k.checked);if(n)n.hidden=k.checked;}k.addEventListener("change",s);s();})();';
+		echo '</script>';
+		echo '</td>';
+		echo '</tr>';
+	}
+
 	private function render_suggested_rules( array $log, array $policy, array $plugins, array $log_filters ): void {
 		$suggested = Policy::suggested_rules_from_log( $log, $policy, $plugins );
 
@@ -2559,6 +2637,10 @@ final class Admin {
 		$reason = isset( $row['denial_reason'] ) ? (string) $row['denial_reason'] : '';
 		if ( '' !== $reason && ( 'deny' === $decision || ( ! empty( $policy['audit_only'] ) && 'deny' === ( $row['would_decision'] ?? '' ) ) ) ) {
 			echo '<br /><span class="description handl-aicac-denial-reason">' . esc_html( $this->format_denial_reason_label( $reason ) ) . '</span>';
+		}
+		$user_role = isset( $row['user_role'] ) ? (string) $row['user_role'] : '';
+		if ( '' !== $user_role ) {
+			echo '<br /><span class="description handl-aicac-user-role" style="font-size:11px;">' . esc_html__( 'role', 'handl-ai-connector-access-control' ) . ' <code>' . esc_html( $user_role ) . '</code></span>';
 		}
 		$matched = array();
 		if ( isset( $row['matched_tools'] ) && is_array( $row['matched_tools'] ) ) {
@@ -2765,6 +2847,7 @@ final class Admin {
 	private function format_denial_reason_label( string $reason ): string {
 		$map = array(
 			'kill_switch'         => __( 'Denied by HandL AICAC: emergency kill switch', 'handl-ai-connector-access-control' ),
+			'role'                => __( 'Denied by HandL AICAC: role gate', 'handl-ai-connector-access-control' ),
 			'plugin'              => __( 'Denied by HandL AICAC: plugin rule', 'handl-ai-connector-access-control' ),
 			'capability_family'   => __( 'Denied by HandL AICAC: capability family rule', 'handl-ai-connector-access-control' ),
 			'unknown_operation'   => __( 'Denied by HandL AICAC: unknown operation fallback', 'handl-ai-connector-access-control' ),

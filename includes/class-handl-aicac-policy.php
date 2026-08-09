@@ -83,6 +83,7 @@ final class Policy {
 				// Legacy alias for pre-rename log readers.
 				'matched_abilities' => $would_eval['matched_tools'] ?? array(),
 				'user_id'           => get_current_user_id(),
+				'user_role'         => self::current_user_role_for_log(),
 				'uri'               => isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) ) : null,
 			),
 			$snapshot
@@ -202,10 +203,11 @@ final class Policy {
 	 * Decision order:
 	 * 1. Kill switch — non-excepted callers blocked; exceptions fall through to normal rules
 	 *    (plugin + family + tool arming), not unconditional allow.
-	 * 2. Plugin-level deny (all families denied).
-	 * 3. Capability-family rule when plugin is allowed (or inherits allow).
-	 * 4. Unknown-operation fallback when the method has no family mapping.
-	 * 5. Tool deny-at-arming — prompt arms a denied tool (F2).
+	 * 2. Role gate (optional) — user-context requests only; cron/CLI (no user) bypass.
+	 * 3. Plugin-level deny (all families denied).
+	 * 4. Capability-family rule when plugin is allowed (or inherits allow).
+	 * 5. Unknown-operation fallback when the method has no family mapping.
+	 * 6. Tool deny-at-arming — prompt arms a denied tool (F2).
 	 *
 	 * Matched tools are collected on every denial regardless of which rule fired.
 	 *
@@ -230,6 +232,18 @@ final class Policy {
 					$armed_tools ?? array()
 				);
 			}
+		}
+
+		// Optional role gate: only user-context requests; cron/CLI bypass (user id 0).
+		if ( self::role_gate_should_prevent( $policy ) ) {
+			return self::with_matched_tools(
+				array(
+					'prevent' => true,
+					'reason'  => 'role',
+				),
+				$policy,
+				$armed_tools ?? array()
+			);
 		}
 
 		$instance = self::instance();
@@ -305,6 +319,150 @@ final class Policy {
 		);
 
 		return $rows;
+	}
+
+
+	/**
+	 * Sanitize allowed WP role slugs for the optional role gate.
+	 *
+	 * @param mixed $raw
+	 * @return list<string>
+	 */
+	public static function sanitize_allowed_roles( $raw ): array {
+		if ( ! is_array( $raw ) ) {
+			return array();
+		}
+		$out = array();
+		foreach ( $raw as $role ) {
+			$role = sanitize_key( (string) $role );
+			if ( '' !== $role ) {
+				$out[] = $role;
+			}
+		}
+		return array_values( array_unique( $out ) );
+	}
+
+	/**
+	 * True when optional role gate is on and the current user is not in an allowed role.
+	 * No-user context (cron / CLI / user id 0) always bypasses the role gate in v1.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	public static function role_gate_should_prevent( array $policy ): bool {
+		if ( empty( $policy['role_gate_enabled'] ) ) {
+			return false;
+		}
+
+		$user_id = self::current_user_id_for_gate();
+		if ( $user_id <= 0 ) {
+			// Cron / CLI / unauthenticated: not affected by role gate (v1).
+			return false;
+		}
+
+		$allowed = self::sanitize_allowed_roles( $policy['allowed_roles'] ?? array() );
+		$roles   = self::current_user_roles();
+		if ( empty( $roles ) ) {
+			// Authenticated user with no role assignment cannot pass a restricted gate.
+			return true;
+		}
+		foreach ( $roles as $role ) {
+			if ( in_array( $role, $allowed, true ) ) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Current user id for role gate / log (test-overridable via $GLOBALS).
+	 */
+	public static function current_user_id_for_gate(): int {
+		if ( array_key_exists( 'handl_aicac_test_user_id', $GLOBALS ) ) {
+			return (int) $GLOBALS['handl_aicac_test_user_id'];
+		}
+		if ( function_exists( 'get_current_user_id' ) ) {
+			return (int) get_current_user_id();
+		}
+		return 0;
+	}
+
+	/**
+	 * Role slugs for the current user (test-overridable via $GLOBALS).
+	 *
+	 * @return list<string>
+	 */
+	public static function current_user_roles(): array {
+		if ( array_key_exists( 'handl_aicac_test_user_roles', $GLOBALS ) ) {
+			$raw = $GLOBALS['handl_aicac_test_user_roles'];
+			if ( ! is_array( $raw ) ) {
+				return array();
+			}
+			return array_values( array_map( 'strval', $raw ) );
+		}
+		if ( ! function_exists( 'wp_get_current_user' ) ) {
+			return array();
+		}
+		$user = wp_get_current_user();
+		if ( ! is_object( $user ) || empty( $user->ID ) ) {
+			return array();
+		}
+		$roles = isset( $user->roles ) && is_array( $user->roles ) ? $user->roles : array();
+		return array_values( array_map( 'strval', $roles ) );
+	}
+
+	/**
+	 * Single role slug (or comma-joined) for audit rows — no username / PII.
+	 * Empty string when no user context.
+	 */
+	public static function current_user_role_for_log(): string {
+		$user_id = self::current_user_id_for_gate();
+		if ( $user_id <= 0 ) {
+			return '';
+		}
+		$roles = self::current_user_roles();
+		if ( empty( $roles ) ) {
+			return '';
+		}
+		// Prefer primary (first) role; join if multiple without expanding to names.
+		return implode( ',', array_map( 'sanitize_key', $roles ) );
+	}
+
+	/**
+	 * Editable role slugs available on this site (for Settings checklist).
+	 *
+	 * @return array<string,string> slug => display name
+	 */
+	public static function available_roles_for_gate(): array {
+		if ( array_key_exists( 'handl_aicac_test_available_roles', $GLOBALS ) && is_array( $GLOBALS['handl_aicac_test_available_roles'] ) ) {
+			$out = array();
+			foreach ( $GLOBALS['handl_aicac_test_available_roles'] as $slug => $label ) {
+				$slug = sanitize_key( (string) $slug );
+				if ( '' !== $slug ) {
+					$out[ $slug ] = (string) $label;
+				}
+			}
+			return $out;
+		}
+		if ( ! function_exists( 'wp_roles' ) ) {
+			return array();
+		}
+		$wp_roles = wp_roles();
+		if ( ! is_object( $wp_roles ) || empty( $wp_roles->roles ) || ! is_array( $wp_roles->roles ) ) {
+			return array();
+		}
+		$out = array();
+		foreach ( $wp_roles->roles as $slug => $data ) {
+			$slug = sanitize_key( (string) $slug );
+			if ( '' === $slug ) {
+				continue;
+			}
+			$name = is_array( $data ) && isset( $data['name'] ) ? (string) $data['name'] : $slug;
+			if ( function_exists( 'translate_user_role' ) ) {
+				$name = translate_user_role( $name );
+			}
+			$out[ $slug ] = $name;
+		}
+		return $out;
 	}
 
 	/**
@@ -636,6 +794,9 @@ final class Policy {
 		$policy['audit_only']  = (bool) ( $policy['audit_only'] ?? false );
 		$policy['kill_switch'] = (bool) ( $policy['kill_switch'] ?? false );
 		$policy['kill_switch_exceptions'] = self::get_kill_switch_exceptions( $policy );
+		// Optional role gate (AICAC-ROLE): off by default = all roles may initiate AI.
+		$policy['role_gate_enabled'] = (bool) ( $policy['role_gate_enabled'] ?? false );
+		$policy['allowed_roles']     = self::sanitize_allowed_roles( $policy['allowed_roles'] ?? array() );
 		$policy['log_limit'] = (int) ( $policy['log_limit'] ?? 200 );
 		if ( $policy['log_limit'] < 20 ) {
 			$policy['log_limit'] = 20;
@@ -747,6 +908,8 @@ final class Policy {
 		}
 
 		$policy['kill_switch_exceptions'] = self::get_kill_switch_exceptions( $policy );
+		$policy['role_gate_enabled']      = ! empty( $policy['role_gate_enabled'] );
+		$policy['allowed_roles']          = self::sanitize_allowed_roles( $policy['allowed_roles'] ?? array() );
 		$policy['operations']             = self::sanitize_operations( $policy['operations'] ?? array() );
 		$policy['unknown_operation']      = self::sanitize_unknown_operation( $policy['unknown_operation'] ?? 'inherit' );
 		$policy['denied_tools']           = self::sanitize_denied_tools( $policy['denied_tools'] ?? $policy['denied_abilities'] ?? array() );
