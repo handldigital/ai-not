@@ -68,8 +68,8 @@ final class Admin {
 
 	public function register_menu(): void {
 		add_options_page(
-			__( 'HandL AI Connector Access Control', 'handl-ai-connector-access-control' ),
-			__( 'HandL AI Connector Access Control', 'handl-ai-connector-access-control' ),
+			__( 'HandL AI Access', 'handl-ai-connector-access-control' ),
+			__( 'HandL AI Access', 'handl-ai-connector-access-control' ),
 			'manage_options',
 			'handl-ai-connector-access-control',
 			array( $this, 'render_page' )
@@ -203,9 +203,9 @@ final class Admin {
 		echo '<div class="wrap">';
 		echo '<h1 style="display:flex;align-items:center;gap:12px;">';
 		echo '<img src="' . esc_url( $icon_src ) . '" alt="" width="40" height="40" style="border-radius:8px;" loading="lazy" decoding="async" />';
-		echo esc_html__( 'HandL AI Connector Access Control', 'handl-ai-connector-access-control' );
+		echo esc_html__( 'HandL AI Access', 'handl-ai-connector-access-control' );
 		echo '</h1>';
-		echo '<p>' . esc_html__( 'See whether AI activity is governed, what is spending, and block a plugin in one click. Default policy is allow.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be driving estimated spend, and block a plugin with one click. The default is Allow.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		$this->render_tabs( $tab, $plugin_status_filter, $plugin_access_filter, $this->log_filters );
 
@@ -213,12 +213,12 @@ final class Admin {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Saved.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $this->webhook_url_rejected ) {
-			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Webhook URL was not saved: enter a valid http:// or https:// URL (or leave blank to disable).', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Webhook URL not saved. Enter a valid http:// or https:// URL, or leave it blank to disable webhooks.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( is_array( $this->bulk_result ) ) {
 			$status = (string) ( $this->bulk_result['status'] ?? '' );
 			if ( 'empty' === $status ) {
-				echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__( 'No plugins selected. Bulk allow/deny made no changes.', 'handl-ai-connector-access-control' ) . '</p></div>';
+				echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__( 'No plugins selected. No rules were changed.', 'handl-ai-connector-access-control' ) . '</p></div>';
 			} elseif ( 'invalid' === $status ) {
 				echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Choose Set to Allow or Set to Deny, then Apply.', 'handl-ai-connector-access-control' ) . '</p></div>';
 			} elseif ( 'ok' === $status ) {
@@ -243,19 +243,19 @@ final class Admin {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Plugin rule updated.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $digest_sent ) {
-			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Denial digest send attempted (queue cleared only if mail succeeded).', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Tried to send the blocked-call summary. Queued alerts are cleared only after a successful send.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( '1' === $webhook_tested ) {
-			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Test webhook accepted (HTTP 2xx).', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Test webhook sent successfully (HTTP 2xx).', 'handl-ai-connector-access-control' ) . '</p></div>';
 		} elseif ( '0' === $webhook_tested ) {
-			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Test webhook failed (non-2xx, timeout, or missing URL). The sample payload is labeled as a test and does not count toward rate limits.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Test webhook failed. Check the URL and try again. The test does not count toward rate limits.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $undone ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Plugin rule restored.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $imported_ok ) {
 			echo '<div class="notice notice-success is-dismissible"><p>';
-			echo esc_html__( 'Rules imported. The policy option was fully replaced with the uploaded configuration.', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'Rules imported. Your previous rule settings were replaced with the uploaded file.', 'handl-ai-connector-access-control' );
 			echo ' <a href="' . esc_url(
 				add_query_arg(
 					array(
@@ -270,7 +270,7 @@ final class Admin {
 				$ignored_list = array_filter( array_map( 'trim', explode( ',', $import_ignored_q ) ) );
 				if ( ! empty( $ignored_list ) ) {
 					echo '<div class="notice notice-warning is-dismissible"><p>';
-					echo esc_html__( 'Ignored unknown fields from a newer export:', 'handl-ai-connector-access-control' );
+					echo esc_html__( 'Ignored unsupported fields from a newer export:', 'handl-ai-connector-access-control' );
 					echo ' <code>' . esc_html( implode( ', ', $ignored_list ) ) . '</code>';
 					echo '</p></div>';
 				}
@@ -285,7 +285,7 @@ final class Admin {
 			echo esc_html(
 				sprintf(
 					/* translators: %s: plugin display name */
-					__( 'Blocked %s at the plugin level. New AI Client calls from this plugin will be denied.', 'handl-ai-connector-access-control' ),
+					__( 'Blocked %s. New AI Client calls from this plugin will be blocked.', 'handl-ai-connector-access-control' ),
 					$blocked_label
 				)
 			);
@@ -304,22 +304,22 @@ final class Admin {
 		// Honesty banner: core skips our filter when AI is disabled site-wide.
 		if ( function_exists( 'wp_supports_ai' ) && ! wp_supports_ai() ) {
 			$why = defined( 'WP_AI_SUPPORT' ) && ! WP_AI_SUPPORT
-				? __( 'WP_AI_SUPPORT is defined as false (or equivalent).', 'handl-ai-connector-access-control' )
-				: __( 'The wp_supports_ai filter is returning false.', 'handl-ai-connector-access-control' );
-			echo '<div class="notice notice-warning"><p><strong>' . esc_html__( 'AI is disabled site-wide via wp_supports_ai.', 'handl-ai-connector-access-control' ) . '</strong> ';
+				? __( 'WP_AI_SUPPORT is set to false.', 'handl-ai-connector-access-control' )
+				: __( 'wp_supports_ai returned false.', 'handl-ai-connector-access-control' );
+			echo '<div class="notice notice-warning"><p><strong>' . esc_html__( 'AI is turned off for the whole site.', 'handl-ai-connector-access-control' ) . '</strong> ';
 			echo esc_html( $why ) . ' ';
-			echo esc_html__( 'WordPress short-circuits prompts before HandL AICAC’s prevent filter runs, so this plugin’s audit log will be empty or incomplete for those calls — that is expected, not a broken install.', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'WordPress stops these prompts before HandL AI Access can inspect them. The activity log may be empty or incomplete, but the plugin is working as expected.', 'handl-ai-connector-access-control' );
 			echo '</p></div>';
 		}
 
 		// Distinct empty-window honesty when TTL pruned everything (not the same as wp_supports_ai).
 		$max_age_days = Policy::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
 		if ( null !== $max_age_days && 0 === count( $log ) && ( ! empty( $policy['log_enabled'] ) || ! empty( $policy['audit_only'] ) ) ) {
-			echo '<div class="notice notice-info"><p><strong>' . esc_html__( 'Retained audit log is empty for the current time window.', 'handl-ai-connector-access-control' ) . '</strong> ';
+			echo '<div class="notice notice-info"><p><strong>' . esc_html__( 'No activity is stored for the current time window.', 'handl-ai-connector-access-control' ) . '</strong> ';
 			echo esc_html(
 				sprintf(
 					/* translators: %d: maximum log age in days */
-					__( 'Maximum log age is set to %d day(s): older rows were pruned by time-based retention. This is separate from site-wide AI disable via wp_supports_ai (which prevents calls from being logged at all).', 'handl-ai-connector-access-control' ),
+					__( 'Your %d-day time limit removed older log rows. This is different from site-wide AI being disabled, which prevents calls from being logged.', 'handl-ai-connector-access-control' ),
 					$max_age_days
 				)
 			);
@@ -327,13 +327,13 @@ final class Admin {
 		}
 
 		if ( ! empty( $policy['audit_only'] ) ) {
-			$audit_notice = esc_html__( 'Learn mode is on: calls are logged and never blocked. Per-plugin rules show as “would enforce” only. Turn off learn mode on the Activity tab when you are ready to enforce.', 'handl-ai-connector-access-control' );
+			$audit_notice = esc_html__( 'Learn mode is on. Calls are logged but never blocked. Plugin rules show what would happen. Turn off Learn mode on the Activity tab when you are ready to enforce your rules.', 'handl-ai-connector-access-control' );
 			if ( 'activity' !== $tab ) {
 				$audit_notice .= ' <a href="' . esc_url( admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' ) ) . '">' . esc_html__( 'Open Activity', 'handl-ai-connector-access-control' ) . '</a>';
 			}
 			echo '<div class="notice notice-info"><p>' . wp_kses_post( $audit_notice ) . '</p></div>';
 		} elseif ( ! empty( $policy['kill_switch'] ) ) {
-			echo '<div class="notice notice-warning"><p>' . esc_html__( 'Emergency kill switch is on: all AI Client calls are blocked except plugins listed as exceptions.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<div class="notice notice-warning"><p>' . esc_html__( 'Emergency stop is on. All AI Client calls are blocked except listed plugins.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 
 		if ( 'dashboard' === $tab ) {
@@ -379,7 +379,7 @@ final class Admin {
 		// Settings demoted: collapsible panel, not the first thing you see (F5 IA).
 		echo '<details class="handl-aicac-settings-panel">';
 		echo '<summary><strong>' . esc_html__( 'Settings', 'handl-ai-connector-access-control' ) . '</strong> — ';
-		echo esc_html__( 'site default, unknown operations, kill switch, role gate, tool arming, model force', 'handl-ai-connector-access-control' );
+		echo esc_html__( 'site default, unknown operations, emergency stop, limit by role, blocked tools, model routing', 'handl-ai-connector-access-control' );
 		echo '</summary>';
 		echo '<table class="form-table" role="presentation">';
 		echo '<tr>';
@@ -389,19 +389,19 @@ final class Admin {
 		$this->render_option( 'allow', $policy['default'] ?? 'allow', __( 'Allow', 'handl-ai-connector-access-control' ) );
 		$this->render_option( 'deny', $policy['default'] ?? 'allow', __( 'Deny', 'handl-ai-connector-access-control' ) );
 		echo '</select>';
-		echo '<p class="description">' . esc_html__( 'Used when the calling plugin cannot be resolved or has no explicit rule.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Used when we cannot identify the calling plugin or the plugin has no rule.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td>';
 		echo '</tr>';
 		echo '<tr>';
-		echo '<th scope="row">' . esc_html__( 'Unknown operations', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="row">' . esc_html__( 'Unknown AI operations', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<td>';
 		$unknown = $policy['unknown_operation'] ?? 'inherit';
 		echo '<select name="handl_aicac_unknown_operation" form="' . esc_attr( $rules_form_id ) . '">';
-		$this->render_option( 'inherit', (string) $unknown, __( 'Inherit plugin rule', 'handl-ai-connector-access-control' ) );
+		$this->render_option( 'inherit', (string) $unknown, __( 'Follow plugin rule', 'handl-ai-connector-access-control' ) );
 		$this->render_option( 'allow', (string) $unknown, __( 'Allow', 'handl-ai-connector-access-control' ) );
 		$this->render_option( 'deny', (string) $unknown, __( 'Deny', 'handl-ai-connector-access-control' ) );
 		echo '</select>';
-		echo '<p class="description">' . esc_html__( 'When an AI Client method does not map to Text / Image / Speech / TTS / Video (including music, embeddings, and generic is_supported). Support checks and matching generate_* methods always share the same family rule.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Choose what happens when an AI Client operation does not fit Text, Image, Speech, Text to speech, or Video. This includes music, embeddings, and generic methods. Support checks follow the same rule as the matching generation method.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td>';
 		echo '</tr>';
 		$this->render_kill_switch_settings_rows( $policy, $rules_form_id, $plugins );
@@ -417,22 +417,22 @@ final class Admin {
 		$unforced_n    = Model_Force::count_unforced_unattributed( $log );
 
 		echo '<h2>' . esc_html__( 'Plugin rules', 'handl-ai-connector-access-control' ) . '</h2>';
-		echo '<p class="description">' . esc_html__( 'Plugin access is the outer gate. Capability columns refine what an allowed plugin may do (e.g. allow text, deny image). Inherit follows the plugin AI access rule. A plugin-level Deny blocks every family. EXPERIMENTAL force columns pin the detected caller’s provider/model (best-effort nearest plugin frame — not a spend guarantee). Leave force fields empty for no pin.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Plugin rules set the main access level. AI type columns can refine an allowed plugin, such as allowing text but blocking images. A plugin-level Deny blocks every AI type. Model routing is experimental, uses best-effort plugin detection, and does not guarantee spend. Leave both route fields blank to disable it.', 'handl-ai-connector-access-control' ) . '</p>';
 		if ( $unforced_n > 0 && ! empty( $force_map ) ) {
 			echo '<div class="notice notice-warning inline"><p>';
 			echo esc_html(
 				sprintf(
 					/* translators: %d: count of unattributed unforced calls in retained log */
 					_n(
-						'%d call in the retained log could not be attributed and ran unforced.',
-						'%d calls in the retained log could not be attributed and ran unforced.',
+						'%d saved call could not be linked to a plugin and ran without model routing.',
+						'%d saved calls could not be linked to a plugin and ran without model routing.',
 						$unforced_n,
 						'handl-ai-connector-access-control'
 					),
 					$unforced_n
 				)
 			);
-			echo ' ' . esc_html__( 'Pins follow the detected caller only; unattributed traffic is not a spend guarantee for any row below.', 'handl-ai-connector-access-control' );
+			echo ' ' . esc_html__( 'Model routes follow the detected plugin. Calls with no detected plugin may run without a route, so model routing is not a spend guarantee.', 'handl-ai-connector-access-control' );
 			echo '</p></div>';
 		}
 		$this->render_plugin_rules_filters( $plugin_status_filter, $plugin_access_filter );
@@ -460,8 +460,8 @@ final class Admin {
 		foreach ( $family_labels as $family_id => $family_label ) {
 			echo '<th class="handl-aicac-col-family">' . esc_html( $family_label ) . '</th>';
 		}
-		echo '<th class="handl-aicac-col-force">' . esc_html__( 'EXPERIMENTAL force provider', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="handl-aicac-col-force">' . esc_html__( 'EXPERIMENTAL force model', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th class="handl-aicac-col-force">' . esc_html__( 'Provider route (experimental)', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th class="handl-aicac-col-force">' . esc_html__( 'Model route (experimental)', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Plugin file', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead>';
 		echo '<tbody>';
@@ -521,8 +521,8 @@ final class Admin {
 					sprintf(
 						/* translators: %d: unattributed unforced call count */
 						_n(
-							'%d call could not be attributed and ran unforced',
-							'%d calls could not be attributed and ran unforced',
+							'%d call ran without model routing because no plugin was detected',
+							'%d calls ran without model routing because no plugin was detected',
 							$unforced_n,
 							'handl-ai-connector-access-control'
 						),
@@ -545,11 +545,11 @@ final class Admin {
 				echo '<td class="handl-aicac-col-family">';
 				echo '<select name="handl_aicac_operation[' . esc_attr( $basename ) . '][' . esc_attr( $family_id ) . ']" form="' . esc_attr( $rules_form_id ) . '" aria-label="' . esc_attr( sprintf(
 					/* translators: 1: plugin name, 2: capability family */
-					__( '%1$s — %2$s', 'handl-ai-connector-access-control' ),
+					__( '%1$s: %2$s', 'handl-ai-connector-access-control' ),
 					$name,
 					$family_label
 				) ) . '">';
-				$this->render_option( '', $family_rule, __( 'Inherit', 'handl-ai-connector-access-control' ) );
+				$this->render_option( '', $family_rule, __( 'Follow plugin rule', 'handl-ai-connector-access-control' ) );
 				$this->render_option( 'allow', $family_rule, __( 'Allow', 'handl-ai-connector-access-control' ) );
 				$this->render_option( 'deny', $family_rule, __( 'Deny', 'handl-ai-connector-access-control' ) );
 				echo '</select>';
@@ -558,14 +558,14 @@ final class Admin {
 			echo '<td class="handl-aicac-col-force">';
 			echo '<input type="text" class="regular-text code" style="max-width:9em;" name="handl_aicac_model_force[' . esc_attr( $basename ) . '][provider]" form="' . esc_attr( $rules_form_id ) . '" value="' . esc_attr( $force_p ) . '" placeholder="openai" autocomplete="off" aria-label="' . esc_attr( sprintf(
 				/* translators: %s: plugin name */
-				__( '%s force provider', 'handl-ai-connector-access-control' ),
+				__( '%s provider route', 'handl-ai-connector-access-control' ),
 				$name
 			) ) . '" />';
 			echo '</td>';
 			echo '<td class="handl-aicac-col-force">';
 			echo '<input type="text" class="regular-text code" style="max-width:11em;" name="handl_aicac_model_force[' . esc_attr( $basename ) . '][model]" form="' . esc_attr( $rules_form_id ) . '" value="' . esc_attr( $force_m ) . '" placeholder="gpt-4o-mini" autocomplete="off" aria-label="' . esc_attr( sprintf(
 				/* translators: %s: plugin name */
-				__( '%s force model', 'handl-ai-connector-access-control' ),
+				__( '%s model route', 'handl-ai-connector-access-control' ),
 				$name
 			) ) . '" />';
 			echo '</td>';
@@ -646,10 +646,10 @@ final class Admin {
 		echo '<div class="alignleft actions">';
 		echo '<label for="handl-aicac-access-filter" class="screen-reader-text">' . esc_html__( 'Filter by AI access', 'handl-ai-connector-access-control' ) . '</label>';
 		echo '<select id="handl-aicac-access-filter" name="handl_aicac_access" onchange="if (this.form) { if (this.form.requestSubmit) { this.form.requestSubmit(); } else { HTMLFormElement.prototype.submit.call(this.form); } }">';
-		$this->render_option( 'all', $plugin_access_filter, __( 'All AI access', 'handl-ai-connector-access-control' ) );
-		$this->render_option( 'effective-allow', $plugin_access_filter, __( 'Plugin-level allow', 'handl-ai-connector-access-control' ) );
-		$this->render_option( 'effective-deny', $plugin_access_filter, __( 'Plugin-level deny', 'handl-ai-connector-access-control' ) );
-		$this->render_option( 'default-only', $plugin_access_filter, __( 'Default only', 'handl-ai-connector-access-control' ) );
+		$this->render_option( 'all', $plugin_access_filter, __( 'All rules', 'handl-ai-connector-access-control' ) );
+		$this->render_option( 'effective-allow', $plugin_access_filter, __( 'Explicit Allow', 'handl-ai-connector-access-control' ) );
+		$this->render_option( 'effective-deny', $plugin_access_filter, __( 'Explicit Deny', 'handl-ai-connector-access-control' ) );
+		$this->render_option( 'default-only', $plugin_access_filter, __( 'Uses default', 'handl-ai-connector-access-control' ) );
 		echo '</select>';
 		echo '</div>';
 		echo '<br class="clear" />';
@@ -829,20 +829,20 @@ final class Admin {
 
 		// --- Coverage tile (Δ1 + Δ5) ---
 		echo '<div class="postbox handl-aicac-tile handl-aicac-tile--coverage">';
-		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Coverage', 'handl-ai-connector-access-control' ) . '</h2></div>';
+		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'AI coverage', 'handl-ai-connector-access-control' ) . '</h2></div>';
 		echo '<div class="inside">';
 		if ( $coverage['D'] > 0 ) {
 			// Q4 defaulted headline — one string, changeable at haktan F5 review.
 			echo '<p class="handl-aicac-coverage-headline"><strong>';
-			echo esc_html__( 'Some AI activity on this site is outside what these rules can control', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'Some known AI activity is outside the AI Client and cannot be controlled by these rules', 'handl-ai-connector-access-control' );
 			echo '</strong></p>';
 		} elseif ( $coverage['M'] > 0 ) {
 			echo '<p class="handl-aicac-coverage-headline"><strong>';
-			echo esc_html__( 'Known AI activity in this log is flowing through the AI Client', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'All known AI activity in this log is using the AI Client', 'handl-ai-connector-access-control' );
 			echo '</strong></p>';
 		} else {
 			echo '<p class="handl-aicac-coverage-headline"><strong>';
-			echo esc_html__( 'No AI activity retained in the log yet', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'No AI activity in the log yet', 'handl-ai-connector-access-control' );
 			echo '</strong></p>';
 		}
 
@@ -850,7 +850,7 @@ final class Admin {
 		echo esc_html(
 			sprintf(
 				/* translators: 1: log_limit (row slots), 2: human span or em dash */
-				__( 'from the last %1$s log entries · spanning %2$s', 'handl-ai-connector-access-control' ),
+				__( 'Last %1$s log entries, covering %2$s', 'handl-ai-connector-access-control' ),
 				number_format_i18n( $coverage['log_limit'] ),
 				$coverage['span_label']
 			)
@@ -870,7 +870,7 @@ final class Admin {
 		echo esc_html(
 			sprintf(
 				/* translators: 1: N through AI Client, 2: A attributed, 3: U unattributed */
-				__( '— Through the AI Client: %1$s (attributed %2$s · unattributed %3$s)', 'handl-ai-connector-access-control' ),
+				__( 'Through the AI Client: %1$s (identified: %2$s; unknown: %3$s)', 'handl-ai-connector-access-control' ),
 				number_format_i18n( $coverage['N'] ),
 				number_format_i18n( $coverage['A'] ),
 				number_format_i18n( $coverage['U'] )
@@ -880,7 +880,7 @@ final class Admin {
 		echo esc_html(
 			sprintf(
 				/* translators: %s: D outside AI Client call count */
-				__( '— Outside the AI Client: %s — seen, not governed by these rules', 'handl-ai-connector-access-control' ),
+				__( 'Outside the AI Client: %s (observed, not controlled)', 'handl-ai-connector-access-control' ),
 				number_format_i18n( $coverage['D'] )
 			)
 		);
@@ -893,7 +893,7 @@ final class Admin {
 			echo esc_html(
 				sprintf(
 					/* translators: %d: log_limit (row slots) */
-					__( 'Log is at its %d-entry limit; older entries have aged out. Raise the limit in Settings (Activity tab) for a longer window.', 'handl-ai-connector-access-control' ),
+					__( 'The log reached its %d-entry limit, so older entries were removed. Increase the limit under Activity settings to keep more history.', 'handl-ai-connector-access-control' ),
 					$coverage['log_limit']
 				)
 			);
@@ -901,7 +901,7 @@ final class Admin {
 		}
 
 		echo '<p class="description">';
-		echo esc_html__( 'Not counted here (named blind spots, not false precision): site-wide wp_supports_ai short-circuit; raw curl / external workers that never touch WordPress HTTP or the AI Client.', 'handl-ai-connector-access-control' );
+		echo esc_html__( 'Not counted: calls stopped before this plugin runs, direct cURL requests, and external workers that do not use WordPress HTTP or the AI Client.', 'handl-ai-connector-access-control' );
 		echo '</p>';
 		echo '</div></div>';
 
@@ -910,21 +910,21 @@ final class Admin {
 
 		// --- Safety / control ---
 		echo '<div class="postbox handl-aicac-tile handl-aicac-tile--safety">';
-		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Safety & control', 'handl-ai-connector-access-control' ) . '</h2></div>';
+		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Safety and control', 'handl-ai-connector-access-control' ) . '</h2></div>';
 		echo '<div class="inside">';
 		$default = ( $policy['default'] ?? 'allow' ) === 'deny' ? __( 'Deny', 'handl-ai-connector-access-control' ) : __( 'Allow', 'handl-ai-connector-access-control' );
 		$learn   = ! empty( $policy['audit_only'] )
-			? __( 'Learn mode on (observation only — no deny/force)', 'handl-ai-connector-access-control' )
-			: __( 'Learn mode off (enforcing)', 'handl-ai-connector-access-control' );
+			? __( 'Learn mode on (observing only; no blocking or model routing)', 'handl-ai-connector-access-control' )
+			: __( 'Learn mode off (rules enforced)', 'handl-ai-connector-access-control' );
 		echo '<p><strong>' . esc_html__( 'Default:', 'handl-ai-connector-access-control' ) . '</strong> ' . esc_html( $default );
 		echo ' · <strong>' . esc_html( $learn ) . '</strong></p>';
 		if ( ! empty( $policy['kill_switch'] ) ) {
-			echo '<p class="handl-aicac-danger"><strong>' . esc_html__( 'Emergency kill switch is on.', 'handl-ai-connector-access-control' ) . '</strong></p>';
+			echo '<p class="handl-aicac-danger"><strong>' . esc_html__( 'Emergency stop is on.', 'handl-ai-connector-access-control' ) . '</strong></p>';
 		}
 		echo '<p>' . esc_html(
 			sprintf(
 				/* translators: %d: deny count in retained log */
-				_n( '%d deny in this log window.', '%d denies in this log window.', $deny_n, 'handl-ai-connector-access-control' ),
+				_n( '%d blocked call in this log window.', '%d blocked calls in this log window.', $deny_n, 'handl-ai-connector-access-control' ),
 				$deny_n
 			)
 		) . '</p>';
@@ -932,17 +932,17 @@ final class Admin {
 
 		// --- Spend ---
 		echo '<div class="postbox handl-aicac-tile handl-aicac-tile--spend">';
-		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Spend (estimated)', 'handl-ai-connector-access-control' ) . '</h2></div>';
+		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Estimated spend', 'handl-ai-connector-access-control' ) . '</h2></div>';
 		echo '<div class="inside">';
 		if ( $est_any ) {
 			echo '<p class="handl-aicac-spend-total"><strong>$' . esc_html( number_format_i18n( $est_total, 2 ) ) . '</strong> ';
 			$rate_label = Cost::using_default_rates( $policy )
-				? __( 'est. · default rates', 'handl-ai-connector-access-control' )
-				: __( 'est. · custom rates', 'handl-ai-connector-access-control' );
+				? __( 'estimate using default rates', 'handl-ai-connector-access-control' )
+				: __( 'estimate using custom rates', 'handl-ai-connector-access-control' );
 			echo '<span class="description">' . esc_html( $rate_label ) . '</span></p>';
 			echo '<table class="widefat striped handl-aicac-tile-table"><thead><tr>';
 			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th class="column-num">' . esc_html__( 'Est. $', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th class="column-num">' . esc_html__( 'Estimated $', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '<th class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '</tr></thead><tbody>';
 			$i = 0;
@@ -960,20 +960,20 @@ final class Admin {
 			}
 			echo '</tbody></table>';
 		} else {
-			echo '<p class="description">' . esc_html__( 'No token-backed estimates in the retained log yet.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'No estimates yet. Token counts are required.', 'handl-ai-connector-access-control' ) . '</p>';
 		}
 		echo '</div></div>';
 
 		// --- Pin-hold (Δ2): quiet when no force rules ---
 		if ( $has_pins ) {
 			echo '<div class="postbox handl-aicac-tile handl-aicac-tile--pins">';
-			echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Did my pins hold?', 'handl-ai-connector-access-control' ) . '</h2></div>';
+			echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Did model routes work?', 'handl-ai-connector-access-control' ) . '</h2></div>';
 			echo '<div class="inside">';
 			echo '<p><strong>';
 			echo esc_html(
 				sprintf(
 					/* translators: 1: X held, 2: Y attempted */
-					__( 'Pins held for %1$s of %2$s attempted forces', 'handl-ai-connector-access-control' ),
+					__( 'Model routes matched %1$s of %2$s attempts', 'handl-ai-connector-access-control' ),
 					number_format_i18n( $pin['held'] ),
 					number_format_i18n( $pin['attempted'] )
 				)
@@ -985,8 +985,8 @@ final class Admin {
 					sprintf(
 						/* translators: %d: unattributed never-evaluated count */
 						_n(
-							'%d call could not be attributed; pins were never evaluated for it.',
-							'%d calls could not be attributed; pins were never evaluated for them.',
+							'%d call had no detected plugin, so its model route was not checked.',
+							'%d calls had no detected plugin, so their model routes were not checked.',
 							$unforced,
 							'handl-ai-connector-access-control'
 						),
@@ -1007,11 +1007,11 @@ final class Admin {
 
 		// --- Block that one ---
 		echo '<div class="postbox handl-aicac-tile handl-aicac-tile--block">';
-		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Block that one', 'handl-ai-connector-access-control' ) . '</h2></div>';
+		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Block a plugin', 'handl-ai-connector-access-control' ) . '</h2></div>';
 		echo '<div class="inside">';
-		echo '<p class="description">' . esc_html__( 'Top attributed AI Client callers in this log. One click sets a plugin-level Deny (undo from the success notice).', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'These are the top AI Client callers that the plugin could identify in this log. Block one with a click. You can undo the change from the success notice.', 'handl-ai-connector-access-control' ) . '</p>';
 		if ( empty( $offenders ) ) {
-			echo '<p class="description">' . esc_html__( 'No attributed AI Client callers in the retained log.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'No identified AI Client callers in this log yet.', 'handl-ai-connector-access-control' ) . '</p>';
 		} else {
 			echo '<table class="widefat striped handl-aicac-tile-table"><thead><tr>';
 			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
@@ -1049,7 +1049,7 @@ final class Admin {
 		// Shadow rows: explicit not-governable state (F5 item 5 / standing rule).
 		if ( ! empty( $shadow_top ) ) {
 			echo '<h3 style="margin-top:1.25em;">' . esc_html__( 'Outside AI Client (observe only)', 'handl-ai-connector-access-control' ) . '</h3>';
-			echo '<p class="description">' . esc_html__( 'These callers bypass the AI Client. Allow/Deny rules cannot reach them.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'These calls bypass the AI Client, so Allow and Deny rules cannot control them.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '<table class="widefat striped handl-aicac-tile-table"><thead><tr>';
 			echo '<th>' . esc_html__( 'Caller', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '<th class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
@@ -1073,7 +1073,7 @@ final class Admin {
 				echo '</td>';
 				echo '<td class="column-num">' . esc_html( number_format_i18n( (int) $row['calls'] ) ) . '</td>';
 				echo '<td><span class="description handl-aicac-not-governable">';
-				echo esc_html__( 'not governed by these rules', 'handl-ai-connector-access-control' );
+				echo esc_html__( 'observed, not controlled by these rules', 'handl-ai-connector-access-control' );
 				echo '</span></td></tr>';
 			}
 			echo '</tbody></table>';
@@ -1137,11 +1137,11 @@ final class Admin {
 		echo '<div class="handl-aicac-insights-hero__copy">';
 		echo '<h2 class="handl-aicac-insights-title">' . esc_html__( 'Usage insights', 'handl-ai-connector-access-control' ) . '</h2>';
 		echo '<p class="handl-aicac-insights-lead">';
-		echo esc_html__( 'Aggregated peaks and totals from your retained call log — grouped by plugin, provider, model, or operation.', 'handl-ai-connector-access-control' );
+		echo esc_html__( 'Totals and peaks from the saved log, grouped by plugin, provider, model, or operation.', 'handl-ai-connector-access-control' );
 		echo '</p>';
 		if ( 0 === $stored_count ) {
 			echo '<p class="handl-aicac-insights-empty-note">';
-			echo esc_html__( 'No data yet. Turn on learn mode or logging on Activity, then trigger a few AI Client requests.', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'No data yet. Turn on Learn mode or logging in Activity, then run a few AI Client requests.', 'handl-ai-connector-access-control' );
 			echo ' <a href="' . esc_url( admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' ) ) . '">';
 			echo esc_html__( 'Open Activity', 'handl-ai-connector-access-control' );
 			echo '</a></p>';
@@ -1151,7 +1151,7 @@ final class Admin {
 				esc_html(
 					sprintf(
 						/* translators: 1: stored entry count, 2: retention limit (entries), 3: retention mode phrase */
-						__( 'Based on %1$d of %2$d stored entries (%3$s).', 'handl-ai-connector-access-control' ),
+						__( 'Using %1$d of %2$d saved entries (%3$s).', 'handl-ai-connector-access-control' ),
 						$stored_count,
 						$log_limit_policy,
 						$this->retention_mode_phrase( $policy )
@@ -1174,8 +1174,8 @@ final class Admin {
 						sprintf(
 							/* translators: %d: sum of direct_http row counts (HTTP calls) outside the AI Client */
 							_n(
-								'%d AI HTTP call outside the AI Client (seen, not governed by these rules).',
-								'%d AI HTTP calls outside the AI Client (seen, not governed by these rules).',
+								'%d AI HTTP call was observed outside the AI Client and is not controlled by these rules.',
+								'%d AI HTTP calls were observed outside the AI Client and are not controlled by these rules.',
 								$direct_http_count,
 								'handl-ai-connector-access-control'
 							),
@@ -1196,7 +1196,7 @@ final class Admin {
 				''
 			);
 			$this->render_insights_stat_card(
-				__( 'Calls with tokens', 'handl-ai-connector-access-control' ),
+				__( 'Calls with token data', 'handl-ai-connector-access-control' ),
 				number_format_i18n( $summary['calls_with_tokens'] ),
 				$summary['calls'] > 0
 					? sprintf(
@@ -1207,23 +1207,23 @@ final class Admin {
 					: ''
 			);
 			$this->render_insights_stat_card(
-				__( 'Token sum (in + out)', 'handl-ai-connector-access-control' ),
+				__( 'Total tokens (input + output)', 'handl-ai-connector-access-control' ),
 				$this->format_insights_token_total( $summary['sum_input'], $summary['sum_output'] ),
 				$summary['sum_total'] > 0
 					? sprintf(
 						/* translators: %s: formatted total token count */
-						__( '%s reported total', 'handl-ai-connector-access-control' ),
+						__( 'Reported total: %s', 'handl-ai-connector-access-control' ),
 						number_format_i18n( $summary['sum_total'] )
 					)
 					: __( 'Filled after model responds', 'handl-ai-connector-access-control' )
 			);
 			$this->render_insights_stat_card(
-				__( 'Peak single call', 'handl-ai-connector-access-control' ),
+				__( 'Largest single call', 'handl-ai-connector-access-control' ),
 				$summary['max_total'] > 0 ? number_format_i18n( $summary['max_total'] ) : '—',
 				$summary['max_total'] > 0
 					? sprintf(
 						/* translators: 1: input tokens, 2: output tokens */
-						__( '%1$s in · %2$s out', 'handl-ai-connector-access-control' ),
+						__( '%1$s input, %2$s output', 'handl-ai-connector-access-control' ),
 						number_format_i18n( $summary['max_input'] ),
 						number_format_i18n( $summary['max_output'] )
 					)
@@ -1258,10 +1258,10 @@ final class Admin {
 		}
 		echo '</nav>';
 
-		echo '<nav class="handl-aicac-insights-metric-toggle" aria-label="' . esc_attr__( 'Chart metric', 'handl-ai-connector-access-control' ) . '">';
+		echo '<nav class="handl-aicac-insights-metric-toggle" aria-label="' . esc_attr__( 'Measure', 'handl-ai-connector-access-control' ) . '">';
 		foreach ( array(
-			'calls'  => __( 'By calls', 'handl-ai-connector-access-control' ),
-			'tokens' => __( 'By token sum', 'handl-ai-connector-access-control' ),
+			'calls'  => __( 'Calls', 'handl-ai-connector-access-control' ),
+			'tokens' => __( 'Total tokens', 'handl-ai-connector-access-control' ),
 		) as $metric_key => $metric_label ) {
 			$metric_url = add_query_arg(
 				array(
@@ -1281,7 +1281,7 @@ final class Admin {
 		echo '</div>';
 
 		if ( empty( $rows ) ) {
-			echo '<p class="handl-aicac-insights-table-empty">' . esc_html__( 'Nothing to chart for this dimension yet.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="handl-aicac-insights-table-empty">' . esc_html__( 'No data to chart for this group yet.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '</div>';
 			return;
 		}
@@ -1298,10 +1298,10 @@ final class Admin {
 		echo '<th class="column-label">' . esc_html( $dimensions[ $dimension ] ) . '</th>';
 		echo '<th class="column-chart">' . esc_html__( 'Share', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-num">' . esc_html__( 'Σ tokens', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-num">' . esc_html__( 'Peak call', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-num">' . esc_html__( 'Peak in', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-num">' . esc_html__( 'Peak out', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th class="column-num">' . esc_html__( 'Total tokens', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th class="column-num">' . esc_html__( 'Largest call', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th class="column-num">' . esc_html__( 'Largest input', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th class="column-num">' . esc_html__( 'Largest output', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th class="column-time">' . esc_html__( 'Last seen', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead><tbody>';
 
@@ -1368,7 +1368,7 @@ final class Admin {
 		echo '<tr' . ( $is_peak_row ? ' class="handl-aicac-insights-row--leader"' : '' ) . '>';
 		echo '<td class="column-rank">';
 		if ( $is_peak_row ) {
-			echo '<span class="handl-aicac-insights-rank-badge" title="' . esc_attr__( 'Highest in this view', 'handl-ai-connector-access-control' ) . '">★</span> ';
+			echo '<span class="handl-aicac-insights-rank-badge" title="' . esc_attr__( 'Highest value in this view', 'handl-ai-connector-access-control' ) . '">★</span> ';
 		}
 		echo esc_html( (string) $rank );
 		echo '</td>';
@@ -1382,7 +1382,7 @@ final class Admin {
 		echo '<div class="handl-aicac-insights-bar" role="img" aria-label="' . esc_attr(
 			sprintf(
 				/* translators: %d: percentage of chart maximum */
-				__( '%d%% of chart maximum', 'handl-ai-connector-access-control' ),
+				__( '%d%% of the chart maximum', 'handl-ai-connector-access-control' ),
 				$bar_percent
 			)
 		) . '">';
@@ -1421,7 +1421,7 @@ final class Admin {
 		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
 		$this->render_log_filter_hiddens( $log_filters );
 		$this->render_logging_settings( $policy );
-		submit_button( __( 'Save audit settings', 'handl-ai-connector-access-control' ) );
+		submit_button( __( 'Save Activity settings', 'handl-ai-connector-access-control' ) );
 		echo '</form>';
 
 		$webhook_saved = Alerts::resolve_webhook( $policy );
@@ -1436,7 +1436,7 @@ final class Admin {
 				'submit',
 				false
 			);
-			echo '<p class="description" style="display:inline;margin-left:8px;">' . esc_html__( 'POSTs a sample JSON payload labeled as a test to the saved Webhook URL immediately (bypasses rate limiting). Not a real denial.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description" style="display:inline;margin-left:8px;">' . esc_html__( 'Immediately sends a sample JSON payload to the saved Webhook URL. The payload is marked as a test, does not represent a real blocked call, and does not count toward rate limits.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '</form>';
 		}
 
@@ -1449,7 +1449,7 @@ final class Admin {
 			submit_button(
 				sprintf(
 					/* translators: %d: queued denial count */
-					__( 'Send denial digest now (%d queued)', 'handl-ai-connector-access-control' ),
+					__( 'Send blocked-call summary now (%d queued)', 'handl-ai-connector-access-control' ),
 					$pending_digest
 				),
 				'secondary',
@@ -1487,7 +1487,7 @@ final class Admin {
 		if ( $this->log_filters_active( $log_filters ) ) {
 			printf(
 				/* translators: 1: entries shown, 2: matching-entry count, 3: stored entry count, 4: retention limit, 5: retention mode phrase */
-				esc_html__( 'Showing %1$d of %2$d matching entries (newest first, up to 50). %3$d of %4$d stored entries retained (%5$s).', 'handl-ai-connector-access-control' ),
+				esc_html__( 'Showing %1$d of %2$d matching entries, newest first. The log currently keeps %3$d of %4$d entries (%5$s).', 'handl-ai-connector-access-control' ),
 				count( $rows_to_show ),
 				$matching_count,
 				(int) $stored_count,
@@ -1497,7 +1497,7 @@ final class Admin {
 		} else {
 			printf(
 				/* translators: 1: stored entry count, 2: retention limit, 3: rows shown in table, 4: retention mode phrase */
-				esc_html__( 'Showing up to %3$d newest rows. %1$d of %2$d stored entries retained (%4$s). Provider/model are read from the prompt builder when available. Input/output tokens are filled after the model responds (allowed generate_* calls only).', 'handl-ai-connector-access-control' ),
+				esc_html__( 'Showing the newest %3$d rows. The log currently keeps %1$d of %2$d entries (%4$s).', 'handl-ai-connector-access-control' ),
 				(int) $stored_count,
 				(int) $log_limit_policy,
 				count( $rows_to_show ),
@@ -1509,16 +1509,16 @@ final class Admin {
 		echo '<thead><tr>';
 		echo '<th class="column-time">' . esc_html__( 'Time', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Decision', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-operation">' . esc_html__( 'Operation / family', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th class="column-operation">' . esc_html__( 'Operation / AI type', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th class="column-provider">' . esc_html__( 'Provider', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th class="column-model">' . esc_html__( 'Model', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th class="column-tokens">' . esc_html__( 'Input tokens', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th class="column-tokens">' . esc_html__( 'Output tokens', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-tokens">' . esc_html__( 'Est. $', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th class="column-tokens">' . esc_html__( 'Estimated $', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Prompt', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'User', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'URI', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Request URL', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th class="column-actions">' . esc_html__( 'Actions', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead><tbody>';
 
@@ -1529,8 +1529,8 @@ final class Admin {
 		if ( 0 === count( $rows_to_show ) ) {
 			if ( 0 === $stored_count ) {
 				$empty_message = ! empty( $policy['audit_only'] )
-					? __( 'No calls logged yet. Trigger an AI Client request while audit-only mode is on.', 'handl-ai-connector-access-control' )
-					: __( 'No calls logged yet. Enable logging above and trigger an AI Client request.', 'handl-ai-connector-access-control' );
+					? __( 'No calls logged yet. Make an AI Client request while Learn mode is on.', 'handl-ai-connector-access-control' )
+					: __( 'No calls logged yet. Turn on logging above, then make an AI Client request.', 'handl-ai-connector-access-control' );
 			} elseif ( $this->log_filters_active( $log_filters ) ) {
 				$empty_message = __( 'No calls match the current filters.', 'handl-ai-connector-access-control' );
 			} else {
@@ -1851,12 +1851,12 @@ final class Admin {
 	private function retention_mode_phrase( array $policy ): string {
 		$max_age = Policy::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
 		if ( null === $max_age ) {
-			return __( 'entry-based retention; no time-based TTL', 'handl-ai-connector-access-control' );
+			return __( 'entry limit; no time limit', 'handl-ai-connector-access-control' );
 		}
 
 		return sprintf(
 			/* translators: %d: maximum log age in days */
-			__( 'entry-count cap plus %d-day time-based TTL; stricter limit wins', 'handl-ai-connector-access-control' ),
+			__( 'entry limit plus %d-day time limit; stricter limit wins', 'handl-ai-connector-access-control' ),
 			$max_age
 		);
 	}
@@ -1895,7 +1895,7 @@ final class Admin {
 		$max_age_val = null === $max_age ? '' : (string) $max_age;
 
 		echo '<p class="description" style="max-width:52em;margin-bottom:1em;">';
-		echo esc_html__( 'Use this tab to observe AI Client and direct-HTTP AI activity. Learn mode logs every call without blocking. When learn mode is off, you can still log calls for troubleshooting. Enforcement lives on the Rules and Dashboard tabs.', 'handl-ai-connector-access-control' );
+		echo esc_html__( 'Use this tab to see AI Client and direct AI HTTP activity. Learn mode logs every call without blocking it. Manage enforcement on the Rules tab.', 'handl-ai-connector-access-control' );
 		echo '</p>';
 
 		echo '<table class="form-table" role="presentation">';
@@ -1903,40 +1903,40 @@ final class Admin {
 		echo '<th scope="row">' . esc_html__( 'Learn mode', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<td>';
 		echo '<label><input type="checkbox" name="handl_aicac_audit_only" value="1" ' . checked( $audit_only, true, false ) . ' /> ';
-		echo esc_html__( 'Log every call and never block (recommended while discovering callers)', 'handl-ai-connector-access-control' ) . '</label>';
-		echo '<p class="description">' . esc_html__( 'Shows which plugins use the AI Client and what your rules would do (“would enforce”). Use Allow/Deny below or on the Plugin rules tab, then turn learn mode off to enforce.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo esc_html__( 'Log every call without blocking it (recommended while you identify plugins)', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'See which plugins use the AI Client and what your rules would do. Set Allow or Deny here or on the Rules tab, then turn off Learn mode to enforce the rules.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td>';
 		echo '</tr>';
 
 		if ( ! $audit_only ) {
 			echo '<tr>';
-			echo '<th scope="row">' . esc_html__( 'Logging only', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="row">' . esc_html__( 'Log calls', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '<td>';
 			echo '<label><input type="checkbox" name="handl_aicac_log_enabled" value="1" ' . checked( $log_enabled, true, false ) . ' /> ';
 			echo esc_html__( 'Log calls while enforcing rules', 'handl-ai-connector-access-control' ) . '</label>';
-			echo '<p class="description">' . esc_html__( 'Optional audit trail after learn mode. Nothing is sent off-site; data stays in the options table.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Keep an activity trail while rules are enforced. The log is stored in your WordPress database. Optional emails and webhooks are controlled separately below.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '</td>';
 			echo '</tr>';
 		} else {
 			echo '<tr class="handl-aicac-log-implied">';
-			echo '<th scope="row">' . esc_html__( 'Logging only', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="row">' . esc_html__( 'Log calls', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '<td><p class="description" style="margin:0;">' . esc_html__( 'On automatically while learn mode is active.', 'handl-ai-connector-access-control' ) . '</p></td>';
 			echo '</tr>';
 		}
 
 		echo '<tr>';
-		echo '<th scope="row"><label for="handl-aicac-log-limit">' . esc_html__( 'Retain entries', 'handl-ai-connector-access-control' ) . '</label></th>';
+		echo '<th scope="row"><label for="handl-aicac-log-limit">' . esc_html__( 'Keep this many log entries', 'handl-ai-connector-access-control' ) . '</label></th>';
 		echo '<td>';
 		echo '<input type="number" id="handl-aicac-log-limit" name="handl_aicac_log_limit" value="' . esc_attr( (string) $log_limit ) . '" min="20" max="1000" step="1" class="small-text" />';
-		echo ' <span class="description">' . esc_html__( '(20–1000). Oldest entries drop when the count cap is full.', 'handl-ai-connector-access-control' ) . '</span>';
+		echo ' <span class="description">' . esc_html__( 'Choose 20 to 1,000. Oldest entries are removed when the limit is reached.', 'handl-ai-connector-access-control' ) . '</span>';
 		echo '</td>';
 		echo '</tr>';
 
 		echo '<tr>';
-		echo '<th scope="row"><label for="handl-aicac-log-max-age-days">' . esc_html__( 'Maximum log age (days)', 'handl-ai-connector-access-control' ) . '</label></th>';
+		echo '<th scope="row"><label for="handl-aicac-log-max-age-days">' . esc_html__( 'Delete log entries older than (days)', 'handl-ai-connector-access-control' ) . '</label></th>';
 		echo '<td>';
 		echo '<input type="number" id="handl-aicac-log-max-age-days" name="handl_aicac_log_max_age_days" value="' . esc_attr( $max_age_val ) . '" min="1" max="3650" step="1" class="small-text" placeholder="" />';
-		echo ' <span class="description">' . esc_html__( 'Optional. Leave empty for no time-based expiry. When set, entries older than this many days are removed on the next read or append (in addition to the entry-count cap; the stricter limit wins).', 'handl-ai-connector-access-control' ) . '</span>';
+		echo ' <span class="description">' . esc_html__( 'Optional. Leave blank for no time limit. When set, older entries are removed the next time the log is read or updated. The entry limit still applies, and the stricter limit wins.', 'handl-ai-connector-access-control' ) . '</span>';
 		echo '</td>';
 		echo '</tr>';
 
@@ -1948,28 +1948,28 @@ final class Admin {
 		$pending     = count( Alerts::pending_digest_rows() );
 
 		echo '<tr>';
-		echo '<th scope="row">' . esc_html__( 'Denial email alerts', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="row">' . esc_html__( 'Blocked-call email alerts', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<td>';
 		echo '<label><input type="checkbox" name="handl_aicac_alert_on_deny" value="1" ' . checked( $alert_on, true, false ) . ' /> ';
-		echo esc_html__( 'Email when a prompt is denied (enforcement only — not learn mode)', 'handl-ai-connector-access-control' ) . '</label>';
-		echo '<p class="description">' . esc_html__( 'Messages are attributed to HandL AICAC so you can tell a blocked tool call from an upstream plugin bug. Uses wp_mail only.', 'handl-ai-connector-access-control' ) . '</p>';
-		echo '<p style="margin-top:8px;"><label for="handl-aicac-alert-email">' . esc_html__( 'Recipient', 'handl-ai-connector-access-control' ) . '</label><br />';
+		echo esc_html__( 'Email me when a prompt is blocked. Alerts are sent only while rules are enforced, not in Learn mode.', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Emails identify HandL AI Access as the sender, so you can distinguish a blocked call from a plugin error.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p style="margin-top:8px;"><label for="handl-aicac-alert-email">' . esc_html__( 'Recipient email', 'handl-ai-connector-access-control' ) . '</label><br />';
 		echo '<input type="email" class="regular-text" id="handl-aicac-alert-email" name="handl_aicac_alert_email" value="' . esc_attr( $alert_email ) . '" placeholder="' . esc_attr( (string) get_option( 'admin_email' ) ) . '" />';
 		echo '<br /><span class="description">' . esc_html__( 'Leave empty to use the site admin email.', 'handl-ai-connector-access-control' ) . '</span></p>';
 		echo '<p style="margin-top:8px;"><label for="handl-aicac-alert-webhook">' . esc_html__( 'Webhook URL', 'handl-ai-connector-access-control' ) . '</label><br />';
 		echo '<input type="url" class="regular-text" id="handl-aicac-alert-webhook" name="handl_aicac_alert_webhook_url" value="' . esc_attr( $alert_hook ) . '" placeholder="https://" pattern="https?://.*" inputmode="url" autocomplete="off" />';
-		echo '<br /><span class="description">' . esc_html__( 'Optional. When set, denial alerts that would email also POST JSON to this http(s) URL (Slack/Teams-compatible incoming webhook). Same trigger, rate limit, and digest mode as email — path-only fields, no prompt preview or user identity. Leave empty to disable.', 'handl-ai-connector-access-control' ) . '</span></p>';
+		echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same blocked-call alert as JSON to an http:// or https:// webhook, such as Slack or Teams. It follows the email schedule and rate limit. It includes request paths, but not prompt text or user identity. Leave blank to disable.', 'handl-ai-connector-access-control' ) . '</span></p>';
 		echo '<p style="margin-top:8px;">';
 		echo '<label><input type="radio" name="handl_aicac_alert_mode" value="immediate" ' . checked( $alert_mode, 'immediate', false ) . ' /> ';
-		echo esc_html__( 'Immediate (rate-limited to 20/hour; overflow and failed sends drain via hourly cron)', 'handl-ai-connector-access-control' ) . '</label><br />';
+		echo esc_html__( 'Send immediately (maximum 20 per hour; extra alerts retry later)', 'handl-ai-connector-access-control' ) . '</label><br />';
 		echo '<label><input type="radio" name="handl_aicac_alert_mode" value="digest" ' . checked( $alert_mode, 'digest', false ) . ' /> ';
-		echo esc_html__( 'Hourly digest (cron; primary delivery)', 'handl-ai-connector-access-control' ) . '</label>';
+		echo esc_html__( 'Send an hourly summary', 'handl-ai-connector-access-control' ) . '</label>';
 		echo '</p>';
 		if ( $pending > 0 ) {
 			echo '<p class="description"><strong>' . esc_html(
 				sprintf(
 					/* translators: %d: queued denial count */
-					_n( '%d denial queued for the next digest.', '%d denials queued for the next digest.', $pending, 'handl-ai-connector-access-control' ),
+					_n( '%d blocked call queued for the next summary.', '%d blocked calls queued for the next summary.', $pending, 'handl-ai-connector-access-control' ),
 					$pending
 				)
 			) . '</strong></p>';
@@ -1982,14 +1982,14 @@ final class Admin {
 		// gated by logging/learn (is_active). Provenance field records what the operator saw.
 		$weekly_on = ! empty( $policy['weekly_report_enabled'] );
 		echo '<tr>';
-		echo '<th scope="row">' . esc_html__( 'Weekly report email', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="row">' . esc_html__( 'Weekly activity summary', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<td>';
 		// Hidden provenance: "what the UI presented as the untouched state" (board re-tip).
 		echo '<input type="hidden" name="handl_aicac_weekly_report_rendered" value="' . ( $weekly_on ? '1' : '0' ) . '" />';
 		echo '<label><input type="checkbox" name="handl_aicac_weekly_report_enabled" value="1" ' . checked( $weekly_on, true, false ) . ' /> ';
-		echo esc_html__( 'Email a weekly summary of Dashboard stats (coverage, denials, estimated spend, pins)', 'handl-ai-connector-access-control' ) . '</label>';
-		echo '<p class="description">' . esc_html__( 'Selected by default. Reports are sent only while logging or learn mode is on. Uncheck and save to opt out.', 'handl-ai-connector-access-control' ) . '</p>';
-		echo '<p class="description">' . esc_html__( 'Uses the same recipient as denial alerts (or the site admin email). Aggregates and plugin names only — no prompt text, user names, or request paths. Delivered by weekly WP-cron via wp_mail; the email dates its own window so a late send stays honest.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo esc_html__( 'Email a weekly summary of AI coverage, blocked calls, estimated spend, and model-routing activity', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Selected by default. It sends only while logging or Learn mode is on. Clear the checkbox and save to turn it off.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Uses the blocked-call alert recipient, or the site admin email. Includes totals and plugin names only. It does not include prompt text, user names, or request paths. The email shows the date range it covers.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td>';
 		echo '</tr>';
 
@@ -1997,21 +1997,21 @@ final class Admin {
 		$rates          = Cost::fallback_rates_from_policy( $policy );
 		$provider_rates = Cost::sanitize_provider_rates( $policy['est_usd_provider_rates'] ?? array() );
 		echo '<tr>';
-		echo '<th scope="row">' . esc_html__( 'Estimated cost rates', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="row">' . esc_html__( 'Estimated spend rates', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<td>';
-		echo '<p class="description" style="margin-top:0;">' . esc_html__( 'Rough USD per 1M tokens for the audit “est. $” column only. Not billing, not enforcement — placeholders so you can scan spend-ish signal from retained logs.', 'handl-ai-connector-access-control' ) . '</p>';
-		echo '<p><strong>' . esc_html__( 'Global fallback', 'handl-ai-connector-access-control' ) . '</strong></p>';
-		echo '<label for="handl-aicac-est-in">' . esc_html__( 'Input (prompt) $/1M', 'handl-ai-connector-access-control' ) . '</label> ';
+		echo '<p class="description" style="margin-top:0;">' . esc_html__( 'Enter approximate USD prices per 1 million tokens to calculate the Estimated $ column. These values are for estimates only, not billing or enforcement.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p><strong>' . esc_html__( 'Default rates', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		echo '<label for="handl-aicac-est-in">' . esc_html__( 'Input tokens ($ per 1M)', 'handl-ai-connector-access-control' ) . '</label> ';
 		echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="handl-aicac-est-in" name="handl_aicac_est_usd_input_per_m" value="' . esc_attr( (string) $rates['input_per_m'] ) . '" /> ';
-		echo '<label for="handl-aicac-est-out" style="margin-left:12px;">' . esc_html__( 'Output (completion) $/1M', 'handl-ai-connector-access-control' ) . '</label> ';
+		echo '<label for="handl-aicac-est-out" style="margin-left:12px;">' . esc_html__( 'Output tokens ($ per 1M)', 'handl-ai-connector-access-control' ) . '</label> ';
 		echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="handl-aicac-est-out" name="handl_aicac_est_usd_output_per_m" value="' . esc_attr( (string) $rates['output_per_m'] ) . '" />';
-		echo '<p class="description">' . esc_html__( 'Used when a log row has no provider, an unknown provider, or no per-provider pair below.', 'handl-ai-connector-access-control' ) . '</p>';
-		echo '<p style="margin-top:12px;"><strong>' . esc_html__( 'Per-provider overrides (optional)', 'handl-ai-connector-access-control' ) . '</strong></p>';
-		echo '<p class="description">' . esc_html__( 'Leave both fields empty to keep using the global fallback for that provider. Est. only — not billing.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Used when the provider is missing or unknown, or has no custom rates below.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p style="margin-top:12px;"><strong>' . esc_html__( 'Rates by provider (optional)', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		echo '<p class="description">' . esc_html__( 'Leave both fields blank to use the default rates for that provider. Estimates only, not billing.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<table class="widefat striped" style="max-width:36em;"><thead><tr>';
 		echo '<th>' . esc_html__( 'Provider', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Input $/1M', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Output $/1M', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Input $ per 1M tokens', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Output $ per 1M tokens', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead><tbody>';
 		foreach ( Cost::KNOWN_PROVIDERS as $provider_id ) {
 			$row_in  = isset( $provider_rates[ $provider_id ] ) ? (string) $provider_rates[ $provider_id ]['input_per_m'] : '';
@@ -2023,19 +2023,19 @@ final class Admin {
 			echo '<td><label class="screen-reader-text" for="' . esc_attr( $in_id ) . '">' . esc_html(
 				sprintf(
 					/* translators: %s: provider id */
-					__( '%s input $/1M', 'handl-ai-connector-access-control' ),
+					__( '%s input $ per 1M tokens', 'handl-ai-connector-access-control' ),
 					$provider_id
 				)
 			) . '</label>';
-			echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="' . esc_attr( $in_id ) . '" name="handl_aicac_est_usd_provider[' . esc_attr( $provider_id ) . '][input]" value="' . esc_attr( $row_in ) . '" placeholder="' . esc_attr__( 'fallback', 'handl-ai-connector-access-control' ) . '" /></td>';
+			echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="' . esc_attr( $in_id ) . '" name="handl_aicac_est_usd_provider[' . esc_attr( $provider_id ) . '][input]" value="' . esc_attr( $row_in ) . '" placeholder="' . esc_attr__( 'uses default rates', 'handl-ai-connector-access-control' ) . '" /></td>';
 			echo '<td><label class="screen-reader-text" for="' . esc_attr( $out_id ) . '">' . esc_html(
 				sprintf(
 					/* translators: %s: provider id */
-					__( '%s output $/1M', 'handl-ai-connector-access-control' ),
+					__( '%s output $ per 1M tokens', 'handl-ai-connector-access-control' ),
 					$provider_id
 				)
 			) . '</label>';
-			echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="' . esc_attr( $out_id ) . '" name="handl_aicac_est_usd_provider[' . esc_attr( $provider_id ) . '][output]" value="' . esc_attr( $row_out ) . '" placeholder="' . esc_attr__( 'fallback', 'handl-ai-connector-access-control' ) . '" /></td>';
+			echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="' . esc_attr( $out_id ) . '" name="handl_aicac_est_usd_provider[' . esc_attr( $provider_id ) . '][output]" value="' . esc_attr( $row_out ) . '" placeholder="' . esc_attr__( 'uses default rates', 'handl-ai-connector-access-control' ) . '" /></td>';
 			echo '</tr>';
 		}
 		echo '</tbody></table>';
@@ -2169,10 +2169,10 @@ final class Admin {
 		$force_n  = count( Model_Force::force_map( $policy ) );
 		$unforced = Model_Force::count_unforced_unattributed( $log );
 
-		echo '<h2>' . esc_html__( 'EXPERIMENTAL: Per-plugin force provider / model', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<h2>' . esc_html__( 'Model routing by plugin (experimental)', 'handl-ai-connector-access-control' ) . '</h2>';
 		echo '<div class="notice notice-warning inline"><p>';
-		echo '<strong>' . esc_html__( 'EXPERIMENTAL — not a supported production control.', 'handl-ai-connector-access-control' ) . '</strong> ';
-		echo esc_html__( 'Set provider + model on a Plugin rules row to pin that detected caller’s allowed AI Client generations. Empty force fields = no pin for that plugin. Pins follow the nearest plugin frame on the PHP backtrace (best-effort) — not who initiated the call, and not a spend guarantee. Cron, REST bootstraps, shared libraries, and MU plugins may resolve unknown or to a helper plugin; misattribution can apply the wrong pin without tripping fail-closed. Mechanism mutates a prevent-hook clone WordPress documents as read-only. Clone-compat detection is a cheap pre-check for one failure mode only — final-route verification (exact provider + model ids, no substring near-match) is the real safety. Mismatch throws so generation becomes a WP_Error before any provider call. Does not change allow/deny. Upstream routing filter draft is reviewed with the plugin author before filing.', 'handl-ai-connector-access-control' );
+		echo '<strong>' . esc_html__( 'Experimental. Do not rely on this as a production control.', 'handl-ai-connector-access-control' ) . '</strong> ';
+		echo esc_html__( 'Choose a provider and model in a plugin row to route allowed AI Client calls. Leave both fields blank for no routing. Plugin detection is best-effort and may be wrong or unavailable for cron, REST, shared libraries, and must-use plugins. A wrong match can apply the wrong route. This feature is experimental and not a spend guarantee.', 'handl-ai-connector-access-control' );
 		echo '</p></div>';
 
 		if ( $force_n > 0 || 'force' === $ua_mode ) {
@@ -2180,7 +2180,7 @@ final class Admin {
 			echo esc_html(
 				sprintf(
 					/* translators: %d: number of plugins with a force row */
-					_n( '%d plugin has a force pin configured.', '%d plugins have a force pin configured.', $force_n, 'handl-ai-connector-access-control' ),
+					_n( '%d plugin has model routing configured.', '%d plugins have model routing configured.', $force_n, 'handl-ai-connector-access-control' ),
 					$force_n
 				)
 			);
@@ -2189,8 +2189,8 @@ final class Admin {
 					sprintf(
 						/* translators: %d: unattributed unforced count */
 						_n(
-							'%d call could not be attributed and ran unforced (from retained log).',
-							'%d calls could not be attributed and ran unforced (from retained log).',
+							'%d saved call ran without model routing because no plugin was detected.',
+							'%d saved calls ran without model routing because no plugin was detected.',
 							$unforced,
 							'handl-ai-connector-access-control'
 						),
@@ -2198,43 +2198,43 @@ final class Admin {
 					)
 				) . '</strong>';
 			} else {
-				echo ' ' . esc_html__( 'No unattributed unforced calls in the retained log yet.', 'handl-ai-connector-access-control' );
+				echo ' ' . esc_html__( 'No saved calls have run without model routing because no plugin was detected.', 'handl-ai-connector-access-control' );
 			}
 			echo '</p></div>';
 		}
 
 		echo '<table class="form-table" role="presentation">';
 		echo '<tr>';
-		echo '<th scope="row">' . esc_html__( 'Unattributed calls', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="row">' . esc_html__( 'Calls with no detected plugin', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<td>';
 		echo '<select name="handl_aicac_model_force_unattributed" id="handl-aicac-model-force-unattributed" form="' . esc_attr( $form_id ) . '">';
-		$this->render_option( 'none', $ua_mode, __( 'Don’t force (recommended)', 'handl-ai-connector-access-control' ) );
-		$this->render_option( 'force', $ua_mode, __( 'Force to explicit provider/model below', 'handl-ai-connector-access-control' ) );
+		$this->render_option( 'none', $ua_mode, __( 'Do not route (recommended)', 'handl-ai-connector-access-control' ) );
+		$this->render_option( 'force', $ua_mode, __( 'Route to the provider and model below', 'handl-ai-connector-access-control' ) );
 		echo '</select>';
-		echo '<p class="description">' . esc_html__( 'When the caller cannot be resolved to a plugin frame. Same idiom as Unknown operations: choose visibly. Default is don’t force — never force on a guess. The opt-in target is only the pair you enter here; it is not a site-wide default pin for attributed plugins.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Choose what happens when no plugin can be identified. The default is not to route these calls. The optional provider and model apply only to unidentified calls, not as a site-wide default.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<p style="margin-top:8px;">';
 		echo '<label for="handl-aicac-model-force-ua-provider">' . esc_html__( 'Provider', 'handl-ai-connector-access-control' ) . '</label> ';
 		echo '<input type="text" class="regular-text code" id="handl-aicac-model-force-ua-provider" name="handl_aicac_model_force_unattributed_provider" form="' . esc_attr( $form_id ) . '" value="' . esc_attr( $ua_prov ) . '" placeholder="openai" autocomplete="off" /> ';
 		echo '<label for="handl-aicac-model-force-ua-model">' . esc_html__( 'Model', 'handl-ai-connector-access-control' ) . '</label> ';
 		echo '<input type="text" class="regular-text code" id="handl-aicac-model-force-ua-model" name="handl_aicac_model_force_unattributed_model" form="' . esc_attr( $form_id ) . '" value="' . esc_attr( $ua_model ) . '" placeholder="gpt-4o-mini" autocomplete="off" />';
 		echo '</p>';
-		echo '<p class="description">' . esc_html__( 'Required only when “Force to explicit…” is selected. Incomplete force falls back to don’t force.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Required only when routing unidentified calls. If either field is missing, no model route is applied.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td>';
 		echo '</tr>';
 
 		echo '<tr>';
-		echo '<th scope="row">' . esc_html__( 'Runtime health', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="row">' . esc_html__( 'Model-routing health', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<td>';
 		if ( $compat['compatible'] ) {
 			echo '<p style="margin:0;"><span class="dashicons dashicons-yes-alt" style="color:#00a32a;"></span> ';
-			echo esc_html__( 'Clone-compat pre-check: OK (cheap check — does not prove the force will land). Final-route verification is the safety.', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'Compatibility check passed. This quick check does not prove that model routing will work. The final route is checked again before the provider call.', 'handl-ai-connector-access-control' );
 			echo '</p>';
 		} else {
 			echo '<p style="margin:0;"><span class="dashicons dashicons-warning" style="color:#d63638;"></span> ';
 			echo esc_html(
 				sprintf(
 					/* translators: %s: reason code */
-					__( 'Clone-compat pre-check: FAIL (%s). Force will not be applied. Final-route verification remains the safety when force is active.', 'handl-ai-connector-access-control' ),
+					__( 'Compatibility check failed: %s. Model routing will not be applied.', 'handl-ai-connector-access-control' ),
 					$compat['reason']
 				)
 			);
@@ -2246,7 +2246,7 @@ final class Admin {
 			echo esc_html(
 				sprintf(
 					/* translators: %s: health status code */
-					__( 'Last force status: %s', 'handl-ai-connector-access-control' ),
+					__( 'Last routing status: %s', 'handl-ai-connector-access-control' ),
 					$status
 				)
 			);
@@ -2270,17 +2270,17 @@ final class Admin {
 		$denied_text = implode( "\n", $denied );
 		$registered  = $this->list_registered_ability_names();
 
-		echo '<h2>' . esc_html__( 'AI tool arming (caller intent)', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<h2>' . esc_html__( 'Blocked AI tools', 'handl-ai-connector-access-control' ) . '</h2>';
 		echo '<div class="notice notice-info inline handl-aicac-ability-axis-notice"><p>';
-		echo esc_html__( 'This controls which tools a model may be offered when a plugin calls the AI Client (functionDeclarations on the prompt). It covers WordPress abilities (using_abilities / wpab__) and custom FunctionDeclarations. It is not MCP visibility, and it does not unregister abilities for the rest of the site. Denials block the entire prompt at arming time and are logged under this plugin’s name so you can tell a blocked tool call from an upstream plugin bug. Matching is case-insensitive.', 'handl-ai-connector-access-control' );
+		echo esc_html__( 'Choose which tools plugins may offer to an AI model. If a prompt includes a blocked WordPress ability or custom tool, the entire prompt is blocked before the model runs. This does not hide or unregister the tool elsewhere on your site. Matching is not case-sensitive.', 'handl-ai-connector-access-control' );
 		echo '</p></div>';
 
 		echo '<table class="form-table" role="presentation">';
 		echo '<tr>';
-		echo '<th scope="row"><label for="handl-aicac-denied-tools">' . esc_html__( 'Denied tools', 'handl-ai-connector-access-control' ) . '</label></th>';
+		echo '<th scope="row"><label for="handl-aicac-denied-tools">' . esc_html__( 'Blocked tools', 'handl-ai-connector-access-control' ) . '</label></th>';
 		echo '<td>';
 		echo '<textarea name="handl_aicac_denied_tools" id="handl-aicac-denied-tools" form="' . esc_attr( $form_id ) . '" rows="6" cols="50" class="large-text code" placeholder="namespace/tool-name">' . esc_textarea( $denied_text ) . '</textarea>';
-		echo '<p class="description">' . esc_html__( 'One tool name per line (example: mainwp/add-site-v1). If a prompt arms any listed tool, the call is denied before the model runs. Leave empty to allow all tools that plugins choose to arm. Custom tool names (not just registered abilities) may be listed.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Enter one tool name per line, such as mainwp/add-site-v1. If a prompt offers any listed tool, the prompt is blocked before the model runs. Leave this empty to allow all tools. You may list custom tool names too.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		// Flag deny-list entries that match nothing currently registered (helper only).
 		if ( ! empty( $denied ) ) {
@@ -2292,14 +2292,14 @@ final class Admin {
 			}
 			if ( ! empty( $inert ) ) {
 				echo '<div class="notice notice-warning inline handl-aicac-inert-tools"><p>';
-				echo esc_html__( 'Not currently registered — will apply if a plugin registers it later (or if a custom tool uses this name):', 'handl-ai-connector-access-control' );
+				echo esc_html__( 'Not registered now. The rule will apply if this ability or custom tool is added later:', 'handl-ai-connector-access-control' );
 				echo ' <code>' . esc_html( implode( ', ', $inert ) ) . '</code>';
 				echo '</p></div>';
 			}
 		}
 
 		if ( ! empty( $registered ) ) {
-			echo '<p class="description"><strong>' . esc_html__( 'Registered abilities (helper subset — custom tool names may also be listed above):', 'handl-ai-connector-access-control' ) . '</strong></p>';
+			echo '<p class="description"><strong>' . esc_html__( 'Registered WordPress abilities you can add:', 'handl-ai-connector-access-control' ) . '</strong></p>';
 			echo '<ul class="handl-aicac-registered-abilities">';
 			foreach ( $registered as $name ) {
 				// Case-insensitive check so checkbox reflects normalized matching.
@@ -2310,7 +2310,7 @@ final class Admin {
 				echo '</label></li>';
 			}
 			echo '</ul>';
-			echo '<p class="description">' . esc_html__( 'Checkboxes only help fill the list above — save still uses the textarea. Click a box to add or remove that name from the list before saving. This list is not an enumeration of everything the deny list can match.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Use the checkboxes to add or remove names from the list above, then save your changes. This is not a complete list of tools you can block.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '<script>';
 			echo '(function(){var ta=document.getElementById("handl-aicac-denied-tools");if(!ta)return;';
 			echo 'function lines(){return ta.value.split(/\\r\\n|\\r|\\n/).map(function(s){return s.trim();}).filter(Boolean);}';
@@ -2320,7 +2320,7 @@ final class Admin {
 			echo '})();';
 			echo '</script>';
 		} else {
-			echo '<p class="description">' . esc_html__( 'No abilities are registered via the Abilities API on this site right now. You can still pre-list ability or custom tool names that plugins may arm later.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'No WordPress abilities are registered right now. You can still enter ability or custom tool names above to block them if they are added later.', 'handl-ai-connector-access-control' ) . '</p>';
 		}
 
 		echo '</td>';
@@ -2567,18 +2567,18 @@ final class Admin {
 		$ex_class = 'handl-aicac-kill-exceptions' . ( $kill_switch ? '' : ' is-muted' );
 
 		echo '<tr>';
-		echo '<th scope="row">' . esc_html__( 'Emergency kill switch', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="row">' . esc_html__( 'Emergency stop', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<td>';
 		echo '<label><input type="checkbox" name="handl_aicac_kill_switch" value="1" form="' . esc_attr( $form_id ) . '" ' . checked( $kill_switch, true, false ) . ' id="handl-aicac-kill-switch" /> ';
 		echo esc_html__( 'Block all AI Client calls', 'handl-ai-connector-access-control' ) . '</label>';
-		echo '<p class="description">' . esc_html__( 'Blocks every AI Client call except plugins listed as exceptions. Unresolved callers are blocked too.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Blocks every AI Client call except listed exceptions. Calls from unknown plugins are blocked too.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		echo '<div class="' . esc_attr( $ex_class ) . '" id="handl-aicac-kill-exceptions-wrap">';
 		echo '<p class="handl-aicac-kill-exceptions__heading" id="handl-aicac-kill-exceptions-heading"><strong>' . esc_html__( 'Exceptions', 'handl-ai-connector-access-control' ) . '</strong></p>';
 		// Load-bearing: "exception" ≠ unconditionally allowed.
-		echo '<p class="description">' . esc_html__( 'Excepted plugins still follow their normal allow/deny and capability-family rules.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Exceptions still follow their normal plugin and AI type rules.', 'handl-ai-connector-access-control' ) . '</p>';
 		// Visible only while kill is off; same listener toggles hidden with is-muted.
-		echo '<p class="description handl-aicac-kill-exceptions__state" id="handl-aicac-kill-exceptions-state"' . ( $kill_switch ? ' hidden' : '' ) . '>' . esc_html__( 'Not in effect while the kill switch is off.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description handl-aicac-kill-exceptions__state" id="handl-aicac-kill-exceptions-state"' . ( $kill_switch ? ' hidden' : '' ) . '>' . esc_html__( 'Exceptions apply only while the Emergency stop is on.', 'handl-ai-connector-access-control' ) . '</p>';
 		// #16: announce the kill-off state line on group focus (sibling of aria-labelledby).
 		echo '<div class="handl-aicac-kill-exceptions__list" role="group" aria-labelledby="handl-aicac-kill-exceptions-heading" aria-describedby="handl-aicac-kill-exceptions-state">';
 		$i = 0;
@@ -2627,20 +2627,20 @@ final class Admin {
 		$list_class = 'handl-aicac-role-gate-list' . ( $enabled ? '' : ' is-muted' );
 
 		echo '<tr>';
-		echo '<th scope="row">' . esc_html__( 'Role gate', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="row">' . esc_html__( 'Limit by role', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<td>';
 		echo '<label><input type="checkbox" name="handl_aicac_role_gate_enabled" value="1" form="' . esc_attr( $form_id ) . '" ' . checked( $enabled, true, false ) . ' id="handl-aicac-role-gate-enabled" /> ';
-		echo esc_html__( 'Only allow selected WordPress roles to initiate AI Client operations', 'handl-ai-connector-access-control' ) . '</label>';
-		echo '<p class="description">' . esc_html__( 'Optional. Default is off (all roles). When enabled, requests from a signed-in user whose role is unchecked are denied through the normal deny path (logged and alerted with reason “role”). Cron, WP-CLI, and other no-user-context requests are not affected by this gate in v1.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo esc_html__( 'Only selected WordPress roles may start AI Client calls', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Off by default, so every role is allowed. When enabled, users with an unselected role are blocked. Blocks appear in the log and alerts as “role not allowed.” Cron, WP-CLI, and requests without a signed-in user are not limited.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		echo '<div class="' . esc_attr( $list_class ) . '" id="handl-aicac-role-gate-wrap" style="margin-top:10px;max-width:28em;">';
 		echo '<p class="handl-aicac-role-gate__heading" id="handl-aicac-role-gate-heading"><strong>' . esc_html__( 'Allowed roles', 'handl-ai-connector-access-control' ) . '</strong></p>';
-		echo '<p class="description handl-aicac-role-gate__state" id="handl-aicac-role-gate-state"' . ( $enabled ? ' hidden' : '' ) . '>' . esc_html__( 'Not in effect while the role gate is off.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description handl-aicac-role-gate__state" id="handl-aicac-role-gate-state"' . ( $enabled ? ' hidden' : '' ) . '>' . esc_html__( 'This list applies only while Limit by role is on.', 'handl-ai-connector-access-control' ) . '</p>';
 		if ( $enabled && empty( $allowed ) ) {
-			echo '<p class="description" style="color:#b32d2e;"><strong>' . esc_html__( 'Warning: no roles selected — every signed-in user will be denied by the role gate.', 'handl-ai-connector-access-control' ) . '</strong></p>';
+			echo '<p class="description" style="color:#b32d2e;"><strong>' . esc_html__( 'No roles selected. Every signed-in user will be blocked.', 'handl-ai-connector-access-control' ) . '</strong></p>';
 		}
 		if ( empty( $available ) ) {
-			echo '<p class="description">' . esc_html__( 'No roles available to list on this site.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'No WordPress roles are available on this site.', 'handl-ai-connector-access-control' ) . '</p>';
 		} else {
 			echo '<div class="handl-aicac-role-gate__list" role="group" aria-labelledby="handl-aicac-role-gate-heading" aria-describedby="handl-aicac-role-gate-state">';
 			$i = 0;
@@ -2669,11 +2669,11 @@ final class Admin {
 
 		echo '<h2>' . esc_html__( 'Suggested rules', 'handl-ai-connector-access-control' ) . '</h2>';
 		echo '<p class="description handl-aicac-log-meta" style="margin-top:0;">';
-		echo esc_html__( 'Plugins seen in the log during learn mode. “Plugin-level would enforce” is the outer plugin gate only (kill switch + plugin allow/deny) — it does not include capability-family rules. Per-family effective decisions come later.', 'handl-ai-connector-access-control' );
+		echo esc_html__( 'Plugins found while Learn mode was on. “Would block at plugin level” reflects only the Emergency stop and plugin rule. AI type rules are evaluated separately.', 'handl-ai-connector-access-control' );
 		echo '</p>';
 
 		if ( empty( $suggested ) ) {
-			echo '<p>' . esc_html__( 'No attributed plugin calls in the log yet.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p>' . esc_html__( 'No identified plugin calls in the log yet.', 'handl-ai-connector-access-control' ) . '</p>';
 			return;
 		}
 
@@ -2683,7 +2683,7 @@ final class Admin {
 		echo '<th>' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Last seen', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Rule', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Plugin-level would enforce', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Would block at plugin level', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Actions', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead><tbody>';
 
@@ -2793,7 +2793,7 @@ final class Admin {
 		echo $this->render_decision_badge( $decision ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		if ( $is_direct_http ) {
 			echo '<br /><span class="description handl-aicac-shadow-label" style="font-size:11px;">';
-			echo esc_html__( 'outside AI Client — not governed by these rules', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'outside AI Client; observed, not controlled by these rules', 'handl-ai-connector-access-control' );
 			echo '</span>';
 			$cluster_count = isset( $row['count'] ) ? (int) $row['count'] : 1;
 			if ( $cluster_count > 1 ) {
@@ -2806,8 +2806,8 @@ final class Admin {
 						sprintf(
 							/* translators: 1: call count, 2: first time, 3: last time */
 							_n(
-								'seen %1$d call between %2$s and %3$s',
-								'seen %1$d calls between %2$s and %3$s',
+								'observed %1$d call between %2$s and %3$s',
+								'observed %1$d calls between %2$s and %3$s',
 								$cluster_count,
 								'handl-ai-connector-access-control'
 							),
@@ -2821,8 +2821,8 @@ final class Admin {
 						sprintf(
 							/* translators: %d: number of HTTP calls in this cluster */
 							_n(
-								'seen %d call',
-								'seen %d calls',
+								'observed %d call',
+								'observed %d calls',
 								$cluster_count,
 								'handl-ai-connector-access-control'
 							),
@@ -2852,7 +2852,7 @@ final class Admin {
 		}
 		$user_role = isset( $row['user_role'] ) ? (string) $row['user_role'] : '';
 		if ( '' !== $user_role ) {
-			echo '<br /><span class="description handl-aicac-user-role" style="font-size:11px;">' . esc_html__( 'role', 'handl-ai-connector-access-control' ) . ' <code>' . esc_html( $user_role ) . '</code></span>';
+			echo '<br /><span class="description handl-aicac-user-role" style="font-size:11px;">' . esc_html__( 'Role:', 'handl-ai-connector-access-control' ) . ' <code>' . esc_html( $user_role ) . '</code></span>';
 		}
 		$matched = array();
 		if ( isset( $row['matched_tools'] ) && is_array( $row['matched_tools'] ) ) {
@@ -2870,7 +2870,7 @@ final class Admin {
 			$armed = $row['armed_abilities'];
 		}
 		if ( ! empty( $armed ) && empty( $matched ) ) {
-			echo '<br /><span class="description handl-aicac-armed-tools">' . esc_html__( 'armed:', 'handl-ai-connector-access-control' ) . ' <code>' . esc_html( implode( ', ', array_map( 'strval', $armed ) ) ) . '</code></span>';
+			echo '<br /><span class="description handl-aicac-armed-tools">' . esc_html__( 'tools offered:', 'handl-ai-connector-access-control' ) . ' <code>' . esc_html( implode( ', ', array_map( 'strval', $armed ) ) ) . '</code></span>';
 		}
 		echo '</td>';
 		$family = isset( $row['capability_family'] ) ? (string) $row['capability_family'] : '';
@@ -2894,7 +2894,7 @@ final class Admin {
 			$pp = isset( $row['pin_provider'] ) ? (string) $row['pin_provider'] : '';
 			$pm = isset( $row['pin_model'] ) ? (string) $row['pin_model'] : '';
 			echo '<br /><span class="description handl-aicac-pin-matched" style="font-size:11px;">';
-			echo esc_html__( 'pin matched', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'model route matched', 'handl-ai-connector-access-control' );
 			if ( '' !== $pp || '' !== $pm ) {
 				echo ' → <code>' . esc_html( $pp . ( '' !== $pp && '' !== $pm ? '/' : '' ) . $pm ) . '</code>';
 			}
@@ -2903,17 +2903,17 @@ final class Admin {
 		if ( ! empty( $row['model_forced'] ) ) {
 			$fp = isset( $row['forced_provider'] ) ? (string) $row['forced_provider'] : '';
 			$fm = isset( $row['forced_model'] ) ? (string) $row['forced_model'] : '';
-			echo '<br /><span class="description handl-aicac-forced-label" style="font-size:11px;">' . esc_html__( 'forced', 'handl-ai-connector-access-control' );
+			echo '<br /><span class="description handl-aicac-forced-label" style="font-size:11px;">' . esc_html__( 'model routed', 'handl-ai-connector-access-control' );
 			if ( '' !== $fp || '' !== $fm ) {
 				echo ' → <code>' . esc_html( trim( $fp . '/' . $fm, '/' ) ) . '</code>';
 			}
 			$src = isset( $row['forced_source'] ) ? (string) $row['forced_source'] : '';
 			if ( 'unattributed' === $src ) {
-				echo ' <em>' . esc_html__( '(unattributed rule)', 'handl-ai-connector-access-control' ) . '</em>';
+				echo ' <em>' . esc_html__( '(rule for unknown plugins)', 'handl-ai-connector-access-control' ) . '</em>';
 			}
 			echo '</span>';
 		} elseif ( ! empty( $row['model_force_unforced'] ) || ( isset( $row['model_force_skipped'] ) && 'unattributed' === (string) $row['model_force_skipped'] ) ) {
-			echo '<br /><span class="description handl-aicac-unforced-label" style="font-size:11px;">' . esc_html__( 'unforced (unattributed)', 'handl-ai-connector-access-control' ) . '</span>';
+			echo '<br /><span class="description handl-aicac-unforced-label" style="font-size:11px;">' . esc_html__( 'not routed (plugin unknown)', 'handl-ai-connector-access-control' ) . '</span>';
 		}
 		// Observability honesty: inferred provider/model must not look like builder-set facts.
 		if ( $model_inferred && $provider ) {
@@ -2993,7 +2993,7 @@ final class Admin {
 		// Wording matches the decision-column label — one concept, one phrase.
 		if ( $is_direct_http ) {
 			echo '<span class="description handl-aicac-not-governable" style="font-size:11px;">';
-			echo esc_html__( 'not governed by these rules', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'observed, not controlled by these rules', 'handl-ai-connector-access-control' );
 			echo '</span>';
 		} elseif ( $plugin ) {
 			$this->render_quick_rule_buttons( $plugin, $log_filters );
@@ -3015,7 +3015,7 @@ final class Admin {
 			$html .= '<br /><span class="description" style="font-size:11px;">' . esc_html(
 				sprintf(
 					/* translators: %s: formatted thought token count */
-					__( '%s thought', 'handl-ai-connector-access-control' ),
+					__( 'Reasoning: %s', 'handl-ai-connector-access-control' ),
 					number_format_i18n( $thought_tokens )
 				)
 			) . '</span>';
@@ -3042,11 +3042,11 @@ final class Admin {
 
 		$using_defaults = Cost::using_default_rates( $policy );
 		$title          = $using_defaults
-			? __( 'Rough estimate using built-in default placeholder rates × tokens. Not a bill — set rates under Estimated cost rates.', 'handl-ai-connector-access-control' )
-			: __( 'Rough estimate from configured rates × tokens. Not a bill.', 'handl-ai-connector-access-control' );
+			? __( 'Estimate based on tokens and built-in placeholder rates. Not a bill. Set your own rates under Estimated spend rates.', 'handl-ai-connector-access-control' )
+			: __( 'Estimate based on tokens and your saved rates. Not a bill.', 'handl-ai-connector-access-control' );
 		$label          = $using_defaults
-			? __( 'est. · default rates', 'handl-ai-connector-access-control' )
-			: __( 'est. · custom rates', 'handl-ai-connector-access-control' );
+			? __( 'estimate using default rates', 'handl-ai-connector-access-control' )
+			: __( 'estimate using custom rates', 'handl-ai-connector-access-control' );
 
 		return '<span class="handl-aicac-est-cost" title="' . esc_attr( $title ) . '">'
 			. esc_html( Cost::format_usd( $usd ) )
@@ -3059,18 +3059,18 @@ final class Admin {
 	 */
 	private function format_denial_reason_label( string $reason ): string {
 		$map = array(
-			'kill_switch'         => __( 'Denied by HandL AICAC: emergency kill switch', 'handl-ai-connector-access-control' ),
-			'role'                => __( 'Denied by HandL AICAC: role gate', 'handl-ai-connector-access-control' ),
-			'plugin'              => __( 'Denied by HandL AICAC: plugin rule', 'handl-ai-connector-access-control' ),
-			'capability_family'   => __( 'Denied by HandL AICAC: capability family rule', 'handl-ai-connector-access-control' ),
-			'unknown_operation'   => __( 'Denied by HandL AICAC: unknown operation fallback', 'handl-ai-connector-access-control' ),
-			'tool_armed'          => __( 'Denied by HandL AICAC: prompt armed a blocked tool (caller intent)', 'handl-ai-connector-access-control' ),
+			'kill_switch'         => __( 'Blocked by HandL: emergency stop', 'handl-ai-connector-access-control' ),
+			'role'                => __( 'Blocked by HandL: role not allowed', 'handl-ai-connector-access-control' ),
+			'plugin'              => __( 'Blocked by HandL: plugin rule', 'handl-ai-connector-access-control' ),
+			'capability_family'   => __( 'Blocked by HandL: AI type rule', 'handl-ai-connector-access-control' ),
+			'unknown_operation'   => __( 'Blocked by HandL: unknown operation rule', 'handl-ai-connector-access-control' ),
+			'tool_armed'          => __( 'Blocked by HandL: prompt offered a blocked tool', 'handl-ai-connector-access-control' ),
 			// Legacy reason code from pre-rename log rows.
-			'ability_armed'       => __( 'Denied by HandL AICAC: prompt armed a blocked tool (caller intent)', 'handl-ai-connector-access-control' ),
+			'ability_armed'       => __( 'Blocked by HandL: prompt offered a blocked tool', 'handl-ai-connector-access-control' ),
 		);
 		return $map[ $reason ] ?? sprintf(
 			/* translators: %s: internal denial reason code */
-			__( 'Denied by HandL AICAC: %s', 'handl-ai-connector-access-control' ),
+			__( 'Blocked by HandL: %s', 'handl-ai-connector-access-control' ),
 			$reason
 		);
 	}
@@ -3126,8 +3126,8 @@ final class Admin {
 	 */
 	private function render_rules_transfer_section( array $policy, bool $show_preview ): void {
 		echo '<hr />';
-		echo '<h2>' . esc_html__( 'Export / import rules', 'handl-ai-connector-access-control' ) . '</h2>';
-		echo '<p class="description">' . esc_html__( 'Download the current policy option as JSON, or upload a previous export. Import fully replaces the live policy option (default, plugin rules, capability families, kill switch, denied tools, model-force pins, and other fields stored in the same option). The audit log is not included.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<h2>' . esc_html__( 'Export or import rules', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<p class="description">' . esc_html__( 'Download your current rules as a JSON file, or upload a previous export. Importing replaces all current access-control settings. The activity log is not included.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		echo '<form method="post" style="margin-bottom:1em;">';
 		wp_nonce_field( 'handl_aicac_export_rules', 'handl_aicac_nonce' );
@@ -3144,7 +3144,7 @@ final class Admin {
 		echo '<label for="handl-aicac-import-file"><strong>' . esc_html__( 'Import rules (JSON)', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
 		echo '<input type="file" id="handl-aicac-import-file" name="handl_aicac_import_file" accept="application/json,.json" required />';
 		echo '</p>';
-		echo '<p class="description">' . esc_html__( 'Upload only (max ~1MB). You will preview added/changed/removed rules before anything is written.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Choose a JSON file up to 1 MB. You can preview added, changed, and removed rules before anything changes.', 'handl-ai-connector-access-control' ) . '</p>';
 		submit_button( __( 'Upload and preview', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
 		echo '</form>';
 
@@ -3166,13 +3166,13 @@ final class Admin {
 
 		echo '<div class="handl-aicac-import-preview" style="border:1px solid #c3c4c7;padding:12px 16px;background:#fff;max-width:52em;">';
 		echo '<h3>' . esc_html__( 'Import preview', 'handl-ai-connector-access-control' ) . '</h3>';
-		echo '<p><strong>' . esc_html__( 'Mode: full replace', 'handl-ai-connector-access-control' ) . '</strong> — ';
-		echo esc_html__( 'Confirming will atomically replace the entire policy option with the uploaded configuration (after the same sanitization used when saving Rules).', 'handl-ai-connector-access-control' );
+		echo '<p><strong>' . esc_html__( 'Mode: replace all rules', 'handl-ai-connector-access-control' ) . '</strong> — ';
+		echo esc_html__( 'Confirming this import replaces all current rules with the uploaded settings. The same safety checks used when saving Rules will run first.', 'handl-ai-connector-access-control' );
 		echo '</p>';
 
 		if ( ! empty( $ignored ) ) {
 			echo '<div class="notice notice-warning inline"><p>';
-			echo esc_html__( 'Unknown fields from a newer export will be ignored:', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'These fields from a newer export will be ignored:', 'handl-ai-connector-access-control' );
 			echo ' <code>' . esc_html( implode( ', ', array_map( 'strval', $ignored ) ) ) . '</code>';
 			echo '</p></div>';
 		}
@@ -3190,14 +3190,14 @@ final class Admin {
 			&& empty( $incoming['model_force_plugins'] )
 			&& empty( $incoming['kill_switch'] );
 		if ( $empty_ruleset ) {
-			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'This export has an empty ruleset (no per-plugin rules, family settings, denied tools, model-force pins, or kill switch). Confirming is a legitimate reset path.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'This file contains no saved plugin rules, AI type settings, blocked tools, model routes, or Emergency stop settings. Importing it is a valid way to reset these settings.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 
 		echo '<form method="post">';
 		wp_nonce_field( 'handl_aicac_import_rules_confirm', 'handl_aicac_nonce' );
 		echo '<input type="hidden" name="handl_aicac_action" value="import_rules_confirm" />';
 		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
-		submit_button( __( 'Confirm import (full replace)', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
+		submit_button( __( 'Confirm and replace rules', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
 		echo '</form>';
 		echo '</div>';
 	}
@@ -3386,16 +3386,16 @@ final class Admin {
 	 */
 	private function import_error_message( string $code ): string {
 		$messages = array(
-			'empty'                => __( 'Import rejected: the uploaded file was empty. Live policy was not changed.', 'handl-ai-connector-access-control' ),
-			'no_file'              => __( 'Import rejected: no file was uploaded. Live policy was not changed.', 'handl-ai-connector-access-control' ),
-			'upload_failed'        => __( 'Import rejected: the upload failed. Live policy was not changed.', 'handl-ai-connector-access-control' ),
-			'too_large'            => __( 'Import rejected: file exceeds the 1MB size limit. Live policy was not changed.', 'handl-ai-connector-access-control' ),
-			'invalid_json'         => __( 'Import rejected: the file is not valid JSON. Live policy was not changed.', 'handl-ai-connector-access-control' ),
-			'missing_required_keys'=> __( 'Import rejected: required keys plugin_version and exported_at are missing. Live policy was not changed.', 'handl-ai-connector-access-control' ),
-			'preview_expired'      => __( 'Import rejected: the preview expired. Upload the file again. Live policy was not changed.', 'handl-ai-connector-access-control' ),
+			'empty'                => __( 'Import failed: the file was empty. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
+			'no_file'              => __( 'Import failed: no file was selected. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
+			'upload_failed'        => __( 'Import failed: the file could not be uploaded. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
+			'too_large'            => __( 'Import failed: the file is larger than 1 MB. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
+			'invalid_json'         => __( 'Import failed: the file is not valid JSON. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
+			'missing_required_keys'=> __( 'Import failed: the file is missing plugin_version or exported_at. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
+			'preview_expired'      => __( 'Import failed: the preview expired. Upload the file again. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
 		);
 
-		return $messages[ $code ] ?? __( 'Import rejected. Live policy was not changed.', 'handl-ai-connector-access-control' );
+		return $messages[ $code ] ?? __( 'Import failed. Your current rules were not changed.', 'handl-ai-connector-access-control' );
 	}
 }
 

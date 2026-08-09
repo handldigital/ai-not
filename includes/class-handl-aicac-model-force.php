@@ -413,7 +413,7 @@ final class Model_Force {
 
 		$message = sprintf(
 			/* translators: 1: expected provider, 2: expected model, 3: actual provider, 4: actual model */
-			__( 'HandL AICAC experimental model force: final route mismatch (expected %1$s / %2$s, got %3$s / %4$s). Generation blocked before the provider call. Disable the experimental force or fix the provider/model ids under Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' ),
+			__( 'HandL AI Access blocked the generation because the final model route did not match. Expected %1$s / %2$s; received %3$s / %4$s. The generation was blocked before the provider call. Update or disable model routing under Settings → HandL AI Access.', 'handl-ai-connector-access-control' ),
 			$expected['provider'],
 			$expected['model'],
 			$actual_provider,
@@ -664,30 +664,30 @@ final class Model_Force {
 			if ( ! $on_our_page ) {
 				return;
 			}
-			echo '<div class="notice notice-warning"><p><strong>' . esc_html__( 'EXPERIMENTAL: Per-plugin model force is configured.', 'handl-ai-connector-access-control' ) . '</strong> ';
-			echo esc_html__( 'Pins follow the detected caller (best-effort nearest plugin frame) and are not a spend guarantee. This feature relies on unsupported AI Client clone behaviour. An upstream routing filter is the supported exit ramp.', 'handl-ai-connector-access-control' );
-			echo ' <a href="' . esc_url( admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules' ) ) . '">' . esc_html__( 'Review settings', 'handl-ai-connector-access-control' ) . '</a></p></div>';
+			echo '<div class="notice notice-warning"><p><strong>' . esc_html__( 'Model routing by plugin is configured (experimental).', 'handl-ai-connector-access-control' ) . '</strong> ';
+			echo esc_html__( 'Routes follow the detected plugin. Detection is best-effort, and model routing is not a spend guarantee. This experimental feature relies on unsupported AI Client behavior.', 'handl-ai-connector-access-control' );
+			echo ' <a href="' . esc_url( admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules' ) ) . '">' . esc_html__( 'Review model routing', 'handl-ai-connector-access-control' ) . '</a></p></div>';
 			return;
 		}
 
-		echo '<div class="notice notice-error"><p><strong>' . esc_html__( 'EXPERIMENTAL model force is not healthy.', 'handl-ai-connector-access-control' ) . '</strong> ';
+		echo '<div class="notice notice-error"><p><strong>' . esc_html__( 'Experimental model routing is not working.', 'handl-ai-connector-access-control' ) . '</strong> ';
 
 		if ( ! $compat['compatible'] ) {
 			echo esc_html(
 				sprintf(
 					/* translators: %s: technical reason code */
-					__( 'Clone-compat pre-check failed (%s). Forced provider/model will not be applied — WordPress may have fixed the shallow clone. Disable this experimental feature or wait for an official routing filter.', 'handl-ai-connector-access-control' ),
+					__( 'Compatibility check failed: %s. Model routing will not be applied. Disable this experimental feature or wait for an official WordPress routing option.', 'handl-ai-connector-access-control' ),
 					$compat['reason']
 				)
 			);
 		} elseif ( 'route_mismatch' === $status ) {
 			$detail = isset( $health['last_mismatch'] ) && is_array( $health['last_mismatch'] ) ? $health['last_mismatch'] : array();
-			echo esc_html__( 'A generation was blocked because the final selected model did not match the forced route. Check provider/model ids and installed AI providers.', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'A generation was blocked because the selected provider or model did not match the configured route. Check the saved IDs and installed AI providers.', 'handl-ai-connector-access-control' );
 			if ( ! empty( $detail['expected_model'] ) ) {
 				echo ' ' . esc_html(
 					sprintf(
 						/* translators: 1: expected provider, 2: expected model, 3: actual provider, 4: actual model */
-						__( 'Expected %1$s / %2$s; got %3$s / %4$s.', 'handl-ai-connector-access-control' ),
+						__( 'Expected: %1$s / %2$s. Received: %3$s / %4$s.', 'handl-ai-connector-access-control' ),
 						(string) ( $detail['expected_provider'] ?? '' ),
 						(string) ( $detail['expected_model'] ?? '' ),
 						(string) ( $detail['actual_provider'] ?? '' ),
@@ -696,7 +696,7 @@ final class Model_Force {
 				);
 			}
 		} else {
-			echo esc_html__( 'The experimental override failed to apply. Generation continues on the caller’s chosen model until you fix or clear the force rows.', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'The experimental route could not be applied. Calls will continue using the model chosen by the calling plugin until you fix or remove the routing settings.', 'handl-ai-connector-access-control' );
 		}
 
 		echo ' <a href="' . esc_url( admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules' ) ) . '">' . esc_html__( 'Open settings', 'handl-ai-connector-access-control' ) . '</a></p></div>';
