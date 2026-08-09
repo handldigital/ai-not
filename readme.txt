@@ -169,15 +169,15 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = 1.2.0 =
-* Rewrote the WordPress.org listing in plain language so site owners can see what the plugin does before the technical details.
-* Optional rates by AI provider for estimated spend. Still an estimate, not billing.
-* Optional maximum log age (days) so Activity history can expire by time as well as by entry count.
-* Rules tab: select several plugins and set them to Allow or Deny together.
-* Optional Limit by role — choose which WordPress roles may start AI Client calls. Off by default.
-* Multisite: read-only Network Admin list of sites where the plugin is active, with status and Activity links. No network-wide rule editing.
-* Optional webhook URL for blocked-call alerts (same privacy rules as email), plus a send-test control.
-* WP-CLI commands to list and set per-plugin capability rules.
-* Export and import Rules as JSON (preview and confirm). Does not include the activity log.
+* Rewrote the WordPress.org listing in plain language so site owners can quickly understand what the plugin does.
+* Added optional rates for each AI provider when calculating estimated spend. Estimates are not bills.
+* Added an optional maximum age for Activity entries, alongside the entry limit.
+* Select multiple plugins on the Rules tab and set them to Allow or Deny together.
+* Limit AI Client access by WordPress role. Off by default, so every role is allowed.
+* On multisite, view sites where the plugin is active, check their status, and open each site's Activity screen. View only; no network-wide rule changes.
+* Send optional blocked-call alerts to a webhook. The payload follows the same privacy limits as email alerts, and you can send a test.
+* Use WP-CLI to list and set per-plugin AI type rules.
+* Export and import Rules as JSON with a preview and confirmation. The Activity log is not included.
 
 = 1.0.14 =
 * F7: Weekly report email — Dashboard aggregates via wp_mail on a weekly cron (coverage, denials, estimated spend, pins).
