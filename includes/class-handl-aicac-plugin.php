@@ -45,6 +45,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-spend-threshold.php'
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-site-health.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rest.php';
 
 		Policy::instance()->init();
 		Alerts::instance()->init();
@@ -54,6 +55,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-spend-threshold.php'
 		Admin::instance()->init();
 		Network_Admin::instance()->init();
 		Site_Health::instance()->init();
+		Rest::instance()->init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
