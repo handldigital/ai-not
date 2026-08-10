@@ -1543,7 +1543,7 @@ final class Admin {
 			'submit',
 			false
 		);
-		echo ' <span class="description">' . esc_html__( 'Exports every retained row matching the current filters (same columns as the table; not limited to the 50 on-screen rows).', 'handl-ai-connector-access-control' ) . '</span>';
+		echo ' <span class="description">' . esc_html__( 'Downloads all saved activity matching your current filters, not just the rows shown here.', 'handl-ai-connector-access-control' ) . '</span>';
 		echo '</form>';
 
 		$log_newest_first = array_reverse( $log );
