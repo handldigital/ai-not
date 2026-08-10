@@ -72,10 +72,11 @@ final class BeyondConnectorApprovalsMessagingTest extends TestCase {
 		$this->assertStringContainsString( '= Unreleased =', $readme );
 	}
 
-	public function test_plugin_version_is_1_1_1(): void {
+	public function test_plugin_version_stays_current_release(): void {
 		$main = file_get_contents( HANDL_AICAC_DIR . '/handl-ai-connector-access-control.php' );
 		$this->assertNotFalse( $main );
-		$this->assertMatchesRegularExpression( "/define\(\s*'HANDL_AICAC_VERSION',\s*'1\.1\.1'\s*\)/", $main );
-		$this->assertStringContainsString( 'Version: 1.1.1', $main );
+		// Messaging ships without a forced version bump (1.2.0 already live).
+		$this->assertMatchesRegularExpression( "/define\(\s*'HANDL_AICAC_VERSION',\s*'1\.2\.0'\s*\)/", $main );
+		$this->assertStringContainsString( 'Version: 1.2.0', $main );
 	}
 }
