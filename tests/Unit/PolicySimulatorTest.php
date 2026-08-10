@@ -241,6 +241,43 @@ final class PolicySimulatorTest extends TestCase {
 		$this->assertStringContainsString( 'Activity logging is off', $diff['empty_reason'] );
 	}
 
+	/**
+	 * Direct-HTTP observe-only logs must explain that rules cannot replay them —
+	 * not fall through to the generic "no saved AI Client calls" empty string.
+	 */
+	public function test_replay_direct_only_explains_outside_ai_client(): void {
+		$log = array(
+			array(
+				'plugin'    => 'shadow/plugin.php',
+				'operation' => 'direct_http',
+				'decision'  => 'observe',
+				'channel'   => 'direct_http',
+			),
+			array(
+				'plugin'    => 'other/x.php',
+				'operation' => 'direct_http',
+				'decision'  => 'observe',
+				'channel'   => 'direct_http',
+			),
+		);
+
+		$diff = Policy_Simulator::replay_diff(
+			array( 'default' => 'allow' ),
+			array( 'default' => 'deny' ),
+			$log,
+			50,
+			array(
+				'log_enabled' => true,
+			)
+		);
+
+		$this->assertTrue( $diff['empty'] );
+		$this->assertSame( 0, $diff['scanned'] );
+		$this->assertSame( 2, $diff['skipped'] );
+		$this->assertStringContainsString( 'direct connections outside the AI Client', $diff['empty_reason'] );
+		$this->assertStringNotContainsString( 'There are no saved AI Client calls to replay.', $diff['empty_reason'] );
+	}
+
 	public function test_replay_empty_explains_ttl_window(): void {
 		$diff = Policy_Simulator::replay_diff(
 			array( 'default' => 'allow' ),

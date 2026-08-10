@@ -245,18 +245,24 @@ final class Policy_Simulator {
 	 * @return array{rows:list<array<string,mixed>>,scanned:int,skipped_total:int,skipped_governable:int}
 	 */
 	private static function take_recent_governable_rows( array $log, int $limit ): array {
-		$governable = array();
-		$skipped    = 0;
+		$governable         = array();
+		$skipped_total      = 0;
+		$skipped_ungoverned = 0;
 
 		// Log is oldest→newest; walk newest first.
 		for ( $i = count( $log ) - 1; $i >= 0; $i-- ) {
 			$row = $log[ $i ];
-			if ( ! is_array( $row ) || self::row_is_ungovernable( $row ) ) {
-				++$skipped;
+			if ( ! is_array( $row ) ) {
+				++$skipped_total;
+				continue;
+			}
+			if ( self::row_is_ungovernable( $row ) ) {
+				++$skipped_total;
+				++$skipped_ungoverned;
 				continue;
 			}
 			if ( count( $governable ) >= $limit ) {
-				++$skipped;
+				++$skipped_total;
 				continue;
 			}
 			$governable[] = $row;
@@ -265,8 +271,9 @@ final class Policy_Simulator {
 		return array(
 			'rows'               => $governable,
 			'scanned'            => count( $governable ),
-			'skipped_total'      => $skipped,
-			'skipped_governable' => 0,
+			'skipped_total'      => $skipped_total,
+			// Count of direct_http / observe rows skipped (not AI Client–governable).
+			'skipped_governable' => $skipped_ungoverned,
 		);
 	}
 
