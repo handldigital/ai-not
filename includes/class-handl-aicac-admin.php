@@ -474,16 +474,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		$rules_form_id = 'handl-aicac-rules-save';
 		$bulk_form_id  = 'handl-aicac-bulk-rules';
 
-		echo '<form method="post" id="' . esc_attr( $rules_form_id ) . '" class="handl-aicac-rules-save-form">';
-		wp_nonce_field( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
-		// Do not put handl_aicac_action=save in a hidden field: secondary submits
-		// (policy simulator) share this form via the form= attribute, and a hidden
-		// save action wins over the clicked button in PHP's last-wins POST parse.
-		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
-		echo '<input type="hidden" name="handl_aicac_status" value="' . esc_attr( $plugin_status_filter ) . '" />';
-		echo '<input type="hidden" name="handl_aicac_access" value="' . esc_attr( $plugin_access_filter ) . '" />';
-		echo '</form>';
-
+		// Bulk shell first — must not nest inside the rules form.
 		echo '<form method="post" id="' . esc_attr( $bulk_form_id ) . '" class="handl-aicac-rules-save-form">';
 		wp_nonce_field( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
 		echo '<input type="hidden" name="handl_aicac_action" value="bulk_plugin_rules" />';
@@ -491,6 +482,16 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		echo '<input type="hidden" name="handl_aicac_status" value="' . esc_attr( $plugin_status_filter ) . '" />';
 		echo '<input type="hidden" name="handl_aicac_access" value="' . esc_attr( $plugin_access_filter ) . '" />';
 		echo '</form>';
+
+		// Rules form wraps settings, matrix, Save, and Test this policy so submit
+		// buttons are in-form descendants. External form= submits drop the clicked
+		// button's name/value in shared Chrome automation (QA false negative).
+		// Do not use a hidden handl_aicac_action=save — it wins over Run test in PHP.
+		echo '<form method="post" id="' . esc_attr( $rules_form_id ) . '" class="handl-aicac-rules-save-form">';
+		wp_nonce_field( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		echo '<input type="hidden" name="handl_aicac_status" value="' . esc_attr( $plugin_status_filter ) . '" />';
+		echo '<input type="hidden" name="handl_aicac_access" value="' . esc_attr( $plugin_access_filter ) . '" />';
 
 		// Settings demoted: collapsible panel, not the first thing you see (F5 IA).
 		echo '<details class="handl-aicac-settings-panel">';
@@ -700,12 +701,14 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '</script>';
 
 		echo '<p class="submit">';
-		echo '<button type="submit" name="handl_aicac_action" value="save" class="button button-primary" form="' . esc_attr( $rules_form_id ) . '">';
+		echo '<button type="submit" name="handl_aicac_action" value="save" class="button button-primary">';
 		echo esc_html__( 'Save changes', 'handl-ai-connector-access-control' );
 		echo '</button>';
 		echo '</p>';
 
 		$this->render_policy_simulator_panel( $policy, $plugins, $log, $rules_form_id );
+
+		echo '</form>';
 
 		$this->render_rules_transfer_section( $policy, $show_import_preview );
 
@@ -2370,22 +2373,26 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			'is_supported_for_music_generation' => __( 'Other or unknown operation (for example, music)', 'handl-ai-connector-access-control' ),
 		);
 
-		echo '<div class="handl-aicac-sim-panel" id="handl-aicac-sim-panel">';
+		echo '<div class="handl-aicac-sim-panel" id="handl-aicac-sim-panel" data-rules-form="' . esc_attr( $form_id ) . '">';
 		echo '<h2>' . esc_html__( 'Test this policy', 'handl-ai-connector-access-control' ) . '</h2>';
 		echo '<p class="description">' . esc_html__( 'Preview how the rules on this screen would handle AI Client calls before you save. No AI call is sent, and the test uses the same decision process as live traffic.', 'handl-ai-connector-access-control' ) . '</p>';
 
+		// Panel is rendered inside the rules <form> ($form_id); controls are native
+		// descendants (no form=) so Run test includes handl_aicac_action=simulate_policy
+		// under both native clicks and shared Chrome automation.
+
 		echo '<fieldset class="handl-aicac-sim-mode">';
 		echo '<legend class="screen-reader-text">' . esc_html__( 'Test mode', 'handl-ai-connector-access-control' ) . '</legend>';
-		echo '<label><input type="radio" name="handl_aicac_sim_mode" value="hypothetical" form="' . esc_attr( $form_id ) . '" ' . checked( $mode, 'hypothetical', false ) . ' /> ';
+		echo '<label><input type="radio" name="handl_aicac_sim_mode" value="hypothetical" ' . checked( $mode, 'hypothetical', false ) . ' /> ';
 		echo esc_html__( 'Test a sample call', 'handl-ai-connector-access-control' ) . '</label> ';
-		echo '<label><input type="radio" name="handl_aicac_sim_mode" value="replay" form="' . esc_attr( $form_id ) . '" ' . checked( $mode, 'replay', false ) . ' /> ';
+		echo '<label><input type="radio" name="handl_aicac_sim_mode" value="replay" ' . checked( $mode, 'replay', false ) . ' /> ';
 		echo esc_html__( 'Replay saved activity', 'handl-ai-connector-access-control' ) . '</label>';
 		echo '</fieldset>';
 
 		echo '<table class="form-table handl-aicac-sim-fields" role="presentation">';
 		echo '<tr class="handl-aicac-sim-hyp">';
 		echo '<th scope="row"><label for="handl-aicac-sim-plugin">' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</label></th>';
-		echo '<td><select name="handl_aicac_sim_plugin" id="handl-aicac-sim-plugin" form="' . esc_attr( $form_id ) . '">';
+		echo '<td><select name="handl_aicac_sim_plugin" id="handl-aicac-sim-plugin">';
 		echo '<option value="">' . esc_html__( 'Unknown or no plugin', 'handl-ai-connector-access-control' ) . '</option>';
 		foreach ( $plugins as $basename => $meta ) {
 			$basename = (string) $basename;
@@ -2396,7 +2403,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 
 		echo '<tr class="handl-aicac-sim-hyp">';
 		echo '<th scope="row"><label for="handl-aicac-sim-operation">' . esc_html__( 'Operation', 'handl-ai-connector-access-control' ) . '</label></th>';
-		echo '<td><select name="handl_aicac_sim_operation" id="handl-aicac-sim-operation" form="' . esc_attr( $form_id ) . '">';
+		echo '<td><select name="handl_aicac_sim_operation" id="handl-aicac-sim-operation">';
 		foreach ( $ops as $op_id => $op_label ) {
 			echo '<option value="' . esc_attr( $op_id ) . '" ' . selected( $sel_op, $op_id, false ) . '>' . esc_html( $op_label ) . '</option>';
 		}
@@ -2406,19 +2413,19 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 
 		echo '<tr class="handl-aicac-sim-hyp">';
 		echo '<th scope="row"><label for="handl-aicac-sim-tools">' . esc_html__( 'Tools offered to the AI (optional)', 'handl-ai-connector-access-control' ) . '</label></th>';
-		echo '<td><input type="text" class="regular-text code" name="handl_aicac_sim_tools" id="handl-aicac-sim-tools" form="' . esc_attr( $form_id ) . '" value="" placeholder="namespace/tool" />';
+		echo '<td><input type="text" class="regular-text code" name="handl_aicac_sim_tools" id="handl-aicac-sim-tools" value="" placeholder="namespace/tool" />';
 		echo '<p class="description">' . esc_html__( 'Enter tool names separated by commas or new lines. Use this to test rules that block specific tools.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td></tr>';
 
 		echo '<tr class="handl-aicac-sim-replay">';
 		echo '<th scope="row"><label for="handl-aicac-sim-limit">' . esc_html__( 'Calls to replay', 'handl-ai-connector-access-control' ) . '</label></th>';
-		echo '<td><input type="number" class="small-text" min="1" max="1000" name="handl_aicac_sim_limit" id="handl-aicac-sim-limit" form="' . esc_attr( $form_id ) . '" value="' . esc_attr( (string) $sel_limit ) . '" />';
+		echo '<td><input type="number" class="small-text" min="1" max="1000" name="handl_aicac_sim_limit" id="handl-aicac-sim-limit" value="' . esc_attr( (string) $sel_limit ) . '" />';
 		echo '<p class="description">' . esc_html__( 'Replays the newest saved AI Client calls. Direct connections outside the AI Client are skipped because these rules do not control them.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td></tr>';
 		echo '</table>';
 
 		echo '<p>';
-		echo '<button type="submit" class="button button-secondary" name="handl_aicac_action" value="simulate_policy" form="' . esc_attr( $form_id ) . '">';
+		echo '<button type="submit" class="button button-secondary" name="handl_aicac_action" value="simulate_policy" id="handl-aicac-sim-run">';
 		echo esc_html__( 'Run test', 'handl-ai-connector-access-control' );
 		echo '</button>';
 		echo ' <span class="description">' . esc_html__( 'Your rules will not be saved.', 'handl-ai-connector-access-control' ) . '</span>';

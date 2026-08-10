@@ -258,37 +258,40 @@ final class PolicySimulatorTest extends TestCase {
 	}
 
 	/**
-	 * Rules save shell must not hide handl_aicac_action=save: the simulator
-	 * submit shares that form via form=, and a hidden save wins in $_POST.
+	 * Rules save must not hide handl_aicac_action=save, and Run test must be an
+	 * in-form submit (not form= external) so automation includes simulate_policy.
 	 */
 	public function test_rules_form_action_is_submit_not_hidden_save(): void {
 		$src = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php' );
 
 		$this->assertTrue(
 			(bool) preg_match(
-				'/\$rules_form_id = \'handl-aicac-rules-save\';(.*?)echo \'<form method="post" id="\' \. esc_attr\( \$bulk_form_id \)/s',
-				$src,
-				$m
+				'/echo \'<form method="post" id="\' \. esc_attr\( \$rules_form_id \)[\s\S]*?render_policy_simulator_panel\([\s\S]*?echo \'<\/form>\';/',
+				$src
 			),
-			'Rules save form shell must precede the bulk form'
+			'Rules form must wrap the policy simulator panel before closing'
 		);
 
-		$shell = $m[1];
+		$this->assertDoesNotMatchRegularExpression(
+			'/\$rules_form_id = \'handl-aicac-rules-save\';[\s\S]{0,800}?handl_aicac_action" value="save"/',
+			$src,
+			'Rules form must not hard-code hidden save action near open'
+		);
+
+		$this->assertMatchesRegularExpression(
+			'/<button type="submit" name="handl_aicac_action" value="save" class="button button-primary">/',
+			$src,
+			'Save changes must be an in-form submit with value=save'
+		);
+		$this->assertMatchesRegularExpression(
+			'/<button type="submit" class="button button-secondary" name="handl_aicac_action" value="simulate_policy" id="handl-aicac-sim-run">/',
+			$src,
+			'Run test must be an in-form submit with value=simulate_policy (no form=)'
+		);
 		$this->assertStringNotContainsString(
-			'handl_aicac_action" value="save"',
-			$shell,
-			'Rules form shell must not hard-code hidden save action'
-		);
-
-		$this->assertMatchesRegularExpression(
-			'/<button type="submit" name="handl_aicac_action" value="save"/',
+			'name="handl_aicac_action" value="simulate_policy" form="',
 			$src,
-			'Save changes must submit handl_aicac_action=save via the clicked button'
-		);
-		$this->assertMatchesRegularExpression(
-			'/<button type="submit"[^>]*name="handl_aicac_action" value="simulate_policy"/',
-			$src,
-			'Run test must submit handl_aicac_action=simulate_policy via the clicked button'
+			'Run test must not use external form= association'
 		);
 	}
 }
