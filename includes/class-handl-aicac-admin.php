@@ -117,6 +117,22 @@ final class Admin {
 		}
 	}
 
+	/**
+	 * AICAC-22 defense-in-depth: re-verify capability + CSRF inside private mutators.
+	 *
+	 * render_page already gates manage_options and checks the action nonce before
+	 * dispatch. This aborts again if a future call site invokes a mutator without
+	 * those checks (public refactor, REST/AJAX, admin-post).
+	 *
+	 * @param string $nonce_action Same action string as the dispatch check_admin_referer.
+	 */
+	private function require_admin_mutation( string $nonce_action ): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'handl-ai-connector-access-control' ) );
+		}
+		check_admin_referer( $nonce_action, 'handl_aicac_nonce' );
+	}
+
 	public function render_page(): void {
 		if ( ! $this->user_can_manage_options() ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'handl-ai-connector-access-control' ) );
@@ -2184,6 +2200,8 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	}
 
 	private function handle_save_rules(): void {
+		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
 		$policy = Policy::get_policy();
 
 		$posted_default = filter_input( INPUT_POST, 'handl_aicac_default', FILTER_UNSAFE_RAW );
@@ -2232,6 +2250,8 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	 * Does not rewrite capability-family or model-force maps.
 	 */
 	private function handle_bulk_plugin_rules(): void {
+		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
 		$posted_action = filter_input( INPUT_POST, 'handl_aicac_bulk_action', FILTER_UNSAFE_RAW );
 		$rule          = sanitize_text_field( (string) $posted_action );
 		if ( 'allow' !== $rule && 'deny' !== $rule ) {
@@ -2276,6 +2296,8 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	 * @param array<string,mixed> $policy
 	 */
 	private function apply_model_force_settings_from_post( array &$policy ): void {
+		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
 		$posted_map = filter_input( INPUT_POST, 'handl_aicac_model_force', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
 		$policy['model_force_plugins'] = Model_Force::sanitize_force_map( is_array( $posted_map ) ? $posted_map : array() );
 
@@ -2507,6 +2529,8 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	 * @param array<string,mixed> $policy
 	 */
 	private function apply_kill_switch_settings_from_post( array &$policy ): void {
+		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
 		$posted_kill = filter_input( INPUT_POST, 'handl_aicac_kill_switch', FILTER_UNSAFE_RAW );
 		$policy['kill_switch'] = ! empty( $posted_kill );
 
@@ -2527,6 +2551,8 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	 * @param array<string,mixed> $policy
 	 */
 	private function apply_role_gate_settings_from_post( array &$policy ): void {
+		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
 		$posted_enabled = filter_input( INPUT_POST, 'handl_aicac_role_gate_enabled', FILTER_UNSAFE_RAW );
 		$policy['role_gate_enabled'] = ! empty( $posted_enabled );
 
@@ -2547,6 +2573,8 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	 * @param array<string,mixed> $policy
 	 */
 	private function apply_log_settings_from_post( array &$policy ): void {
+		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
 		$posted_audit = filter_input( INPUT_POST, 'handl_aicac_audit_only', FILTER_UNSAFE_RAW );
 		$policy['audit_only'] = ! empty( $posted_audit );
 
@@ -2626,6 +2654,8 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $log_filters
 	 */
 	private function handle_quick_rule_redirect( array $log_filters ): void {
+		$this->require_admin_mutation( 'handl_aicac_quick_rule' );
+
 		$plugin = filter_input( INPUT_POST, 'handl_aicac_quick_plugin', FILTER_UNSAFE_RAW );
 		$rule   = filter_input( INPUT_POST, 'handl_aicac_quick_rule', FILTER_UNSAFE_RAW );
 		$return = filter_input( INPUT_POST, 'handl_aicac_return_tab', FILTER_UNSAFE_RAW );
@@ -2675,6 +2705,8 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	 * Restore a previous plugin rule after dashboard single-click block (board Q3 undo).
 	 */
 	private function handle_undo_quick_rule(): void {
+		$this->require_admin_mutation( 'handl_aicac_undo_quick_rule' );
+
 		$plugin = sanitize_text_field( (string) filter_input( INPUT_POST, 'handl_aicac_quick_plugin', FILTER_UNSAFE_RAW ) );
 		$prev   = sanitize_text_field( (string) filter_input( INPUT_POST, 'handl_aicac_undo_rule', FILTER_UNSAFE_RAW ) );
 		if ( 'allow' !== $prev && 'deny' !== $prev ) {
@@ -2900,6 +2932,8 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	}
 
 	private function handle_save_log(): void {
+		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
 		$policy = Policy::get_policy();
 
 		$this->apply_log_settings_from_post( $policy );
@@ -3365,6 +3399,8 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	 * Stream current policy as a JSON download (AC1).
 	 */
 	private function handle_export_rules(): void {
+		$this->require_admin_mutation( 'handl_aicac_export_rules' );
+
 		$policy  = Policy::get_policy();
 		$export  = Policy_Transfer::build_export(
 			$policy,
@@ -3430,6 +3466,8 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	 * Validate upload and stash preview; no policy write (AC2/AC4).
 	 */
 	private function handle_import_rules_preview(): void {
+		$this->require_admin_mutation( 'handl_aicac_import_rules' );
+
 		$redirect_base = array(
 			'page'            => 'handl-ai-connector-access-control',
 			'handl_aicac_tab' => 'rules',
@@ -3546,6 +3584,8 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	 * Confirm pending import: full replace via Policy::save_policy (AC3).
 	 */
 	private function handle_import_rules_confirm(): void {
+		$this->require_admin_mutation( 'handl_aicac_import_rules_confirm' );
+
 		$redirect_base = array(
 			'page'            => 'handl-ai-connector-access-control',
 			'handl_aicac_tab' => 'rules',
