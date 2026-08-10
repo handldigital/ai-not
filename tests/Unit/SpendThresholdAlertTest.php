@@ -68,11 +68,11 @@ final class SpendThresholdAlertTest extends TestCase {
 		$this->assertCount( 1, self::$mails );
 		$mail = self::$mails[0];
 		$this->assertStringContainsString( 'estimated spend alert', strtolower( $mail['subject'] ) );
-		$this->assertStringContainsString( 'site total crossed', strtolower( $mail['subject'] ) );
-		$this->assertStringContainsString( 'Threshold:', $mail['message'] );
-		$this->assertStringContainsString( 'Current estimated total:', $mail['message'] );
-		$this->assertStringContainsString( 'Log window:', $mail['message'] );
-		$this->assertStringContainsString( 'estimated (token × rate placeholder), not billing', $mail['message'] );
+		$this->assertStringContainsString( 'site estimate crossed', strtolower( $mail['subject'] ) );
+		$this->assertStringContainsString( 'Alert threshold:', $mail['message'] );
+		$this->assertStringContainsString( 'Current estimated spend:', $mail['message'] );
+		$this->assertStringContainsString( 'Saved activity period:', $mail['message'] );
+		$this->assertStringContainsString( 'This estimate is based on logged token usage and configured rates. It is not a bill', $mail['message'] );
 		$this->assertStringContainsString( 'handl_aicac_tab=activity', $mail['message'] );
 
 		// Second evaluate within 24h → no duplicate.
@@ -136,7 +136,7 @@ final class SpendThresholdAlertTest extends TestCase {
 
 	public function test_body_and_subject_helpers_include_estimate_disclaimer(): void {
 		$body = Spend_Threshold::build_body( 'site', null, 10.0, 12.0, 'Aug 1 to Aug 10, 2026' );
-		$this->assertStringContainsString( 'estimated (token × rate placeholder), not billing', $body );
+		$this->assertStringContainsString( 'This estimate is based on logged token usage and configured rates. It is not a bill', $body );
 		$this->assertStringContainsString( 'handl_aicac_tab=activity', $body );
 		$subject = Spend_Threshold::build_subject( 'site', null, 10.0, 12.0 );
 		$this->assertStringContainsString( 'estimated spend alert', strtolower( $subject ) );

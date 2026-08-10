@@ -260,7 +260,7 @@ final class Spend_Threshold {
 
 			return sprintf(
 				/* translators: 1: site name, 2: plugin name, 3: threshold USD */
-				__( '[%1$s] HandL estimated spend alert: %2$s crossed $%3$s', 'handl-ai-connector-access-control' ),
+				__( '[%1$s] HandL estimated spend alert: %2$s estimate crossed $%3$s', 'handl-ai-connector-access-control' ),
 				$site,
 				$label,
 				self::format_amount( $threshold )
@@ -269,7 +269,7 @@ final class Spend_Threshold {
 
 		return sprintf(
 			/* translators: 1: site name, 2: threshold USD */
-			__( '[%1$s] HandL estimated spend alert: site total crossed $%2$s', 'handl-ai-connector-access-control' ),
+			__( '[%1$s] HandL estimated spend alert: Site estimate crossed $%2$s', 'handl-ai-connector-access-control' ),
 			$site,
 			self::format_amount( $threshold )
 		);
@@ -296,26 +296,26 @@ final class Spend_Threshold {
 				self::plugin_label( (string) $plugin_basename )
 			);
 		} else {
-			$lines[] = __( 'Scope: site-wide estimated total', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'Scope: Site-wide estimate', 'handl-ai-connector-access-control' );
 		}
 
 		$lines[] = sprintf(
 			/* translators: %s: threshold amount with $ */
-			__( 'Threshold: $%s', 'handl-ai-connector-access-control' ),
+			__( 'Alert threshold: $%s', 'handl-ai-connector-access-control' ),
 			self::format_amount( $threshold )
 		);
 		$lines[] = sprintf(
 			/* translators: %s: current estimated total with $ */
-			__( 'Current estimated total: $%s', 'handl-ai-connector-access-control' ),
+			__( 'Current estimated spend: $%s', 'handl-ai-connector-access-control' ),
 			self::format_amount( $current_total )
 		);
 		$lines[] = sprintf(
 			/* translators: %s: dated retained-log window label */
-			__( 'Log window: %s', 'handl-ai-connector-access-control' ),
+			__( 'Saved activity period: %s', 'handl-ai-connector-access-control' ),
 			$window_label
 		);
 		$lines[] = '';
-		$lines[] = __( 'This amount is estimated (token × rate placeholder), not billing. It does not block AI Client calls.', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'This estimate is based on logged token usage and configured rates. It is not a bill and does not block AI Client calls.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = __( 'Manage estimated spend alerts:', 'handl-ai-connector-access-control' );
 		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' );

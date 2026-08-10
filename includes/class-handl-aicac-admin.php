@@ -2134,12 +2134,12 @@ final class Admin {
 		echo '<tr>';
 		echo '<th scope="row">' . esc_html__( 'Estimated spend alerts', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<td>';
-		echo '<p class="description" style="margin-top:0;">' . esc_html__( 'Optional. Send an email when estimated spend in the saved log first crosses a dollar threshold. Empty means off. Uses the same recipient as blocked-call alerts. Estimates only — not billing, and nothing is blocked.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description" style="margin-top:0;">' . esc_html__( 'Sends an email when estimated spend in the saved activity log crosses a threshold. After the estimate drops below that threshold, another crossing can trigger a new alert. Each threshold can alert at most once every 24 hours. Leave a field blank to turn that alert off. Uses the same email address as blocked-call alerts. Amounts are estimates, not billing, and alerts do not block calls.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<p><label for="handl-aicac-spend-threshold-site">' . esc_html__( 'Site-wide threshold (USD)', 'handl-ai-connector-access-control' ) . '</label><br />';
 		echo '<input type="number" step="0.01" min="0" max="1000000" class="small-text" id="handl-aicac-spend-threshold-site" name="handl_aicac_spend_threshold_site" value="' . esc_attr( null === $site_threshold ? '' : (string) $site_threshold ) . '" placeholder="' . esc_attr__( 'Off', 'handl-ai-connector-access-control' ) . '" /></p>';
 
-		echo '<p style="margin-top:12px;"><strong>' . esc_html__( 'Per-plugin thresholds (optional)', 'handl-ai-connector-access-control' ) . '</strong></p>';
-		echo '<p class="description">' . esc_html__( 'Leave blank to skip a plugin. Each plugin that crosses its own threshold gets a separate email.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p style="margin-top:12px;"><strong>' . esc_html__( 'Plugin thresholds (optional)', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		echo '<p class="description">' . esc_html__( 'Leave a field blank to turn that plugin’s alert off. Each plugin sends a separate email when its estimate crosses the threshold.', 'handl-ai-connector-access-control' ) . '</p>';
 		if ( ! function_exists( 'get_plugins' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		}
@@ -2150,7 +2150,7 @@ final class Admin {
 		} else {
 			echo '<table class="widefat striped" style="margin:0;"><thead><tr>';
 			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'Threshold USD', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'Threshold (USD)', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '</tr></thead><tbody>';
 			foreach ( $plugins_for_threshold as $basename => $meta ) {
 				$name  = isset( $meta['Name'] ) ? (string) $meta['Name'] : (string) $basename;
