@@ -43,7 +43,7 @@ final class Site_Health {
 		}
 
 		$tests['direct'][ self::TEST_SLUG ] = array(
-			'label' => __( 'HandL AI access control', 'handl-ai-connector-access-control' ),
+			'label' => __( 'HandL AI Connector Access Control', 'handl-ai-connector-access-control' ),
 			'test'  => array( $this, 'run_test' ),
 		);
 
@@ -151,15 +151,15 @@ final class Site_Health {
 
 		$url = self::settings_url( $tab );
 
-		$label = __( 'HandL AI access control is configured', 'handl-ai-connector-access-control' );
+		$label = __( 'HandL AI Connector Access Control is configured', 'handl-ai-connector-access-control' );
 		if ( 'kill_switch_zero_exceptions' === $issue ) {
-			$label = __( 'Emergency stop is on with no exceptions', 'handl-ai-connector-access-control' );
+			$label = __( 'Emergency stop blocks all AI Client calls', 'handl-ai-connector-access-control' );
 		} elseif ( 'alerts_without_logging' === $issue ) {
-			$label = __( 'Alerts are on but activity logging is off', 'handl-ai-connector-access-control' );
+			$label = __( 'Alerts cannot run because activity logging and Learn mode are off', 'handl-ai-connector-access-control' );
 		} elseif ( 'no_ai_client_plugins' === $issue ) {
-			$label = __( 'No AI Client plugins detected', 'handl-ai-connector-access-control' );
+			$label = __( 'No AI Client plugins are installed', 'handl-ai-connector-access-control' );
 		} elseif ( 'observing' === $issue ) {
-			$label = __( 'Learn mode is observing AI Client calls', 'handl-ai-connector-access-control' );
+			$label = __( 'Learn mode is monitoring AI Client calls', 'handl-ai-connector-access-control' );
 		}
 
 		$description = self::build_description( $snapshot );
@@ -169,7 +169,7 @@ final class Site_Health {
 			$actions = sprintf(
 				'<a href="%s">%s</a>',
 				esc_url( $url ),
-				esc_html__( 'Open HandL AI Access settings', 'handl-ai-connector-access-control' )
+				esc_html__( 'Open HandL AI Connector Access Control settings', 'handl-ai-connector-access-control' )
 			);
 		}
 
@@ -202,8 +202,8 @@ final class Site_Health {
 
 		if ( $kill_on ) {
 			$lines[] = sprintf(
-				/* translators: %d: number of Emergency stop exceptions */
-				__( 'Emergency stop: on (%d exception(s)).', 'handl-ai-connector-access-control' ),
+				/* translators: %d: number of Emergency stop exceptions configured */
+				__( 'Emergency stop: on. Exceptions configured: %d.', 'handl-ai-connector-access-control' ),
 				$exc_count
 			);
 		} else {
@@ -211,7 +211,7 @@ final class Site_Health {
 		}
 
 		if ( $audit ) {
-			$lines[] = __( 'Learn mode: on (calls are logged, not blocked).', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'Learn mode: on. Calls are logged, not blocked.', 'handl-ai-connector-access-control' );
 		} elseif ( $logging ) {
 			$lines[] = __( 'Activity logging: on.', 'handl-ai-connector-access-control' );
 		} else {
@@ -232,13 +232,13 @@ final class Site_Health {
 		if ( $has_ai ) {
 			$lines[] = __( 'AI Client plugins: detected on this site.', 'handl-ai-connector-access-control' );
 		} else {
-			$lines[] = __( 'AI Client plugins: none detected. Rules will apply when an AI Client plugin is installed.', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'AI Client plugins: none detected. Your rules will apply after an AI Client plugin is installed.', 'handl-ai-connector-access-control' );
 		}
 
 		if ( 'kill_switch_zero_exceptions' === $issue ) {
-			$lines[] = __( 'With no exceptions selected, Emergency stop blocks every AI Client call. Add at least one exception or turn Emergency stop off if that is not intended.', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'Emergency stop blocks every AI Client call because no exceptions are selected. Add an exception or turn off Emergency stop if you want to allow any calls.', 'handl-ai-connector-access-control' );
 		} elseif ( 'alerts_without_logging' === $issue ) {
-			$lines[] = __( 'Email or webhook alerts need activity logging or Learn mode so there is data to report.', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'Email and webhook alerts require activity logging or Learn mode.', 'handl-ai-connector-access-control' );
 		}
 
 		$html = '';
