@@ -308,6 +308,21 @@ if ( ! function_exists( 'add_action' ) ) {
 	}
 }
 
+if ( ! function_exists( 'current_user_can' ) ) {
+	/**
+	 * Capability stub for REST permission_callback tests.
+	 *
+	 * @param string $capability Capability slug.
+	 */
+	function current_user_can( $capability ): bool {
+		unset( $capability );
+		if ( array_key_exists( 'handl_aicac_test_current_user_can', $GLOBALS ) ) {
+			return (bool) $GLOBALS['handl_aicac_test_current_user_can'];
+		}
+		return true;
+	}
+}
+
 if ( ! function_exists( 'wp_mail' ) ) {
 	/**
 	 * @param string|list<string> $to Recipients.
@@ -415,9 +430,11 @@ if ( ! function_exists( 'get_plugins' ) ) {
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-attribution.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-shadow-ai.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-simulator.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-transfer.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-audit-export.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-differentiator-messaging.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-site-health.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rest.php';

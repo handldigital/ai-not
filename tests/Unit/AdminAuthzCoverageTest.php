@@ -37,6 +37,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 		'send_denial_digest',
 		'send_test_email',
 		'send_test_webhook',
+		'simulate_policy',
 		'undo_quick_rule',
 	);
 
@@ -158,6 +159,10 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array(
 				'action'       => 'import_rules_confirm',
 				'nonce_action' => 'handl_aicac_import_rules_confirm',
+			),
+			array(
+				'action'       => 'simulate_policy',
+				'nonce_action' => 'handl_aicac_save_policy',
 			),
 		);
 	}
@@ -294,6 +299,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array( 'handle_save_rules', 'handl_aicac_save_policy' ),
 			array( 'handle_save_log', 'handl_aicac_save_policy' ),
 			array( 'handle_bulk_plugin_rules', 'handl_aicac_save_policy' ),
+			array( 'handle_simulate_policy', 'handl_aicac_save_policy' ),
 			array( 'handle_quick_rule_redirect', 'handl_aicac_quick_rule' ),
 			array( 'handle_undo_quick_rule', 'handl_aicac_undo_quick_rule' ),
 			array( 'apply_kill_switch_settings_from_post', 'handl_aicac_save_policy' ),
@@ -316,6 +322,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'handle_save_rules',
 				'handle_save_log',
 				'handle_bulk_plugin_rules',
+				'handle_simulate_policy',
 				'handle_quick_rule_redirect',
 				'handle_undo_quick_rule',
 				'apply_kill_switch_settings_from_post',

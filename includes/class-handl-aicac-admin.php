@@ -35,6 +35,13 @@ final class Admin {
 	 */
 	private ?array $bulk_result = null;
 
+	/**
+	 * AICAC-SIM dry-run result for Rules-tab panel (never persists policy).
+	 *
+	 * @var null|array<string,mixed>
+	 */
+	private ?array $sim_result = null;
+
 	private static ?Admin $instance = null;
 
 	public static function instance(): Admin {
@@ -241,6 +248,10 @@ final class Admin {
 			if ( 'bulk_plugin_rules' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
 				$this->handle_bulk_plugin_rules();
+			}
+			if ( 'simulate_policy' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
+				$this->handle_simulate_policy();
 			}
 		}
 
@@ -463,14 +474,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		$rules_form_id = 'handl-aicac-rules-save';
 		$bulk_form_id  = 'handl-aicac-bulk-rules';
 
-		echo '<form method="post" id="' . esc_attr( $rules_form_id ) . '" class="handl-aicac-rules-save-form">';
-		wp_nonce_field( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
-		echo '<input type="hidden" name="handl_aicac_action" value="save" />';
-		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
-		echo '<input type="hidden" name="handl_aicac_status" value="' . esc_attr( $plugin_status_filter ) . '" />';
-		echo '<input type="hidden" name="handl_aicac_access" value="' . esc_attr( $plugin_access_filter ) . '" />';
-		echo '</form>';
-
+		// Bulk shell first — must not nest inside the rules form.
 		echo '<form method="post" id="' . esc_attr( $bulk_form_id ) . '" class="handl-aicac-rules-save-form">';
 		wp_nonce_field( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
 		echo '<input type="hidden" name="handl_aicac_action" value="bulk_plugin_rules" />';
@@ -478,6 +482,24 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		echo '<input type="hidden" name="handl_aicac_status" value="' . esc_attr( $plugin_status_filter ) . '" />';
 		echo '<input type="hidden" name="handl_aicac_access" value="' . esc_attr( $plugin_access_filter ) . '" />';
 		echo '</form>';
+
+		// Visible Rules form — do NOT use handl-aicac-rules-save-form (that class is
+		// display:none for empty shells that only exist for form= association).
+		echo '<form method="post" id="' . esc_attr( $rules_form_id ) . '">';
+		wp_nonce_field( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		echo '<input type="hidden" name="handl_aicac_status" value="' . esc_attr( $plugin_status_filter ) . '" />';
+		echo '<input type="hidden" name="handl_aicac_access" value="' . esc_attr( $plugin_access_filter ) . '" />';
+		// Early action slot: Save is after the matrix and can be truncated by
+		// max_input_vars. Click/submit handlers copy data-aicac-action here first.
+		echo '<input type="hidden" name="handl_aicac_action" id="handl-aicac-action" value="" />';
+		echo '<script>';
+		echo '(function(){var form=document.getElementById(' . wp_json_encode( $rules_form_id ) . ');';
+		echo 'var action=document.getElementById("handl-aicac-action");if(!form||!action)return;';
+		echo 'form.addEventListener("click",function(e){var b=e.target.closest("[data-aicac-action]");if(b){action.value=b.getAttribute("data-aicac-action");}});';
+		echo 'form.addEventListener("submit",function(e){var b=e.submitter;if(b&&b.getAttribute("data-aicac-action")){action.value=b.getAttribute("data-aicac-action");}});';
+		echo '})();';
+		echo '</script>';
 
 		// Settings demoted: collapsible panel, not the first thing you see (F5 IA).
 		echo '<details class="handl-aicac-settings-panel">';
@@ -515,6 +537,12 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		$this->render_ability_arming_settings( $policy, $rules_form_id );
 		$this->render_model_force_settings( $policy, $rules_form_id, $log );
 		echo '</details>';
+
+		// Test this policy BEFORE the plugin matrix: sandbox has ~176 plugins × ~8
+		// fields, which exceeds PHP max_input_vars (1000). Fields after the cutoff
+		// are dropped — including a late simulate_policy submit — so Run test must
+		// appear early enough that action + sim inputs always reach PHP.
+		$this->render_policy_simulator_panel( $policy, $plugins, $log, $rules_form_id );
 
 		$family_labels = Operations::family_labels();
 		$force_map     = Model_Force::force_map( $policy );
@@ -687,13 +715,13 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '})();';
 		echo '</script>';
 
-		submit_button(
-			__( 'Save changes', 'handl-ai-connector-access-control' ),
-			'primary',
-			'submit',
-			false,
-			array( 'form' => $rules_form_id )
-		);
+		echo '<p class="submit">';
+		echo '<button type="submit" name="handl_aicac_action" value="save" class="button button-primary" data-aicac-action="save">';
+		echo esc_html__( 'Save changes', 'handl-ai-connector-access-control' );
+		echo '</button>';
+		echo '</p>';
+
+		echo '</form>';
 
 		$this->render_rules_transfer_section( $policy, $show_import_preview );
 
@@ -743,23 +771,39 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 		echo '</ul>';
 
-		echo '<form method="get">';
-		echo '<input type="hidden" name="page" value="handl-ai-connector-access-control" />';
-		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
-		echo '<input type="hidden" name="handl_aicac_status" value="' . esc_attr( $plugin_status_filter ) . '" />';
+		// No <form> here: this panel is rendered inside the Rules POST form. A nested
+		// GET form would auto-close the outer form in browsers, leaving Run test with
+		// button.form === null (AICAC-SIM QA fail on #93).
+		$access_options = array(
+			'all'             => __( 'All rules', 'handl-ai-connector-access-control' ),
+			'effective-allow' => __( 'Explicit Allow', 'handl-ai-connector-access-control' ),
+			'effective-deny'  => __( 'Explicit Deny', 'handl-ai-connector-access-control' ),
+			'default-only'    => __( 'Uses default', 'handl-ai-connector-access-control' ),
+		);
 		echo '<div class="tablenav top">';
 		echo '<div class="alignleft actions">';
 		echo '<label for="handl-aicac-access-filter" class="screen-reader-text">' . esc_html__( 'Filter by AI access', 'handl-ai-connector-access-control' ) . '</label>';
-		echo '<select id="handl-aicac-access-filter" name="handl_aicac_access" onchange="if (this.form) { if (this.form.requestSubmit) { this.form.requestSubmit(); } else { HTMLFormElement.prototype.submit.call(this.form); } }">';
-		$this->render_option( 'all', $plugin_access_filter, __( 'All rules', 'handl-ai-connector-access-control' ) );
-		$this->render_option( 'effective-allow', $plugin_access_filter, __( 'Explicit Allow', 'handl-ai-connector-access-control' ) );
-		$this->render_option( 'effective-deny', $plugin_access_filter, __( 'Explicit Deny', 'handl-ai-connector-access-control' ) );
-		$this->render_option( 'default-only', $plugin_access_filter, __( 'Uses default', 'handl-ai-connector-access-control' ) );
+		echo '<select id="handl-aicac-access-filter" onchange="if (this.selectedOptions.length) { window.location = this.selectedOptions[0].getAttribute(\'data-url\'); }">';
+		foreach ( $access_options as $access_key => $access_label ) {
+			$access_url = add_query_arg(
+				array(
+					'handl_aicac_status' => $plugin_status_filter,
+					'handl_aicac_access' => $access_key,
+				),
+				$base_url
+			);
+			printf(
+				'<option value="%1$s" data-url="%2$s"%3$s>%4$s</option>',
+				esc_attr( $access_key ),
+				esc_url( $access_url ),
+				selected( $plugin_access_filter, $access_key, false ),
+				esc_html( $access_label )
+			);
+		}
 		echo '</select>';
 		echo '</div>';
 		echo '<br class="clear" />';
 		echo '</div>';
-		echo '</form>';
 		echo '</div>';
 	}
 
@@ -2242,46 +2286,387 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	private function handle_save_rules(): void {
 		$this->require_admin_mutation( 'handl_aicac_save_policy' );
 
-		$policy = Policy::get_policy();
+		$policy = $this->build_rules_policy_from_post( Policy::get_policy() );
+		Policy::save_policy( $policy );
+	}
+
+	/**
+	 * Build a rules-tab policy from POST without saving (used by save + AICAC-SIM).
+	 *
+	 * @param array<string,mixed> $base Starting policy (usually saved).
+	 * @return array<string,mixed>
+	 */
+	/**
+	 * Build a policy array from Rules-tab POST fields.
+	 *
+	 * @param array<string,mixed> $base          Saved policy used as the starting point.
+	 * @param bool                $merge_missing When true (simulator), keep base plugin /
+	 *                                           operation / force rules for keys absent from
+	 *                                           POST. Needed when max_input_vars truncates the
+	 *                                           matrix so a partial POST does not wipe rules.
+	 *                                           Save keeps false: empty selects mean "Default".
+	 * @return array<string,mixed>
+	 */
+	private function build_rules_policy_from_post( array $base, bool $merge_missing = false ): array {
+		$policy = $base;
 
 		$posted_default = filter_input( INPUT_POST, 'handl_aicac_default', FILTER_UNSAFE_RAW );
-		$policy['default'] = ( 'deny' === sanitize_text_field( (string) $posted_default ) ) ? 'deny' : 'allow';
+		if ( null !== $posted_default && false !== $posted_default ) {
+			$policy['default'] = ( 'deny' === sanitize_text_field( (string) $posted_default ) ) ? 'deny' : 'allow';
+		}
 
 		$posted_unknown = filter_input( INPUT_POST, 'handl_aicac_unknown_operation', FILTER_UNSAFE_RAW );
-		$policy['unknown_operation'] = Policy::sanitize_unknown_operation( $posted_unknown );
+		if ( null !== $posted_unknown && false !== $posted_unknown ) {
+			$policy['unknown_operation'] = Policy::sanitize_unknown_operation( $posted_unknown );
+		}
 
-		$rules        = array();
+		$rules        = $merge_missing && isset( $base['plugins'] ) && is_array( $base['plugins'] )
+			? $base['plugins']
+			: array();
 		$posted_rules = filter_input( INPUT_POST, 'handl_aicac_rule', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
 		if ( is_array( $posted_rules ) ) {
-			foreach ( $posted_rules as $basename => $rule ) {
-				$basename = sanitize_text_field( (string) $basename );
-				$rule     = sanitize_text_field( (string) $rule );
-				if ( '' === $basename ) {
-					continue;
+			if ( $merge_missing ) {
+				foreach ( $posted_rules as $basename => $rule ) {
+					$basename = sanitize_text_field( (string) $basename );
+					$rule     = sanitize_text_field( (string) $rule );
+					if ( '' === $basename ) {
+						continue;
+					}
+					if ( 'allow' === $rule || 'deny' === $rule ) {
+						$rules[ $basename ] = $rule;
+					} else {
+						unset( $rules[ $basename ] );
+					}
 				}
-				if ( 'allow' === $rule || 'deny' === $rule ) {
-					$rules[ $basename ] = $rule;
+			} else {
+				$rules = array();
+				foreach ( $posted_rules as $basename => $rule ) {
+					$basename = sanitize_text_field( (string) $basename );
+					$rule     = sanitize_text_field( (string) $rule );
+					if ( '' === $basename ) {
+						continue;
+					}
+					if ( 'allow' === $rule || 'deny' === $rule ) {
+						$rules[ $basename ] = $rule;
+					}
 				}
 			}
+		} elseif ( ! $merge_missing ) {
+			$rules = array();
 		}
 		$policy['plugins'] = $rules;
 
 		$posted_ops = filter_input( INPUT_POST, 'handl_aicac_operation', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
-		$policy['operations'] = Policy::sanitize_operations( is_array( $posted_ops ) ? $posted_ops : array() );
+		if ( is_array( $posted_ops ) ) {
+			$sanitized_ops = Policy::sanitize_operations( $posted_ops );
+			if ( $merge_missing ) {
+				$base_ops = isset( $base['operations'] ) && is_array( $base['operations'] ) ? $base['operations'] : array();
+				$policy['operations'] = array_replace_recursive( $base_ops, $sanitized_ops );
+			} else {
+				$policy['operations'] = $sanitized_ops;
+			}
+		} elseif ( ! $merge_missing ) {
+			$policy['operations'] = array();
+		}
 
 		// Accept new field name; also read legacy POST key during transition.
 		$posted_tools = filter_input( INPUT_POST, 'handl_aicac_denied_tools', FILTER_UNSAFE_RAW );
 		if ( null === $posted_tools || false === $posted_tools || '' === $posted_tools ) {
 			$posted_tools = filter_input( INPUT_POST, 'handl_aicac_denied_abilities', FILTER_UNSAFE_RAW );
 		}
-		$policy['denied_tools'] = Policy::sanitize_denied_tools( (string) $posted_tools );
+		if ( null !== $posted_tools && false !== $posted_tools ) {
+			$policy['denied_tools'] = Policy::sanitize_denied_tools( (string) $posted_tools );
+		}
 
 		$this->apply_kill_switch_settings_from_post( $policy );
 		$this->apply_shadow_block_settings_from_post( $policy );
 		$this->apply_role_gate_settings_from_post( $policy );
 		$this->apply_model_force_settings_from_post( $policy );
 
-		Policy::save_policy( $policy );
+		return $policy;
+	}
+
+	/**
+	 * AICAC-SIM: dry-run draft Rules-tab settings against Policy::evaluate (no save, no outbound).
+	 */
+	private function handle_simulate_policy(): void {
+		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
+		$saved = Policy::get_policy();
+		$draft = $this->build_rules_policy_from_post( $saved, true );
+
+		$mode = isset( $_POST['handl_aicac_sim_mode'] )
+			? sanitize_key( wp_unslash( (string) $_POST['handl_aicac_sim_mode'] ) )
+			: 'hypothetical';
+		if ( 'replay' !== $mode ) {
+			$mode = 'hypothetical';
+		}
+
+		$result = array(
+			'mode'  => $mode,
+			'draft' => true,
+		);
+
+		if ( 'hypothetical' === $mode ) {
+			$plugin = isset( $_POST['handl_aicac_sim_plugin'] )
+				? sanitize_text_field( wp_unslash( (string) $_POST['handl_aicac_sim_plugin'] ) )
+				: '';
+			$operation = isset( $_POST['handl_aicac_sim_operation'] )
+				? sanitize_text_field( wp_unslash( (string) $_POST['handl_aicac_sim_operation'] ) )
+				: '';
+			$armed_raw = isset( $_POST['handl_aicac_sim_tools'] )
+				? wp_unslash( (string) $_POST['handl_aicac_sim_tools'] )
+				: '';
+			$armed_raw = str_replace( array( ',', ';' ), "\n", $armed_raw );
+			$armed     = Policy::sanitize_denied_tools( $armed_raw );
+
+			$family = '' !== $operation ? Operations::family_from_operation( $operation ) : null;
+			$eval   = Policy_Simulator::evaluate_call(
+				$draft,
+				'' !== $plugin ? $plugin : null,
+				'' !== $operation ? $operation : null,
+				$armed,
+				$family
+			);
+			$verdict = Policy_Simulator::verdict_from_eval( $eval );
+
+			$result['plugin']    = $plugin;
+			$result['operation'] = $operation;
+			$result['family']    = is_string( $family ) ? $family : '';
+			$result['eval']      = $eval;
+			$result['verdict']   = $verdict;
+		} else {
+			$limit = Policy_Simulator::sanitize_replay_limit(
+				isset( $_POST['handl_aicac_sim_limit'] )
+					? wp_unslash( (string) $_POST['handl_aicac_sim_limit'] )
+					: Policy_Simulator::DEFAULT_REPLAY_LIMIT
+			);
+			$log = Policy::get_retained_log();
+			$diff = Policy_Simulator::replay_diff(
+				$saved,
+				$draft,
+				$log,
+				$limit,
+				array(
+					'log_enabled'      => ! empty( $saved['log_enabled'] ),
+					'audit_only'       => ! empty( $saved['audit_only'] ),
+					'log_max_age_days' => $saved['log_max_age_days'] ?? null,
+					'log_limit'        => $saved['log_limit'] ?? null,
+				)
+			);
+			$result['limit'] = $limit;
+			$result['diff']  = $diff;
+		}
+
+		$this->sim_result = $result;
+	}
+
+	/**
+	 * Rules-tab "Test this policy" panel (AICAC-SIM).
+	 *
+	 * @param array<string,mixed>      $policy
+	 * @param array<string,array|mixed> $plugins
+	 * @param array<int,mixed>         $log
+	 */
+	private function render_policy_simulator_panel( array $policy, array $plugins, array $log, string $form_id ): void {
+		$mode = is_array( $this->sim_result ) ? (string) ( $this->sim_result['mode'] ?? 'hypothetical' ) : 'hypothetical';
+		if ( 'replay' !== $mode ) {
+			$mode = 'hypothetical';
+		}
+
+		$sel_plugin = is_array( $this->sim_result ) ? (string) ( $this->sim_result['plugin'] ?? '' ) : '';
+		$sel_op     = is_array( $this->sim_result ) ? (string) ( $this->sim_result['operation'] ?? '' ) : 'generate_text';
+		$sel_limit  = is_array( $this->sim_result ) && isset( $this->sim_result['limit'] )
+			? (int) $this->sim_result['limit']
+			: Policy_Simulator::DEFAULT_REPLAY_LIMIT;
+
+		$ops = array(
+			'generate_text'                     => __( 'Text generation (generate_text)', 'handl-ai-connector-access-control' ),
+			'generate_image'                    => __( 'Image generation (generate_image)', 'handl-ai-connector-access-control' ),
+			'generate_speech'                   => __( 'Speech generation (generate_speech)', 'handl-ai-connector-access-control' ),
+			'convert_text_to_speech'            => __( 'Text to speech (convert_text_to_speech)', 'handl-ai-connector-access-control' ),
+			'generate_video'                    => __( 'Video generation (generate_video)', 'handl-ai-connector-access-control' ),
+			'is_supported_for_music_generation' => __( 'Other or unknown operation (for example, music)', 'handl-ai-connector-access-control' ),
+		);
+
+		echo '<div class="handl-aicac-sim-panel" id="handl-aicac-sim-panel" data-rules-form="' . esc_attr( $form_id ) . '">';
+		echo '<h2>' . esc_html__( 'Test this policy', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<p class="description">' . esc_html__( 'Preview how the rules on this screen would handle AI Client calls before you save. No AI call is sent, and the test uses the same decision process as live traffic.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		// Panel is rendered inside the rules <form> ($form_id); controls are native
+		// descendants (no form=) so Run test includes handl_aicac_action=simulate_policy
+		// under both native clicks and shared Chrome automation.
+
+		echo '<fieldset class="handl-aicac-sim-mode">';
+		echo '<legend class="screen-reader-text">' . esc_html__( 'Test mode', 'handl-ai-connector-access-control' ) . '</legend>';
+		echo '<label><input type="radio" name="handl_aicac_sim_mode" value="hypothetical" ' . checked( $mode, 'hypothetical', false ) . ' /> ';
+		echo esc_html__( 'Test a sample call', 'handl-ai-connector-access-control' ) . '</label> ';
+		echo '<label><input type="radio" name="handl_aicac_sim_mode" value="replay" ' . checked( $mode, 'replay', false ) . ' /> ';
+		echo esc_html__( 'Replay saved activity', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '</fieldset>';
+
+		echo '<table class="form-table handl-aicac-sim-fields" role="presentation">';
+		echo '<tr class="handl-aicac-sim-hyp">';
+		echo '<th scope="row"><label for="handl-aicac-sim-plugin">' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</label></th>';
+		echo '<td><select name="handl_aicac_sim_plugin" id="handl-aicac-sim-plugin">';
+		echo '<option value="">' . esc_html__( 'Unknown or no plugin', 'handl-ai-connector-access-control' ) . '</option>';
+		foreach ( $plugins as $basename => $meta ) {
+			$basename = (string) $basename;
+			$label    = is_array( $meta ) && isset( $meta['Name'] ) ? (string) $meta['Name'] : $basename;
+			echo '<option value="' . esc_attr( $basename ) . '" ' . selected( $sel_plugin, $basename, false ) . '>' . esc_html( $label ) . '</option>';
+		}
+		echo '</select></td></tr>';
+
+		echo '<tr class="handl-aicac-sim-hyp">';
+		echo '<th scope="row"><label for="handl-aicac-sim-operation">' . esc_html__( 'Operation', 'handl-ai-connector-access-control' ) . '</label></th>';
+		echo '<td><select name="handl_aicac_sim_operation" id="handl-aicac-sim-operation">';
+		foreach ( $ops as $op_id => $op_label ) {
+			echo '<option value="' . esc_attr( $op_id ) . '" ' . selected( $sel_op, $op_id, false ) . '>' . esc_html( $op_label ) . '</option>';
+		}
+		echo '</select>';
+		echo '<p class="description">' . esc_html__( 'AI type rules use the operation family, such as Text or Image.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '</td></tr>';
+
+		echo '<tr class="handl-aicac-sim-hyp">';
+		echo '<th scope="row"><label for="handl-aicac-sim-tools">' . esc_html__( 'Tools offered to the AI (optional)', 'handl-ai-connector-access-control' ) . '</label></th>';
+		echo '<td><input type="text" class="regular-text code" name="handl_aicac_sim_tools" id="handl-aicac-sim-tools" value="" placeholder="namespace/tool" />';
+		echo '<p class="description">' . esc_html__( 'Enter tool names separated by commas or new lines. Use this to test rules that block specific tools.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '</td></tr>';
+
+		echo '<tr class="handl-aicac-sim-replay">';
+		echo '<th scope="row"><label for="handl-aicac-sim-limit">' . esc_html__( 'Calls to replay', 'handl-ai-connector-access-control' ) . '</label></th>';
+		echo '<td><input type="number" class="small-text" min="1" max="1000" name="handl_aicac_sim_limit" id="handl-aicac-sim-limit" value="' . esc_attr( (string) $sel_limit ) . '" />';
+		echo '<p class="description">' . esc_html__( 'Replays the newest saved AI Client calls. Direct connections outside the AI Client are skipped because these rules do not control them.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '</td></tr>';
+		echo '</table>';
+
+		echo '<p>';
+		echo '<button type="submit" class="button button-secondary" name="handl_aicac_action" value="simulate_policy" id="handl-aicac-sim-run" data-aicac-action="simulate_policy">';
+		echo esc_html__( 'Run test', 'handl-ai-connector-access-control' );
+		echo '</button>';
+		echo ' <span class="description">' . esc_html__( 'Your rules will not be saved.', 'handl-ai-connector-access-control' ) . '</span>';
+		echo '</p>';
+
+		if ( is_array( $this->sim_result ) ) {
+			$this->render_policy_simulator_result( $this->sim_result, $plugins );
+		}
+
+		echo '</div>';
+	}
+
+	/**
+	 * @param array<string,mixed>       $result
+	 * @param array<string,array|mixed> $plugins
+	 */
+	private function render_policy_simulator_result( array $result, array $plugins ): void {
+		$mode = (string) ( $result['mode'] ?? '' );
+		echo '<div class="handl-aicac-sim-result notice notice-info inline" role="status">';
+
+		if ( 'hypothetical' === $mode ) {
+			$verdict = is_array( $result['verdict'] ?? null ) ? $result['verdict'] : array();
+			$chip    = (string) ( $verdict['chip'] ?? '' );
+			$allowed = ! empty( $verdict['allowed'] );
+			$class   = $allowed ? 'handl-aicac-badge--allow' : 'handl-aicac-badge--deny';
+			echo '<p><strong>' . esc_html__( 'Sample call result', 'handl-ai-connector-access-control' ) . ':</strong> ';
+			echo '<span class="handl-aicac-badge ' . esc_attr( $class ) . '">' . esc_html( $chip ) . '</span></p>';
+			$plugin = (string) ( $result['plugin'] ?? '' );
+			$op     = (string) ( $result['operation'] ?? '' );
+			$pname  = $plugin;
+			if ( $plugin && isset( $plugins[ $plugin ]['Name'] ) ) {
+				$pname = (string) $plugins[ $plugin ]['Name'];
+			}
+			echo '<p class="description">' . esc_html(
+				sprintf(
+					/* translators: 1: plugin label, 2: operation name */
+					__( 'Plugin: %1$s · Operation: %2$s', 'handl-ai-connector-access-control' ),
+					'' !== $pname ? $pname : __( 'Unknown', 'handl-ai-connector-access-control' ),
+					'' !== $op ? $op : __( 'None', 'handl-ai-connector-access-control' )
+				)
+			) . '</p>';
+			echo '</div>';
+			return;
+		}
+
+		$diff = is_array( $result['diff'] ?? null ) ? $result['diff'] : array();
+		if ( ! empty( $diff['empty'] ) ) {
+			$why = (string) ( $diff['empty_reason'] ?? '' );
+			echo '<p>' . esc_html( $why !== '' ? $why : __( 'No saved activity to replay.', 'handl-ai-connector-access-control' ) ) . '</p>';
+			echo '</div>';
+			return;
+		}
+
+		$blocked_n = (int) ( $diff['now_blocked_count'] ?? 0 );
+		$allowed_n = (int) ( $diff['now_allowed_count'] ?? 0 );
+		$scanned   = (int) ( $diff['scanned'] ?? 0 );
+		$unchanged = (int) ( $diff['unchanged'] ?? 0 );
+
+		echo '<p><strong>' . esc_html__( 'Replay summary', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		echo '<ul>';
+		echo '<li>' . esc_html(
+			sprintf(
+				/* translators: %d: call count */
+				__( 'Allowed before, blocked now: %d', 'handl-ai-connector-access-control' ),
+				$blocked_n
+			)
+		) . '</li>';
+		echo '<li>' . esc_html(
+			sprintf(
+				/* translators: %d: call count */
+				__( 'Blocked before, allowed now: %d', 'handl-ai-connector-access-control' ),
+				$allowed_n
+			)
+		) . '</li>';
+		echo '<li>' . esc_html(
+			sprintf(
+				/* translators: 1: scanned count, 2: unchanged count */
+				__( 'Saved calls compared: %1$d. Unchanged: %2$d.', 'handl-ai-connector-access-control' ),
+				$scanned,
+				$unchanged
+			)
+		) . '</li>';
+		echo '</ul>';
+
+		$blocked_rows = is_array( $diff['now_blocked'] ?? null ) ? $diff['now_blocked'] : array();
+		$allowed_rows = is_array( $diff['now_allowed'] ?? null ) ? $diff['now_allowed'] : array();
+		if ( ! empty( $blocked_rows ) ) {
+			echo '<p><strong>' . esc_html__( 'Allowed before, blocked now', 'handl-ai-connector-access-control' ) . '</strong></p>';
+			$this->render_sim_delta_list( $blocked_rows, $plugins );
+		}
+		if ( ! empty( $allowed_rows ) ) {
+			echo '<p><strong>' . esc_html__( 'Blocked before, allowed now', 'handl-ai-connector-access-control' ) . '</strong></p>';
+			$this->render_sim_delta_list( $allowed_rows, $plugins );
+		}
+
+		echo '</div>';
+	}
+
+	/**
+	 * @param list<array{plugin?:string,operation?:string,reason?:string}> $rows
+	 * @param array<string,array|mixed>                                    $plugins
+	 */
+	private function render_sim_delta_list( array $rows, array $plugins ): void {
+		echo '<ul class="handl-aicac-sim-delta-list">';
+		foreach ( $rows as $row ) {
+			$plugin = (string) ( $row['plugin'] ?? '' );
+			$op     = (string) ( $row['operation'] ?? '' );
+			$reason = (string) ( $row['reason'] ?? '' );
+			$label  = $plugin;
+			if ( $plugin && isset( $plugins[ $plugin ]['Name'] ) ) {
+				$label = (string) $plugins[ $plugin ]['Name'];
+			}
+			if ( '' === $label ) {
+				$label = __( 'Unknown plugin', 'handl-ai-connector-access-control' );
+			}
+			$line = $label;
+			if ( '' !== $op ) {
+				$line .= ' · ' . $op;
+			}
+			if ( '' !== $reason ) {
+				$line .= ' — ' . Policy_Simulator::reason_label( $reason );
+			}
+			echo '<li><code>' . esc_html( $line ) . '</code></li>';
+		}
+		echo '</ul>';
 	}
 
 	/**
