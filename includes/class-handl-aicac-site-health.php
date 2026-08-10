@@ -1,0 +1,351 @@
+<?php
+/**
+ * Site Health status test for AI access control configuration (AICAC-HEALTH).
+ *
+ * Read-only snapshot of existing policy — no new options or retained data.
+ *
+ * @package HandL_AICAC
+ */
+
+namespace HandL\AICAC;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+final class Site_Health {
+	public const TEST_SLUG = 'handl_aicac_access_control';
+
+	private static ?Site_Health $instance = null;
+
+	public static function instance(): Site_Health {
+		if ( null === self::$instance ) {
+			self::$instance = new Site_Health();
+		}
+		return self::$instance;
+	}
+
+	public function init(): void {
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		add_filter( 'site_status_tests', array( $this, 'register_tests' ) );
+	}
+
+	/**
+	 * @param array<string,mixed> $tests
+	 * @return array<string,mixed>
+	 */
+	public function register_tests( array $tests ): array {
+		if ( ! isset( $tests['direct'] ) || ! is_array( $tests['direct'] ) ) {
+			$tests['direct'] = array();
+		}
+
+		$tests['direct'][ self::TEST_SLUG ] = array(
+			'label' => __( 'HandL AI access control', 'handl-ai-connector-access-control' ),
+			'test'  => array( $this, 'run_test' ),
+		);
+
+		return $tests;
+	}
+
+	/**
+	 * Site Health direct-test callback.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function run_test(): array {
+		$policy = Policy::get_policy();
+
+		$installed = function_exists( 'get_plugins' ) ? get_plugins() : array();
+		if ( ! is_array( $installed ) ) {
+			$installed = array();
+		}
+
+		$active_raw = get_option( 'active_plugins', array() );
+		$active     = array();
+		if ( is_array( $active_raw ) ) {
+			$active = array_fill_keys( array_map( 'strval', $active_raw ), true );
+		}
+
+		$snapshot = self::build_snapshot( $policy, $installed, $active );
+
+		return self::format_site_health_result( $snapshot );
+	}
+
+	/**
+	 * Pure classification + metrics for PHPUnit and the live test.
+	 *
+	 * @param array<string,mixed>               $policy
+	 * @param array<string,array<string,mixed>> $installed_plugins get_plugins()-shaped map.
+	 * @param array<string,bool>                $active_plugins    basename => true for active.
+	 * @return array{
+	 *   status:string,
+	 *   issue:string,
+	 *   settings_tab:string,
+	 *   kill_switch:bool,
+	 *   kill_switch_exceptions:int,
+	 *   logging_active:bool,
+	 *   audit_only:bool,
+	 *   deny_rule_count:int,
+	 *   has_ai_client_plugins:bool,
+	 *   alerts_configured:bool
+	 * }
+	 */
+	public static function build_snapshot( array $policy, array $installed_plugins, array $active_plugins ): array {
+		$kill_switch   = ! empty( $policy['kill_switch'] );
+		$exceptions    = Policy::get_kill_switch_exceptions( $policy );
+		$logging       = self::logging_active( $policy );
+		$audit_only    = ! empty( $policy['audit_only'] );
+		$alerts_on     = self::alerts_configured( $policy );
+		$has_ai_client = self::has_ai_client_plugins( $installed_plugins, $active_plugins );
+		$deny_count    = self::count_deny_rules( $policy );
+
+		$issue = 'ok';
+		$tab   = 'dashboard';
+
+		if ( $kill_switch && empty( $exceptions ) ) {
+			$issue = 'kill_switch_zero_exceptions';
+			$tab   = 'rules';
+		} elseif ( $alerts_on && ! $logging ) {
+			$issue = 'alerts_without_logging';
+			$tab   = 'activity';
+		} elseif ( ! $has_ai_client ) {
+			$issue = 'no_ai_client_plugins';
+			$tab   = 'dashboard';
+		} elseif ( $audit_only ) {
+			$issue = 'observing';
+			$tab   = 'activity';
+		}
+
+		$status = ( 'kill_switch_zero_exceptions' === $issue || 'alerts_without_logging' === $issue )
+			? 'recommended'
+			: 'good';
+
+		return array(
+			'status'                  => $status,
+			'issue'                   => $issue,
+			'settings_tab'            => $tab,
+			'kill_switch'             => $kill_switch,
+			'kill_switch_exceptions'  => count( $exceptions ),
+			'logging_active'          => $logging,
+			'audit_only'              => $audit_only,
+			'deny_rule_count'         => $deny_count,
+			'has_ai_client_plugins'   => $has_ai_client,
+			'alerts_configured'       => $alerts_on,
+		);
+	}
+
+	/**
+	 * @param array<string,mixed> $snapshot
+	 * @return array<string,mixed>
+	 */
+	public static function format_site_health_result( array $snapshot ): array {
+		$status = (string) ( $snapshot['status'] ?? 'good' );
+		$issue  = (string) ( $snapshot['issue'] ?? 'ok' );
+		$tab    = sanitize_key( (string) ( $snapshot['settings_tab'] ?? 'dashboard' ) );
+		if ( ! in_array( $tab, array( 'dashboard', 'rules', 'activity', 'insights' ), true ) ) {
+			$tab = 'dashboard';
+		}
+
+		$url = self::settings_url( $tab );
+
+		$label = __( 'HandL AI access control is configured', 'handl-ai-connector-access-control' );
+		if ( 'kill_switch_zero_exceptions' === $issue ) {
+			$label = __( 'Emergency stop is on with no exceptions', 'handl-ai-connector-access-control' );
+		} elseif ( 'alerts_without_logging' === $issue ) {
+			$label = __( 'Alerts are on but activity logging is off', 'handl-ai-connector-access-control' );
+		} elseif ( 'no_ai_client_plugins' === $issue ) {
+			$label = __( 'No AI Client plugins detected', 'handl-ai-connector-access-control' );
+		} elseif ( 'observing' === $issue ) {
+			$label = __( 'Learn mode is observing AI Client calls', 'handl-ai-connector-access-control' );
+		}
+
+		$description = self::build_description( $snapshot );
+
+		$actions = '';
+		if ( 'recommended' === $status || 'no_ai_client_plugins' === $issue ) {
+			$actions = sprintf(
+				'<a href="%s">%s</a>',
+				esc_url( $url ),
+				esc_html__( 'Open HandL AI Access settings', 'handl-ai-connector-access-control' )
+			);
+		}
+
+		return array(
+			'label'       => $label,
+			'status'      => $status,
+			'badge'       => array(
+				'label' => __( 'Security', 'handl-ai-connector-access-control' ),
+				'color' => 'blue',
+			),
+			'description' => $description,
+			'actions'     => $actions,
+			'test'        => self::TEST_SLUG,
+		);
+	}
+
+	/**
+	 * @param array<string,mixed> $snapshot
+	 */
+	private static function build_description( array $snapshot ): string {
+		$kill_on   = ! empty( $snapshot['kill_switch'] );
+		$exc_count = (int) ( $snapshot['kill_switch_exceptions'] ?? 0 );
+		$logging   = ! empty( $snapshot['logging_active'] );
+		$audit     = ! empty( $snapshot['audit_only'] );
+		$deny_n    = (int) ( $snapshot['deny_rule_count'] ?? 0 );
+		$has_ai    = ! empty( $snapshot['has_ai_client_plugins'] );
+		$issue     = (string) ( $snapshot['issue'] ?? 'ok' );
+
+		$lines = array();
+
+		if ( $kill_on ) {
+			$lines[] = sprintf(
+				/* translators: %d: number of Emergency stop exceptions */
+				__( 'Emergency stop: on (%d exception(s)).', 'handl-ai-connector-access-control' ),
+				$exc_count
+			);
+		} else {
+			$lines[] = __( 'Emergency stop: off.', 'handl-ai-connector-access-control' );
+		}
+
+		if ( $audit ) {
+			$lines[] = __( 'Learn mode: on (calls are logged, not blocked).', 'handl-ai-connector-access-control' );
+		} elseif ( $logging ) {
+			$lines[] = __( 'Activity logging: on.', 'handl-ai-connector-access-control' );
+		} else {
+			$lines[] = __( 'Activity logging: off.', 'handl-ai-connector-access-control' );
+		}
+
+		$lines[] = sprintf(
+			/* translators: %d: count of explicit deny rules */
+			_n(
+				'Deny rules: %d configured.',
+				'Deny rules: %d configured.',
+				$deny_n,
+				'handl-ai-connector-access-control'
+			),
+			$deny_n
+		);
+
+		if ( $has_ai ) {
+			$lines[] = __( 'AI Client plugins: detected on this site.', 'handl-ai-connector-access-control' );
+		} else {
+			$lines[] = __( 'AI Client plugins: none detected. Rules will apply when an AI Client plugin is installed.', 'handl-ai-connector-access-control' );
+		}
+
+		if ( 'kill_switch_zero_exceptions' === $issue ) {
+			$lines[] = __( 'With no exceptions selected, Emergency stop blocks every AI Client call. Add at least one exception or turn Emergency stop off if that is not intended.', 'handl-ai-connector-access-control' );
+		} elseif ( 'alerts_without_logging' === $issue ) {
+			$lines[] = __( 'Email or webhook alerts need activity logging or Learn mode so there is data to report.', 'handl-ai-connector-access-control' );
+		}
+
+		$html = '';
+		foreach ( $lines as $line ) {
+			$html .= '<p>' . esc_html( $line ) . '</p>';
+		}
+
+		return $html;
+	}
+
+	public static function logging_active( array $policy ): bool {
+		return ! empty( $policy['log_enabled'] ) || ! empty( $policy['audit_only'] );
+	}
+
+	public static function alerts_configured( array $policy ): bool {
+		if ( ! empty( $policy['alert_on_deny'] ) ) {
+			return true;
+		}
+
+		if ( ! empty( $policy['alert_webhook_url'] ) ) {
+			return true;
+		}
+
+		if ( ! empty( $policy['weekly_report_enabled'] ) ) {
+			return true;
+		}
+
+		if ( ! empty( $policy['alert_on_shadow'] ) ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Count explicit deny rules (plugin-level + capability-family), not default-only.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	public static function count_deny_rules( array $policy ): int {
+		$count = 0;
+
+		$plugins = is_array( $policy['plugins'] ?? null ) ? (array) $policy['plugins'] : array();
+		foreach ( $plugins as $rule ) {
+			if ( 'deny' === $rule ) {
+				++$count;
+			}
+		}
+
+		$operations = is_array( $policy['operations'] ?? null ) ? (array) $policy['operations'] : array();
+		foreach ( $operations as $plugin_ops ) {
+			if ( ! is_array( $plugin_ops ) ) {
+				continue;
+			}
+			foreach ( $plugin_ops as $rule ) {
+				if ( 'deny' === $rule ) {
+					++$count;
+				}
+			}
+		}
+
+		if ( ( $policy['default'] ?? 'allow' ) === 'deny' ) {
+			++$count;
+		}
+
+		return $count;
+	}
+
+	/**
+	 * Whether the WordPress AI Client stack appears installed and active.
+	 *
+	 * @param array<string,array<string,mixed>> $installed_plugins
+	 * @param array<string,bool>                $active_plugins
+	 */
+	public static function has_ai_client_plugins( array $installed_plugins, array $active_plugins ): bool {
+		if ( isset( $active_plugins['ai/ai.php'] ) ) {
+			return true;
+		}
+
+		foreach ( $installed_plugins as $basename => $data ) {
+			if ( ! isset( $active_plugins[ $basename ] ) ) {
+				continue;
+			}
+
+			$requires = $data['RequiresPlugins'] ?? '';
+			if ( ! is_string( $requires ) || '' === $requires ) {
+				continue;
+			}
+
+			foreach ( array_map( 'trim', explode( ',', $requires ) ) as $slug ) {
+				if ( 'ai' === strtolower( $slug ) ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	public static function settings_url( string $tab = 'dashboard' ): string {
+		$tab = sanitize_key( $tab );
+		if ( ! in_array( $tab, array( 'dashboard', 'rules', 'activity', 'insights' ), true ) ) {
+			$tab = 'dashboard';
+		}
+
+		return admin_url(
+			'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=' . rawurlencode( $tab )
+		);
+	}
+}

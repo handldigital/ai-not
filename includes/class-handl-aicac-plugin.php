@@ -40,6 +40,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-analytics.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-site-health.php';
 
 		Policy::instance()->init();
 		Alerts::instance()->init();
@@ -48,6 +49,7 @@ final class Plugin {
 		Shadow_AI::instance()->init();
 		Admin::instance()->init();
 		Network_Admin::instance()->init();
+		Site_Health::instance()->init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
