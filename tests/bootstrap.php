@@ -377,6 +377,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-operations.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cost.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-model-force.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cost.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-spend-threshold.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-analytics.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alerts.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-weekly-report.php';
