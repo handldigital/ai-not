@@ -132,7 +132,7 @@ final class Anomaly {
 		}
 		if ( 'logging_off' === $ready['reason'] ) {
 			return __(
-				'Usage spike alerts are on, but activity logging and Learn mode are off. Turn one of them on, or turn spike alerts off. No spike emails will be sent while logging is off.',
+				'Usage spike alerts are paused because activity logging and Learn mode are off. Turn on either one, or turn off spike alerts. No alerts will be sent.',
 				'handl-ai-connector-access-control'
 			);
 		}
@@ -140,7 +140,7 @@ final class Anomaly {
 			return sprintf(
 				/* translators: %d: required baseline days */
 				__(
-					'Usage spike alerts need at least %d days of saved activity. Your maximum activity age is shorter, so spike alerts are paused until you raise that limit or turn spike alerts off.',
+					'Usage spike alerts need at least %d days of saved activity. Increase the activity time limit or turn off spike alerts. No alerts will be sent until the time limit is long enough.',
 					'handl-ai-connector-access-control'
 				),
 				self::BASELINE_DAYS
@@ -492,7 +492,7 @@ final class Anomaly {
 		if ( 'spend' === $metric ) {
 			$lines[] = sprintf(
 				/* translators: %s: USD amount */
-				__( 'Recent daily average (estimated spend): $%s', 'handl-ai-connector-access-control' ),
+				__( '7-day daily average (estimated spend): $%s', 'handl-ai-connector-access-control' ),
 				self::format_amount( $baseline )
 			);
 			$lines[] = sprintf(
@@ -502,13 +502,13 @@ final class Anomaly {
 			);
 			$lines[] = sprintf(
 				/* translators: %s: USD amount */
-				__( 'Alert level: $%s', 'handl-ai-connector-access-control' ),
+				__( 'Alert threshold: $%s', 'handl-ai-connector-access-control' ),
 				self::format_amount( $threshold )
 			);
 		} else {
 			$lines[] = sprintf(
 				/* translators: %s: call count */
-				__( 'Recent daily average (calls): %s', 'handl-ai-connector-access-control' ),
+				__( '7-day daily average (calls): %s', 'handl-ai-connector-access-control' ),
 				self::format_calls( $baseline )
 			);
 			$lines[] = sprintf(
@@ -518,15 +518,15 @@ final class Anomaly {
 			);
 			$lines[] = sprintf(
 				/* translators: %s: call count */
-				__( 'Alert level: %s calls', 'handl-ai-connector-access-control' ),
+				__( 'Alert threshold: %s calls', 'handl-ai-connector-access-control' ),
 				self::format_calls( $threshold )
 			);
 		}
 
 		$lines[] = '';
-		$lines[] = __( 'This compares today’s AI Client activity to the average of the previous 7 days in your saved activity log. It is not a bill and does not block calls.', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'This compares today’s AI Client activity with the daily average for the previous 7 days. Estimated spend is not billing. This alert does not block calls.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
-		$lines[] = __( 'View this plugin in Activity:', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'View this plugin’s activity:', 'handl-ai-connector-access-control' );
 		$lines[] = self::activity_url_for_plugin( $plugin );
 		$lines[] = '';
 		$lines[] = __( 'Manage usage spike alerts:', 'handl-ai-connector-access-control' );
@@ -562,7 +562,7 @@ final class Anomaly {
 
 	private static function plugin_label( string $basename ): string {
 		if ( '' === $basename || Analytics::UNKNOWN_KEY === $basename ) {
-			return __( '(unknown plugin)', 'handl-ai-connector-access-control' );
+			return __( 'Unknown plugin', 'handl-ai-connector-access-control' );
 		}
 		if ( ! function_exists( 'get_plugins' ) ) {
 			$plugin_php = ABSPATH . 'wp-admin/includes/plugin.php';

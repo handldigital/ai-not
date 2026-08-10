@@ -148,7 +148,7 @@ final class AnomalyAlertTest extends TestCase {
 		$this->assertStringContainsString( 'usage spike', strtolower( $mail['subject'] ) );
 		$this->assertStringContainsString( 'acme/acme.php', $mail['message'] );
 		$this->assertStringContainsString( 'handl_aicac_log_plugin', $mail['message'] );
-		$this->assertStringContainsString( 'Recent daily average', $mail['message'] );
+		$this->assertStringContainsString( '7-day daily average', $mail['message'] );
 		$this->assertStringContainsString( 'Today so far', $mail['message'] );
 
 		// 24h dedupe.
