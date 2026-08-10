@@ -15,6 +15,7 @@ delete_option( 'handl_aicac_recent_calls' );
 // F3: denial alert metadata — must not survive uninstall (privacy).
 delete_option( 'handl_aicac_denial_digest_queue' );
 delete_option( 'handl_aicac_denial_email_rate' );
+delete_option( 'handl_aicac_test_email_rate' );
 if ( function_exists( 'wp_clear_scheduled_hook' ) ) {
 	wp_clear_scheduled_hook( 'handl_aicac_send_denial_digest' );
 	// F7: weekly report cron.

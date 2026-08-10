@@ -31,13 +31,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class Alerts {
 	public const DIGEST_OPTION_KEY = 'handl_aicac_denial_digest_queue';
 	public const RATE_OPTION_KEY   = 'handl_aicac_denial_email_rate';
+	public const TEST_EMAIL_RATE_OPTION_KEY = 'handl_aicac_test_email_rate';
 	public const CRON_HOOK         = 'handl_aicac_send_denial_digest';
 
 	/** Max immediate emails per rolling hour (flood guard). */
 	private const IMMEDIATE_MAX_PER_HOUR = 20;
 
+	/** Cooldown between admin "Send test email" clicks (abuse / relay guard). */
+	private const TEST_EMAIL_COOLDOWN_SECONDS = 60;
+
 	/** Max rows retained in the digest queue. */
 	private const DIGEST_QUEUE_MAX = 200;
+
+	/** Allowed admin test-email channels (denial alerts vs weekly report). */
+	public const TEST_EMAIL_CHANNELS = array( 'denial_alert', 'weekly_report' );
 
 	private static ?Alerts $instance = null;
 
@@ -456,6 +463,113 @@ final class Alerts {
 	}
 
 	/**
+	 * Admin "Send test email" — immediate wp_mail to the saved recipient
+	 * (or admin_email). Never accepts a free-text To address.
+	 *
+	 * @param array<string,mixed> $policy
+	 * @param string              $channel One of TEST_EMAIL_CHANNELS.
+	 * @return array{ok:bool,status:string,to:string} status is sent|failed|rate_limited|no_recipient|invalid_channel.
+	 */
+	public static function send_test_email( array $policy, string $channel = 'denial_alert' ): array {
+		$channel = self::sanitize_test_email_channel( $channel );
+		if ( '' === $channel ) {
+			return array(
+				'ok'     => false,
+				'status' => 'invalid_channel',
+				'to'     => '',
+			);
+		}
+
+		$to = self::resolve_email( $policy );
+		if ( '' === $to ) {
+			return array(
+				'ok'     => false,
+				'status' => 'no_recipient',
+				'to'     => '',
+			);
+		}
+
+		if ( ! self::under_test_email_rate_limit() ) {
+			return array(
+				'ok'     => false,
+				'status' => 'rate_limited',
+				'to'     => $to,
+			);
+		}
+
+		// Count the attempt before wp_mail so rapid clicks cannot hammer SMTP.
+		self::record_test_email_send();
+
+		$subject = self::build_test_email_subject( $channel );
+		$body    = self::build_test_email_body( $channel );
+		$ok      = self::safe_wp_mail( $to, $subject, $body );
+
+		return array(
+			'ok'     => $ok,
+			'status' => $ok ? 'sent' : 'failed',
+			'to'     => $to,
+		);
+	}
+
+	/**
+	 * @param mixed $raw
+	 */
+	public static function sanitize_test_email_channel( $raw ): string {
+		$channel = sanitize_key( (string) $raw );
+		return in_array( $channel, self::TEST_EMAIL_CHANNELS, true ) ? $channel : '';
+	}
+
+	/**
+	 * Subject for admin test email — clearly labeled; no per-call data.
+	 */
+	public static function build_test_email_subject( string $channel ): string {
+		$channel = self::sanitize_test_email_channel( $channel );
+		$site    = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
+
+		if ( 'weekly_report' === $channel ) {
+			return sprintf(
+				/* translators: %s: site name */
+				__( '[%s] Test: HandL AICAC weekly report', 'handl-ai-connector-access-control' ),
+				$site
+			);
+		}
+
+		return sprintf(
+			/* translators: %s: site name */
+			__( '[%s] Test: HandL AICAC denial alert', 'handl-ai-connector-access-control' ),
+			$site
+		);
+	}
+
+	/**
+	 * Body for admin test email — labeled as a test; no prompts, users, or call data.
+	 */
+	public static function build_test_email_body( string $channel ): string {
+		$channel = self::sanitize_test_email_channel( $channel );
+
+		$lines   = array();
+		$lines[] = __( 'TEST MESSAGE: HandL AI Connector Access Control', 'handl-ai-connector-access-control' );
+
+		if ( 'weekly_report' === $channel ) {
+			$lines[] = __( 'This is a test. This is not a real weekly report.', 'handl-ai-connector-access-control' );
+			$lines[] = '';
+			$lines[] = __( 'You requested a test of weekly report email delivery from Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' );
+		} else {
+			$lines[] = __( 'This is a test. No denial occurred.', 'handl-ai-connector-access-control' );
+			$lines[] = '';
+			$lines[] = __( 'You requested a test of denial alert email delivery from Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' );
+		}
+
+		$lines[] = '';
+		$lines[] = __( 'This message contains no prompt text, user identity, or call details. It only confirms that WordPress accepted the test for sending to the saved recipient, or the site admin email. Inbox delivery is not guaranteed.', 'handl-ai-connector-access-control' );
+		$lines[] = '';
+		$lines[] = __( 'Manage email settings:', 'handl-ai-connector-access-control' );
+		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' );
+
+		return implode( "\n", $lines ) . "\n";
+	}
+
+	/**
 	 * Privacy-scoped summary fields used by email and webhook (AC1).
 	 *
 	 * @param array<string,mixed> $event
@@ -725,5 +839,17 @@ final class Alerts {
 		}
 		$times[] = $now;
 		update_option( self::RATE_OPTION_KEY, $times, false );
+	}
+
+	private static function under_test_email_rate_limit(): bool {
+		$last = (int) get_option( self::TEST_EMAIL_RATE_OPTION_KEY, 0 );
+		if ( $last <= 0 ) {
+			return true;
+		}
+		return ( time() - $last ) >= self::TEST_EMAIL_COOLDOWN_SECONDS;
+	}
+
+	private static function record_test_email_send(): void {
+		update_option( self::TEST_EMAIL_RATE_OPTION_KEY, time(), false );
 	}
 }
