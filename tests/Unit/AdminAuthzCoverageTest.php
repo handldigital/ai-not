@@ -35,6 +35,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 		'onboard_dismiss',
 		'onboard_reopen',
 		'onboard_step',
+		'onboard_test_email',
 		'quick_rule',
 		'save',
 		'send_denial_digest',
@@ -173,6 +174,10 @@ final class AdminAuthzCoverageTest extends TestCase {
 			),
 			array(
 				'action'       => 'onboard_step',
+				'nonce_action' => 'handl_aicac_onboard',
+			),
+			array(
+				'action'       => 'onboard_test_email',
 				'nonce_action' => 'handl_aicac_onboard',
 			),
 			array(
@@ -326,6 +331,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array( 'handle_import_rules_confirm', 'handl_aicac_import_rules_confirm' ),
 			array( 'handle_onboard_dismiss', 'handl_aicac_onboard' ),
 			array( 'handle_onboard_step', 'handl_aicac_onboard' ),
+			array( 'handle_onboard_test_email', 'handl_aicac_onboard' ),
 			array( 'handle_onboard_reopen', 'handl_aicac_onboard' ),
 		);
 	}
@@ -353,6 +359,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'handle_import_rules_confirm',
 				'handle_onboard_dismiss',
 				'handle_onboard_step',
+				'handle_onboard_test_email',
 				'handle_onboard_reopen',
 			) as $method
 		) {

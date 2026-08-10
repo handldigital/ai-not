@@ -268,6 +268,10 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_onboard', 'handl_aicac_nonce' );
 				$this->handle_onboard_step();
 			}
+			if ( 'onboard_test_email' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_onboard', 'handl_aicac_nonce' );
+				$this->handle_onboard_test_email();
+			}
 			if ( 'onboard_reopen' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_onboard', 'handl_aicac_nonce' );
 				$this->handle_onboard_reopen();
@@ -914,7 +918,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			$activity_url = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' );
 			$rules_url    = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules' );
 			echo '<div class="notice notice-info handl-aicac-onboard-review"><p>';
-			echo esc_html__( 'Your watch window is over. Check Activity for what plugins used AI, then set Rules for anything you want to allow or block.', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'Your watch period has ended. Review Activity to see which plugins used AI, then use Rules to allow or block them.', 'handl-ai-connector-access-control' );
 			echo ' <a href="' . esc_url( $activity_url ) . '">' . esc_html__( 'Open Activity', 'handl-ai-connector-access-control' ) . '</a>';
 			echo ' · <a href="' . esc_url( $rules_url ) . '">' . esc_html__( 'Open Rules', 'handl-ai-connector-access-control' ) . '</a>';
 			echo '</p></div>';
@@ -953,7 +957,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<p class="description">' . esc_html(
 			sprintf(
 				/* translators: %d: current step number 1–3 */
-				__( 'Step %d of 3 — get watching and alerts working in about two minutes.', 'handl-ai-connector-access-control' ),
+				__( 'Step %d of 3: set up monitoring and alerts in about two minutes.', 'handl-ai-connector-access-control' ),
 				$step
 			)
 		) . '</p>';
@@ -988,10 +992,10 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 		$days = Onboarding::sanitize_observe_days( $state['observe_days'] ?? Onboarding::DEFAULT_OBSERVE_DAYS );
 
-		echo '<h3>' . esc_html__( '1. How should we start?', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<h3>' . esc_html__( '1. How do you want to start?', 'handl-ai-connector-access-control' ) . '</h3>';
 
 		if ( $network_locked ) {
-			echo '<p class="notice notice-warning inline" style="padding:8px 12px;">' . esc_html__( 'Your network admin sets the site-wide AI mode. You can still set alerts and a review reminder next.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="notice notice-warning inline" style="padding:8px 12px;">' . esc_html__( 'Your network admin controls the site-wide AI mode. You can still set alerts and a review reminder.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '<form method="post">';
 			wp_nonce_field( 'handl_aicac_onboard', 'handl_aicac_nonce' );
 			echo '<input type="hidden" name="handl_aicac_action" value="onboard_step" />';
@@ -1014,16 +1018,16 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		echo '<p><label><input type="radio" name="handl_aicac_onboard_mode" value="' . esc_attr( Onboarding::MODE_OBSERVE ) . '" ' . checked( $mode, Onboarding::MODE_OBSERVE, false ) . ' /> ';
 		echo '<strong>' . esc_html__( 'Watch first (recommended)', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
-		echo '<span class="description" style="margin-left:1.75em;">' . esc_html__( 'Log AI use without blocking. Best while you learn which plugins need access.', 'handl-ai-connector-access-control' ) . '</span></p>';
+		echo '<span class="description" style="margin-left:1.75em;">' . esc_html__( 'Log AI activity without blocking it. Start here while you learn which plugins need access.', 'handl-ai-connector-access-control' ) . '</span></p>';
 
 		echo '<p><label><input type="radio" name="handl_aicac_onboard_mode" value="' . esc_attr( Onboarding::MODE_ENFORCE ) . '" ' . checked( $mode, Onboarding::MODE_ENFORCE, false ) . ' /> ';
 		echo '<strong>' . esc_html__( 'Enforce now', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
-		echo '<span class="description" style="margin-left:1.75em;">' . esc_html__( 'Start applying your Rules right away. Use this if you already know your policy.', 'handl-ai-connector-access-control' ) . '</span></p>';
+		echo '<span class="description" style="margin-left:1.75em;">' . esc_html__( 'Apply your Rules immediately. Choose this only if your policy is already set.', 'handl-ai-connector-access-control' ) . '</span></p>';
 		echo '</fieldset>';
 
 		echo '<p><label for="handl-aicac-onboard-days">' . esc_html__( 'Watch window (days)', 'handl-ai-connector-access-control' ) . '</label><br />';
 		echo '<input type="number" class="small-text" id="handl-aicac-onboard-days" name="handl_aicac_onboard_observe_days" min="' . esc_attr( (string) Onboarding::MIN_OBSERVE_DAYS ) . '" max="' . esc_attr( (string) Onboarding::MAX_OBSERVE_DAYS ) . '" step="1" value="' . esc_attr( (string) $days ) . '" /> ';
-		echo '<span class="description">' . esc_html__( 'Used for Watch first (7–14 days). Older log entries outside this window are removed.', 'handl-ai-connector-access-control' ) . '</span></p>';
+		echo '<span class="description">' . esc_html__( 'Watch first keeps 7–14 days of activity. Older entries are deleted.', 'handl-ai-connector-access-control' ) . '</span></p>';
 
 		unset( $policy );
 		submit_button( __( 'Continue', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
@@ -1040,19 +1044,11 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 		$deny_on = ! empty( $policy['alert_on_deny'] );
 
-		echo '<h3>' . esc_html__( '2. Where should alerts go?', 'handl-ai-connector-access-control' ) . '</h3>';
-		echo '<p class="description">' . esc_html__( 'Confirm the email for blocked-call alerts, then optionally send a test so you know mail works.', 'handl-ai-connector-access-control' ) . '</p>';
-
-		echo '<form method="post" id="handl-aicac-onboard-test-email" style="display:none;" hidden>';
-		wp_nonce_field( 'handl_aicac_send_test_email', 'handl_aicac_nonce' );
-		echo '<input type="hidden" name="handl_aicac_action" value="send_test_email" />';
-		echo '<input type="hidden" name="handl_aicac_tab" value="dashboard" />';
-		echo '<input type="hidden" name="handl_aicac_test_email_channel" value="denial_alert" />';
-		echo '</form>';
+		echo '<h3>' . esc_html__( '2. Where should we send alerts?', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<p class="description">' . esc_html__( 'Choose where to send blocked-call alerts. You can also send a test email.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		echo '<form method="post">';
 		wp_nonce_field( 'handl_aicac_onboard', 'handl_aicac_nonce' );
-		echo '<input type="hidden" name="handl_aicac_action" value="onboard_step" />';
 		echo '<input type="hidden" name="handl_aicac_tab" value="dashboard" />';
 		echo '<input type="hidden" name="handl_aicac_onboard_step" value="2" />';
 
@@ -1063,11 +1059,10 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo esc_html__( 'Email me when a call is blocked', 'handl-ai-connector-access-control' ) . '</label></p>';
 
 		echo '<p>';
-		submit_button( __( 'Continue', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
+		echo '<button type="submit" name="handl_aicac_action" value="onboard_step" class="button button-primary">' . esc_html__( 'Continue', 'handl-ai-connector-access-control' ) . '</button>';
 		echo ' ';
-		echo '<button type="submit" class="button" form="handl-aicac-onboard-test-email">' . esc_html__( 'Send test email', 'handl-ai-connector-access-control' ) . '</button>';
+		echo '<button type="submit" name="handl_aicac_action" value="onboard_test_email" class="button">' . esc_html__( 'Send test email', 'handl-ai-connector-access-control' ) . '</button>';
 		echo '</p>';
-		echo '<p class="description">' . esc_html__( 'Send test email uses your current saved alert address (same as Activity). Save Continue first if you just changed the address.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</form>';
 	}
 
@@ -1080,7 +1075,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<p class="description">' . esc_html(
 			sprintf(
 				/* translators: %d: observe window in days */
-				__( 'Optional: after %d days, show a Dashboard note to turn watched traffic into Rules.', 'handl-ai-connector-access-control' ),
+				__( 'After %d days, show a Dashboard reminder to review Activity and update Rules.', 'handl-ai-connector-access-control' ),
 				$days
 			)
 		) . '</p>';
@@ -1096,6 +1091,37 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		submit_button( __( 'Finish setup', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
 		echo '</form>';
+	}
+
+	/**
+	 * Step 2: validate/save the entered alert address, send a denial-alert test, stay on step 2.
+	 */
+	private function handle_onboard_test_email(): void {
+		$this->require_admin_mutation( 'handl_aicac_onboard' );
+		$state = Onboarding::ensure_initialized();
+		if ( empty( $state['eligible'] ) ) {
+			$this->redirect_onboard_dashboard();
+		}
+
+		$email  = isset( $_POST['handl_aicac_onboard_alert_email'] )
+			? wp_unslash( (string) $_POST['handl_aicac_onboard_alert_email'] )
+			: '';
+		$enable = isset( $_POST['handl_aicac_onboard_alert_on_deny'] );
+		$policy = Onboarding::apply_alerts_to_policy( Policy::get_policy(), $email, $enable );
+		Policy::save_policy( $policy );
+
+		// Keep the wizard on alerts; do not advance the step.
+		$state['step']   = 2;
+		$state['status'] = Onboarding::STATUS_ACTIVE;
+		Onboarding::save_state( $state );
+
+		$result = Alerts::send_test_email( $policy, 'denial_alert' );
+		$this->redirect_onboard_dashboard(
+			array(
+				'handl_aicac_test_email'    => (string) $result['status'],
+				'handl_aicac_test_email_to' => (string) $result['to'],
+			)
+		);
 	}
 
 	private function handle_onboard_dismiss(): void {

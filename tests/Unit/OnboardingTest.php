@@ -81,6 +81,51 @@ final class OnboardingTest extends TestCase {
 		$this->assertTrue( $policy['alert_on_deny'] );
 	}
 
+	public function test_wizard_copy_and_test_email_stay_on_step_two(): void {
+		$src = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php' );
+		$this->assertStringContainsString(
+			'Your watch period has ended. Review Activity to see which plugins used AI, then use Rules to allow or block them.',
+			$src
+		);
+		$this->assertStringContainsString(
+			'Step %d of 3: set up monitoring and alerts in about two minutes.',
+			$src
+		);
+		$this->assertStringContainsString( '1. How do you want to start?', $src );
+		$this->assertStringContainsString(
+			'Your network admin controls the site-wide AI mode. You can still set alerts and a review reminder.',
+			$src
+		);
+		$this->assertStringContainsString(
+			'Log AI activity without blocking it. Start here while you learn which plugins need access.',
+			$src
+		);
+		$this->assertStringContainsString(
+			'Apply your Rules immediately. Choose this only if your policy is already set.',
+			$src
+		);
+		$this->assertStringContainsString(
+			'Watch first keeps 7–14 days of activity. Older entries are deleted.',
+			$src
+		);
+		$this->assertStringContainsString( '2. Where should we send alerts?', $src );
+		$this->assertStringContainsString(
+			'Choose where to send blocked-call alerts. You can also send a test email.',
+			$src
+		);
+		$this->assertStringContainsString(
+			'After %d days, show a Dashboard reminder to review Activity and update Rules.',
+			$src
+		);
+		$this->assertStringContainsString( "value=\"onboard_test_email\"", $src );
+		$this->assertStringContainsString( 'handle_onboard_test_email', $src );
+		$this->assertStringNotContainsString(
+			'Send test email uses your current saved alert address',
+			$src
+		);
+		$this->assertStringNotContainsString( 'handl-aicac-onboard-test-email', $src );
+	}
+
 	public function test_dismiss_then_reentry(): void {
 		$state = Onboarding::ensure_initialized();
 		$state['status'] = Onboarding::STATUS_DISMISSED;
