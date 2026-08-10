@@ -280,14 +280,23 @@ final class PolicySimulatorTest extends TestCase {
 		);
 
 		$this->assertMatchesRegularExpression(
-			'/<button type="submit" name="handl_aicac_action" value="save" class="button button-primary">/',
+			'/<button type="submit" name="handl_aicac_action" value="save" class="button button-primary" data-aicac-action="save">/',
 			$src,
 			'Save changes must be an in-form submit with value=save'
 		);
 		$this->assertMatchesRegularExpression(
-			'/<button type="submit" class="button button-secondary" name="handl_aicac_action" value="simulate_policy" id="handl-aicac-sim-run">/',
+			'/<button type="submit" class="button button-secondary" name="handl_aicac_action" value="simulate_policy" id="handl-aicac-sim-run" data-aicac-action="simulate_policy">/',
 			$src,
 			'Run test must be an in-form submit with value=simulate_policy (no form=)'
+		);
+		$this->assertStringContainsString(
+			'id="handl-aicac-action"',
+			$src,
+			'Early handl_aicac_action hidden must exist so Save survives max_input_vars truncation'
+		);
+		$this->assertTrue(
+			strpos( $src, 'render_policy_simulator_panel' ) < strpos( $src, 'handl-aicac-rules-matrix' ),
+			'Simulator panel must render before the plugin matrix (max_input_vars)'
 		);
 		$this->assertStringNotContainsString(
 			'name="handl_aicac_action" value="simulate_policy" form="',
