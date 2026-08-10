@@ -2128,6 +2128,45 @@ final class Admin {
 		echo '</td>';
 		echo '</tr>';
 
+		// S-103: estimated-spend threshold alerts (opt-in, empty = off).
+		$site_threshold    = Spend_Threshold::sanitize_threshold( $policy['spend_threshold_site'] ?? null );
+		$plugin_thresholds = Spend_Threshold::sanitize_plugin_thresholds( $policy['spend_threshold_plugins'] ?? array() );
+		echo '<tr>';
+		echo '<th scope="row">' . esc_html__( 'Estimated spend alerts', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<td>';
+		echo '<p class="description" style="margin-top:0;">' . esc_html__( 'Optional. Send an email when estimated spend in the saved log first crosses a dollar threshold. Empty means off. Uses the same recipient as blocked-call alerts. Estimates only — not billing, and nothing is blocked.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p><label for="handl-aicac-spend-threshold-site">' . esc_html__( 'Site-wide threshold (USD)', 'handl-ai-connector-access-control' ) . '</label><br />';
+		echo '<input type="number" step="0.01" min="0" max="1000000" class="small-text" id="handl-aicac-spend-threshold-site" name="handl_aicac_spend_threshold_site" value="' . esc_attr( null === $site_threshold ? '' : (string) $site_threshold ) . '" placeholder="' . esc_attr__( 'Off', 'handl-ai-connector-access-control' ) . '" /></p>';
+
+		echo '<p style="margin-top:12px;"><strong>' . esc_html__( 'Per-plugin thresholds (optional)', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		echo '<p class="description">' . esc_html__( 'Leave blank to skip a plugin. Each plugin that crosses its own threshold gets a separate email.', 'handl-ai-connector-access-control' ) . '</p>';
+		if ( ! function_exists( 'get_plugins' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+		$plugins_for_threshold = get_plugins();
+		echo '<div class="handl-aicac-spend-threshold-plugins" style="max-height:220px;overflow:auto;border:1px solid #c3c4c7;padding:8px;max-width:36em;background:#fff;">';
+		if ( empty( $plugins_for_threshold ) ) {
+			echo '<p class="description">' . esc_html__( 'No installed plugins found.', 'handl-ai-connector-access-control' ) . '</p>';
+		} else {
+			echo '<table class="widefat striped" style="margin:0;"><thead><tr>';
+			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'Threshold USD', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '</tr></thead><tbody>';
+			foreach ( $plugins_for_threshold as $basename => $meta ) {
+				$name  = isset( $meta['Name'] ) ? (string) $meta['Name'] : (string) $basename;
+				$val   = isset( $plugin_thresholds[ $basename ] ) ? (string) $plugin_thresholds[ $basename ] : '';
+				$field = 'handl-aicac-spend-th-' . md5( (string) $basename );
+				echo '<tr>';
+				echo '<td><label for="' . esc_attr( $field ) . '">' . esc_html( $name ) . '</label><br /><code style="font-size:11px;">' . esc_html( (string) $basename ) . '</code></td>';
+				echo '<td><input type="number" step="0.01" min="0" max="1000000" class="small-text" id="' . esc_attr( $field ) . '" name="handl_aicac_spend_threshold_plugins[' . esc_attr( (string) $basename ) . ']" value="' . esc_attr( $val ) . '" placeholder="' . esc_attr__( 'Off', 'handl-ai-connector-access-control' ) . '" /></td>';
+				echo '</tr>';
+			}
+			echo '</tbody></table>';
+		}
+		echo '</div>';
+		echo '</td>';
+		echo '</tr>';
+
 		echo '</table>';
 	}
 
@@ -2566,6 +2605,15 @@ final class Admin {
 		);
 		$posted_provider_rates = filter_input( INPUT_POST, 'handl_aicac_est_usd_provider', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
 		$policy['est_usd_provider_rates'] = Cost::sanitize_provider_rates( is_array( $posted_provider_rates ) ? $posted_provider_rates : array() );
+
+		// S-103: estimated-spend thresholds (empty = off).
+		$policy['spend_threshold_site'] = Spend_Threshold::sanitize_threshold(
+			filter_input( INPUT_POST, 'handl_aicac_spend_threshold_site', FILTER_UNSAFE_RAW )
+		);
+		$posted_plugin_th = filter_input( INPUT_POST, 'handl_aicac_spend_threshold_plugins', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		$policy['spend_threshold_plugins'] = Spend_Threshold::sanitize_plugin_thresholds(
+			is_array( $posted_plugin_th ) ? $posted_plugin_th : array()
+		);
 	}
 
 	/**

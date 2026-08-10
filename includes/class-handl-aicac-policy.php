@@ -851,6 +851,8 @@ final class Policy {
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate( $policy['est_usd_input_per_m'] ?? Cost::DEFAULT_INPUT_PER_M, Cost::DEFAULT_INPUT_PER_M );
 		$policy['est_usd_output_per_m'] = Cost::sanitize_rate( $policy['est_usd_output_per_m'] ?? Cost::DEFAULT_OUTPUT_PER_M, Cost::DEFAULT_OUTPUT_PER_M );
 		$policy['est_usd_provider_rates'] = Cost::sanitize_provider_rates( $policy['est_usd_provider_rates'] ?? array() );
+		$policy['spend_threshold_site']    = Spend_Threshold::sanitize_threshold( $policy['spend_threshold_site'] ?? null );
+		$policy['spend_threshold_plugins'] = Spend_Threshold::sanitize_plugin_thresholds( $policy['spend_threshold_plugins'] ?? array() );
 
 		// F7: weekly report preference — staged selected-by-default until first explicit choice.
 		// Delivery still requires logging/learn (Weekly_Report::is_active). Key absence ≠ off.
@@ -1065,6 +1067,8 @@ final class Policy {
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate( $policy['est_usd_input_per_m'] ?? Cost::DEFAULT_INPUT_PER_M, Cost::DEFAULT_INPUT_PER_M );
 		$policy['est_usd_output_per_m'] = Cost::sanitize_rate( $policy['est_usd_output_per_m'] ?? Cost::DEFAULT_OUTPUT_PER_M, Cost::DEFAULT_OUTPUT_PER_M );
 		$policy['est_usd_provider_rates'] = Cost::sanitize_provider_rates( $policy['est_usd_provider_rates'] ?? array() );
+		$policy['spend_threshold_site']    = Spend_Threshold::sanitize_threshold( $policy['spend_threshold_site'] ?? null );
+		$policy['spend_threshold_plugins'] = Spend_Threshold::sanitize_plugin_thresholds( $policy['spend_threshold_plugins'] ?? array() );
 
 		$max_age = self::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
 		if ( null === $max_age ) {
@@ -1128,6 +1132,9 @@ final class Policy {
 		if ( empty( $policy['alert_on_deny'] ) ) {
 			Alerts::clear_digest_queue();
 		}
+
+		// S-103: threshold set below already-accrued spend fires immediately.
+		Spend_Threshold::maybe_evaluate( $policy );
 	}
 
 	/**
@@ -1500,6 +1507,8 @@ final class Policy {
 			}
 			$log[ $i ] = array_merge( $log[ $i ], $patch );
 			update_option( Plugin::LOG_OPTION_KEY, $log, false );
+			// S-103: token patch can move estimated spend over a threshold.
+			Spend_Threshold::maybe_evaluate();
 			return true;
 		}
 
