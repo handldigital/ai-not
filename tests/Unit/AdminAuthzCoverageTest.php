@@ -28,6 +28,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 	 */
 	private const APPROVED_DISPATCH_ACTIONS = array(
 		'bulk_plugin_rules',
+		'export_log',
 		'export_rules',
 		'import_rules_confirm',
 		'import_rules_preview',
@@ -147,6 +148,10 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'nonce_action' => 'handl_aicac_export_rules',
 			),
 			array(
+				'action'       => 'export_log',
+				'nonce_action' => 'handl_aicac_export_log',
+			),
+			array(
 				'action'       => 'import_rules_preview',
 				'nonce_action' => 'handl_aicac_import_rules',
 			),
@@ -214,20 +219,91 @@ final class AdminAuthzCoverageTest extends TestCase {
 	}
 
 	/**
-	 * Combined match count: 1 shared capability + one check_admin_referer per mutating action.
+	 * Shared page gate + defense-in-depth helper each call current_user_can;
+	 * dispatch keeps one check_admin_referer per mutating action; helper adds one more.
 	 */
 	public function test_combined_capability_and_nonce_verify_match_count(): void {
 		preg_match_all( '/\bcurrent_user_can\s*\(/', $this->source, $cap );
 		preg_match_all( '/\bcheck_admin_referer\s*\(/', $this->source, $nonce );
 		preg_match_all( '/\bwp_verify_nonce\s*\(/', $this->source, $verify );
 
-		$expected_nonces = count( $this->mutating_action_provider() );
-		$combined        = count( $cap[0] ) + count( $nonce[0] ) + count( $verify[0] );
-
-		$this->assertSame( 1, count( $cap[0] ), 'Expected exactly one current_user_can in admin class' );
-		$this->assertSame( $expected_nonces, count( $nonce[0] ), 'Expected one check_admin_referer per mutating action' );
+		$expected_dispatch_nonces = count( $this->mutating_action_provider() );
+		// render_page shared gate + require_admin_mutation helper.
+		$this->assertSame( 2, count( $cap[0] ), 'Expected shared gate + require_admin_mutation current_user_can' );
+		// One referer per dispatch action + one inside require_admin_mutation.
+		$this->assertSame(
+			$expected_dispatch_nonces + 1,
+			count( $nonce[0] ),
+			'Expected dispatch nonces plus require_admin_mutation check_admin_referer'
+		);
 		$this->assertSame( 0, count( $verify[0] ), 'wp_verify_nonce should remain unused (check_admin_referer covers CSRF)' );
-		$this->assertSame( 1 + $expected_nonces, $combined, 'Shared-wrapper design: 1 capability + N action nonces' );
+	}
+
+	/**
+	 * AICAC-22: require_admin_mutation must itself re-check capability + nonce.
+	 */
+	public function test_require_admin_mutation_rechecks_capability_and_nonce(): void {
+		$body = $this->method_body( 'require_admin_mutation' );
+		$this->assertNotNull( $body, 'require_admin_mutation() not found' );
+		$this->assertMatchesRegularExpression(
+			'/current_user_can\s*\(\s*[\'"]manage_options[\'"]\s*\)/',
+			$body
+		);
+		$this->assertMatchesRegularExpression(
+			'/check_admin_referer\s*\(\s*\$nonce_action\s*,\s*[\'"]handl_aicac_nonce[\'"]\s*\)/',
+			$body
+		);
+	}
+
+	/**
+	 * AICAC-22: each private mutator must call require_admin_mutation with its action nonce.
+	 *
+	 * @dataProvider private_mutator_authz_provider
+	 */
+	public function test_private_mutator_rechecks_authz( string $method, string $nonce_action ): void {
+		$body = $this->method_body( $method );
+		$this->assertNotNull( $body, "Method {$method} not found" );
+
+		$this->assertMatchesRegularExpression(
+			'/\$this->require_admin_mutation\s*\(\s*[\'"]' . preg_quote( $nonce_action, '/' ) . '[\'"]\s*\)/',
+			$body,
+			"{$method} must call require_admin_mutation( '{$nonce_action}' ) before mutating"
+		);
+
+		// Re-check must precede Policy::save_policy / set_plugin_rule / option-affecting work.
+		$recheck_pos = strpos( $body, 'require_admin_mutation' );
+		$this->assertNotFalse( $recheck_pos );
+		foreach ( array( 'Policy::save_policy', 'Policy::set_plugin_rule', 'Policy_Transfer::' ) as $write ) {
+			$write_pos = strpos( $body, $write );
+			if ( false === $write_pos ) {
+				continue;
+			}
+			$this->assertLessThan(
+				$write_pos,
+				$recheck_pos,
+				"{$method}: require_admin_mutation must run before {$write}"
+			);
+		}
+	}
+
+	/**
+	 * @return list<array{method:string,nonce_action:string}>
+	 */
+	public function private_mutator_authz_provider(): array {
+		return array(
+			array( 'handle_save_rules', 'handl_aicac_save_policy' ),
+			array( 'handle_save_log', 'handl_aicac_save_policy' ),
+			array( 'handle_bulk_plugin_rules', 'handl_aicac_save_policy' ),
+			array( 'handle_quick_rule_redirect', 'handl_aicac_quick_rule' ),
+			array( 'handle_undo_quick_rule', 'handl_aicac_undo_quick_rule' ),
+			array( 'apply_kill_switch_settings_from_post', 'handl_aicac_save_policy' ),
+			array( 'apply_model_force_settings_from_post', 'handl_aicac_save_policy' ),
+			array( 'apply_role_gate_settings_from_post', 'handl_aicac_save_policy' ),
+			array( 'apply_log_settings_from_post', 'handl_aicac_save_policy' ),
+			array( 'handle_export_rules', 'handl_aicac_export_rules' ),
+			array( 'handle_import_rules_preview', 'handl_aicac_import_rules' ),
+			array( 'handle_import_rules_confirm', 'handl_aicac_import_rules_confirm' ),
+		);
 	}
 
 	/**
@@ -236,6 +312,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 	public function test_core_mutators_remain_private(): void {
 		foreach (
 			array(
+				'require_admin_mutation',
 				'handle_save_rules',
 				'handle_save_log',
 				'handle_bulk_plugin_rules',
@@ -243,8 +320,10 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'handle_undo_quick_rule',
 				'apply_kill_switch_settings_from_post',
 				'apply_model_force_settings_from_post',
+				'apply_role_gate_settings_from_post',
 				'apply_log_settings_from_post',
 				'handle_export_rules',
+				'handle_export_log',
 				'handle_import_rules_preview',
 				'handle_import_rules_confirm',
 			) as $method
@@ -308,6 +387,45 @@ final class AdminAuthzCoverageTest extends TestCase {
 	}
 
 	/**
+	 * File downloads must run on admin_init — render_page is after admin HTML is buffered,
+	 * which produced HTML bodies with .csv filenames in QA (PR #72).
+	 */
+	public function test_file_downloads_hooked_on_admin_init_before_html(): void {
+		$this->assertMatchesRegularExpression(
+			"/add_action\s*\(\s*'admin_init'\s*,\s*array\s*\(\s*\\\$this\s*,\s*'maybe_handle_file_downloads'\s*\)/",
+			$this->source,
+			'CSV/JSON downloads must register on admin_init'
+		);
+
+		$maybe_pos  = strpos( $this->source, 'function maybe_handle_file_downloads' );
+		$render_pos = strpos( $this->source, 'function render_page' );
+		$this->assertNotFalse( $maybe_pos );
+		$this->assertNotFalse( $render_pos );
+
+		$maybe_body = substr( $this->source, $maybe_pos, $render_pos > $maybe_pos ? $render_pos - $maybe_pos : 2500 );
+		$this->assertStringContainsString( 'handle_export_log', $maybe_body );
+		$this->assertStringContainsString( 'handle_export_rules', $maybe_body );
+
+		// Late dispatch in render_page must not call the stream handlers again.
+		$render_end  = strpos( $this->source, 'function render_plugin_rules_filters', $render_pos );
+		$render_body = substr(
+			$this->source,
+			$render_pos,
+			false !== $render_end ? $render_end - $render_pos : 8000
+		);
+		$this->assertStringNotContainsString(
+			'handle_export_log()',
+			$render_body,
+			'export_log must not stream from render_page (HTML already buffered)'
+		);
+		$this->assertStringNotContainsString(
+			'handle_export_rules()',
+			$render_body,
+			'export_rules must not stream from render_page (HTML already buffered)'
+		);
+	}
+
+	/**
 	 * Import path must call Policy::save_policy (reuse sanitize path; no bypass).
 	 */
 	public function test_import_confirm_uses_policy_save_policy(): void {
@@ -343,6 +461,35 @@ final class AdminAuthzCoverageTest extends TestCase {
 			'/name=[\'"]handl_aicac_import_(path|server_path|filepath)[\'"]/',
 			$this->source
 		);
+	}
+
+	/**
+	 * Extract a method body from the admin source (best-effort brace match).
+	 */
+	private function method_body( string $method ): ?string {
+		$pattern = '/\b(?:private|public|protected)\s+function\s+' . preg_quote( $method, '/' ) . '\s*\(/';
+		if ( ! preg_match( $pattern, $this->source, $m, PREG_OFFSET_CAPTURE ) ) {
+			return null;
+		}
+		$start = (int) $m[0][1];
+		$open  = strpos( $this->source, '{', $start );
+		if ( false === $open ) {
+			return null;
+		}
+		$depth = 0;
+		$len   = strlen( $this->source );
+		for ( $i = $open; $i < $len; $i++ ) {
+			$ch = $this->source[ $i ];
+			if ( '{' === $ch ) {
+				++$depth;
+			} elseif ( '}' === $ch ) {
+				--$depth;
+				if ( 0 === $depth ) {
+					return substr( $this->source, $open, $i - $open + 1 );
+				}
+			}
+		}
+		return null;
 	}
 
 	/**

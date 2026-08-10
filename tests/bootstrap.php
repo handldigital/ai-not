@@ -108,6 +108,36 @@ if ( ! function_exists( '__' ) ) {
 	}
 }
 
+if ( ! function_exists( '_n' ) ) {
+	/**
+	 * @param string $single Singular.
+	 * @param string $plural Plural.
+	 * @param int    $number Count.
+	 */
+	function _n( $single, $plural, $number, $domain = 'default' ): string {
+		unset( $domain );
+		return 1 === (int) $number ? (string) $single : (string) $plural;
+	}
+}
+
+if ( ! function_exists( 'esc_html' ) ) {
+	/**
+	 * @param string $text Text.
+	 */
+	function esc_html( $text ): string {
+		return htmlspecialchars( (string) $text, ENT_QUOTES, 'UTF-8' );
+	}
+}
+
+if ( ! function_exists( 'esc_url' ) ) {
+	/**
+	 * @param string $url URL.
+	 */
+	function esc_url( $url ): string {
+		return (string) $url;
+	}
+}
+
 
 if ( ! function_exists( 'is_multisite' ) ) {
 	/**
@@ -293,6 +323,18 @@ if ( ! function_exists( 'wp_mail' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_supports_ai' ) ) {
+	/**
+	 * Stub: default true; tests may set $GLOBALS['handl_aicac_wp_supports_ai'] = false.
+	 */
+	function wp_supports_ai(): bool {
+		if ( array_key_exists( 'handl_aicac_wp_supports_ai', $GLOBALS ) ) {
+			return (bool) $GLOBALS['handl_aicac_wp_supports_ai'];
+		}
+		return true;
+	}
+}
+
 if ( ! function_exists( 'wp_remote_post' ) ) {
 	/**
 	 * @param string               $url URL.
@@ -332,6 +374,7 @@ if ( ! function_exists( 'wp_remote_retrieve_response_code' ) ) {
 }
 
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-operations.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cost.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-model-force.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cost.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-spend-threshold.php';
@@ -340,5 +383,8 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alerts.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-weekly-report.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-transfer.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-audit-export.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-differentiator-messaging.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-site-health.php';

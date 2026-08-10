@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 final class Admin {
-	private const LOG_FILTER_UNKNOWN = '__unknown__';
+	private const LOG_FILTER_UNKNOWN = Audit_Export::FILTER_UNKNOWN;
 
 	/**
 	 * @var array{decision:string,operation:string,provider:string,model:string,plugin:string}
@@ -51,6 +51,15 @@ final class Admin {
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		// File downloads must run before admin-header HTML is buffered (render_page is too late).
+		add_action( 'admin_init', array( $this, 'maybe_handle_file_downloads' ) );
+	}
+
+	/**
+	 * Shared capability gate (single current_user_can for authz inventory).
+	 */
+	private function user_can_manage_options(): bool {
+		return current_user_can( 'manage_options' );
 	}
 
 	public function enqueue_assets( string $hook_suffix ): void {
@@ -76,8 +85,56 @@ final class Admin {
 		);
 	}
 
-	public function render_page(): void {
+	/**
+	 * Stream export downloads on admin_init — before any admin HTML output.
+	 *
+	 * Handling these inside render_page() leaves the buffered admin chrome in the
+	 * response body, so browsers save an HTML document with a .csv/.json filename.
+	 */
+	public function maybe_handle_file_downloads(): void {
+		if ( ! isset( $_POST['handl_aicac_action'] ) ) {
+			return;
+		}
+
+		$posted_action = sanitize_key( wp_unslash( (string) $_POST['handl_aicac_action'] ) );
+		if ( 'export_log' !== $posted_action && 'export_rules' !== $posted_action ) {
+			return;
+		}
+
+		if ( ! $this->user_can_manage_options() ) {
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'handl-ai-connector-access-control' ) );
+		}
+
+		if ( 'export_log' === $posted_action ) {
+			check_admin_referer( 'handl_aicac_export_log', 'handl_aicac_nonce' );
+			$this->log_filters = $this->parse_log_filters();
+			$this->handle_export_log();
+		}
+
+		if ( 'export_rules' === $posted_action ) {
+			check_admin_referer( 'handl_aicac_export_rules', 'handl_aicac_nonce' );
+			$this->handle_export_rules();
+		}
+	}
+
+	/**
+	 * AICAC-22 defense-in-depth: re-verify capability + CSRF inside private mutators.
+	 *
+	 * render_page already gates manage_options and checks the action nonce before
+	 * dispatch. This aborts again if a future call site invokes a mutator without
+	 * those checks (public refactor, REST/AJAX, admin-post).
+	 *
+	 * @param string $nonce_action Same action string as the dispatch check_admin_referer.
+	 */
+	private function require_admin_mutation( string $nonce_action ): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'handl-ai-connector-access-control' ) );
+		}
+		check_admin_referer( $nonce_action, 'handl_aicac_nonce' );
+	}
+
+	public function render_page(): void {
+		if ( ! $this->user_can_manage_options() ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'handl-ai-connector-access-control' ) );
 		}
 
@@ -172,10 +229,7 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_undo_quick_rule', 'handl_aicac_nonce' );
 				$this->handle_undo_quick_rule();
 			}
-			if ( 'export_rules' === $posted_action ) {
-				check_admin_referer( 'handl_aicac_export_rules', 'handl_aicac_nonce' );
-				$this->handle_export_rules();
-			}
+			// export_log / export_rules: handled on admin_init (maybe_handle_file_downloads).
 			if ( 'import_rules_preview' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_import_rules', 'handl_aicac_nonce' );
 				$this->handle_import_rules_preview();
@@ -232,7 +286,8 @@ final class Admin {
 		echo '<img src="' . esc_url( $icon_src ) . '" alt="" width="40" height="40" style="border-radius:8px;" loading="lazy" decoding="async" />';
 		echo esc_html__( 'HandL AI Access', 'handl-ai-connector-access-control' );
 		echo '</h1>';
-		echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be driving estimated spend, and block a plugin with one click. The default is Allow.', 'handl-ai-connector-access-control' ) . '</p>';
+echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be driving estimated spend, and block a plugin with one click. The default is Allow.', 'handl-ai-connector-access-control' );
+		echo ' ' . esc_html( Differentiator_Messaging::page_subtitle_addition() ) . '</p>';
 
 		$this->render_tabs( $tab, $plugin_status_filter, $plugin_access_filter, $this->log_filters );
 
@@ -465,7 +520,8 @@ final class Admin {
 		$unforced_n    = Model_Force::count_unforced_unattributed( $log );
 
 		echo '<h2>' . esc_html__( 'Plugin rules', 'handl-ai-connector-access-control' ) . '</h2>';
-		echo '<p class="description">' . esc_html__( 'Plugin rules set the main access level. AI type columns can refine an allowed plugin, such as allowing text but blocking images. A plugin-level Deny blocks every AI type. Model routing is experimental, uses best-effort plugin detection, and does not guarantee spend. Leave both route fields blank to disable it.', 'handl-ai-connector-access-control' ) . '</p>';
+echo '<p class="description">' . esc_html__( 'Plugin rules set the main access level. AI type columns can refine an allowed plugin, such as allowing text but blocking images. A plugin-level Deny blocks every AI type. Model routing is experimental, uses best-effort plugin detection, and does not guarantee spend. Leave both route fields blank to disable it.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description handl-aicac-beyond-ca-rules">' . esc_html( Differentiator_Messaging::rules_note() ) . '</p>';
 		if ( $unforced_n > 0 && ! empty( $force_map ) ) {
 			echo '<div class="notice notice-warning inline"><p>';
 			echo esc_html(
@@ -771,6 +827,17 @@ final class Admin {
 	}
 
 	/**
+	 * AICAC-11: Dashboard callout naming HandL differentiators vs Connector Approvals.
+	 */
+	private function render_beyond_connector_approvals_callout(): void {
+		echo '<div class="handl-aicac-beyond-ca" role="note">';
+		echo '<p class="handl-aicac-beyond-ca__title"><strong>' . esc_html( Differentiator_Messaging::headline() ) . '</strong></p>';
+		echo '<p class="handl-aicac-beyond-ca__body">' . esc_html( Differentiator_Messaging::body() ) . '</p>';
+		echo '<p class="handl-aicac-beyond-ca__coexist description">' . esc_html( Differentiator_Messaging::coexistence() ) . '</p>';
+		echo '</div>';
+	}
+
+	/**
 	 * F5 Dashboard — answers: Am I safe? What's spending? Block that one.
 	 *
 	 * @param array<int,mixed> $log
@@ -874,6 +941,9 @@ final class Admin {
 		);
 
 		echo '<div class="handl-aicac-tab-panel handl-aicac-dashboard">';
+
+		// AICAC-11: name differentiators vs WordPress AI Connector Approvals (Dashboard-primary).
+		$this->render_beyond_connector_approvals_callout();
 
 		// --- Coverage tile (Δ1 + Δ5) ---
 		echo '<div class="postbox handl-aicac-tile handl-aicac-tile--coverage">';
@@ -1503,15 +1573,16 @@ final class Admin {
 		}
 
 		$pending_digest = count( Alerts::pending_digest_rows() );
-		if ( $pending_digest > 0 && ! empty( $policy['alert_on_deny'] ) ) {
+		$alerts_on      = ! empty( $policy['alert_on_deny'] ) || ! empty( $policy['alert_on_shadow'] );
+		if ( $pending_digest > 0 && $alerts_on ) {
 			echo '<form method="post" style="margin-bottom:1.5em;">';
 			wp_nonce_field( 'handl_aicac_send_digest', 'handl_aicac_nonce' );
 			echo '<input type="hidden" name="handl_aicac_action" value="send_denial_digest" />';
 			echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
 			submit_button(
 				sprintf(
-					/* translators: %d: queued denial count */
-					__( 'Send blocked-call summary now (%d queued)', 'handl-ai-connector-access-control' ),
+/* translators: %d: queued alert count */
+					__( 'Send alert summary now (%d queued)', 'handl-ai-connector-access-control' ),
 					$pending_digest
 				),
 				'secondary',
@@ -1527,6 +1598,20 @@ final class Admin {
 
 		echo '<h2>' . esc_html__( 'Recent calls', 'handl-ai-connector-access-control' ) . '</h2>';
 		$this->render_log_filters( $log_filters, $filter_options, $plugins );
+
+		echo '<form method="post" style="margin:0 0 1em;">';
+		wp_nonce_field( 'handl_aicac_export_log', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="export_log" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
+		$this->render_log_filter_hiddens( $log_filters );
+		submit_button(
+			__( 'Download CSV', 'handl-ai-connector-access-control' ),
+			'secondary',
+			'submit',
+			false
+		);
+		echo ' <span class="description">' . esc_html__( 'Downloads all saved activity matching your current filters, not just the rows shown here.', 'handl-ai-connector-access-control' ) . '</span>';
+		echo '</form>';
 
 		$log_newest_first = array_reverse( $log );
 		$matching_count   = 0;
@@ -1884,25 +1969,7 @@ final class Admin {
 	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $filters
 	 */
 	private function log_row_matches_filters( array $row, array $filters ): bool {
-		foreach ( array( 'decision', 'operation', 'provider', 'model', 'plugin' ) as $field ) {
-			if ( '' === $filters[ $field ] ) {
-				continue;
-			}
-
-			$value = $this->get_log_row_field( $row, $field );
-			if ( self::LOG_FILTER_UNKNOWN === $filters[ $field ] ) {
-				if ( '' !== $value ) {
-					return false;
-				}
-				continue;
-			}
-
-			if ( $filters[ $field ] !== $value ) {
-				return false;
-			}
-		}
-
-		return true;
+		return Audit_Export::row_matches_filters( $row, $filters );
 	}
 
 	/**
@@ -1927,23 +1994,14 @@ final class Admin {
 	 * @param array<string,mixed> $row
 	 */
 	private function get_log_row_field( array $row, string $field ): string {
-		if ( 'model' === $field ) {
-			return $this->get_log_row_model( $row );
-		}
-
-		return isset( $row[ $field ] ) ? (string) $row[ $field ] : '';
+		return Audit_Export::row_field( $row, $field );
 	}
 
 	/**
 	 * @param array<string,mixed> $row
 	 */
 	private function get_log_row_model( array $row ): string {
-		$model = isset( $row['model'] ) ? (string) $row['model'] : '';
-		if ( '' === $model && ! empty( $row['model_preferences'] ) && is_array( $row['model_preferences'] ) ) {
-			$model = implode( ', ', array_map( 'strval', $row['model_preferences'] ) );
-		}
-
-		return $model;
+		return Audit_Export::row_model( $row );
 	}
 
 	/**
@@ -2002,12 +2060,13 @@ final class Admin {
 		echo '</td>';
 		echo '</tr>';
 
-		// F3: denial alerts.
-		$alert_on    = ! empty( $policy['alert_on_deny'] );
-		$alert_mode  = Alerts::sanitize_mode( $policy['alert_mode'] ?? 'immediate' );
-		$alert_email = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
-		$alert_hook  = Alerts::sanitize_webhook_url( $policy['alert_webhook_url'] ?? '' );
-		$pending     = count( Alerts::pending_digest_rows() );
+		// F3: denial alerts + AICAC-SHADOW-ALERT shadow-AI observe emails.
+		$alert_on      = ! empty( $policy['alert_on_deny'] );
+		$alert_shadow  = ! empty( $policy['alert_on_shadow'] );
+		$alert_mode    = Alerts::sanitize_mode( $policy['alert_mode'] ?? 'immediate' );
+		$alert_email   = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
+		$alert_hook    = Alerts::sanitize_webhook_url( $policy['alert_webhook_url'] ?? '' );
+		$pending       = count( Alerts::pending_digest_rows() );
 
 		echo '<tr>';
 		echo '<th scope="row">' . esc_html__( 'Blocked-call email alerts', 'handl-ai-connector-access-control' ) . '</th>';
@@ -2031,7 +2090,7 @@ final class Admin {
 		echo '<br /><span class="description">' . esc_html__( 'Leave empty to use the site admin email. Test emails use the saved address, so save changes before testing.', 'handl-ai-connector-access-control' ) . '</span></p>';
 		echo '<p style="margin-top:8px;"><label for="handl-aicac-alert-webhook">' . esc_html__( 'Webhook URL', 'handl-ai-connector-access-control' ) . '</label><br />';
 		echo '<input type="url" class="regular-text" id="handl-aicac-alert-webhook" name="handl_aicac_alert_webhook_url" value="' . esc_attr( $alert_hook ) . '" placeholder="https://" pattern="https?://.*" inputmode="url" autocomplete="off" />';
-		echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same blocked-call alert as JSON to an http:// or https:// webhook, such as Slack or Teams. It follows the email schedule and rate limit. It includes request paths, but not prompt text or user identity. Leave blank to disable.', 'handl-ai-connector-access-control' ) . '</span></p>';
+echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same blocked-call alert as JSON to an http:// or https:// webhook, such as Slack or Teams. It follows the email schedule and rate limit. It includes request paths, but not prompt text or user identity. Direct AI connection alerts are email-only and are not sent to this webhook. Leave blank to disable the webhook.', 'handl-ai-connector-access-control' ) . '</span></p>';
 		echo '<p style="margin-top:8px;">';
 		echo '<label><input type="radio" name="handl_aicac_alert_mode" value="immediate" ' . checked( $alert_mode, 'immediate', false ) . ' /> ';
 		echo esc_html__( 'Send immediately (maximum 20 per hour; extra alerts retry later)', 'handl-ai-connector-access-control' ) . '</label><br />';
@@ -2041,12 +2100,21 @@ final class Admin {
 		if ( $pending > 0 ) {
 			echo '<p class="description"><strong>' . esc_html(
 				sprintf(
-					/* translators: %d: queued denial count */
-					_n( '%d blocked call queued for the next summary.', '%d blocked calls queued for the next summary.', $pending, 'handl-ai-connector-access-control' ),
+					/* translators: %d: queued alert count */
+					__( 'Queued for the next summary: %d', 'handl-ai-connector-access-control' ),
 					$pending
 				)
 			) . '</strong></p>';
 		}
+		echo '</td>';
+		echo '</tr>';
+
+		echo '<tr>';
+		echo '<th scope="row">' . esc_html__( 'Direct AI connection alerts', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<td>';
+		echo '<label><input type="checkbox" name="handl_aicac_alert_on_shadow" value="1" ' . checked( $alert_shadow, true, false ) . ' /> ';
+		echo esc_html__( 'Send an email when a plugin connects directly to an AI provider outside the AI Client', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Off by default. Requires logging or learn mode. Sends one alert for each plugin and AI provider domain while that activity remains in the log. These alerts do not block requests. Uses the same email address and delivery schedule as blocked-request alerts.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td>';
 		echo '</tr>';
 
@@ -2171,6 +2239,8 @@ final class Admin {
 	}
 
 	private function handle_save_rules(): void {
+		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
 		$policy = Policy::get_policy();
 
 		$posted_default = filter_input( INPUT_POST, 'handl_aicac_default', FILTER_UNSAFE_RAW );
@@ -2219,6 +2289,8 @@ final class Admin {
 	 * Does not rewrite capability-family or model-force maps.
 	 */
 	private function handle_bulk_plugin_rules(): void {
+		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
 		$posted_action = filter_input( INPUT_POST, 'handl_aicac_bulk_action', FILTER_UNSAFE_RAW );
 		$rule          = sanitize_text_field( (string) $posted_action );
 		if ( 'allow' !== $rule && 'deny' !== $rule ) {
@@ -2263,6 +2335,8 @@ final class Admin {
 	 * @param array<string,mixed> $policy
 	 */
 	private function apply_model_force_settings_from_post( array &$policy ): void {
+		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
 		$posted_map = filter_input( INPUT_POST, 'handl_aicac_model_force', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
 		$policy['model_force_plugins'] = Model_Force::sanitize_force_map( is_array( $posted_map ) ? $posted_map : array() );
 
@@ -2494,6 +2568,8 @@ final class Admin {
 	 * @param array<string,mixed> $policy
 	 */
 	private function apply_kill_switch_settings_from_post( array &$policy ): void {
+		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
 		$posted_kill = filter_input( INPUT_POST, 'handl_aicac_kill_switch', FILTER_UNSAFE_RAW );
 		$policy['kill_switch'] = ! empty( $posted_kill );
 
@@ -2514,6 +2590,8 @@ final class Admin {
 	 * @param array<string,mixed> $policy
 	 */
 	private function apply_role_gate_settings_from_post( array &$policy ): void {
+		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
 		$posted_enabled = filter_input( INPUT_POST, 'handl_aicac_role_gate_enabled', FILTER_UNSAFE_RAW );
 		$policy['role_gate_enabled'] = ! empty( $posted_enabled );
 
@@ -2534,6 +2612,8 @@ final class Admin {
 	 * @param array<string,mixed> $policy
 	 */
 	private function apply_log_settings_from_post( array &$policy ): void {
+		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
 		$posted_audit = filter_input( INPUT_POST, 'handl_aicac_audit_only', FILTER_UNSAFE_RAW );
 		$policy['audit_only'] = ! empty( $posted_audit );
 
@@ -2559,6 +2639,8 @@ final class Admin {
 
 		$posted_alert = filter_input( INPUT_POST, 'handl_aicac_alert_on_deny', FILTER_UNSAFE_RAW );
 		$policy['alert_on_deny'] = ! empty( $posted_alert );
+		$posted_shadow = filter_input( INPUT_POST, 'handl_aicac_alert_on_shadow', FILTER_UNSAFE_RAW );
+		$policy['alert_on_shadow'] = ! empty( $posted_shadow );
 		$policy['alert_mode']    = Alerts::sanitize_mode( filter_input( INPUT_POST, 'handl_aicac_alert_mode', FILTER_UNSAFE_RAW ) );
 		$policy['alert_email']   = Alerts::sanitize_email( filter_input( INPUT_POST, 'handl_aicac_alert_email', FILTER_UNSAFE_RAW ) );
 
@@ -2620,6 +2702,8 @@ final class Admin {
 	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $log_filters
 	 */
 	private function handle_quick_rule_redirect( array $log_filters ): void {
+		$this->require_admin_mutation( 'handl_aicac_quick_rule' );
+
 		$plugin = filter_input( INPUT_POST, 'handl_aicac_quick_plugin', FILTER_UNSAFE_RAW );
 		$rule   = filter_input( INPUT_POST, 'handl_aicac_quick_rule', FILTER_UNSAFE_RAW );
 		$return = filter_input( INPUT_POST, 'handl_aicac_return_tab', FILTER_UNSAFE_RAW );
@@ -2669,6 +2753,8 @@ final class Admin {
 	 * Restore a previous plugin rule after dashboard single-click block (board Q3 undo).
 	 */
 	private function handle_undo_quick_rule(): void {
+		$this->require_admin_mutation( 'handl_aicac_undo_quick_rule' );
+
 		$plugin = sanitize_text_field( (string) filter_input( INPUT_POST, 'handl_aicac_quick_plugin', FILTER_UNSAFE_RAW ) );
 		$prev   = sanitize_text_field( (string) filter_input( INPUT_POST, 'handl_aicac_undo_rule', FILTER_UNSAFE_RAW ) );
 		if ( 'allow' !== $prev && 'deny' !== $prev ) {
@@ -2894,6 +2980,8 @@ final class Admin {
 	}
 
 	private function handle_save_log(): void {
+		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
 		$policy = Policy::get_policy();
 
 		$this->apply_log_settings_from_post( $policy );
@@ -3359,6 +3447,8 @@ final class Admin {
 	 * Stream current policy as a JSON download (AC1).
 	 */
 	private function handle_export_rules(): void {
+		$this->require_admin_mutation( 'handl_aicac_export_rules' );
+
 		$policy  = Policy::get_policy();
 		$export  = Policy_Transfer::build_export(
 			$policy,
@@ -3378,9 +3468,54 @@ final class Admin {
 	}
 
 	/**
+	 * Stream the currently filtered retained audit log as CSV (AICAC-26).
+	 *
+	 * Capability + nonce are enforced by maybe_handle_file_downloads() on admin_init
+	 * (before admin HTML is buffered). Exports every matching retained row
+	 * (≤ log_limit / 1000), not the 50-row UI page.
+	 */
+	private function handle_export_log(): void {
+		$policy  = Policy::get_policy();
+		$log     = get_option( Plugin::LOG_OPTION_KEY );
+		$log     = is_array( $log ) ? $log : array();
+		$plugins = function_exists( 'get_plugins' ) ? get_plugins() : array();
+		if ( ! is_array( $plugins ) ) {
+			$plugins = array();
+		}
+
+		$user_labels = array();
+		foreach ( $log as $row ) {
+			if ( ! is_array( $row ) || empty( $row['user_id'] ) ) {
+				continue;
+			}
+			$uid = (int) $row['user_id'];
+			if ( $uid < 1 || isset( $user_labels[ $uid ] ) ) {
+				continue;
+			}
+			$user = get_userdata( $uid );
+			$user_labels[ $uid ] = ( $user && isset( $user->display_name ) )
+				? (string) $user->display_name
+				: '';
+		}
+
+		$payload  = Audit_Export::build_csv( $log, $this->log_filters, $plugins, $policy, $user_labels );
+		$filename = 'handl-aicac-audit-' . gmdate( 'Ymd-His' ) . '.csv';
+
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+		header( 'Content-Length: ' . (string) strlen( $payload ) );
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- raw CSV download body.
+		echo $payload;
+		exit;
+	}
+
+	/**
 	 * Validate upload and stash preview; no policy write (AC2/AC4).
 	 */
 	private function handle_import_rules_preview(): void {
+		$this->require_admin_mutation( 'handl_aicac_import_rules' );
+
 		$redirect_base = array(
 			'page'            => 'handl-ai-connector-access-control',
 			'handl_aicac_tab' => 'rules',
@@ -3497,6 +3632,8 @@ final class Admin {
 	 * Confirm pending import: full replace via Policy::save_policy (AC3).
 	 */
 	private function handle_import_rules_confirm(): void {
+		$this->require_admin_mutation( 'handl_aicac_import_rules_confirm' );
+
 		$redirect_base = array(
 			'page'            => 'handl-ai-connector-access-control',
 			'handl_aicac_tab' => 'rules',
