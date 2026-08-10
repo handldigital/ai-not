@@ -199,7 +199,7 @@ final class Shadow_AI {
 	 */
 	public static function block_error() {
 		$message = __(
-			'Blocked: a plugin tried to call an AI provider directly, outside the AI Client.',
+			'HandL AI Connector Access Control blocked a direct connection to an AI provider outside the WordPress AI Client.',
 			'handl-ai-connector-access-control'
 		);
 		if ( class_exists( 'WP_Error', false ) ) {

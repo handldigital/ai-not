@@ -59,7 +59,7 @@ final class ShadowBlockTest extends TestCase {
 		$err = Shadow_AI::block_error();
 		$this->assertInstanceOf( \WP_Error::class, $err );
 		$this->assertSame( Shadow_AI::BLOCK_ERROR_CODE, $err->code );
-		$this->assertStringContainsString( 'Blocked', $err->message );
+		$this->assertStringContainsString( 'blocked a direct connection', $err->message );
 	}
 
 	public function test_default_off_does_not_block_matched_host(): void {

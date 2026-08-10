@@ -2886,12 +2886,12 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo '<th scope="row">' . esc_html__( 'Direct AI connections', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<td>';
 		echo '<label><input type="checkbox" name="handl_aicac_shadow_block_enabled" value="1" form="' . esc_attr( $form_id ) . '" ' . checked( $enabled, true, false ) . ' id="handl-aicac-shadow-block-enabled" /> ';
-		echo esc_html__( 'Block direct AI provider calls', 'handl-ai-connector-access-control' ) . '</label>';
-		echo '<p class="description">' . esc_html__( 'Off by default. When on, WordPress HTTP calls to known AI provider hosts are blocked unless the calling plugin is listed below. Calls that go through the WordPress AI Client are not affected. Turn on Learn mode or logging first so you can see what would be blocked.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo esc_html__( 'Block direct calls to known AI providers', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Off by default. Blocks WordPress HTTP requests to known AI provider hosts, except for the plugins allowed below. Calls made through the WordPress AI Client are not affected. Turn on Learn mode or activity logging first to see which direct connections would be blocked.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		echo '<div class="' . esc_attr( $ex_class ) . '" id="handl-aicac-shadow-block-exceptions-wrap">';
-		echo '<p class="handl-aicac-shadow-block-exceptions__heading" id="handl-aicac-shadow-block-exceptions-heading"><strong>' . esc_html__( 'Allow these plugins to call AI providers directly', 'handl-ai-connector-access-control' ) . '</strong></p>';
-		echo '<p class="description handl-aicac-shadow-block-exceptions__state" id="handl-aicac-shadow-block-exceptions-state"' . ( $enabled ? ' hidden' : '' ) . '>' . esc_html__( 'Exceptions apply only while blocking is on. Allowed direct calls are still logged when logging or Learn mode is on.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="handl-aicac-shadow-block-exceptions__heading" id="handl-aicac-shadow-block-exceptions-heading"><strong>' . esc_html__( 'Allow selected plugins to connect directly', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		echo '<p class="description handl-aicac-shadow-block-exceptions__state" id="handl-aicac-shadow-block-exceptions-state"' . ( $enabled ? ' hidden' : '' ) . '>' . esc_html__( 'Exceptions apply only when blocking is on. Allowed direct connections are logged when Learn mode or activity logging is on.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<div class="handl-aicac-kill-exceptions__list" role="group" aria-labelledby="handl-aicac-shadow-block-exceptions-heading">';
 		$i = 0;
 		foreach ( $plugins as $basename => $data ) {
@@ -3100,9 +3100,9 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		if ( $is_direct_http ) {
 			echo '<br /><span class="description handl-aicac-shadow-label" style="font-size:11px;">';
 			if ( 'deny' === $decision ) {
-				echo esc_html__( 'outside AI Client; blocked by Direct AI connections', 'handl-ai-connector-access-control' );
+				echo esc_html__( 'outside AI Client; blocked', 'handl-ai-connector-access-control' );
 			} elseif ( 'allow' === $decision && ! empty( $row['shadow_exception'] ) ) {
-				echo esc_html__( 'outside AI Client; allowed exception', 'handl-ai-connector-access-control' );
+				echo esc_html__( 'outside AI Client; allowed by exception', 'handl-ai-connector-access-control' );
 			} else {
 				echo esc_html__( 'outside AI Client; observed, not blocked', 'handl-ai-connector-access-control' );
 			}
@@ -3303,11 +3303,11 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		if ( $is_direct_http ) {
 			echo '<span class="description handl-aicac-not-governable" style="font-size:11px;">';
 			if ( 'deny' === $decision ) {
-				echo esc_html__( 'blocked by Direct AI connections', 'handl-ai-connector-access-control' );
+				echo esc_html__( 'outside AI Client; blocked', 'handl-ai-connector-access-control' );
 			} elseif ( 'allow' === $decision && ! empty( $row['shadow_exception'] ) ) {
-				echo esc_html__( 'allowed exception (direct AI)', 'handl-ai-connector-access-control' );
+				echo esc_html__( 'outside AI Client; allowed by exception', 'handl-ai-connector-access-control' );
 			} else {
-				echo esc_html__( 'observed, not blocked', 'handl-ai-connector-access-control' );
+				echo esc_html__( 'outside AI Client; observed, not blocked', 'handl-ai-connector-access-control' );
 			}
 			echo '</span>';
 		} elseif ( $plugin ) {
