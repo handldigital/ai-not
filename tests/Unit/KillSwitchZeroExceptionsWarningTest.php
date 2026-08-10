@@ -67,7 +67,7 @@ final class KillSwitchZeroExceptionsWarningTest extends TestCase {
 
 		$this->assertStringContainsString( 'handl-aicac-kill-exceptions-zero-warn', $html );
 		$this->assertStringContainsString(
-			'ALL AI Client calls from every installed plugin will be blocked',
+			'No exceptions selected. Emergency stop will block all AI Client calls from every installed plugin.',
 			$html
 		);
 		$this->assertDoesNotMatchRegularExpression(

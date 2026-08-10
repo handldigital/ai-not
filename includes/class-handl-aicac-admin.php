@@ -2590,7 +2590,7 @@ final class Admin {
 		echo '<p class="description handl-aicac-kill-exceptions__state" id="handl-aicac-kill-exceptions-state"' . ( $kill_switch ? ' hidden' : '' ) . '>' . esc_html__( 'Exceptions apply only while the Emergency stop is on.', 'handl-ai-connector-access-control' ) . '</p>';
 		// S-104: distinct inline warning when kill is on and no exceptions are selected (server + JS).
 		echo '<p class="description notice notice-warning inline handl-aicac-kill-exceptions__zero-warn" id="handl-aicac-kill-exceptions-zero-warn" aria-live="polite"' . ( $show_zero_warn ? '' : ' hidden' ) . '>';
-		echo esc_html__( 'With no exceptions selected, ALL AI Client calls from every installed plugin will be blocked.', 'handl-ai-connector-access-control' );
+		echo esc_html__( 'No exceptions selected. Emergency stop will block all AI Client calls from every installed plugin.', 'handl-ai-connector-access-control' );
 		echo '</p>';
 		// #16: announce state / zero-exceptions warning on group focus (sibling of aria-labelledby).
 		echo '<div class="handl-aicac-kill-exceptions__list" role="group" aria-labelledby="handl-aicac-kill-exceptions-heading"';
