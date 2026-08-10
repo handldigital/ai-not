@@ -256,4 +256,39 @@ final class PolicySimulatorTest extends TestCase {
 		$this->assertTrue( $diff['empty'] );
 		$this->assertStringContainsString( '7-day activity limit', $diff['empty_reason'] );
 	}
+
+	/**
+	 * Rules save shell must not hide handl_aicac_action=save: the simulator
+	 * submit shares that form via form=, and a hidden save wins in $_POST.
+	 */
+	public function test_rules_form_action_is_submit_not_hidden_save(): void {
+		$src = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php' );
+
+		$this->assertTrue(
+			(bool) preg_match(
+				'/\$rules_form_id = \'handl-aicac-rules-save\';(.*?)echo \'<form method="post" id="\' \. esc_attr\( \$bulk_form_id \)/s',
+				$src,
+				$m
+			),
+			'Rules save form shell must precede the bulk form'
+		);
+
+		$shell = $m[1];
+		$this->assertStringNotContainsString(
+			'handl_aicac_action" value="save"',
+			$shell,
+			'Rules form shell must not hard-code hidden save action'
+		);
+
+		$this->assertMatchesRegularExpression(
+			'/<button type="submit" name="handl_aicac_action" value="save"/',
+			$src,
+			'Save changes must submit handl_aicac_action=save via the clicked button'
+		);
+		$this->assertMatchesRegularExpression(
+			'/<button type="submit"[^>]*name="handl_aicac_action" value="simulate_policy"/',
+			$src,
+			'Run test must submit handl_aicac_action=simulate_policy via the clicked button'
+		);
+	}
 }

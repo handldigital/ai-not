@@ -476,7 +476,9 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 
 		echo '<form method="post" id="' . esc_attr( $rules_form_id ) . '" class="handl-aicac-rules-save-form">';
 		wp_nonce_field( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
-		echo '<input type="hidden" name="handl_aicac_action" value="save" />';
+		// Do not put handl_aicac_action=save in a hidden field: secondary submits
+		// (policy simulator) share this form via the form= attribute, and a hidden
+		// save action wins over the clicked button in PHP's last-wins POST parse.
 		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
 		echo '<input type="hidden" name="handl_aicac_status" value="' . esc_attr( $plugin_status_filter ) . '" />';
 		echo '<input type="hidden" name="handl_aicac_access" value="' . esc_attr( $plugin_access_filter ) . '" />';
@@ -697,13 +699,11 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '})();';
 		echo '</script>';
 
-		submit_button(
-			__( 'Save changes', 'handl-ai-connector-access-control' ),
-			'primary',
-			'submit',
-			false,
-			array( 'form' => $rules_form_id )
-		);
+		echo '<p class="submit">';
+		echo '<button type="submit" name="handl_aicac_action" value="save" class="button button-primary" form="' . esc_attr( $rules_form_id ) . '">';
+		echo esc_html__( 'Save changes', 'handl-ai-connector-access-control' );
+		echo '</button>';
+		echo '</p>';
 
 		$this->render_policy_simulator_panel( $policy, $plugins, $log, $rules_form_id );
 
