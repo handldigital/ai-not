@@ -61,11 +61,11 @@ final class Policy_Simulator {
 		}
 
 		if ( 'kill_switch' === $reason ) {
-			$chip = __( 'Blocked (Emergency stop)', 'handl-ai-connector-access-control' );
+			$chip = __( 'Blocked by Emergency stop', 'handl-ai-connector-access-control' );
 		} else {
 			$chip = sprintf(
 				/* translators: %s: short rule name that decided the block */
-				__( 'Blocked (rule: %s)', 'handl-ai-connector-access-control' ),
+				__( 'Blocked by rule: %s', 'handl-ai-connector-access-control' ),
 				$label
 			);
 		}
@@ -84,12 +84,12 @@ final class Policy_Simulator {
 	public static function reason_label( string $reason ): string {
 		$map = array(
 			'kill_switch'       => __( 'Emergency stop', 'handl-ai-connector-access-control' ),
-			'role'              => __( 'Role gate', 'handl-ai-connector-access-control' ),
+			'role'              => __( 'User role rule', 'handl-ai-connector-access-control' ),
 			'plugin'            => __( 'Plugin rule', 'handl-ai-connector-access-control' ),
 			'capability_family' => __( 'AI type rule', 'handl-ai-connector-access-control' ),
 			'unknown_operation' => __( 'Unknown operation rule', 'handl-ai-connector-access-control' ),
-			'tool_armed'        => __( 'Blocked tool', 'handl-ai-connector-access-control' ),
-			'ability_armed'     => __( 'Blocked tool', 'handl-ai-connector-access-control' ),
+			'tool_armed'        => __( 'Blocked tool rule', 'handl-ai-connector-access-control' ),
+			'ability_armed'     => __( 'Blocked tool rule', 'handl-ai-connector-access-control' ),
 		);
 		if ( isset( $map[ $reason ] ) ) {
 			return $map[ $reason ];
@@ -179,7 +179,7 @@ final class Policy_Simulator {
 		if ( $empty ) {
 			$empty_reason = self::empty_log_explanation( $retention_meta ?? array(), is_array( $log ) ? count( $log ) : 0 );
 		} elseif ( 0 === $slice['scanned'] && $slice['skipped_total'] > 0 ) {
-			$empty_reason = __( 'Saved activity is only outside-AI-Client (observe) traffic. Those calls are not controlled by these rules, so there is nothing to replay.', 'handl-ai-connector-access-control' );
+			$empty_reason = __( 'The saved activity only contains direct connections outside the AI Client. These rules do not control those calls, so there is nothing to replay.', 'handl-ai-connector-access-control' );
 		}
 
 		return array(
@@ -220,22 +220,22 @@ final class Policy_Simulator {
 		}
 
 		if ( ! $logging ) {
-			return __( 'Activity logging is off, so there are no saved calls to replay. Turn on logging or Learn mode on the Activity tab, then try again.', 'handl-ai-connector-access-control' );
+			return __( 'Activity logging is off, so there are no saved calls to replay. Turn on activity logging or Learn mode on the Activity tab, then try again.', 'handl-ai-connector-access-control' );
 		}
 
 		if ( null !== $max_age && 0 === $raw_count ) {
 			return sprintf(
 				/* translators: %d: maximum log age in days */
-				__( 'No activity is stored for the current time window. Your %d-day time limit removed older log rows.', 'handl-ai-connector-access-control' ),
+				__( 'No activity is saved for the current period. Your %d-day activity limit removed older entries.', 'handl-ai-connector-access-control' ),
 				$max_age
 			);
 		}
 
 		if ( 0 === $raw_count ) {
-			return __( 'No saved activity yet. After plugins make AI Client calls, replay them here to preview a rule change.', 'handl-ai-connector-access-control' );
+			return __( 'No activity has been saved yet. After a plugin makes an AI Client call, return here to test your rule changes against it.', 'handl-ai-connector-access-control' );
 		}
 
-		return __( 'No AI Client calls in the saved activity window to replay.', 'handl-ai-connector-access-control' );
+		return __( 'There are no saved AI Client calls to replay.', 'handl-ai-connector-access-control' );
 	}
 
 	/**

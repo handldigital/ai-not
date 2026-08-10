@@ -166,7 +166,7 @@ final class PolicySimulatorTest extends TestCase {
 			)
 		);
 		$this->assertFalse( $kill['allowed'] );
-		$this->assertSame( 'Blocked (Emergency stop)', $kill['chip'] );
+		$this->assertSame( 'Blocked by Emergency stop', $kill['chip'] );
 
 		$plugin = Policy_Simulator::verdict_from_eval(
 			array(
@@ -254,6 +254,6 @@ final class PolicySimulatorTest extends TestCase {
 		);
 
 		$this->assertTrue( $diff['empty'] );
-		$this->assertStringContainsString( '7-day', $diff['empty_reason'] );
+		$this->assertStringContainsString( '7-day activity limit', $diff['empty_reason'] );
 	}
 }

@@ -2362,22 +2362,22 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			: Policy_Simulator::DEFAULT_REPLAY_LIMIT;
 
 		$ops = array(
-			'generate_text'                     => __( 'Text (generate_text)', 'handl-ai-connector-access-control' ),
-			'generate_image'                    => __( 'Image (generate_image)', 'handl-ai-connector-access-control' ),
-			'generate_speech'                   => __( 'Speech (generate_speech)', 'handl-ai-connector-access-control' ),
+			'generate_text'                     => __( 'Text generation (generate_text)', 'handl-ai-connector-access-control' ),
+			'generate_image'                    => __( 'Image generation (generate_image)', 'handl-ai-connector-access-control' ),
+			'generate_speech'                   => __( 'Speech generation (generate_speech)', 'handl-ai-connector-access-control' ),
 			'convert_text_to_speech'            => __( 'Text to speech (convert_text_to_speech)', 'handl-ai-connector-access-control' ),
-			'generate_video'                    => __( 'Video (generate_video)', 'handl-ai-connector-access-control' ),
-			'is_supported_for_music_generation' => __( 'Unknown / other (music support check)', 'handl-ai-connector-access-control' ),
+			'generate_video'                    => __( 'Video generation (generate_video)', 'handl-ai-connector-access-control' ),
+			'is_supported_for_music_generation' => __( 'Other or unknown operation (for example, music)', 'handl-ai-connector-access-control' ),
 		);
 
 		echo '<div class="handl-aicac-sim-panel" id="handl-aicac-sim-panel">';
 		echo '<h2>' . esc_html__( 'Test this policy', 'handl-ai-connector-access-control' ) . '</h2>';
-		echo '<p class="description">' . esc_html__( 'Preview what the rules on this screen would do before you save. No AI call is sent. Results use the same decision path as live traffic.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Preview how the rules on this screen would handle AI Client calls before you save. No AI call is sent, and the test uses the same decision process as live traffic.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		echo '<fieldset class="handl-aicac-sim-mode">';
 		echo '<legend class="screen-reader-text">' . esc_html__( 'Test mode', 'handl-ai-connector-access-control' ) . '</legend>';
 		echo '<label><input type="radio" name="handl_aicac_sim_mode" value="hypothetical" form="' . esc_attr( $form_id ) . '" ' . checked( $mode, 'hypothetical', false ) . ' /> ';
-		echo esc_html__( 'One sample call', 'handl-ai-connector-access-control' ) . '</label> ';
+		echo esc_html__( 'Test a sample call', 'handl-ai-connector-access-control' ) . '</label> ';
 		echo '<label><input type="radio" name="handl_aicac_sim_mode" value="replay" form="' . esc_attr( $form_id ) . '" ' . checked( $mode, 'replay', false ) . ' /> ';
 		echo esc_html__( 'Replay saved activity', 'handl-ai-connector-access-control' ) . '</label>';
 		echo '</fieldset>';
@@ -2386,7 +2386,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo '<tr class="handl-aicac-sim-hyp">';
 		echo '<th scope="row"><label for="handl-aicac-sim-plugin">' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</label></th>';
 		echo '<td><select name="handl_aicac_sim_plugin" id="handl-aicac-sim-plugin" form="' . esc_attr( $form_id ) . '">';
-		echo '<option value="">' . esc_html__( '— Unknown / no plugin —', 'handl-ai-connector-access-control' ) . '</option>';
+		echo '<option value="">' . esc_html__( 'Unknown or no plugin', 'handl-ai-connector-access-control' ) . '</option>';
 		foreach ( $plugins as $basename => $meta ) {
 			$basename = (string) $basename;
 			$label    = is_array( $meta ) && isset( $meta['Name'] ) ? (string) $meta['Name'] : $basename;
@@ -2401,19 +2401,19 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			echo '<option value="' . esc_attr( $op_id ) . '" ' . selected( $sel_op, $op_id, false ) . '>' . esc_html( $op_label ) . '</option>';
 		}
 		echo '</select>';
-		echo '<p class="description">' . esc_html__( 'AI type rules follow the operation family (Text, Image, and so on).', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'AI type rules use the operation family, such as Text or Image.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td></tr>';
 
 		echo '<tr class="handl-aicac-sim-hyp">';
-		echo '<th scope="row"><label for="handl-aicac-sim-tools">' . esc_html__( 'Armed tools (optional)', 'handl-ai-connector-access-control' ) . '</label></th>';
+		echo '<th scope="row"><label for="handl-aicac-sim-tools">' . esc_html__( 'Tools offered to the AI (optional)', 'handl-ai-connector-access-control' ) . '</label></th>';
 		echo '<td><input type="text" class="regular-text code" name="handl_aicac_sim_tools" id="handl-aicac-sim-tools" form="' . esc_attr( $form_id ) . '" value="" placeholder="namespace/tool" />';
-		echo '<p class="description">' . esc_html__( 'Comma or line-separated tool names the prompt would offer. Used to test blocked-tool rules.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Enter tool names separated by commas or new lines. Use this to test rules that block specific tools.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td></tr>';
 
 		echo '<tr class="handl-aicac-sim-replay">';
 		echo '<th scope="row"><label for="handl-aicac-sim-limit">' . esc_html__( 'Calls to replay', 'handl-ai-connector-access-control' ) . '</label></th>';
 		echo '<td><input type="number" class="small-text" min="1" max="1000" name="handl_aicac_sim_limit" id="handl-aicac-sim-limit" form="' . esc_attr( $form_id ) . '" value="' . esc_attr( (string) $sel_limit ) . '" />';
-		echo '<p class="description">' . esc_html__( 'Newest saved AI Client calls only. Outside-AI-Client (observe) rows are skipped.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Replays the newest saved AI Client calls. Direct connections outside the AI Client are skipped because these rules do not control them.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td></tr>';
 		echo '</table>';
 
@@ -2421,7 +2421,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo '<button type="submit" class="button button-secondary" name="handl_aicac_action" value="simulate_policy" form="' . esc_attr( $form_id ) . '">';
 		echo esc_html__( 'Run test', 'handl-ai-connector-access-control' );
 		echo '</button>';
-		echo ' <span class="description">' . esc_html__( 'Does not save your rules.', 'handl-ai-connector-access-control' ) . '</span>';
+		echo ' <span class="description">' . esc_html__( 'Your rules will not be saved.', 'handl-ai-connector-access-control' ) . '</span>';
 		echo '</p>';
 
 		if ( is_array( $this->sim_result ) ) {
@@ -2456,8 +2456,8 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 				sprintf(
 					/* translators: 1: plugin label, 2: operation name */
 					__( 'Plugin: %1$s · Operation: %2$s', 'handl-ai-connector-access-control' ),
-					'' !== $pname ? $pname : __( '(unknown)', 'handl-ai-connector-access-control' ),
-					'' !== $op ? $op : __( '(none)', 'handl-ai-connector-access-control' )
+					'' !== $pname ? $pname : __( 'Unknown', 'handl-ai-connector-access-control' ),
+					'' !== $op ? $op : __( 'None', 'handl-ai-connector-access-control' )
 				)
 			) . '</p>';
 			echo '</div>';
@@ -2482,31 +2482,21 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo '<li>' . esc_html(
 			sprintf(
 				/* translators: %d: call count */
-				_n(
-					'%d call that was allowed would now be blocked.',
-					'%d calls that were allowed would now be blocked.',
-					$blocked_n,
-					'handl-ai-connector-access-control'
-				),
+				__( 'Allowed before, blocked now: %d', 'handl-ai-connector-access-control' ),
 				$blocked_n
 			)
 		) . '</li>';
 		echo '<li>' . esc_html(
 			sprintf(
 				/* translators: %d: call count */
-				_n(
-					'%d previously blocked call would now be allowed.',
-					'%d previously blocked calls would now be allowed.',
-					$allowed_n,
-					'handl-ai-connector-access-control'
-				),
+				__( 'Blocked before, allowed now: %d', 'handl-ai-connector-access-control' ),
 				$allowed_n
 			)
 		) . '</li>';
 		echo '<li>' . esc_html(
 			sprintf(
 				/* translators: 1: scanned count, 2: unchanged count */
-				__( 'Compared %1$d saved calls (%2$d unchanged).', 'handl-ai-connector-access-control' ),
+				__( 'Saved calls compared: %1$d. Unchanged: %2$d.', 'handl-ai-connector-access-control' ),
 				$scanned,
 				$unchanged
 			)
@@ -2516,11 +2506,11 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		$blocked_rows = is_array( $diff['now_blocked'] ?? null ) ? $diff['now_blocked'] : array();
 		$allowed_rows = is_array( $diff['now_allowed'] ?? null ) ? $diff['now_allowed'] : array();
 		if ( ! empty( $blocked_rows ) ) {
-			echo '<p><strong>' . esc_html__( 'Would now be blocked', 'handl-ai-connector-access-control' ) . '</strong></p>';
+			echo '<p><strong>' . esc_html__( 'Allowed before, blocked now', 'handl-ai-connector-access-control' ) . '</strong></p>';
 			$this->render_sim_delta_list( $blocked_rows, $plugins );
 		}
 		if ( ! empty( $allowed_rows ) ) {
-			echo '<p><strong>' . esc_html__( 'Would now be allowed', 'handl-ai-connector-access-control' ) . '</strong></p>';
+			echo '<p><strong>' . esc_html__( 'Blocked before, allowed now', 'handl-ai-connector-access-control' ) . '</strong></p>';
 			$this->render_sim_delta_list( $allowed_rows, $plugins );
 		}
 
@@ -2542,7 +2532,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 				$label = (string) $plugins[ $plugin ]['Name'];
 			}
 			if ( '' === $label ) {
-				$label = __( '(unknown plugin)', 'handl-ai-connector-access-control' );
+				$label = __( 'Unknown plugin', 'handl-ai-connector-access-control' );
 			}
 			$line = $label;
 			if ( '' !== $op ) {
