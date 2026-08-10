@@ -148,6 +148,9 @@ Weekly report mail does **not** include prompt preview, user identity, request p
 
 == Frequently Asked Questions ==
 
+= How is this different from the WordPress AI plugin’s Connector Approvals? =
+Connector Approvals in the WordPress AI plugin controls which plugins and themes can use configured AI connector credentials. HandL AI Connector Access Control governs AI Client prompts through `wp_ai_client_prevent_prompt`, adding per-plugin allow/deny rules, a **capability-family matrix**, **tool-arming denial**, **shadow-AI detection** for direct connections outside the AI Client, and **estimated spend / denial alerting**. Both can run together because they govern different layers. See Dashboard → “Beyond Connector Approvals”.
+
 = Does this stop all AI usage? =
 Only AI calls made through the WordPress AI Client APIs that pass through `wp_ai_client_prevent_prompt`. The shadow-AI detector **observes** direct HTTP to known AI hosts; it does not block those requests in this version.
 
@@ -179,6 +182,7 @@ Yes. With WP-CLI available and this plugin active:
 
 = Unreleased =
 * Opt-in Direct AI connection email alerts (off by default) when a plugin connects directly to an AI provider outside the AI Client — immediate or hourly summary; labeled Observed, not blocked; email-only.
+* AICAC-11: In-product messaging that differentiates HandL from the WordPress AI plugin’s Connector Approvals experiment (Dashboard callout, settings subtitle, Rules note, FAQ).
 
 = 1.2.0 =
 * Rewrote the WordPress.org listing in plain language so site owners can quickly understand what the plugin does.
