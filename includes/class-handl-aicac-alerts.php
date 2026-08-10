@@ -1,6 +1,6 @@
 <?php
 /**
- * Denial email / webhook alerts and digests (opt-in).
+ * Denial / shadow-observe email (and denial webhook) alerts and digests (opt-in).
  *
  * @package HandL_AICAC
  */
@@ -12,21 +12,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Loud attributed denial notifications via wp_mail and optional webhook POST.
+ * Loud attributed denial notifications via wp_mail and optional webhook POST,
+ * plus optional shadow-AI (direct_http observe) email alerts.
  *
- * Observability only — never influences allow/deny.
+ * Observability only — never influences allow/deny / never blocks HTTP.
  *
  * Mail and webhook work is deferred to shutdown so the AI Client denial
- * *filter* path does not block on SMTP or HTTP. That is not the same as
- * releasing the HTTP connection early — typical FastCGI holds the client
- * open until shutdown finishes unless something calls
- * fastcgi_finish_request() (WordPress does not by default). Outbound copies
- * use path-only URIs; full request URIs remain in the local audit log only.
+ * *filter* path (and shadow observe path) does not block on SMTP or HTTP.
+ * That is not the same as releasing the HTTP connection early — typical
+ * FastCGI holds the client open until shutdown finishes unless something
+ * calls fastcgi_finish_request() (WordPress does not by default). Outbound
+ * copies use path-only URIs; full request URIs remain in the local audit
+ * log only.
  *
  * Webhook URL is an intentional admin-supplied outbound integration (same
  * trust model as the configurable wp_mail recipient). Scheme is restricted
  * to http/https; delivery uses wp_remote_post (WP HTTP API) with redirects
- * disabled.
+ * disabled. Shadow-AI alerts are email-only (no webhook) in this release.
  */
 final class Alerts {
 	public const DIGEST_OPTION_KEY = 'handl_aicac_denial_digest_queue';
@@ -48,7 +50,7 @@ final class Alerts {
 
 	private static ?Alerts $instance = null;
 
-	/** @var list<array{event:array<string,mixed>,policy:array<string,mixed>}> */
+	/** @var list<array{event:array<string,mixed>,policy:array<string,mixed>,kind?:string}> */
 	private static array $deferred_immediate = array();
 
 	/** @var list<array<string,mixed>> */
@@ -77,16 +79,16 @@ final class Alerts {
 	}
 
 	/**
-	 * Schedule the hourly digest/drain cron whenever denial alerts are on.
+	 * Schedule the hourly digest/drain cron whenever denial or shadow alerts are on.
 	 *
 	 * Digest mode: primary delivery. Immediate mode: safety net that drains
 	 * failed sends and rate-limit overflow within the hour (does nothing when
-	 * the queue is empty). Unschedules only when alerts are fully off.
+	 * the queue is empty). Unschedules only when both alert types are off.
 	 *
 	 * @param array<string,mixed> $policy
 	 */
 	public static function maybe_schedule( array $policy ): void {
-		$enabled = ! empty( $policy['alert_on_deny'] );
+		$enabled = ! empty( $policy['alert_on_deny'] ) || ! empty( $policy['alert_on_shadow'] );
 
 		if ( $enabled ) {
 			if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
@@ -102,10 +104,48 @@ final class Alerts {
 	}
 
 	/**
-	 * Drop queued denial rows (disable / uninstall).
+	 * Drop queued alert rows (disable / uninstall).
 	 */
 	public static function clear_digest_queue(): void {
 		delete_option( self::DIGEST_OPTION_KEY );
+	}
+
+	/**
+	 * Keep only queue rows whose alert type is still enabled.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	public static function prune_digest_queue( array $policy ): void {
+		$deny_on   = ! empty( $policy['alert_on_deny'] );
+		$shadow_on = ! empty( $policy['alert_on_shadow'] );
+		if ( ! $deny_on && ! $shadow_on ) {
+			self::clear_digest_queue();
+			return;
+		}
+
+		$queue = get_option( self::DIGEST_OPTION_KEY, array() );
+		if ( ! is_array( $queue ) || empty( $queue ) ) {
+			return;
+		}
+
+		$keep = array();
+		foreach ( $queue as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$kind = isset( $row['alert_kind'] ) ? (string) $row['alert_kind'] : 'denial';
+			if ( 'shadow' === $kind ) {
+				if ( $shadow_on ) {
+					$keep[] = $row;
+				}
+				continue;
+			}
+			if ( $deny_on ) {
+				$keep[] = $row;
+			}
+		}
+
+		update_option( self::DIGEST_OPTION_KEY, $keep, false );
 	}
 
 	/**
@@ -140,6 +180,49 @@ final class Alerts {
 		self::$deferred_immediate[] = array(
 			'event'  => $event,
 			'policy' => $policy,
+			'kind'   => 'denial',
+		);
+		self::hook_flush();
+	}
+
+	/**
+	 * Called after a new direct_http observe row is retained (not collapsed).
+	 *
+	 * Opt-in shadow-AI email only. Observability — never blocks HTTP.
+	 * Deferred to shutdown like denial alerts so observe path does not block
+	 * on SMTP. Skips when AI is disabled site-wide via wp_supports_ai.
+	 *
+	 * @param array<string,mixed> $event  Log row shape (channel=direct_http).
+	 * @param array<string,mixed> $policy Current policy.
+	 */
+	public static function maybe_notify_shadow( array $event, array $policy ): void {
+		if ( empty( $policy['alert_on_shadow'] ) ) {
+			return;
+		}
+		// Same observability gate as the detector / ring buffer.
+		if ( empty( $policy['log_enabled'] ) && empty( $policy['audit_only'] ) ) {
+			return;
+		}
+		if ( function_exists( 'wp_supports_ai' ) && ! wp_supports_ai() ) {
+			return;
+		}
+		if ( ( $event['channel'] ?? '' ) !== 'direct_http' ) {
+			return;
+		}
+
+		$mode = self::sanitize_mode( $policy['alert_mode'] ?? 'immediate' );
+		if ( 'digest' === $mode ) {
+			// Tag before queue so digest formatting/pruning can distinguish.
+			$event['alert_kind'] = 'shadow';
+			self::$deferred_digest_events[] = $event;
+			self::hook_flush();
+			return;
+		}
+
+		self::$deferred_immediate[] = array(
+			'event'  => $event,
+			'policy' => $policy,
+			'kind'   => 'shadow',
 		);
 		self::hook_flush();
 	}
@@ -283,7 +366,12 @@ final class Alerts {
 			if ( ! is_array( $item ) || ! isset( $item['event'], $item['policy'] ) || ! is_array( $item['event'] ) || ! is_array( $item['policy'] ) ) {
 				continue;
 			}
-			self::send_immediate_now( $item['event'], $item['policy'] );
+			$kind = isset( $item['kind'] ) ? (string) $item['kind'] : 'denial';
+			if ( 'shadow' === $kind ) {
+				self::send_immediate_shadow_now( $item['event'], $item['policy'] );
+			} else {
+				self::send_immediate_now( $item['event'], $item['policy'] );
+			}
 		}
 	}
 
@@ -373,11 +461,55 @@ final class Alerts {
 	}
 
 	/**
+	 * Immediate shadow-AI observe email (no webhook — email-only channel).
+	 *
+	 * @param array<string,mixed> $event
+	 * @param array<string,mixed> $policy
+	 */
+	private static function send_immediate_shadow_now( array $event, array $policy ): void {
+		$event['alert_kind'] = 'shadow';
+
+		if ( ! self::under_rate_limit() ) {
+			self::queue_digest_row( $event );
+			return;
+		}
+
+		$to = self::resolve_email( $policy );
+		if ( '' === $to ) {
+			return;
+		}
+
+		$summary = self::summarize_event( $event );
+
+		$subject = sprintf(
+			/* translators: %s: site name */
+			__( '[%s] HandL detected a direct AI connection (not blocked)', 'handl-ai-connector-access-control' ),
+			wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES )
+		);
+
+		$body  = __( 'HandL AI Connector Access Control detected a direct connection to a known AI provider outside the AI Client. This request was observed, not blocked.', 'handl-ai-connector-access-control' ) . "\n\n";
+		$body .= self::format_summary_lines( $summary );
+		$body .= "\n" . __( 'This alert was sent by HandL AI Connector Access Control, not by the plugin that made the request. The request was not blocked. Review it under Settings → HandL AI Connector Access Control → Activity.', 'handl-ai-connector-access-control' ) . "\n";
+		$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=log' ) . "\n";
+
+		$mail_ok = self::safe_wp_mail( $to, $subject, $body );
+		if ( true === $mail_ok ) {
+			self::record_send();
+			return;
+		}
+
+		// Failed / throwing mail → queue; do not burn a rate slot.
+		self::queue_digest_row( $event );
+	}
+
+	/**
 	 * Cron / manual digest flush.
 	 */
 	public function send_digest(): void {
 		$policy = Policy::get_policy();
-		if ( empty( $policy['alert_on_deny'] ) ) {
+		$deny_on   = ! empty( $policy['alert_on_deny'] );
+		$shadow_on = ! empty( $policy['alert_on_shadow'] );
+		if ( ! $deny_on && ! $shadow_on ) {
 			return;
 		}
 
@@ -386,64 +518,154 @@ final class Alerts {
 			return;
 		}
 
-		$to  = self::resolve_email( $policy );
-		$url = self::resolve_webhook( $policy );
-		if ( '' === $to && '' === $url ) {
+		$denials = array();
+		$shadows = array();
+		foreach ( $queue as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$kind = isset( $row['alert_kind'] ) ? (string) $row['alert_kind'] : 'denial';
+			if ( 'shadow' === $kind ) {
+				if ( $shadow_on ) {
+					$shadows[] = $row;
+				}
+				continue;
+			}
+			if ( $deny_on ) {
+				$denials[] = $row;
+			}
+		}
+
+		if ( empty( $denials ) && empty( $shadows ) ) {
 			return;
 		}
 
-		$count   = count( $queue );
+		$to  = self::resolve_email( $policy );
+		$url = self::resolve_webhook( $policy );
+		// Shadow is email-only; webhook still useful when denials are present.
+		if ( '' === $to && ( '' === $url || empty( $denials ) ) ) {
+			return;
+		}
+
 		$mail_ok = null;
 		$hook_ok = null;
 
 		if ( '' !== $to ) {
-			$subject = sprintf(
-				/* translators: 1: site name, 2: denial count */
-				__( '[%1$s] HandL blocked-call summary (%2$d)', 'handl-ai-connector-access-control' ),
-				wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
-				$count
-			);
+			$subject = self::digest_subject( $denials, $shadows );
+			$body    = self::format_digest_body( $denials, $shadows );
+			$mail_ok = self::safe_wp_mail( $to, $subject, $body );
+		}
 
-			$body  = sprintf(
+		if ( '' !== $url && ! empty( $denials ) ) {
+			// Webhook stays denial-scoped (shadow alerts are email-only).
+			$hook_ok = self::safe_wp_remote_post( $url, self::build_digest_webhook_payload( $denials ) );
+		}
+
+		// Email path: clear only on mail success.
+		// Webhook-only installs (denials, no email): clear when the POST succeeds.
+		$cleared = ( true === $mail_ok ) || ( null === $mail_ok && true === $hook_ok );
+		if ( $cleared ) {
+			update_option( self::DIGEST_OPTION_KEY, array(), false );
+		}
+	}
+
+	/**
+	 * @param list<array<string,mixed>> $denials
+	 * @param list<array<string,mixed>> $shadows
+	 */
+	private static function digest_subject( array $denials, array $shadows ): string {
+		$site = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
+		$d    = count( $denials );
+		$s    = count( $shadows );
+
+		if ( $d > 0 && $s > 0 ) {
+			return sprintf(
+				/* translators: 1: site name, 2: denial count, 3: shadow observe count */
+				__( '[%1$s] HandL alert summary (%2$d blocked, %3$d direct connections observed)', 'handl-ai-connector-access-control' ),
+				$site,
+				$d,
+				$s
+			);
+		}
+		if ( $s > 0 ) {
+			return sprintf(
+				/* translators: 1: site name, 2: shadow observe count */
+				__( '[%1$s] HandL direct AI connection summary (%2$d)', 'handl-ai-connector-access-control' ),
+				$site,
+				$s
+			);
+		}
+
+		// Denial-only — match Krusty-signed #89/#51 blocked-call summary language.
+		return sprintf(
+			/* translators: 1: site name, 2: denial count */
+			__( '[%1$s] HandL blocked-call summary (%2$d)', 'handl-ai-connector-access-control' ),
+			$site,
+			$d
+		);
+	}
+
+	/**
+	 * @param list<array<string,mixed>> $denials
+	 * @param list<array<string,mixed>> $shadows
+	 */
+	private static function format_digest_body( array $denials, array $shadows ): string {
+		$body = '';
+
+		if ( ! empty( $denials ) ) {
+			$body .= sprintf(
 				/* translators: %d: number of denials in this digest */
 				__( 'Blocked AI Client prompts since the last summary: %d', 'handl-ai-connector-access-control' ),
-				$count
+				count( $denials )
 			) . "\n\n";
 
 			$shown = 0;
-			foreach ( $queue as $row ) {
-				if ( ! is_array( $row ) ) {
-					continue;
-				}
+			foreach ( $denials as $row ) {
 				++$shown;
 				if ( $shown > 50 ) {
 					$body .= sprintf(
 						/* translators: %d: remaining rows not listed */
-						__( "Plus %d more. See the Activity log. ↵", 'handl-ai-connector-access-control' ),
-						$count - 50
+						__( "Plus %d more. See the Activity log.\n", 'handl-ai-connector-access-control' ),
+						count( $denials ) - 50
 					);
 					break;
 				}
 				$body .= '--- #' . $shown . " ---\n";
 				$body .= self::format_summary_lines( $row ) . "\n";
 			}
-
-			$body .= __( 'This summary came from HandL AI Access. Review your rules under Settings → HandL AI Access.', 'handl-ai-connector-access-control' ) . "\n";
-			$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=log' ) . "\n";
-
-			$mail_ok = self::safe_wp_mail( $to, $subject, $body );
 		}
 
-		if ( '' !== $url ) {
-			$hook_ok = self::safe_wp_remote_post( $url, self::build_digest_webhook_payload( $queue ) );
+		// Omit the shadow section entirely when empty (error_empty_states).
+		if ( ! empty( $shadows ) ) {
+			if ( '' !== $body ) {
+				$body .= "\n";
+			}
+			$body .= sprintf(
+				/* translators: %d: number of shadow observations in this digest */
+				__( 'Direct AI connections observed outside the AI Client (not blocked): %d', 'handl-ai-connector-access-control' ),
+				count( $shadows )
+			) . "\n\n";
+
+			$shown = 0;
+			foreach ( $shadows as $row ) {
+				++$shown;
+				if ( $shown > 50 ) {
+					$body .= sprintf(
+						/* translators: %d: remaining rows not listed */
+						__( "Plus %d more. See the Activity log.\n", 'handl-ai-connector-access-control' ),
+						count( $shadows ) - 50
+					);
+					break;
+				}
+				$body .= '--- shadow #' . $shown . " ---\n";
+				$body .= self::format_summary_lines( $row ) . "\n";
+			}
 		}
 
-		// Email path unchanged when configured: clear only on mail success.
-		// Webhook-only installs clear when the POST succeeds.
-		$cleared = ( true === $mail_ok ) || ( null === $mail_ok && true === $hook_ok );
-		if ( $cleared ) {
-			update_option( self::DIGEST_OPTION_KEY, array(), false );
-		}
+		$body .= __( 'This summary was sent by HandL AI Connector Access Control. Review activity and alert settings under Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' ) . "\n";
+		$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' ) . "\n";
+
+		return $body;
 	}
 
 	/**
@@ -750,7 +972,7 @@ final class Alerts {
 
 	/**
 	 * Mail/digest summary — deliberately omits prompt_preview and user identity.
-	 * URI is path-only (query string never leaves the box via this path).
+	 * URI/path is path-only (query string never leaves the box via this path).
 	 *
 	 * @param array<string,mixed> $event
 	 * @return array<string,mixed>
@@ -762,10 +984,12 @@ final class Alerts {
 		}
 
 		$uri = isset( $event['uri'] ) ? (string) $event['uri'] : '';
+		$is_shadow = ( 'shadow' === ( $event['alert_kind'] ?? '' ) )
+			|| ( isset( $event['channel'] ) && 'direct_http' === (string) $event['channel'] );
 
-		return array(
+		$out = array(
 			'ts'                => isset( $event['ts'] ) ? (int) $event['ts'] : time(),
-			'plugin'            => isset( $event['plugin'] ) ? (string) $event['plugin'] : '',
+			'plugin'            => isset( $event['plugin'] ) && is_string( $event['plugin'] ) ? (string) $event['plugin'] : '',
 			'operation'         => isset( $event['operation'] ) ? (string) $event['operation'] : '',
 			'capability_family' => isset( $event['capability_family'] ) ? (string) $event['capability_family'] : '',
 			'denial_reason'     => isset( $event['denial_reason'] ) ? (string) $event['denial_reason'] : '',
@@ -774,7 +998,21 @@ final class Alerts {
 			'model'             => isset( $event['model'] ) ? (string) $event['model'] : '',
 			'model_inferred'    => ! empty( $event['model_inferred'] ),
 			'uri'               => self::uri_path_only( $uri ),
+			'alert_kind'        => $is_shadow ? 'shadow' : 'denial',
 		);
+
+		if ( $is_shadow ) {
+			$out['host']         = isset( $event['host'] ) ? (string) $event['host'] : '';
+			$out['caller']       = isset( $event['caller'] ) && is_string( $event['caller'] ) ? (string) $event['caller'] : '';
+			$out['file']         = isset( $event['file'] ) && is_string( $event['file'] ) ? (string) $event['file'] : '';
+			$out['decision']     = 'observe';
+			$out['status_label'] = 'Observed, not blocked';
+			if ( '' === $out['provider'] && isset( $event['shadow_provider'] ) ) {
+				$out['provider'] = (string) $event['shadow_provider'];
+			}
+		}
+
+		return $out;
 	}
 
 	/**
@@ -782,6 +1020,23 @@ final class Alerts {
 	 */
 	private static function format_summary_lines( array $summary ): string {
 		$ts = ! empty( $summary['ts'] ) ? wp_date( 'Y-m-d H:i:s', (int) $summary['ts'] ) : '—';
+
+		if ( 'shadow' === ( $summary['alert_kind'] ?? '' ) ) {
+			$caller = self::best_effort_caller_label( $summary );
+			$lines  = array(
+				'Status: Observed, not blocked',
+				sprintf( 'Time: %s', $ts ),
+				sprintf( 'Caller: %s', $caller ),
+				sprintf( 'Host: %s', ( $summary['host'] ?? '' ) !== '' ? (string) $summary['host'] : '—' ),
+				sprintf( 'Path: %s', ( $summary['uri'] ?? '' ) !== '' ? (string) $summary['uri'] : '—' ),
+			);
+			$prov = (string) ( $summary['provider'] ?? '' );
+			if ( '' !== $prov ) {
+				$lines[] = sprintf( 'Provider: %s', $prov );
+			}
+			return implode( "\n", $lines ) . "\n";
+		}
+
 		$lines = array(
 			sprintf( 'Time: %s', $ts ),
 			sprintf( 'Plugin: %s', $summary['plugin'] !== '' ? $summary['plugin'] : '(unknown)' ),
@@ -804,6 +1059,27 @@ final class Alerts {
 		}
 
 		return implode( "\n", $lines ) . "\n";
+	}
+
+	/**
+	 * Best-effort caller for shadow alerts: plugin, else file, else method.
+	 *
+	 * @param array<string,mixed> $summary
+	 */
+	private static function best_effort_caller_label( array $summary ): string {
+		$plugin = isset( $summary['plugin'] ) ? (string) $summary['plugin'] : '';
+		if ( '' !== $plugin ) {
+			return $plugin;
+		}
+		$file = isset( $summary['file'] ) ? (string) $summary['file'] : '';
+		if ( '' !== $file ) {
+			return $file;
+		}
+		$caller = isset( $summary['caller'] ) ? (string) $summary['caller'] : '';
+		if ( '' !== $caller ) {
+			return $caller;
+		}
+		return '(unknown)';
 	}
 
 	private static function under_rate_limit(): bool {

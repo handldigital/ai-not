@@ -1541,15 +1541,16 @@ final class Admin {
 		}
 
 		$pending_digest = count( Alerts::pending_digest_rows() );
-		if ( $pending_digest > 0 && ! empty( $policy['alert_on_deny'] ) ) {
+		$alerts_on      = ! empty( $policy['alert_on_deny'] ) || ! empty( $policy['alert_on_shadow'] );
+		if ( $pending_digest > 0 && $alerts_on ) {
 			echo '<form method="post" style="margin-bottom:1.5em;">';
 			wp_nonce_field( 'handl_aicac_send_digest', 'handl_aicac_nonce' );
 			echo '<input type="hidden" name="handl_aicac_action" value="send_denial_digest" />';
 			echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
 			submit_button(
 				sprintf(
-					/* translators: %d: queued denial count */
-					__( 'Send blocked-call summary now (%d queued)', 'handl-ai-connector-access-control' ),
+/* translators: %d: queued alert count */
+					__( 'Send alert summary now (%d queued)', 'handl-ai-connector-access-control' ),
 					$pending_digest
 				),
 				'secondary',
@@ -2027,12 +2028,13 @@ final class Admin {
 		echo '</td>';
 		echo '</tr>';
 
-		// F3: denial alerts.
-		$alert_on    = ! empty( $policy['alert_on_deny'] );
-		$alert_mode  = Alerts::sanitize_mode( $policy['alert_mode'] ?? 'immediate' );
-		$alert_email = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
-		$alert_hook  = Alerts::sanitize_webhook_url( $policy['alert_webhook_url'] ?? '' );
-		$pending     = count( Alerts::pending_digest_rows() );
+		// F3: denial alerts + AICAC-SHADOW-ALERT shadow-AI observe emails.
+		$alert_on      = ! empty( $policy['alert_on_deny'] );
+		$alert_shadow  = ! empty( $policy['alert_on_shadow'] );
+		$alert_mode    = Alerts::sanitize_mode( $policy['alert_mode'] ?? 'immediate' );
+		$alert_email   = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
+		$alert_hook    = Alerts::sanitize_webhook_url( $policy['alert_webhook_url'] ?? '' );
+		$pending       = count( Alerts::pending_digest_rows() );
 
 		echo '<tr>';
 		echo '<th scope="row">' . esc_html__( 'Blocked-call email alerts', 'handl-ai-connector-access-control' ) . '</th>';
@@ -2056,7 +2058,7 @@ final class Admin {
 		echo '<br /><span class="description">' . esc_html__( 'Leave empty to use the site admin email. Test emails use the saved address, so save changes before testing.', 'handl-ai-connector-access-control' ) . '</span></p>';
 		echo '<p style="margin-top:8px;"><label for="handl-aicac-alert-webhook">' . esc_html__( 'Webhook URL', 'handl-ai-connector-access-control' ) . '</label><br />';
 		echo '<input type="url" class="regular-text" id="handl-aicac-alert-webhook" name="handl_aicac_alert_webhook_url" value="' . esc_attr( $alert_hook ) . '" placeholder="https://" pattern="https?://.*" inputmode="url" autocomplete="off" />';
-		echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same blocked-call alert as JSON to an http:// or https:// webhook, such as Slack or Teams. It follows the email schedule and rate limit. It includes request paths, but not prompt text or user identity. Leave blank to disable.', 'handl-ai-connector-access-control' ) . '</span></p>';
+echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same blocked-call alert as JSON to an http:// or https:// webhook, such as Slack or Teams. It follows the email schedule and rate limit. It includes request paths, but not prompt text or user identity. Direct AI connection alerts are email-only and are not sent to this webhook. Leave blank to disable the webhook.', 'handl-ai-connector-access-control' ) . '</span></p>';
 		echo '<p style="margin-top:8px;">';
 		echo '<label><input type="radio" name="handl_aicac_alert_mode" value="immediate" ' . checked( $alert_mode, 'immediate', false ) . ' /> ';
 		echo esc_html__( 'Send immediately (maximum 20 per hour; extra alerts retry later)', 'handl-ai-connector-access-control' ) . '</label><br />';
@@ -2066,12 +2068,21 @@ final class Admin {
 		if ( $pending > 0 ) {
 			echo '<p class="description"><strong>' . esc_html(
 				sprintf(
-					/* translators: %d: queued denial count */
-					_n( '%d blocked call queued for the next summary.', '%d blocked calls queued for the next summary.', $pending, 'handl-ai-connector-access-control' ),
+					/* translators: %d: queued alert count */
+					__( 'Queued for the next summary: %d', 'handl-ai-connector-access-control' ),
 					$pending
 				)
 			) . '</strong></p>';
 		}
+		echo '</td>';
+		echo '</tr>';
+
+		echo '<tr>';
+		echo '<th scope="row">' . esc_html__( 'Direct AI connection alerts', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<td>';
+		echo '<label><input type="checkbox" name="handl_aicac_alert_on_shadow" value="1" ' . checked( $alert_shadow, true, false ) . ' /> ';
+		echo esc_html__( 'Send an email when a plugin connects directly to an AI provider outside the AI Client', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Off by default. Requires logging or learn mode. Sends one alert for each plugin and AI provider domain while that activity remains in the log. These alerts do not block requests. Uses the same email address and delivery schedule as blocked-request alerts.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td>';
 		echo '</tr>';
 
@@ -2545,6 +2556,8 @@ final class Admin {
 
 		$posted_alert = filter_input( INPUT_POST, 'handl_aicac_alert_on_deny', FILTER_UNSAFE_RAW );
 		$policy['alert_on_deny'] = ! empty( $posted_alert );
+		$posted_shadow = filter_input( INPUT_POST, 'handl_aicac_alert_on_shadow', FILTER_UNSAFE_RAW );
+		$policy['alert_on_shadow'] = ! empty( $posted_shadow );
 		$policy['alert_mode']    = Alerts::sanitize_mode( filter_input( INPUT_POST, 'handl_aicac_alert_mode', FILTER_UNSAFE_RAW ) );
 		$policy['alert_email']   = Alerts::sanitize_email( filter_input( INPUT_POST, 'handl_aicac_alert_email', FILTER_UNSAFE_RAW ) );
 

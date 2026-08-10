@@ -50,6 +50,7 @@ final class Policy_Transfer {
 			'denied_tools',
 			'denied_abilities', // legacy; save_policy migrates away
 			'alert_on_deny',
+			'alert_on_shadow',
 			'alert_mode',
 			'alert_email',
 			'est_usd_input_per_m',

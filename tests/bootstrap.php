@@ -293,6 +293,18 @@ if ( ! function_exists( 'wp_mail' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_supports_ai' ) ) {
+	/**
+	 * Stub: default true; tests may set $GLOBALS['handl_aicac_wp_supports_ai'] = false.
+	 */
+	function wp_supports_ai(): bool {
+		if ( array_key_exists( 'handl_aicac_wp_supports_ai', $GLOBALS ) ) {
+			return (bool) $GLOBALS['handl_aicac_wp_supports_ai'];
+		}
+		return true;
+	}
+}
+
 if ( ! function_exists( 'wp_remote_post' ) ) {
 	/**
 	 * @param string               $url URL.
