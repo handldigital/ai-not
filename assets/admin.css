@@ -686,3 +686,40 @@
 	margin: 0;
 }
 
+/* AICAC-SIM: Test this policy panel */
+.handl-aicac-sim-panel {
+	margin: 24px 0 16px;
+	padding: 16px 18px;
+	border: 1px solid #c3c4c7;
+	background: #fff;
+	max-width: 72em;
+	box-sizing: border-box;
+}
+
+.handl-aicac-sim-panel h2 {
+	margin-top: 0;
+}
+
+.handl-aicac-sim-mode {
+	margin: 0 0 12px;
+	border: 0;
+	padding: 0;
+}
+
+.handl-aicac-sim-mode label {
+	margin-right: 16px;
+}
+
+.handl-aicac-sim-result {
+	margin-top: 12px;
+	padding: 12px 14px;
+}
+
+.handl-aicac-sim-delta-list {
+	margin: 0 0 12px 1.2em;
+}
+
+.handl-aicac-sim-delta-list code {
+	font-size: 12px;
+}
+
