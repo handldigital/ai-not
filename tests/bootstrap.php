@@ -108,6 +108,36 @@ if ( ! function_exists( '__' ) ) {
 	}
 }
 
+if ( ! function_exists( '_n' ) ) {
+	/**
+	 * @param string $single Singular.
+	 * @param string $plural Plural.
+	 * @param int    $number Count.
+	 */
+	function _n( $single, $plural, $number, $domain = 'default' ): string {
+		unset( $domain );
+		return 1 === (int) $number ? (string) $single : (string) $plural;
+	}
+}
+
+if ( ! function_exists( 'esc_html' ) ) {
+	/**
+	 * @param string $text Text.
+	 */
+	function esc_html( $text ): string {
+		return htmlspecialchars( (string) $text, ENT_QUOTES, 'UTF-8' );
+	}
+}
+
+if ( ! function_exists( 'esc_url' ) ) {
+	/**
+	 * @param string $url URL.
+	 */
+	function esc_url( $url ): string {
+		return (string) $url;
+	}
+}
+
 
 if ( ! function_exists( 'is_multisite' ) ) {
 	/**
@@ -355,3 +385,4 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-transfer.php'
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-audit-export.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-site-health.php';
