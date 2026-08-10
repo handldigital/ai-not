@@ -53,6 +53,7 @@ Caller identification is **best-effort**. Calls made through cron, REST requests
 
 = More controls when you need them =
 
+* **Estimated spend alerts:** Optional email when estimated spend in the saved log crosses a site-wide or per-plugin dollar threshold (off when empty). Uses the same recipient as denial alerts. Estimates only, not billing.
 * **Denial alerts:** Send an optional email when a prompt is blocked, either immediately or in an hourly digest. You can also send the same privacy-scoped data to a webhook URL for services such as Slack or Teams.
 * **Weekly report:** Receive a summary of coverage, denials, estimated spend, and model-pin activity. The option is selected by default, sends only while logging or Learn mode is on, and can be turned off at any time.
 * **Estimated spend:** View a rough estimate based on token counts and the rates you provide, including optional rates by provider. This is an estimate, **not billing**.
@@ -106,6 +107,9 @@ If you enable **recent-call logging** in Settings → HandL AI Connector Access 
 - For **direct-HTTP AI observations** only: request **host** and **path** (query string stripped). No request body, no Authorization headers, no API keys. Channel label `direct_http` and matched provider id when known.
 
 Logs are kept as a **single shared entry-based ring buffer** (default 200 entries, configurable 20–1000) for both AI Client rows and direct-HTTP AI observations. An optional **maximum log age (days)** setting also drops rows older than the threshold on the next read or append; when both the count cap and the time-based TTL apply, the stricter limit wins. Leave maximum age empty for entry-count-only retention. Repeated direct-HTTP **calls** from the same attributed plugin + host (or the same unattributed file + host) that stay active within ~5 minutes of idle time are collapsed into one row whose `count` is the number of HTTP **calls** (same unit as AI Client rows). Active clusters move to the newest slot so a chatty bypass does not erase the rest of the log, and the log does not drop the chatty cluster ahead of idle rows.
+
+
+If you set an **estimated spend alert** threshold (Activity → Estimated spend alerts), the plugin may send a message via WordPress `wp_mail` when the retained log’s estimated total first crosses that amount (site-wide or per-plugin). The email includes the threshold, current estimated total, dated log window, and (for per-plugin alerts) the plugin name. It states that the figure is estimated (token × rate placeholder), not billing. No prompt text or user identity is included. Empty thresholds never send mail. Delivery failures are contained and never change allow/deny.
 
 If you enable **denial email alerts**, the plugin sends a message via WordPress `wp_mail` when enforcement blocks a prompt (immediate rate-limited mail, or an hourly digest). The recipient is the address you configure, or the site `admin_email` if left empty — that may be any address you enter, and mail is delivered through whatever transport your site uses (core PHP mail or an SMTP / transactional-mail plugin). Alert messages include:
 
@@ -182,8 +186,11 @@ Yes. With WP-CLI available and this plugin active:
 
 = Unreleased =
 * Read-only REST API (`handl-aicac/v1`): policy summary, activity aggregates, and Site Health verdict for external dashboards. Requires manage_options (application passwords work). No write endpoints in v1.
+* Optional estimated-spend threshold email alerts (site-wide and per-plugin; empty = off). Reuses the denial-alert recipient; no enforcement.
 * Opt-in Direct AI connection email alerts (off by default) when a plugin connects directly to an AI provider outside the AI Client — immediate or hourly summary; labeled Observed, not blocked; email-only.
 * AICAC-11: In-product messaging that differentiates HandL from the WordPress AI plugin’s Connector Approvals experiment (Dashboard callout, settings subtitle, Rules note, FAQ).
+
+
 
 = 1.2.0 =
 * Rewrote the WordPress.org listing in plain language so site owners can quickly understand what the plugin does.
