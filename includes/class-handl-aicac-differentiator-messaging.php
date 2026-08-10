@@ -33,28 +33,28 @@ final class Differentiator_Messaging {
 	 * One-line page subtitle addition (settings wrap).
 	 */
 	public static function page_subtitle_addition(): string {
-		return __( 'Goes beyond the WordPress AI plugin’s Connector Approvals (caller × connector credentials) with a capability-family matrix, tool-arming denial, shadow-AI detection, and spend/alerting.', 'handl-ai-connector-access-control' );
+		return __( 'Adds prompt-level controls beyond Connector Approvals, including a capability-family matrix, tool-arming denial, shadow-AI detection, and spend/alerting.', 'handl-ai-connector-access-control' );
 	}
 
 	/**
 	 * Primary body explaining granularity and HandL differentiators.
 	 */
 	public static function body(): string {
-		return __( 'The WordPress AI plugin’s Connector Approvals experiment decides which plugins or themes may use which configured AI connector credentials, enforced when outbound HTTP carries those credentials. HandL AICAC governs AI Client prompts instead: a per-plugin × capability-family matrix (Text / Image / Speech / TTS / Video), tool-arming denial, shadow-AI detection for direct HTTP outside the AI Client, and estimated spend with denial alerting.', 'handl-ai-connector-access-control' );
+		return __( 'Connector Approvals in the WordPress AI plugin controls which plugins and themes can use configured AI connector credentials. HandL AI Connector Access Control governs AI Client prompts with per-plugin rules, a capability-family matrix for Text, Image, Speech, TTS, and Video, tool-arming denial, shadow-AI detection for direct connections outside the AI Client, and estimated spend/alerting.', 'handl-ai-connector-access-control' );
 	}
 
 	/**
 	 * Explicit coexistence line (not a replacement).
 	 */
 	public static function coexistence(): string {
-		return __( 'Both can run together — they govern different layers.', 'handl-ai-connector-access-control' );
+		return __( 'Both can run together because they govern different layers.', 'handl-ai-connector-access-control' );
 	}
 
 	/**
 	 * Rules-tab pointer to the same differentiators (keeps matrix context).
 	 */
 	public static function rules_note(): string {
-		return __( 'Unlike Connector Approvals (caller × connector credentials at HTTP time), these Rules refine AI Client access by capability family and can deny tool arming; Dashboard/Activity add shadow-AI observation and spend/alerting.', 'handl-ai-connector-access-control' );
+		return __( 'Connector Approvals controls access to connector credentials. HandL rules add a capability-family matrix and tool-arming denial for AI Client prompts. Dashboard and Activity add shadow-AI detection and spend/alerting.', 'handl-ai-connector-access-control' );
 	}
 
 	/**

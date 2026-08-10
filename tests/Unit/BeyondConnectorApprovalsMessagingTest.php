@@ -18,8 +18,9 @@ final class BeyondConnectorApprovalsMessagingTest extends TestCase {
 		$body = Differentiator_Messaging::body();
 		$this->assertStringContainsString( 'Connector Approvals', $body );
 		$this->assertStringContainsString( 'connector credentials', $body );
-		$this->assertStringContainsString( 'outbound HTTP', $body );
 		$this->assertStringContainsString( 'AI Client', $body );
+		$this->assertStringContainsString( 'capability-family matrix', $body );
+		$this->assertStringContainsString( 'direct connections outside the AI Client', $body );
 	}
 
 	public function test_copy_names_all_required_differentiators(): void {
