@@ -26,6 +26,10 @@ if ( ! defined( 'HOUR_IN_SECONDS' ) ) {
 	define( 'HOUR_IN_SECONDS', 3600 );
 }
 
+if ( ! defined( 'DAY_IN_SECONDS' ) ) {
+	define( 'DAY_IN_SECONDS', 86400 );
+}
+
 if ( ! defined( 'ENT_QUOTES' ) ) {
 	// PHP already defines ENT_QUOTES; keep guard for completeness.
 }
@@ -323,6 +327,21 @@ if ( ! function_exists( 'current_user_can' ) ) {
 	}
 }
 
+if ( ! function_exists( 'apply_filters' ) ) {
+	/**
+	 * @param string $hook Hook name.
+	 * @param mixed  $value Value.
+	 * @return mixed
+	 */
+	function apply_filters( $hook, $value ) {
+		$args = func_get_args();
+		if ( isset( $GLOBALS['handl_aicac_test_filters'][ (string) $args[0] ] ) && is_callable( $GLOBALS['handl_aicac_test_filters'][ (string) $args[0] ] ) ) {
+			return call_user_func_array( $GLOBALS['handl_aicac_test_filters'][ (string) $args[0] ], array_slice( $args, 1 ) );
+		}
+		return $value;
+	}
+}
+
 if ( ! function_exists( 'wp_mail' ) ) {
 	/**
 	 * @param string|list<string> $to Recipients.
@@ -431,6 +450,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-attribution.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-shadow-ai.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-simulator.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-onboarding.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-transfer.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-audit-export.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-differentiator-messaging.php';
