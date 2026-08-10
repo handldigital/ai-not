@@ -85,10 +85,11 @@ final class TestEmailSendTest extends TestCase {
 		$subject = self::$mails[0]['subject'];
 		$body    = self::$mails[0]['message'];
 
-		$this->assertStringContainsString( 'TEST', $subject );
+		$this->assertStringContainsString( 'Test: HandL AICAC denial alert', $subject );
 		$this->assertStringContainsString( 'denial alert', strtolower( $subject ) );
-		$this->assertStringContainsString( 'TEST MESSAGE', $body );
-		$this->assertStringContainsString( 'not a real denial', strtolower( $body ) );
+		$this->assertStringContainsString( 'TEST MESSAGE: HandL AI Connector Access Control', $body );
+		$this->assertStringContainsString( 'This is a test. No denial occurred.', $body );
+		$this->assertStringContainsString( 'inbox delivery is not guaranteed', strtolower( $body ) );
 
 		// Must not embed per-call / identity fields (disclaimer may mention "prompt text").
 		foreach ( array( 'prompt_preview', 'user_id=', 'user_login', 'display_name', 'capability_family' ) as $needle ) {
@@ -100,9 +101,10 @@ final class TestEmailSendTest extends TestCase {
 		$result = Alerts::send_test_email( array( 'alert_email' => 'a@example.com' ), 'weekly_report' );
 
 		$this->assertTrue( $result['ok'] );
+		$this->assertStringContainsString( 'Test: HandL AICAC weekly report', self::$mails[0]['subject'] );
 		$this->assertStringContainsString( 'weekly report', strtolower( self::$mails[0]['subject'] ) );
-		$this->assertStringContainsString( 'TEST', self::$mails[0]['subject'] );
-		$this->assertStringContainsString( 'weekly report email path', strtolower( self::$mails[0]['message'] ) );
+		$this->assertStringContainsString( 'This is a test. This is not a real weekly report.', self::$mails[0]['message'] );
+		$this->assertStringContainsString( 'weekly report email delivery', strtolower( self::$mails[0]['message'] ) );
 	}
 
 	public function test_rate_limit_blocks_rapid_repeat_clicks(): void {
@@ -127,11 +129,12 @@ final class TestEmailSendTest extends TestCase {
 		$subject = Alerts::build_test_email_subject( 'denial_alert' );
 		$body    = Alerts::build_test_email_body( 'weekly_report' );
 
-		$this->assertStringContainsString( 'TEST', $subject );
+		$this->assertStringContainsString( 'Test: HandL AICAC denial alert', $subject );
 		$this->assertStringNotContainsString( 'URI:', $body );
 		$this->assertStringNotContainsString( 'Plugin:', $body );
 		$this->assertStringNotContainsString( 'prompt_preview', strtolower( $body ) );
 		$this->assertStringNotContainsString( 'user_login', strtolower( $body ) );
+		$this->assertStringNotContainsString( 'wp_mail can deliver', strtolower( $body ) );
 	}
 
 	public function test_admin_ui_has_test_email_buttons_and_detached_forms(): void {

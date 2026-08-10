@@ -529,14 +529,14 @@ final class Alerts {
 		if ( 'weekly_report' === $channel ) {
 			return sprintf(
 				/* translators: %s: site name */
-				__( '[%s] HandL AICAC TEST weekly report email', 'handl-ai-connector-access-control' ),
+				__( '[%s] Test: HandL AICAC weekly report', 'handl-ai-connector-access-control' ),
 				$site
 			);
 		}
 
 		return sprintf(
 			/* translators: %s: site name */
-			__( '[%s] HandL AICAC TEST denial alert email', 'handl-ai-connector-access-control' ),
+			__( '[%s] Test: HandL AICAC denial alert', 'handl-ai-connector-access-control' ),
 			$site
 		);
 	}
@@ -548,18 +548,20 @@ final class Alerts {
 		$channel = self::sanitize_test_email_channel( $channel );
 
 		$lines   = array();
-		$lines[] = __( 'TEST MESSAGE — HandL AI Connector Access Control', 'handl-ai-connector-access-control' );
-		$lines[] = __( 'This is not a real denial alert or weekly report.', 'handl-ai-connector-access-control' );
-		$lines[] = '';
+		$lines[] = __( 'TEST MESSAGE: HandL AI Connector Access Control', 'handl-ai-connector-access-control' );
 
 		if ( 'weekly_report' === $channel ) {
-			$lines[] = __( 'You requested a test of the weekly report email path from Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'This is a test. This is not a real weekly report.', 'handl-ai-connector-access-control' );
+			$lines[] = '';
+			$lines[] = __( 'You requested a test of weekly report email delivery from Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' );
 		} else {
-			$lines[] = __( 'You requested a test of the denial alert email path from Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'This is a test. No denial occurred.', 'handl-ai-connector-access-control' );
+			$lines[] = '';
+			$lines[] = __( 'You requested a test of denial alert email delivery from Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' );
 		}
 
 		$lines[] = '';
-		$lines[] = __( 'This message contains no prompt text, user identity, or per-call data. It only confirms that wp_mail can deliver to the configured recipient (or the site admin email when none is set).', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'This message contains no prompt text, user identity, or call details. It only confirms that WordPress accepted the test for sending to the saved recipient, or the site admin email. Inbox delivery is not guaranteed.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = __( 'Manage email settings:', 'handl-ai-connector-access-control' );
 		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' );

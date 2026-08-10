@@ -283,20 +283,20 @@ final class Admin {
 				echo esc_html(
 					sprintf(
 						/* translators: %s: recipient email address */
-						__( 'Test email sent to %s. This confirms wp_mail accepted the message; it does not prove inbox delivery.', 'handl-ai-connector-access-control' ),
+						__( 'Test email sent to %s. WordPress accepted the message for sending, but inbox delivery is not guaranteed.', 'handl-ai-connector-access-control' ),
 						$test_email_to
 					)
 				);
 			} else {
-				echo esc_html__( 'Test email sent to the configured recipient. This confirms wp_mail accepted the message; it does not prove inbox delivery.', 'handl-ai-connector-access-control' );
+				echo esc_html__( 'Test email sent to the configured recipient. WordPress accepted the message for sending, but inbox delivery is not guaranteed.', 'handl-ai-connector-access-control' );
 			}
 			echo '</p></div>';
 		} elseif ( 'failed' === $test_email_status ) {
-			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Test email failed: wp_mail returned false. Delivery was not claimed — check your site mail / SMTP configuration.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'WordPress could not send the test email. Check your site’s email or SMTP settings.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		} elseif ( 'rate_limited' === $test_email_status ) {
-			echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__( 'Please wait before sending another test email (rate limited).', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__( 'Please wait one minute before sending another test email.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		} elseif ( 'no_recipient' === $test_email_status || 'invalid_channel' === $test_email_status ) {
-			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Test email could not be sent: no valid recipient is available (configure a denial-alert recipient or set the site admin email).', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Test email could not be sent because no valid recipient is available. Set a recipient for denial alerts or add a valid site admin email.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $undone ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Plugin rule restored.', 'handl-ai-connector-access-control' ) . '</p></div>';
@@ -2028,7 +2028,7 @@ final class Admin {
 				'id'    => 'handl-aicac-send-test-denial-email',
 			)
 		);
-		echo '<br /><span class="description">' . esc_html__( 'Leave empty to use the site admin email. Test sends use the already-saved recipient (or admin email) — not an unsaved value typed above.', 'handl-ai-connector-access-control' ) . '</span></p>';
+		echo '<br /><span class="description">' . esc_html__( 'Leave empty to use the site admin email. Test emails use the saved address, so save changes before testing.', 'handl-ai-connector-access-control' ) . '</span></p>';
 		echo '<p style="margin-top:8px;"><label for="handl-aicac-alert-webhook">' . esc_html__( 'Webhook URL', 'handl-ai-connector-access-control' ) . '</label><br />';
 		echo '<input type="url" class="regular-text" id="handl-aicac-alert-webhook" name="handl_aicac_alert_webhook_url" value="' . esc_attr( $alert_hook ) . '" placeholder="https://" pattern="https?://.*" inputmode="url" autocomplete="off" />';
 		echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same blocked-call alert as JSON to an http:// or https:// webhook, such as Slack or Teams. It follows the email schedule and rate limit. It includes request paths, but not prompt text or user identity. Leave blank to disable.', 'handl-ai-connector-access-control' ) . '</span></p>';
@@ -2074,7 +2074,7 @@ final class Admin {
 				'id'   => 'handl-aicac-send-test-weekly-email',
 			)
 		);
-		echo ' <span class="description">' . esc_html__( 'Sends a clearly labeled test message to the saved denial-alert recipient (or site admin email). Rate-limited against rapid repeats.', 'handl-ai-connector-access-control' ) . '</span>';
+		echo ' <span class="description">' . esc_html__( 'Sends a labeled test weekly report to the saved recipient, or the site admin email. Limited to one test email per minute.', 'handl-ai-connector-access-control' ) . '</span>';
 		echo '</p>';
 		echo '</td>';
 		echo '</tr>';
