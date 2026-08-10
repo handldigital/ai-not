@@ -758,23 +758,39 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 		echo '</ul>';
 
-		echo '<form method="get">';
-		echo '<input type="hidden" name="page" value="handl-ai-connector-access-control" />';
-		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
-		echo '<input type="hidden" name="handl_aicac_status" value="' . esc_attr( $plugin_status_filter ) . '" />';
+		// No <form> here: this panel is rendered inside the Rules POST form. A nested
+		// GET form would auto-close the outer form in browsers, leaving Run test with
+		// button.form === null (AICAC-SIM QA fail on #93).
+		$access_options = array(
+			'all'             => __( 'All rules', 'handl-ai-connector-access-control' ),
+			'effective-allow' => __( 'Explicit Allow', 'handl-ai-connector-access-control' ),
+			'effective-deny'  => __( 'Explicit Deny', 'handl-ai-connector-access-control' ),
+			'default-only'    => __( 'Uses default', 'handl-ai-connector-access-control' ),
+		);
 		echo '<div class="tablenav top">';
 		echo '<div class="alignleft actions">';
 		echo '<label for="handl-aicac-access-filter" class="screen-reader-text">' . esc_html__( 'Filter by AI access', 'handl-ai-connector-access-control' ) . '</label>';
-		echo '<select id="handl-aicac-access-filter" name="handl_aicac_access" onchange="if (this.form) { if (this.form.requestSubmit) { this.form.requestSubmit(); } else { HTMLFormElement.prototype.submit.call(this.form); } }">';
-		$this->render_option( 'all', $plugin_access_filter, __( 'All rules', 'handl-ai-connector-access-control' ) );
-		$this->render_option( 'effective-allow', $plugin_access_filter, __( 'Explicit Allow', 'handl-ai-connector-access-control' ) );
-		$this->render_option( 'effective-deny', $plugin_access_filter, __( 'Explicit Deny', 'handl-ai-connector-access-control' ) );
-		$this->render_option( 'default-only', $plugin_access_filter, __( 'Uses default', 'handl-ai-connector-access-control' ) );
+		echo '<select id="handl-aicac-access-filter" onchange="if (this.selectedOptions.length) { window.location = this.selectedOptions[0].getAttribute(\'data-url\'); }">';
+		foreach ( $access_options as $access_key => $access_label ) {
+			$access_url = add_query_arg(
+				array(
+					'handl_aicac_status' => $plugin_status_filter,
+					'handl_aicac_access' => $access_key,
+				),
+				$base_url
+			);
+			printf(
+				'<option value="%1$s" data-url="%2$s"%3$s>%4$s</option>',
+				esc_attr( $access_key ),
+				esc_url( $access_url ),
+				selected( $plugin_access_filter, $access_key, false ),
+				esc_html( $access_label )
+			);
+		}
 		echo '</select>';
 		echo '</div>';
 		echo '<br class="clear" />';
 		echo '</div>';
-		echo '</form>';
 		echo '</div>';
 	}
 

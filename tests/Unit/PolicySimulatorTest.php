@@ -260,6 +260,7 @@ final class PolicySimulatorTest extends TestCase {
 	/**
 	 * Rules save must not hide handl_aicac_action=save, and Run test must be an
 	 * in-form submit (not form= external) so automation includes simulate_policy.
+	 * Access filters must not open a nested <form> inside the Rules form.
 	 */
 	public function test_rules_form_action_is_submit_not_hidden_save(): void {
 		$src = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php' );
@@ -292,6 +293,20 @@ final class PolicySimulatorTest extends TestCase {
 			'name="handl_aicac_action" value="simulate_policy" form="',
 			$src,
 			'Run test must not use external form= association'
+		);
+
+		$this->assertTrue(
+			(bool) preg_match(
+				'/function render_plugin_rules_filters\(.*?\n\t\}/s',
+				$src,
+				$m
+			),
+			'render_plugin_rules_filters must exist'
+		);
+		$this->assertDoesNotMatchRegularExpression(
+			'/echo\s+[\'"]<form\b/',
+			$m[0],
+			'Rules access filters must not echo a nested <form> inside the Rules POST form'
 		);
 	}
 }
