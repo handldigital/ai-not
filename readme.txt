@@ -48,6 +48,7 @@ Caller identification is **best-effort**. Calls made through cron, REST requests
 * **Capability rules:** Allow or deny Text, Image, Speech, TTS, or Video separately for the same plugin.
 * **Learn mode:** Log AI Client activity without enforcing deny rules, so you can watch first and block later.
 * **Emergency stop:** Block AI Client calls across the site except for plugins you list as exceptions. Exceptions still follow their normal plugin and capability rules.
+* **Direct AI connections:** Optional block of WordPress HTTP calls to known AI provider hosts outside the AI Client (off by default). List plugins that may still call those hosts directly.
 * **Blocked AI tools:** Stop a prompt when it tries to use a blocked WordPress ability or custom tool. The activity log shows which tool triggered the block.
 * **Role gate:** Optionally limit which WordPress roles may start AI Client operations. Off by default (all roles). When enabled, signed-in users whose role is unchecked are denied through the normal deny path. Cron, WP-CLI, and other no-user requests are not affected.
 
@@ -65,7 +66,7 @@ Caller identification is **best-effort**. Calls made through cron, REST requests
 = Honest limits =
 
 * This plugin governs AI calls made through the **WordPress AI Client**. It does not control every possible AI request made by WordPress code.
-* The **Shadow-AI detector is observe-only**. When logging or Learn mode is on, it can record direct WordPress HTTP requests to a curated list of known AI provider hosts. It does **not** block those requests, and the host list is not complete.
+* The **Shadow-AI detector** records direct WordPress HTTP requests to a curated list of known AI provider hosts when logging or Learn mode is on. Blocking those requests is **off by default**; turn on **Block direct AI provider calls** on the Rules tab to short-circuit matched hosts (with optional plugin exceptions). The host list is not complete.
 * Caller identification is best-effort and may be wrong or missing.
 * **EXPERIMENTAL model force** can steer an allowed call toward a provider and model for the detected caller. It is not a spend guarantee and depends on best-effort caller identification.
 * If WordPress has disabled AI across the site, the activity log may be empty. The plugin displays a notice when this happens.
@@ -156,10 +157,10 @@ Weekly report mail does **not** include prompt preview, user identity, request p
 Connector Approvals in the WordPress AI plugin controls which plugins and themes can use configured AI connector credentials. HandL AI Connector Access Control governs AI Client prompts through `wp_ai_client_prevent_prompt`, adding per-plugin allow/deny rules, a **capability-family matrix**, **tool-arming denial**, **shadow-AI detection** for direct connections outside the AI Client, and **estimated spend / denial alerting**. Both can run together because they govern different layers. See Dashboard → “Beyond Connector Approvals”.
 
 = Does this stop all AI usage? =
-Only AI calls made through the WordPress AI Client APIs that pass through `wp_ai_client_prevent_prompt`. The shadow-AI detector **observes** direct HTTP to known AI hosts; it does not block those requests in this version.
+Only AI calls made through the WordPress AI Client APIs that pass through `wp_ai_client_prevent_prompt`. The shadow-AI detector can **observe** direct HTTP to known AI hosts (when logging or Learn mode is on) and, if you enable **Block direct AI provider calls**, can **block** those requests with optional per-plugin exceptions. AI Client traffic is never treated as shadow traffic.
 
 = What does “outside the AI Client” mean on Audit & log? =
-A plugin (or other PHP code) issued a WordPress HTTP request to a known AI provider host without going through the AI Client path this plugin gates. Those rows are labeled observe — seen, not governed by allow/deny/force rules.
+A plugin (or other PHP code) issued a WordPress HTTP request to a known AI provider host without going through the AI Client path this plugin gates. With blocking off, those rows are labeled observe. With **Block direct AI provider calls** on, they may be denied or allowed as an exception. Plugin Allow/Deny rules still apply only to AI Client traffic.
 
 = Is attribution perfect? =
 No. It is best-effort and may be unknown or ambiguous for some execution paths (cron, REST bootstraps, shared libraries, MU plugins). Experimental model force uses the same attribution: a pin follows the **detected** caller, not a guarantee of which product “owns” the spend.
@@ -185,6 +186,7 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = Unreleased =
+* Opt-in **Block direct AI provider calls** (Rules tab, off by default): short-circuit WordPress HTTP to curated AI hosts outside the AI Client, with optional per-plugin exceptions. Recommend Learn mode first. Fail-open on internal errors.
 * Optional estimated-spend threshold email alerts (site-wide and per-plugin; empty = off). Reuses the denial-alert recipient; no enforcement.
 * Opt-in Direct AI connection email alerts (off by default) when a plugin connects directly to an AI provider outside the AI Client — immediate or hourly summary; labeled Observed, not blocked; email-only.
 * AICAC-11: In-product messaging that differentiates HandL from the WordPress AI plugin’s Connector Approvals experiment (Dashboard callout, settings subtitle, Rules note, FAQ).

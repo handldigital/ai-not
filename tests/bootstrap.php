@@ -381,6 +381,39 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-spend-threshold.php'
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-analytics.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alerts.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-weekly-report.php';
+
+if ( ! defined( 'HANDL_AICAC_FILE' ) ) {
+	define( 'HANDL_AICAC_FILE', HANDL_AICAC_DIR . '/handl-ai-connector-access-control.php' );
+}
+if ( ! defined( 'WP_PLUGIN_DIR' ) ) {
+	define( 'WP_PLUGIN_DIR', sys_get_temp_dir() . '/handl-aicac-plugins' );
+}
+if ( ! function_exists( 'wp_normalize_path' ) ) {
+	/**
+	 * @param string $path Path.
+	 */
+	function wp_normalize_path( $path ): string {
+		$path = str_replace( '\\', '/', (string) $path );
+		$path = preg_replace( '|/+|', '/', $path ) ?? $path;
+		return $path;
+	}
+}
+if ( ! function_exists( 'get_current_user_id' ) ) {
+	function get_current_user_id(): int {
+		return 0;
+	}
+}
+if ( ! function_exists( 'get_plugins' ) ) {
+	/**
+	 * @return array<string,array<string,mixed>>
+	 */
+	function get_plugins(): array {
+		return array();
+	}
+}
+
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-attribution.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-shadow-ai.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-transfer.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-audit-export.php';

@@ -846,6 +846,9 @@ final class Policy {
 		// F3: denial / shadow-AI alerts + estimated-$ rates (observability only).
 		$policy['alert_on_deny']     = (bool) ( $policy['alert_on_deny'] ?? false );
 		$policy['alert_on_shadow']   = (bool) ( $policy['alert_on_shadow'] ?? false );
+		// AICAC-23: opt-in block of direct HTTP to curated AI hosts (default off).
+		$policy['shadow_block_enabled']    = (bool) ( $policy['shadow_block_enabled'] ?? false );
+		$policy['shadow_block_exceptions'] = Shadow_AI::get_block_exceptions( $policy );
 		$policy['alert_mode']        = Alerts::sanitize_mode( $policy['alert_mode'] ?? 'immediate' );
 		$policy['alert_email']       = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
 		$policy['alert_webhook_url'] = Alerts::sanitize_webhook_url( $policy['alert_webhook_url'] ?? '' );
@@ -1063,6 +1066,8 @@ final class Policy {
 
 		$policy['alert_on_deny']     = ! empty( $policy['alert_on_deny'] );
 		$policy['alert_on_shadow']   = ! empty( $policy['alert_on_shadow'] );
+		$policy['shadow_block_enabled']    = ! empty( $policy['shadow_block_enabled'] );
+		$policy['shadow_block_exceptions'] = Shadow_AI::get_block_exceptions( $policy );
 		$policy['alert_mode']        = Alerts::sanitize_mode( $policy['alert_mode'] ?? 'immediate' );
 		$policy['alert_email']       = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
 		$policy['alert_webhook_url'] = Alerts::sanitize_webhook_url( $policy['alert_webhook_url'] ?? '' );
@@ -1398,10 +1403,12 @@ final class Policy {
 			return;
 		}
 
-		// First observation for this pair in the current retained window only.
-		// Also covers mid-cluster toggle-on: an existing row (even outside the
-		// idle window) counts as already seen — no alert storm.
-		$shadow_alert_eligible = $is_direct_http && ! self::log_has_direct_http_pair( $log, $event );
+		// First *observe* for this pair in the retained window only.
+		// Deny/allow (block mode) must not fire "observed, not blocked" emails.
+		// Also covers mid-cluster toggle-on: an existing row counts as already seen.
+		$shadow_alert_eligible = $is_direct_http
+			&& 'observe' === (string) ( $event['decision'] ?? 'observe' )
+			&& ! self::log_has_direct_http_pair( $log, $event );
 
 		if ( $is_direct_http && ! isset( $event['count'] ) ) {
 			$event['count'] = 1;
