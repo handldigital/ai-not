@@ -295,6 +295,17 @@ final class PolicySimulatorTest extends TestCase {
 			'Run test must not use external form= association'
 		);
 
+		$this->assertDoesNotMatchRegularExpression(
+			'/echo \'<form method="post" id="\' \. esc_attr\( \$rules_form_id \) \. \'" class="handl-aicac-rules-save-form"/',
+			$src,
+			'Visible Rules form must not use handl-aicac-rules-save-form (CSS display:none)'
+		);
+		$this->assertMatchesRegularExpression(
+			'/\$bulk_form_id[\s\S]{0,200}?class="handl-aicac-rules-save-form"/',
+			$src,
+			'Hidden bulk shell may keep handl-aicac-rules-save-form'
+		);
+
 		$this->assertTrue(
 			(bool) preg_match(
 				'/function render_plugin_rules_filters\(.*?\n\t\}/s',

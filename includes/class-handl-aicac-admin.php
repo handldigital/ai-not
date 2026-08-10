@@ -483,11 +483,9 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		echo '<input type="hidden" name="handl_aicac_access" value="' . esc_attr( $plugin_access_filter ) . '" />';
 		echo '</form>';
 
-		// Rules form wraps settings, matrix, Save, and Test this policy so submit
-		// buttons are in-form descendants. External form= submits drop the clicked
-		// button's name/value in shared Chrome automation (QA false negative).
-		// Do not use a hidden handl_aicac_action=save — it wins over Run test in PHP.
-		echo '<form method="post" id="' . esc_attr( $rules_form_id ) . '" class="handl-aicac-rules-save-form">';
+		// Visible Rules form — do NOT use handl-aicac-rules-save-form (that class is
+		// display:none for empty shells that only exist for form= association).
+		echo '<form method="post" id="' . esc_attr( $rules_form_id ) . '">';
 		wp_nonce_field( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
 		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
 		echo '<input type="hidden" name="handl_aicac_status" value="' . esc_attr( $plugin_status_filter ) . '" />';
