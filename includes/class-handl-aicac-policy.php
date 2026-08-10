@@ -857,6 +857,10 @@ final class Policy {
 		$policy['est_usd_provider_rates'] = Cost::sanitize_provider_rates( $policy['est_usd_provider_rates'] ?? array() );
 		$policy['spend_threshold_site']    = Spend_Threshold::sanitize_threshold( $policy['spend_threshold_site'] ?? null );
 		$policy['spend_threshold_plugins'] = Spend_Threshold::sanitize_plugin_thresholds( $policy['spend_threshold_plugins'] ?? array() );
+		$policy['anomaly_alert_enabled'] = (bool) ( $policy['anomaly_alert_enabled'] ?? false );
+		$policy['anomaly_multiplier']    = Anomaly::sanitize_multiplier( $policy['anomaly_multiplier'] ?? Anomaly::DEFAULT_MULTIPLIER );
+		$policy['anomaly_floor_calls']   = Anomaly::sanitize_floor_calls( $policy['anomaly_floor_calls'] ?? Anomaly::DEFAULT_FLOOR_CALLS );
+		$policy['anomaly_floor_spend']   = Anomaly::sanitize_floor_spend( $policy['anomaly_floor_spend'] ?? Anomaly::DEFAULT_FLOOR_SPEND );
 
 		// F7: weekly report preference — staged selected-by-default until first explicit choice.
 		// Delivery still requires logging/learn (Weekly_Report::is_active). Key absence ≠ off.
@@ -1076,6 +1080,10 @@ final class Policy {
 		$policy['est_usd_provider_rates'] = Cost::sanitize_provider_rates( $policy['est_usd_provider_rates'] ?? array() );
 		$policy['spend_threshold_site']    = Spend_Threshold::sanitize_threshold( $policy['spend_threshold_site'] ?? null );
 		$policy['spend_threshold_plugins'] = Spend_Threshold::sanitize_plugin_thresholds( $policy['spend_threshold_plugins'] ?? array() );
+		$policy['anomaly_alert_enabled'] = ! empty( $policy['anomaly_alert_enabled'] );
+		$policy['anomaly_multiplier']    = Anomaly::sanitize_multiplier( $policy['anomaly_multiplier'] ?? Anomaly::DEFAULT_MULTIPLIER );
+		$policy['anomaly_floor_calls']   = Anomaly::sanitize_floor_calls( $policy['anomaly_floor_calls'] ?? Anomaly::DEFAULT_FLOOR_CALLS );
+		$policy['anomaly_floor_spend']   = Anomaly::sanitize_floor_spend( $policy['anomaly_floor_spend'] ?? Anomaly::DEFAULT_FLOOR_SPEND );
 
 		$max_age = self::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
 		if ( null === $max_age ) {
@@ -1145,6 +1153,8 @@ final class Policy {
 
 		// S-103: threshold set below already-accrued spend fires immediately.
 		Spend_Threshold::maybe_evaluate( $policy );
+		// AICAC-ANOMALY: re-check baseline spikes after policy/log changes.
+		Anomaly::maybe_evaluate( $policy );
 	}
 
 	/**
@@ -1422,6 +1432,12 @@ final class Policy {
 		if ( $shadow_alert_eligible ) {
 			Alerts::maybe_notify_shadow( $event, $policy );
 		}
+
+		// AICAC-ANOMALY: re-check after new retained rows (skip our own audit rows).
+		$channel = isset( $event['channel'] ) ? (string) $event['channel'] : '';
+		if ( 'anomaly' !== $channel && 'spend_threshold' !== $channel ) {
+			Anomaly::maybe_evaluate( $policy );
+		}
 	}
 
 	/**
@@ -1570,6 +1586,7 @@ final class Policy {
 			update_option( Plugin::LOG_OPTION_KEY, $log, false );
 			// S-103: token patch can move estimated spend over a threshold.
 			Spend_Threshold::maybe_evaluate();
+			Anomaly::maybe_evaluate();
 			return true;
 		}
 

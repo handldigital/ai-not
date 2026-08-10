@@ -2280,6 +2280,33 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo '</td>';
 		echo '</tr>';
 
+		// AICAC-ANOMALY: usage spike alerts (opt-in, default off).
+		$anomaly_on       = ! empty( $policy['anomaly_alert_enabled'] );
+		$anomaly_mult     = Anomaly::sanitize_multiplier( $policy['anomaly_multiplier'] ?? Anomaly::DEFAULT_MULTIPLIER );
+		$anomaly_floor_c  = Anomaly::sanitize_floor_calls( $policy['anomaly_floor_calls'] ?? Anomaly::DEFAULT_FLOOR_CALLS );
+		$anomaly_floor_s  = Anomaly::sanitize_floor_spend( $policy['anomaly_floor_spend'] ?? Anomaly::DEFAULT_FLOOR_SPEND );
+		$anomaly_notice   = Anomaly::degradation_notice( $policy );
+		echo '<tr>';
+		echo '<th scope="row">' . esc_html__( 'Usage spike alerts', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<td>';
+		echo '<label><input type="checkbox" name="handl_aicac_anomaly_alert_enabled" value="1" ' . checked( $anomaly_on, true, false ) . ' /> ';
+		echo esc_html__( 'Email me when a plugin’s AI use is much higher than its recent average', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Off by default. Compares today’s AI Client calls and estimated spend to the average of the previous 7 days in your saved activity log. Uses the same email address and optional webhook as blocked-call alerts. Does not block calls.', 'handl-ai-connector-access-control' ) . '</p>';
+		if ( '' !== $anomaly_notice ) {
+			echo '<p class="description notice notice-warning inline" style="padding:8px;"><strong>' . esc_html( $anomaly_notice ) . '</strong></p>';
+		}
+		echo '<p><label for="handl-aicac-anomaly-multiplier">' . esc_html__( 'How many times higher than average', 'handl-ai-connector-access-control' ) . '</label><br />';
+		echo '<input type="number" step="0.1" min="1.5" max="50" class="small-text" id="handl-aicac-anomaly-multiplier" name="handl_aicac_anomaly_multiplier" value="' . esc_attr( (string) $anomaly_mult ) . '" /> ';
+		echo '<span class="description">' . esc_html__( 'Default 3. For example, 3 means about three times the recent daily average.', 'handl-ai-connector-access-control' ) . '</span></p>';
+		echo '<p><label for="handl-aicac-anomaly-floor-calls">' . esc_html__( 'Minimum calls before an alert', 'handl-ai-connector-access-control' ) . '</label><br />';
+		echo '<input type="number" step="1" min="1" max="100000" class="small-text" id="handl-aicac-anomaly-floor-calls" name="handl_aicac_anomaly_floor_calls" value="' . esc_attr( (string) $anomaly_floor_c ) . '" /> ';
+		echo '<span class="description">' . esc_html__( 'Default 20. Quiet plugins will not alert below this many calls today.', 'handl-ai-connector-access-control' ) . '</span></p>';
+		echo '<p><label for="handl-aicac-anomaly-floor-spend">' . esc_html__( 'Minimum estimated spend before an alert (USD)', 'handl-ai-connector-access-control' ) . '</label><br />';
+		echo '<input type="number" step="0.01" min="0.01" max="1000000" class="small-text" id="handl-aicac-anomaly-floor-spend" name="handl_aicac_anomaly_floor_spend" value="' . esc_attr( (string) $anomaly_floor_s ) . '" /> ';
+		echo '<span class="description">' . esc_html__( 'Default $1.00. Quiet plugins will not alert below this estimated amount today.', 'handl-ai-connector-access-control' ) . '</span></p>';
+		echo '</td>';
+		echo '</tr>';
+
 		echo '</table>';
 	}
 
@@ -3106,6 +3133,18 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		$posted_plugin_th = filter_input( INPUT_POST, 'handl_aicac_spend_threshold_plugins', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
 		$policy['spend_threshold_plugins'] = Spend_Threshold::sanitize_plugin_thresholds(
 			is_array( $posted_plugin_th ) ? $posted_plugin_th : array()
+		);
+
+		// AICAC-ANOMALY: usage spike alerts (default off).
+		$policy['anomaly_alert_enabled'] = ! empty( filter_input( INPUT_POST, 'handl_aicac_anomaly_alert_enabled', FILTER_UNSAFE_RAW ) );
+		$policy['anomaly_multiplier']    = Anomaly::sanitize_multiplier(
+			filter_input( INPUT_POST, 'handl_aicac_anomaly_multiplier', FILTER_UNSAFE_RAW )
+		);
+		$policy['anomaly_floor_calls'] = Anomaly::sanitize_floor_calls(
+			filter_input( INPUT_POST, 'handl_aicac_anomaly_floor_calls', FILTER_UNSAFE_RAW )
+		);
+		$policy['anomaly_floor_spend'] = Anomaly::sanitize_floor_spend(
+			filter_input( INPUT_POST, 'handl_aicac_anomaly_floor_spend', FILTER_UNSAFE_RAW )
 		);
 	}
 
