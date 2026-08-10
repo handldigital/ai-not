@@ -530,6 +530,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		echo '</td>';
 		echo '</tr>';
 		$this->render_kill_switch_settings_rows( $policy, $rules_form_id, $plugins );
+		$this->render_shadow_block_settings_rows( $policy, $rules_form_id, $plugins );
 		$this->render_role_gate_settings_rows( $policy, $rules_form_id );
 		echo '</table>';
 
@@ -2378,6 +2379,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		}
 
 		$this->apply_kill_switch_settings_from_post( $policy );
+		$this->apply_shadow_block_settings_from_post( $policy );
 		$this->apply_role_gate_settings_from_post( $policy );
 		$this->apply_model_force_settings_from_post( $policy );
 
@@ -2972,6 +2974,30 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	}
 
 	/**
+	 * AICAC-23: opt-in block of direct AI provider HTTP (Rules tab).
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function apply_shadow_block_settings_from_post( array &$policy ): void {
+		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
+		$posted = filter_input( INPUT_POST, 'handl_aicac_shadow_block_enabled', FILTER_UNSAFE_RAW );
+		$policy['shadow_block_enabled'] = ! empty( $posted );
+
+		$exceptions = array();
+		$posted_exceptions = filter_input( INPUT_POST, 'handl_aicac_shadow_block_exceptions', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		if ( is_array( $posted_exceptions ) ) {
+			foreach ( $posted_exceptions as $basename ) {
+				$basename = sanitize_text_field( (string) $basename );
+				if ( '' !== $basename ) {
+					$exceptions[] = $basename;
+				}
+			}
+		}
+		$policy['shadow_block_exceptions'] = array_values( array_unique( $exceptions ) );
+	}
+
+	/**
 	 * @param array<string,mixed> $policy
 	 */
 	private function apply_role_gate_settings_from_post( array &$policy ): void {
@@ -3231,11 +3257,50 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	}
 
 	/**
-	 * @param array<int,mixed> $log
-	 * @param array<string,mixed> $policy
+	 * AICAC-23: opt-in block of direct AI provider HTTP outside the AI Client.
+	 *
+	 * @param array<string,mixed>               $policy
 	 * @param array<string,array<string,mixed>> $plugins
-	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $log_filters
 	 */
+	private function render_shadow_block_settings_rows( array $policy, string $form_id, array $plugins ): void {
+		$enabled    = ! empty( $policy['shadow_block_enabled'] );
+		$exceptions = Shadow_AI::get_block_exceptions( $policy );
+		$ex_class   = 'handl-aicac-shadow-block-exceptions' . ( $enabled ? '' : ' is-muted' );
+
+		echo '<tr>';
+		echo '<th scope="row">' . esc_html__( 'Direct AI connections', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<td>';
+		echo '<label><input type="checkbox" name="handl_aicac_shadow_block_enabled" value="1" form="' . esc_attr( $form_id ) . '" ' . checked( $enabled, true, false ) . ' id="handl-aicac-shadow-block-enabled" /> ';
+		echo esc_html__( 'Block direct calls to known AI providers', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Off by default. Blocks WordPress HTTP requests to known AI provider hosts, except for the plugins allowed below. Calls made through the WordPress AI Client are not affected. Turn on Learn mode or activity logging first to see which direct connections would be blocked.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		echo '<div class="' . esc_attr( $ex_class ) . '" id="handl-aicac-shadow-block-exceptions-wrap">';
+		echo '<p class="handl-aicac-shadow-block-exceptions__heading" id="handl-aicac-shadow-block-exceptions-heading"><strong>' . esc_html__( 'Allow selected plugins to connect directly', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		echo '<p class="description handl-aicac-shadow-block-exceptions__state" id="handl-aicac-shadow-block-exceptions-state"' . ( $enabled ? ' hidden' : '' ) . '>' . esc_html__( 'Exceptions apply only when blocking is on. Allowed direct connections are logged when Learn mode or activity logging is on.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<div class="handl-aicac-kill-exceptions__list" role="group" aria-labelledby="handl-aicac-shadow-block-exceptions-heading">';
+		$i = 0;
+		foreach ( $plugins as $basename => $data ) {
+			++$i;
+			$name = isset( $data['Name'] ) ? (string) $data['Name'] : $basename;
+			$id   = 'handl-aicac-shadow-ex-' . (string) $i;
+			$on   = in_array( $basename, $exceptions, true );
+			echo '<label class="handl-aicac-kill-exceptions__item" for="' . esc_attr( $id ) . '">';
+			echo '<input type="checkbox" id="' . esc_attr( $id ) . '" name="handl_aicac_shadow_block_exceptions[]" value="' . esc_attr( $basename ) . '" form="' . esc_attr( $form_id ) . '" ' . checked( $on, true, false ) . ' />';
+			echo '<span class="handl-aicac-kill-exceptions__text">';
+			echo '<span class="handl-aicac-kill-exceptions__name">' . esc_html( $name ) . '</span>';
+			echo '<code class="handl-aicac-kill-exceptions__slug">' . esc_html( $basename ) . '</code>';
+			echo '</span>';
+			echo '</label>';
+		}
+		echo '</div>';
+		echo '</div>';
+		echo '<script>';
+		echo '(function(){var k=document.getElementById("handl-aicac-shadow-block-enabled"),w=document.getElementById("handl-aicac-shadow-block-exceptions-wrap"),n=document.getElementById("handl-aicac-shadow-block-exceptions-state");';
+		echo 'if(!k||!w)return;function s(){var on=k.checked;w.classList.toggle("is-muted",!on);if(n)n.hidden=on;}k.addEventListener("change",s);s();})();';
+		echo '</script>';
+		echo '</td>';
+		echo '</tr>';
+	}
 
 	/**
 	 * Optional per-role gate: which WP roles may initiate AI Client operations.
@@ -3419,7 +3484,13 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo $this->render_decision_badge( $decision ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		if ( $is_direct_http ) {
 			echo '<br /><span class="description handl-aicac-shadow-label" style="font-size:11px;">';
-			echo esc_html__( 'outside AI Client; observed, not controlled by these rules', 'handl-ai-connector-access-control' );
+			if ( 'deny' === $decision ) {
+				echo esc_html__( 'outside AI Client; blocked', 'handl-ai-connector-access-control' );
+			} elseif ( 'allow' === $decision && ! empty( $row['shadow_exception'] ) ) {
+				echo esc_html__( 'outside AI Client; allowed by exception', 'handl-ai-connector-access-control' );
+			} else {
+				echo esc_html__( 'outside AI Client; observed, not blocked', 'handl-ai-connector-access-control' );
+			}
 			echo '</span>';
 			$cluster_count = isset( $row['count'] ) ? (int) $row['count'] : 1;
 			if ( $cluster_count > 1 ) {
@@ -3612,14 +3683,17 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		}
 		echo '</td>';
 		echo '<td class="column-actions handl-aicac-quick-actions">';
-		// direct_http is observe-only: Allow/Deny write AI Client rules that cannot
-		// govern this traffic. A live button that is a no-op for the row shown is a
-		// false enforcement surface (F6 live gate / F5 item 5 / standing rule: the PR
-		// that introduces a row type owns every control that renders on that type).
-		// Wording matches the decision-column label — one concept, one phrase.
+		// direct_http is not governed by plugin Allow/Deny rules (AI Client only).
+		// Opt-in Direct AI connections block is separate (Rules → Direct AI connections).
 		if ( $is_direct_http ) {
 			echo '<span class="description handl-aicac-not-governable" style="font-size:11px;">';
-			echo esc_html__( 'observed, not controlled by these rules', 'handl-ai-connector-access-control' );
+			if ( 'deny' === $decision ) {
+				echo esc_html__( 'outside AI Client; blocked', 'handl-ai-connector-access-control' );
+			} elseif ( 'allow' === $decision && ! empty( $row['shadow_exception'] ) ) {
+				echo esc_html__( 'outside AI Client; allowed by exception', 'handl-ai-connector-access-control' );
+			} else {
+				echo esc_html__( 'outside AI Client; observed, not blocked', 'handl-ai-connector-access-control' );
+			}
 			echo '</span>';
 		} elseif ( $plugin ) {
 			$this->render_quick_rule_buttons( $plugin, $log_filters );
