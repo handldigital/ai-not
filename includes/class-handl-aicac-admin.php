@@ -51,6 +51,15 @@ final class Admin {
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		// File downloads must run before admin-header HTML is buffered (render_page is too late).
+		add_action( 'admin_init', array( $this, 'maybe_handle_file_downloads' ) );
+	}
+
+	/**
+	 * Shared capability gate (single current_user_can for authz inventory).
+	 */
+	private function user_can_manage_options(): bool {
+		return current_user_can( 'manage_options' );
 	}
 
 	public function enqueue_assets( string $hook_suffix ): void {
@@ -76,8 +85,40 @@ final class Admin {
 		);
 	}
 
+	/**
+	 * Stream export downloads on admin_init — before any admin HTML output.
+	 *
+	 * Handling these inside render_page() leaves the buffered admin chrome in the
+	 * response body, so browsers save an HTML document with a .csv/.json filename.
+	 */
+	public function maybe_handle_file_downloads(): void {
+		if ( ! isset( $_POST['handl_aicac_action'] ) ) {
+			return;
+		}
+
+		$posted_action = sanitize_key( wp_unslash( (string) $_POST['handl_aicac_action'] ) );
+		if ( 'export_log' !== $posted_action && 'export_rules' !== $posted_action ) {
+			return;
+		}
+
+		if ( ! $this->user_can_manage_options() ) {
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'handl-ai-connector-access-control' ) );
+		}
+
+		if ( 'export_log' === $posted_action ) {
+			check_admin_referer( 'handl_aicac_export_log', 'handl_aicac_nonce' );
+			$this->log_filters = $this->parse_log_filters();
+			$this->handle_export_log();
+		}
+
+		if ( 'export_rules' === $posted_action ) {
+			check_admin_referer( 'handl_aicac_export_rules', 'handl_aicac_nonce' );
+			$this->handle_export_rules();
+		}
+	}
+
 	public function render_page(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! $this->user_can_manage_options() ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'handl-ai-connector-access-control' ) );
 		}
 
@@ -172,14 +213,7 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_undo_quick_rule', 'handl_aicac_nonce' );
 				$this->handle_undo_quick_rule();
 			}
-			if ( 'export_rules' === $posted_action ) {
-				check_admin_referer( 'handl_aicac_export_rules', 'handl_aicac_nonce' );
-				$this->handle_export_rules();
-			}
-			if ( 'export_log' === $posted_action ) {
-				check_admin_referer( 'handl_aicac_export_log', 'handl_aicac_nonce' );
-				$this->handle_export_log();
-			}
+			// export_log / export_rules: handled on admin_init (maybe_handle_file_downloads).
 			if ( 'import_rules_preview' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_import_rules', 'handl_aicac_nonce' );
 				$this->handle_import_rules_preview();
@@ -3323,8 +3357,9 @@ final class Admin {
 	/**
 	 * Stream the currently filtered retained audit log as CSV (AICAC-26).
 	 *
-	 * Capability + nonce are enforced by the render_page dispatch above.
-	 * Exports every matching retained row (≤ log_limit / 1000), not the 50-row UI page.
+	 * Capability + nonce are enforced by maybe_handle_file_downloads() on admin_init
+	 * (before admin HTML is buffered). Exports every matching retained row
+	 * (≤ log_limit / 1000), not the 50-row UI page.
 	 */
 	private function handle_export_log(): void {
 		$policy  = Policy::get_policy();

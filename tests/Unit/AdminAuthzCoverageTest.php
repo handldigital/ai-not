@@ -314,6 +314,45 @@ final class AdminAuthzCoverageTest extends TestCase {
 	}
 
 	/**
+	 * File downloads must run on admin_init — render_page is after admin HTML is buffered,
+	 * which produced HTML bodies with .csv filenames in QA (PR #72).
+	 */
+	public function test_file_downloads_hooked_on_admin_init_before_html(): void {
+		$this->assertMatchesRegularExpression(
+			"/add_action\s*\(\s*'admin_init'\s*,\s*array\s*\(\s*\\\$this\s*,\s*'maybe_handle_file_downloads'\s*\)/",
+			$this->source,
+			'CSV/JSON downloads must register on admin_init'
+		);
+
+		$maybe_pos  = strpos( $this->source, 'function maybe_handle_file_downloads' );
+		$render_pos = strpos( $this->source, 'function render_page' );
+		$this->assertNotFalse( $maybe_pos );
+		$this->assertNotFalse( $render_pos );
+
+		$maybe_body = substr( $this->source, $maybe_pos, $render_pos > $maybe_pos ? $render_pos - $maybe_pos : 2500 );
+		$this->assertStringContainsString( 'handle_export_log', $maybe_body );
+		$this->assertStringContainsString( 'handle_export_rules', $maybe_body );
+
+		// Late dispatch in render_page must not call the stream handlers again.
+		$render_end  = strpos( $this->source, 'function render_plugin_rules_filters', $render_pos );
+		$render_body = substr(
+			$this->source,
+			$render_pos,
+			false !== $render_end ? $render_end - $render_pos : 8000
+		);
+		$this->assertStringNotContainsString(
+			'handle_export_log()',
+			$render_body,
+			'export_log must not stream from render_page (HTML already buffered)'
+		);
+		$this->assertStringNotContainsString(
+			'handle_export_rules()',
+			$render_body,
+			'export_rules must not stream from render_page (HTML already buffered)'
+		);
+	}
+
+	/**
 	 * Import path must call Policy::save_policy (reuse sanitize path; no bypass).
 	 */
 	public function test_import_confirm_uses_policy_save_policy(): void {
