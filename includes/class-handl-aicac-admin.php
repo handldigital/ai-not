@@ -232,7 +232,7 @@ final class Admin {
 						'page'                      => 'handl-ai-connector-access-control',
 						'handl_aicac_tab'           => $return_tab,
 						'handl_aicac_test_email'    => (string) $result['status'],
-						'handl_aicac_test_email_to' => (string) $result['to'],
+						'handl_aicac_test_email_to' => Alerts::encode_email_query_arg( (string) $result['to'] ),
 					),
 					admin_url( 'options-general.php' )
 				);
@@ -1119,7 +1119,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$this->redirect_onboard_dashboard(
 			array(
 				'handl_aicac_test_email'    => (string) $result['status'],
-				'handl_aicac_test_email_to' => (string) $result['to'],
+				'handl_aicac_test_email_to' => Alerts::encode_email_query_arg( (string) $result['to'] ),
 			)
 		);
 	}
