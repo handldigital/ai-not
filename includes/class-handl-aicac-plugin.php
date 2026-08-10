@@ -37,6 +37,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-shadow-ai.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-transfer.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-audit-export.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-analytics.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';

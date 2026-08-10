@@ -28,6 +28,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 	 */
 	private const APPROVED_DISPATCH_ACTIONS = array(
 		'bulk_plugin_rules',
+		'export_log',
 		'export_rules',
 		'import_rules_confirm',
 		'import_rules_preview',
@@ -147,6 +148,10 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'nonce_action' => 'handl_aicac_export_rules',
 			),
 			array(
+				'action'       => 'export_log',
+				'nonce_action' => 'handl_aicac_export_log',
+			),
+			array(
 				'action'       => 'import_rules_preview',
 				'nonce_action' => 'handl_aicac_import_rules',
 			),
@@ -245,6 +250,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'apply_model_force_settings_from_post',
 				'apply_log_settings_from_post',
 				'handle_export_rules',
+				'handle_export_log',
 				'handle_import_rules_preview',
 				'handle_import_rules_confirm',
 			) as $method
@@ -304,6 +310,45 @@ final class AdminAuthzCoverageTest extends TestCase {
 			self::APPROVED_DISPATCH_ACTIONS,
 			$discovered,
 			'Unknown action must make discovered set differ from approved inventory'
+		);
+	}
+
+	/**
+	 * File downloads must run on admin_init — render_page is after admin HTML is buffered,
+	 * which produced HTML bodies with .csv filenames in QA (PR #72).
+	 */
+	public function test_file_downloads_hooked_on_admin_init_before_html(): void {
+		$this->assertMatchesRegularExpression(
+			"/add_action\s*\(\s*'admin_init'\s*,\s*array\s*\(\s*\\\$this\s*,\s*'maybe_handle_file_downloads'\s*\)/",
+			$this->source,
+			'CSV/JSON downloads must register on admin_init'
+		);
+
+		$maybe_pos  = strpos( $this->source, 'function maybe_handle_file_downloads' );
+		$render_pos = strpos( $this->source, 'function render_page' );
+		$this->assertNotFalse( $maybe_pos );
+		$this->assertNotFalse( $render_pos );
+
+		$maybe_body = substr( $this->source, $maybe_pos, $render_pos > $maybe_pos ? $render_pos - $maybe_pos : 2500 );
+		$this->assertStringContainsString( 'handle_export_log', $maybe_body );
+		$this->assertStringContainsString( 'handle_export_rules', $maybe_body );
+
+		// Late dispatch in render_page must not call the stream handlers again.
+		$render_end  = strpos( $this->source, 'function render_plugin_rules_filters', $render_pos );
+		$render_body = substr(
+			$this->source,
+			$render_pos,
+			false !== $render_end ? $render_end - $render_pos : 8000
+		);
+		$this->assertStringNotContainsString(
+			'handle_export_log()',
+			$render_body,
+			'export_log must not stream from render_page (HTML already buffered)'
+		);
+		$this->assertStringNotContainsString(
+			'handle_export_rules()',
+			$render_body,
+			'export_rules must not stream from render_page (HTML already buffered)'
 		);
 	}
 
