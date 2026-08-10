@@ -120,7 +120,7 @@ final class ShadowAlertsTest extends TestCase {
 		$mail = self::$mails[0];
 		$this->assertSame( 'admin@example.com', $mail['to'] );
 		$this->assertStringContainsString( 'not blocked', strtolower( $mail['subject'] ) );
-		$this->assertStringContainsString( 'observe / not blocked', $mail['body'] );
+		$this->assertStringContainsString( 'Observed, not blocked', $mail['body'] );
 		$this->assertStringContainsString( 'Time:', $mail['body'] );
 		$this->assertStringContainsString( 'Caller: shadow-caller/plugin.php', $mail['body'] );
 		$this->assertStringContainsString( 'Host: api.openai.com', $mail['body'] );
@@ -140,7 +140,7 @@ final class ShadowAlertsTest extends TestCase {
 		$this->assertSame( 'shadow', $rows[0]['alert_kind'] ?? '' );
 		$this->assertSame( 'api.openai.com', $rows[0]['host'] ?? '' );
 		$this->assertSame( '/v1/chat/completions', $rows[0]['uri'] ?? '' );
-		$this->assertSame( 'observe / not blocked', $rows[0]['status_label'] ?? '' );
+		$this->assertSame( 'Observed, not blocked', $rows[0]['status_label'] ?? '' );
 	}
 
 	public function test_wp_mail_throw_is_contained_and_queues(): void {
@@ -229,7 +229,7 @@ final class ShadowAlertsTest extends TestCase {
 		$summary = Alerts::summarize_event_public( $this->shadow_event() );
 		$this->assertSame( 'shadow', $summary['alert_kind'] );
 		$this->assertSame( '/v1/chat/completions', $summary['uri'] );
-		$this->assertSame( 'observe / not blocked', $summary['status_label'] );
+		$this->assertSame( 'Observed, not blocked', $summary['status_label'] );
 		$this->assertSame( 'api.openai.com', $summary['host'] );
 	}
 

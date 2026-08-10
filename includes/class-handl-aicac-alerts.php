@@ -483,13 +483,13 @@ final class Alerts {
 
 		$subject = sprintf(
 			/* translators: %s: site name */
-			__( '[%s] HandL AICAC observed shadow AI traffic (not blocked)', 'handl-ai-connector-access-control' ),
+			__( '[%s] HandL detected a direct AI connection (not blocked)', 'handl-ai-connector-access-control' ),
 			wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES )
 		);
 
-		$body  = __( 'HandL AI Connector Access Control observed a direct HTTP call to a known AI provider outside the AI Client (observe / not blocked).', 'handl-ai-connector-access-control' ) . "\n\n";
+		$body  = __( 'HandL AI Connector Access Control detected a direct connection to a known AI provider outside the AI Client. This request was observed, not blocked.', 'handl-ai-connector-access-control' ) . "\n\n";
 		$body .= self::format_summary_lines( $summary );
-		$body .= "\n" . __( 'This message was sent by HandL AICAC (not by the calling plugin). Shadow-AI detection does not block the request. Review the Activity tab under Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' ) . "\n";
+		$body .= "\n" . __( 'This alert was sent by HandL AI Connector Access Control, not by the plugin that made the request. The request was not blocked. Review it under Settings → HandL AI Connector Access Control → Activity.', 'handl-ai-connector-access-control' ) . "\n";
 		$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=log' ) . "\n";
 
 		$mail_ok = self::safe_wp_mail( $to, $subject, $body );
@@ -581,7 +581,7 @@ final class Alerts {
 		if ( $d > 0 && $s > 0 ) {
 			return sprintf(
 				/* translators: 1: site name, 2: denial count, 3: shadow observe count */
-				__( '[%1$s] HandL alert summary (%2$d blocked, %3$d shadow observes)', 'handl-ai-connector-access-control' ),
+				__( '[%1$s] HandL alert summary (%2$d blocked, %3$d direct connections observed)', 'handl-ai-connector-access-control' ),
 				$site,
 				$d,
 				$s
@@ -590,7 +590,7 @@ final class Alerts {
 		if ( $s > 0 ) {
 			return sprintf(
 				/* translators: 1: site name, 2: shadow observe count */
-				__( '[%1$s] HandL shadow-AI observe summary (%2$d)', 'handl-ai-connector-access-control' ),
+				__( '[%1$s] HandL direct AI connection summary (%2$d)', 'handl-ai-connector-access-control' ),
 				$site,
 				$s
 			);
@@ -642,7 +642,7 @@ final class Alerts {
 			}
 			$body .= sprintf(
 				/* translators: %d: number of shadow observations in this digest */
-				__( 'Observed direct-HTTP AI calls outside the AI Client (observe / not blocked): %d', 'handl-ai-connector-access-control' ),
+				__( 'Direct AI connections observed outside the AI Client (not blocked): %d', 'handl-ai-connector-access-control' ),
 				count( $shadows )
 			) . "\n\n";
 
@@ -662,7 +662,7 @@ final class Alerts {
 			}
 		}
 
-		$body .= __( 'This summary came from HandL AI Access. Review your rules under Settings → HandL AI Access.', 'handl-ai-connector-access-control' ) . "\n";
+		$body .= __( 'This summary was sent by HandL AI Connector Access Control. Review activity and alert settings under Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' ) . "\n";
 		$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' ) . "\n";
 
 		return $body;
@@ -1006,7 +1006,7 @@ final class Alerts {
 			$out['caller']       = isset( $event['caller'] ) && is_string( $event['caller'] ) ? (string) $event['caller'] : '';
 			$out['file']         = isset( $event['file'] ) && is_string( $event['file'] ) ? (string) $event['file'] : '';
 			$out['decision']     = 'observe';
-			$out['status_label'] = 'observe / not blocked';
+			$out['status_label'] = 'Observed, not blocked';
 			if ( '' === $out['provider'] && isset( $event['shadow_provider'] ) ) {
 				$out['provider'] = (string) $event['shadow_provider'];
 			}
@@ -1024,7 +1024,7 @@ final class Alerts {
 		if ( 'shadow' === ( $summary['alert_kind'] ?? '' ) ) {
 			$caller = self::best_effort_caller_label( $summary );
 			$lines  = array(
-				'Status: observe / not blocked',
+				'Status: Observed, not blocked',
 				sprintf( 'Time: %s', $ts ),
 				sprintf( 'Caller: %s', $caller ),
 				sprintf( 'Host: %s', ( $summary['host'] ?? '' ) !== '' ? (string) $summary['host'] : '—' ),

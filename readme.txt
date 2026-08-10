@@ -178,7 +178,7 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = Unreleased =
-* Opt-in shadow-AI email alerts (off by default) for the first direct-HTTP observe per plugin+host in the retained window — immediate or hourly summary; labeled observe / not blocked; email-only.
+* Opt-in Direct AI connection email alerts (off by default) when a plugin connects directly to an AI provider outside the AI Client — immediate or hourly summary; labeled Observed, not blocked; email-only.
 
 = 1.2.0 =
 * Rewrote the WordPress.org listing in plain language so site owners can quickly understand what the plugin does.
