@@ -231,6 +231,19 @@
 	margin: 4px 0 0;
 }
 
+/* S-104: advisory zero-exceptions warning (does not block save) */
+.handl-aicac-kill-exceptions__zero-warn {
+	margin: 8px 0 0;
+	padding: 8px 12px;
+	display: block;
+	box-sizing: border-box;
+	max-width: 100%;
+}
+
+.handl-aicac-kill-exceptions__zero-warn[hidden] {
+	display: none;
+}
+
 /* Usage insights tab */
 .handl-aicac-nav-tab--insights {
 	position: relative;

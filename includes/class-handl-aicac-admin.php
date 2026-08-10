@@ -2565,6 +2565,15 @@ final class Admin {
 		// Dimmed + state note when kill is off; list stays fully operable (no pointer-events
 		// block, no disabled checkboxes) so staging exceptions before enabling kill still POSTs.
 		$ex_class = 'handl-aicac-kill-exceptions' . ( $kill_switch ? '' : ' is-muted' );
+		// S-104: advisory only — kill on with an empty Exceptions list.
+		$show_zero_warn = $kill_switch && array() === $exceptions;
+		if ( $show_zero_warn ) {
+			$ex_described_by = 'handl-aicac-kill-exceptions-zero-warn';
+		} elseif ( ! $kill_switch ) {
+			$ex_described_by = 'handl-aicac-kill-exceptions-state';
+		} else {
+			$ex_described_by = '';
+		}
 
 		echo '<tr>';
 		echo '<th scope="row">' . esc_html__( 'Emergency stop', 'handl-ai-connector-access-control' ) . '</th>';
@@ -2579,8 +2588,16 @@ final class Admin {
 		echo '<p class="description">' . esc_html__( 'Exceptions still follow their normal plugin and AI type rules.', 'handl-ai-connector-access-control' ) . '</p>';
 		// Visible only while kill is off; same listener toggles hidden with is-muted.
 		echo '<p class="description handl-aicac-kill-exceptions__state" id="handl-aicac-kill-exceptions-state"' . ( $kill_switch ? ' hidden' : '' ) . '>' . esc_html__( 'Exceptions apply only while the Emergency stop is on.', 'handl-ai-connector-access-control' ) . '</p>';
-		// #16: announce the kill-off state line on group focus (sibling of aria-labelledby).
-		echo '<div class="handl-aicac-kill-exceptions__list" role="group" aria-labelledby="handl-aicac-kill-exceptions-heading" aria-describedby="handl-aicac-kill-exceptions-state">';
+		// S-104: distinct inline warning when kill is on and no exceptions are selected (server + JS).
+		echo '<p class="description notice notice-warning inline handl-aicac-kill-exceptions__zero-warn" id="handl-aicac-kill-exceptions-zero-warn" aria-live="polite"' . ( $show_zero_warn ? '' : ' hidden' ) . '>';
+		echo esc_html__( 'No exceptions selected. Emergency stop will block all AI Client calls from every installed plugin.', 'handl-ai-connector-access-control' );
+		echo '</p>';
+		// #16: announce state / zero-exceptions warning on group focus (sibling of aria-labelledby).
+		echo '<div class="handl-aicac-kill-exceptions__list" role="group" aria-labelledby="handl-aicac-kill-exceptions-heading"';
+		if ( '' !== $ex_described_by ) {
+			echo ' aria-describedby="' . esc_attr( $ex_described_by ) . '"';
+		}
+		echo '>';
 		$i = 0;
 		foreach ( $plugins as $basename => $data ) {
 			++$i;
@@ -2597,10 +2614,12 @@ final class Admin {
 		}
 		echo '</div>';
 		echo '</div>';
-		// Live mute + state-note toggle before save (does not change policy until form submit).
+		// Live mute, state-note, and zero-exceptions warning (does not change policy until form submit).
 		echo '<script>';
-		echo '(function(){var k=document.getElementById("handl-aicac-kill-switch"),w=document.getElementById("handl-aicac-kill-exceptions-wrap"),n=document.getElementById("handl-aicac-kill-exceptions-state");';
-		echo 'if(!k||!w)return;function s(){w.classList.toggle("is-muted",!k.checked);if(n)n.hidden=k.checked;}k.addEventListener("change",s);s();})();';
+		echo '(function(){var k=document.getElementById("handl-aicac-kill-switch"),w=document.getElementById("handl-aicac-kill-exceptions-wrap"),n=document.getElementById("handl-aicac-kill-exceptions-state"),z=document.getElementById("handl-aicac-kill-exceptions-zero-warn"),g=w&&w.querySelector(".handl-aicac-kill-exceptions__list"),xs=w?w.querySelectorAll(\'input[name="handl_aicac_kill_exceptions[]"]\'):[];';
+		echo 'if(!k||!w)return;function anyEx(){for(var i=0;i<xs.length;i++){if(xs[i].checked)return true;}return false;}';
+		echo 'function s(){var on=k.checked,zero=on&&!anyEx();w.classList.toggle("is-muted",!on);if(n)n.hidden=on;if(z)z.hidden=!zero;if(g){if(zero){g.setAttribute("aria-describedby","handl-aicac-kill-exceptions-zero-warn");}else if(!on){g.setAttribute("aria-describedby","handl-aicac-kill-exceptions-state");}else{g.removeAttribute("aria-describedby");}}}';
+		echo 'k.addEventListener("change",s);for(var i=0;i<xs.length;i++){xs[i].addEventListener("change",s);}s();})();';
 		echo '</script>';
 		echo '</td>';
 		echo '</tr>';
