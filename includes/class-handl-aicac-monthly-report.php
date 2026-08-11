@@ -298,11 +298,11 @@ final class Monthly_Report {
 	 */
 	public static function build_summary_body( array $summary ): string {
 		$lines   = array();
-		$lines[] = __( 'HandL AI Connector Access Control — monthly audit report', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'HandL AI Connector Access Control monthly audit report', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = sprintf(
-			/* translators: 1: month label, 2: call count, 3: prior month call count */
-			__( 'Calls (%1$s): %2$s (prior month %3$s: %4$s)', 'handl-ai-connector-access-control' ),
+			/* translators: 1: month label, 2: call count, 3: prior month label, 4: prior call count */
+			__( 'Calls: %2$s in %1$s (%4$s in %3$s)', 'handl-ai-connector-access-control' ),
 			(string) $summary['period_label'],
 			number_format_i18n( (int) $summary['calls'] ),
 			(string) $summary['prior_label'],
@@ -310,22 +310,22 @@ final class Monthly_Report {
 		);
 		$lines[] = sprintf(
 			/* translators: 1: month label, 2: dollar amount, 3: prior month label, 4: prior dollar amount */
-			__( 'Estimated spend (%1$s): $%2$s (prior month %3$s: $%4$s)', 'handl-ai-connector-access-control' ),
+			__( 'Estimated spend: $%2$s in %1$s ($%4$s in %3$s)', 'handl-ai-connector-access-control' ),
 			(string) $summary['period_label'],
 			number_format_i18n( (float) $summary['spend'], 2 ),
 			(string) $summary['prior_label'],
 			number_format_i18n( (float) $summary['prior_spend'], 2 )
 		);
 		$lines[] = sprintf(
-			/* translators: 1: month label, 2: incident count, 3: prior month label, 4: prior incident count */
-			__( 'Incidents (%1$s): %2$s (prior month %3$s: %4$s)', 'handl-ai-connector-access-control' ),
+			/* translators: 1: month label, 2: blocked-call count, 3: prior month label, 4: prior blocked-call count */
+			__( 'Blocked calls: %2$s in %1$s (%4$s in %3$s)', 'handl-ai-connector-access-control' ),
 			(string) $summary['period_label'],
 			number_format_i18n( (int) $summary['incidents'] ),
 			(string) $summary['prior_label'],
 			number_format_i18n( (int) $summary['prior_incidents'] )
 		);
 		$lines[] = '';
-		$lines[] = __( 'The full printable report is attached as an HTML file. Estimate only, not a bill. No prompt text or user names are included.', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'The printable report is attached as an HTML file. Open it in a browser, then use Print → Save as PDF. Estimated spend is an estimate, not a bill. Prompt text and user names are not included.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = __( 'Manage this schedule:', 'handl-ai-connector-access-control' );
 		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' );
@@ -338,15 +338,15 @@ final class Monthly_Report {
 	 */
 	public static function build_skip_body( array $summary ): string {
 		$lines   = array();
-		$lines[] = __( 'HandL AI Connector Access Control — monthly audit report', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'HandL AI Connector Access Control monthly audit report', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = sprintf(
 			/* translators: %s: month label */
-			__( 'No activity recorded for %s in the saved log.', 'handl-ai-connector-access-control' ),
+			__( 'No activity was retained for %s.', 'handl-ai-connector-access-control' ),
 			(string) $summary['period_label']
 		);
 		$lines[] = '';
-		$lines[] = __( 'No report file is attached. Silence means nothing was retained for that period — not that the schedule is off.', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'No report file is attached because no activity was retained for this period. The monthly email schedule is still on.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = __( 'Manage this schedule:', 'handl-ai-connector-access-control' );
 		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' );

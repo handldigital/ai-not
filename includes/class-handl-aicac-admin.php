@@ -3299,7 +3299,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo '<td>';
 		echo '<label><input type="checkbox" name="handl_aicac_monthly_report_enabled" value="1" ' . checked( $monthly_on, true, false ) . ' /> ';
 		echo esc_html__( 'Email the printable audit report once a month', 'handl-ai-connector-access-control' ) . '</label>';
-		echo '<p class="description">' . esc_html__( 'Off by default. Sends on the first of each month while logging or Learn mode is on. Uses the blocked-call alert recipient, or the site admin email. Attaches a self-contained HTML report plus a short summary. When the saved log has no activity for that period, you get a short note instead of a blank file.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Off by default. Sends starting on the first of each month while Activity logging or Learn mode is on. It goes to the saved alert email, or the site administrator email if none is saved. The email includes a short summary and a printable HTML report. If no activity was retained, it sends a note without an attachment.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<p style="margin-top:8px;">';
 		submit_button(
 			__( 'Send test email', 'handl-ai-connector-access-control' ),
@@ -3311,7 +3311,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 				'id'   => 'handl-aicac-send-test-monthly-email',
 			)
 		);
-		echo ' <span class="description">' . esc_html__( 'Sends a labeled test of monthly report email delivery to the saved recipient, or the site admin email. Limited to one test email per minute.', 'handl-ai-connector-access-control' ) . '</span>';
+		echo ' <span class="description">' . esc_html__( 'Sends a labeled test to the saved alert email, or the site administrator email if none is saved. Limited to one test per minute.', 'handl-ai-connector-access-control' ) . '</span>';
 		echo '</p>';
 		echo '</td>';
 		echo '</tr>';

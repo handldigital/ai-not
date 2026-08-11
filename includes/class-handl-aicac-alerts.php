@@ -770,7 +770,7 @@ final class Alerts {
 		if ( 'monthly_report' === $channel ) {
 			return sprintf(
 				/* translators: %s: site name */
-				__( '[%s] Test: HandL AICAC monthly audit report', 'handl-ai-connector-access-control' ),
+				__( '[%s] Test: HandL AI Access monthly audit report', 'handl-ai-connector-access-control' ),
 				$site
 			);
 		}
@@ -796,9 +796,9 @@ final class Alerts {
 			$lines[] = '';
 			$lines[] = __( 'You requested a test of weekly report email delivery from Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' );
 		} elseif ( 'monthly_report' === $channel ) {
-			$lines[] = __( 'This is a test. This is not a real monthly audit report.', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'This is a test. This is not a monthly audit report.', 'handl-ai-connector-access-control' );
 			$lines[] = '';
-			$lines[] = __( 'You requested a test of monthly audit report email delivery from Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'You requested a test of monthly audit report delivery from HandL AI Access.', 'handl-ai-connector-access-control' );
 		} else {
 			$lines[] = __( 'This is a test. No denial occurred.', 'handl-ai-connector-access-control' );
 			$lines[] = '';

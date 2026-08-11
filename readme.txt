@@ -204,7 +204,7 @@ Yes. With WP-CLI available and this plugin active:
 
 = Unreleased =
 * Insights: weekly call and estimated-spend trends (last 8 weeks) with per-plugin sparklines and week-over-week change. Weeks with no retained log data show as “no data kept,” not zero.
-* Optional monthly email of the printable audit report (off by default). Sends on the first of the month with an HTML attachment and a short summary; quiet months get a short “no activity” note instead.
+* Optional monthly email of the printable audit report, off by default. It sends a short summary and HTML attachment starting on the first of each month. If no activity was retained, it sends a no-activity note without an attachment.
 * Create a rule from an Activity call: open the Rules form pre-filled with that plugin, AI type, and provider/model. Already-covered plugins show a status instead of adding a second rule.
 * Added a read-only **Plugin AI profile**. Click a plugin in Activity or Dashboard estimated spend to see usage by day, operation, and model; blocked calls; direct connections outside the AI Client; estimated spend alerts; and the rules that currently apply. Rule results use the same decision process as enforcement. Links open the existing Rules and CSV export screens.
 * Added an optional, unchecked onboarding choice to receive product news and related offers from HandL Digital. If selected, the plugin sends the alert email address, site URL, plugin version, and consent time to HandL Digital. Privacy / Data documents the transmission and opt-out method.

@@ -152,7 +152,7 @@ final class MonthlyReportTest extends TestCase {
 		$this->assertSame( 'no_activity', $out['status'] );
 		$this->assertCount( 1, self::$mails );
 		$this->assertStringContainsString( 'no activity', strtolower( self::$mails[0]['subject'] ) );
-		$this->assertStringContainsString( 'No activity recorded', self::$mails[0]['message'] );
+		$this->assertStringContainsString( 'No activity was retained', self::$mails[0]['message'] );
 		$this->assertSame( array(), self::$mails[0]['attachments'] );
 	}
 
