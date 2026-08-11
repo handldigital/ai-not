@@ -137,6 +137,16 @@ if ( ! function_exists( 'esc_html' ) ) {
 	}
 }
 
+if ( ! function_exists( 'esc_html__' ) ) {
+	/**
+	 * @param string $text Text.
+	 * @param string $domain Domain.
+	 */
+	function esc_html__( $text, $domain = 'default' ): string {
+		return esc_html( __( $text, $domain ) );
+	}
+}
+
 if ( ! function_exists( 'esc_url' ) ) {
 	/**
 	 * @param string $url URL.
@@ -604,6 +614,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-leads.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-transfer.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-presets.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-audit-export.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-audit-evidence.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin-profile.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-differentiator-messaging.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin.php';

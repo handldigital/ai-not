@@ -28,6 +28,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 	 */
 	private const APPROVED_DISPATCH_ACTIONS = array(
 		'bulk_plugin_rules',
+		'export_audit_report',
 		'export_log',
 		'export_rules',
 		'import_rules_confirm',
@@ -162,6 +163,10 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array(
 				'action'       => 'export_log',
 				'nonce_action' => 'handl_aicac_export_log',
+			),
+			array(
+				'action'       => 'export_audit_report',
+				'nonce_action' => 'handl_aicac_export_audit_report',
 			),
 			array(
 				'action'       => 'import_rules_preview',
