@@ -196,9 +196,9 @@ Yes. With WP-CLI available and this plugin active:
 * Temporary Allow rules that expire on their own, with remaining/expired status and one-click renew for 7 days.
 * Policy presets on the Rules tab, with a preview of every setting that will change before you apply.
 * WordPress Dashboard widget for mode, Emergency stop, last-24-hour activity and estimated spend, plus a Review policy link.
-* Printable audit report (rules, activity, spend alerts) you can save as a PDF from your browser — nothing leaves the site.
-* Month-end spend projection on the Dashboard and Insights when the month has enough logged days; optional one-time warning if a projection would cross a spend alert threshold.
-* Dashboard and Site Health visibility when alert emails or webhooks fail repeatedly, with test buttons on the existing paths.
+* Printable audit report with current rules, activity, and estimated spend compared with alert thresholds. Save it as a PDF from your browser. Nothing leaves the site.
+* Estimated month-end spend on the Dashboard and Insights after at least three days of logged activity, with a Dashboard warning and optional monthly email if the projection crosses an alert threshold.
+* Dashboard and Site Health visibility when alert emails or webhooks fail repeatedly, with buttons that send tests through the existing email and webhook paths.
 * One-time What’s new notice after each update, with a short in-plugin highlights panel.
 
 
