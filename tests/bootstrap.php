@@ -30,6 +30,10 @@ if ( ! defined( 'DAY_IN_SECONDS' ) ) {
 	define( 'DAY_IN_SECONDS', 86400 );
 }
 
+if ( ! defined( 'WEEK_IN_SECONDS' ) ) {
+	define( 'WEEK_IN_SECONDS', 604800 );
+}
+
 if ( ! defined( 'ENT_QUOTES' ) ) {
 	// PHP already defines ENT_QUOTES; keep guard for completeness.
 }
@@ -381,6 +385,47 @@ if ( ! function_exists( 'wp_mail' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_next_scheduled' ) ) {
+	/**
+	 * @param string $hook Hook.
+	 * @return int|false
+	 */
+	function wp_next_scheduled( $hook ) {
+		$cron = $GLOBALS['handl_aicac_test_cron'] ?? array();
+		return isset( $cron[ (string) $hook ] ) ? (int) $cron[ (string) $hook ] : false;
+	}
+}
+
+if ( ! function_exists( 'wp_schedule_event' ) ) {
+	/**
+	 * @param int    $timestamp Timestamp.
+	 * @param string $recurrence Recurrence.
+	 * @param string $hook Hook.
+	 */
+	function wp_schedule_event( $timestamp, $recurrence, $hook ): bool {
+		unset( $recurrence );
+		if ( ! isset( $GLOBALS['handl_aicac_test_cron'] ) || ! is_array( $GLOBALS['handl_aicac_test_cron'] ) ) {
+			$GLOBALS['handl_aicac_test_cron'] = array();
+		}
+		$GLOBALS['handl_aicac_test_cron'][ (string) $hook ] = (int) $timestamp;
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_unschedule_event' ) ) {
+	/**
+	 * @param int    $timestamp Timestamp.
+	 * @param string $hook Hook.
+	 */
+	function wp_unschedule_event( $timestamp, $hook ): bool {
+		unset( $timestamp );
+		if ( isset( $GLOBALS['handl_aicac_test_cron'][ (string) $hook ] ) ) {
+			unset( $GLOBALS['handl_aicac_test_cron'][ (string) $hook ] );
+		}
+		return true;
+	}
+}
+
 if ( ! function_exists( 'wp_supports_ai' ) ) {
 	/**
 	 * Stub: default true; tests may set $GLOBALS['handl_aicac_wp_supports_ai'] = false.
@@ -473,6 +518,7 @@ if ( ! function_exists( 'get_plugins' ) ) {
 
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-attribution.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-shadow-ai.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-temp-allow.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-simulator.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-onboarding.php';

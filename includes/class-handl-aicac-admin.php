@@ -256,6 +256,10 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
 				$this->handle_bulk_plugin_rules();
 			}
+			if ( 'renew_temp_allow' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_renew_temp_allow', 'handl_aicac_nonce' );
+				$this->handle_renew_temp_allow();
+			}
 			if ( 'simulate_policy' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
 				$this->handle_simulate_policy();
@@ -293,6 +297,7 @@ final class Admin {
 		$import_err  = isset( $_GET['handl_aicac_import_error'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_import_error'] ) ) : '';
 		$import_ignored_q = isset( $_GET['handl_aicac_import_ignored'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['handl_aicac_import_ignored'] ) ) : '';
 		$show_import_preview = isset( $_GET['handl_aicac_import_preview'] ) && '1' === (string) $_GET['handl_aicac_import_preview'];
+		$renewed_ok = isset( $_GET['handl_aicac_renewed'] ) && '1' === (string) $_GET['handl_aicac_renewed'];
 
 		if ( isset( $_POST['handl_aicac_action'] ) && 'save' === $_POST['handl_aicac_action'] ) {
 			check_admin_referer( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
@@ -327,6 +332,9 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 
 		if ( $saved ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Saved.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		if ( $renewed_ok ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Temporary allow renewed for 7 more days.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $this->webhook_url_rejected ) {
 			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Webhook URL not saved. Enter a valid http:// or https:// URL, or leave it blank to disable webhooks.', 'handl-ai-connector-access-control' ) . '</p></div>';
@@ -510,6 +518,13 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
 		echo '<input type="hidden" name="handl_aicac_status" value="' . esc_attr( $plugin_status_filter ) . '" />';
 		echo '<input type="hidden" name="handl_aicac_access" value="' . esc_attr( $plugin_access_filter ) . '" />';
+		echo '</form>';
+
+		// Renew shell — associated via form= on Renew buttons (no nested forms).
+		echo '<form method="post" id="handl-aicac-renew-form" class="handl-aicac-rules-save-form">';
+		wp_nonce_field( 'handl_aicac_renew_temp_allow', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="renew_temp_allow" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
 		echo '</form>';
 
 		// Visible Rules form — do NOT use handl-aicac-rules-save-form (that class is
@@ -701,6 +716,46 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			$this->render_option( 'allow', (string) $rule, __( 'Allow', 'handl-ai-connector-access-control' ) );
 			$this->render_option( 'deny', (string) $rule, __( 'Deny', 'handl-ai-connector-access-control' ) );
 			echo '</select>';
+			// AICAC-TEMP-ALLOW: optional expiry on Allow rules only.
+			$expire_preset = Temp_Allow::preset_for_stored( $policy, (string) $basename );
+			$expire_ts     = Temp_Allow::expires_at( $policy, (string) $basename );
+			$expire_label  = Temp_Allow::remaining_label( $policy, (string) $basename );
+			$expire_date   = ( null !== $expire_ts ) ? gmdate( 'Y-m-d', $expire_ts ) : '';
+			echo '<div class="handl-aicac-temp-allow" style="margin-top:6px;">';
+			echo '<label class="screen-reader-text" for="handl-aicac-expire-preset-' . esc_attr( md5( $basename ) ) . '">';
+			echo esc_html(
+				sprintf(
+					/* translators: %s: plugin name */
+					__( 'Temporary allow for %s', 'handl-ai-connector-access-control' ),
+					$name
+				)
+			);
+			echo '</label>';
+			echo '<select class="handl-aicac-expire-preset" id="handl-aicac-expire-preset-' . esc_attr( md5( $basename ) ) . '" name="handl_aicac_expire_preset[' . esc_attr( $basename ) . ']" form="' . esc_attr( $rules_form_id ) . '">';
+			$this->render_option( '', $expire_preset, __( 'No expiry', 'handl-ai-connector-access-control' ) );
+			$this->render_option( '24h', $expire_preset, __( 'Expires in 24 hours', 'handl-ai-connector-access-control' ) );
+			$this->render_option( '7d', $expire_preset, __( 'Expires in 7 days', 'handl-ai-connector-access-control' ) );
+			$this->render_option( '30d', $expire_preset, __( 'Expires in 30 days', 'handl-ai-connector-access-control' ) );
+			$this->render_option( 'custom', $expire_preset, __( 'Expires on date…', 'handl-ai-connector-access-control' ) );
+			echo '</select> ';
+			echo '<input type="date" class="handl-aicac-expire-date" name="handl_aicac_expire_date[' . esc_attr( $basename ) . ']" form="' . esc_attr( $rules_form_id ) . '" value="' . esc_attr( $expire_date ) . '" style="' . ( 'custom' === $expire_preset ? '' : 'display:none;' ) . '" aria-label="' . esc_attr(
+				sprintf(
+					/* translators: %s: plugin name */
+					__( '%s expiry date', 'handl-ai-connector-access-control' ),
+					$name
+				)
+			) . '" />';
+			if ( '' !== $expire_label ) {
+				echo '<p class="description" style="margin:4px 0 0;">' . esc_html( $expire_label ) . '</p>';
+			}
+			if ( Temp_Allow::is_expired( $policy, (string) $basename ) ) {
+				echo '<p style="margin:4px 0 0;">';
+				echo '<button type="submit" class="button button-small" form="handl-aicac-renew-form" name="handl_aicac_renew_plugin" value="' . esc_attr( $basename ) . '">';
+				echo esc_html__( 'Renew 7 days', 'handl-ai-connector-access-control' );
+				echo '</button>';
+				echo '</p>';
+			}
+			echo '</div>';
 			echo '</td>';
 			foreach ( $family_labels as $family_id => $family_label ) {
 				$family_rule = isset( $plugin_ops[ $family_id ] ) ? (string) $plugin_ops[ $family_id ] : '';
@@ -742,6 +797,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '(function(){var all=document.getElementById("handl-aicac-bulk-select-all");if(!all)return;';
 		echo 'all.addEventListener("change",function(){document.querySelectorAll(".handl-aicac-rules-matrix tbody input.handl-aicac-bulk-cb").forEach(function(cb){cb.checked=all.checked;});});';
 		echo '})();';
+		echo '(function(){document.querySelectorAll(".handl-aicac-expire-preset").forEach(function(sel){';
+		echo 'sel.addEventListener("change",function(){var wrap=sel.closest(".handl-aicac-temp-allow");if(!wrap)return;var d=wrap.querySelector(".handl-aicac-expire-date");if(!d)return;d.style.display=(sel.value==="custom")?"":"none";});';
+		echo '});})();';
 		$focus_plugin = isset( $_REQUEST['handl_aicac_focus_plugin'] )
 			? Plugin_Profile::sanitize_plugin( wp_unslash( (string) $_REQUEST['handl_aicac_focus_plugin'] ) )
 			: '';
@@ -2986,6 +3044,37 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	}
 
 	/**
+	 * AICAC-TEMP-ALLOW: one-click renew of an expired temporary allow (+7 days).
+	 */
+	private function handle_renew_temp_allow(): void {
+		$this->require_admin_mutation( 'handl_aicac_renew_temp_allow' );
+
+		$plugin = isset( $_POST['handl_aicac_renew_plugin'] )
+			? sanitize_text_field( wp_unslash( (string) $_POST['handl_aicac_renew_plugin'] ) )
+			: '';
+		if ( '' === $plugin ) {
+			return;
+		}
+
+		$updated = Temp_Allow::renew_allow_on_policy( Policy::get_policy(), $plugin );
+		if ( false === $updated ) {
+			return;
+		}
+		Policy::save_policy( $updated );
+
+		$redirect = add_query_arg(
+			array(
+				'page'                => 'handl-ai-connector-access-control',
+				'handl_aicac_tab'     => 'rules',
+				'handl_aicac_renewed' => '1',
+			),
+			admin_url( 'options-general.php' )
+		);
+		wp_safe_redirect( $redirect );
+		exit;
+	}
+
+	/**
 	 * Build a rules-tab policy from POST without saving (used by save + AICAC-SIM).
 	 *
 	 * @param array<string,mixed> $base Starting policy (usually saved).
@@ -3050,6 +3139,46 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			$rules = array();
 		}
 		$policy['plugins'] = $rules;
+
+		// AICAC-TEMP-ALLOW: optional expiry presets for Allow rules.
+		$expires        = $merge_missing && isset( $base['plugin_expires'] ) && is_array( $base['plugin_expires'] )
+			? Temp_Allow::sanitize_plugin_expires( $base['plugin_expires'] )
+			: array();
+		$posted_presets = filter_input( INPUT_POST, 'handl_aicac_expire_preset', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		$posted_dates   = filter_input( INPUT_POST, 'handl_aicac_expire_date', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		if ( ! is_array( $posted_presets ) ) {
+			$posted_presets = array();
+		}
+		if ( ! is_array( $posted_dates ) ) {
+			$posted_dates = array();
+		}
+		if ( ! $merge_missing ) {
+			$expires = array();
+		}
+		$now = time();
+		foreach ( $rules as $basename => $rule ) {
+			if ( 'allow' !== (string) $rule ) {
+				unset( $expires[ $basename ] );
+				continue;
+			}
+			if ( ! array_key_exists( $basename, $posted_presets ) ) {
+				if ( ! $merge_missing ) {
+					unset( $expires[ $basename ] );
+				}
+				continue;
+			}
+			$ts = Temp_Allow::resolve_posted_expiry(
+				$posted_presets[ $basename ] ?? '',
+				$posted_dates[ $basename ] ?? '',
+				$now
+			);
+			if ( null === $ts ) {
+				unset( $expires[ $basename ] );
+			} else {
+				$expires[ $basename ] = $ts;
+			}
+		}
+		$policy['plugin_expires'] = $expires;
 
 		$posted_ops = filter_input( INPUT_POST, 'handl_aicac_operation', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
 		if ( is_array( $posted_ops ) ) {

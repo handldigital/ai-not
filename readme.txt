@@ -4,7 +4,7 @@ Tags: ai, governance, security, handl, ai client
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.2.1
+Stable tag: 1.2.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -54,6 +54,7 @@ No developer experience is required.
 = Everyday controls =
 
 * **Plugin rules:** Allow, deny, or use the site default.
+* **Temporary allow:** Optional expiry on Allow rules (auto-reverts to the site default).
 * **AI type rules:** Control text, image, speech, and video separately.
 * **Learn mode:** Record activity without enforcing deny rules.
 * **Emergency stop:** Block AI Client calls across the site.
@@ -189,6 +190,10 @@ Yes. With WP-CLI available and this plugin active:
 5. Activity — OBSERVE direct_http rows contrasted with governed AI Client decisions.
 
 == Changelog ==
+
+= 1.2.2 =
+* Temporary Allow rules: optional expiry (24h / 7d / 30d / date). Expired allows stop at decision time (no cron dependency); hourly sweep tidies rules, writes an audit row, and emails when denial/shadow alerts are enabled. Rules UI shows remaining/expired state with one-click renew.
+
 
 = Unreleased =
 * Added a read-only **Plugin AI profile**. Click a plugin in Activity or Dashboard estimated spend to see usage by day, operation, and model; blocked calls; direct connections outside the AI Client; estimated spend alerts; and the rules that currently apply. Rule results use the same decision process as enforcement. Links open the existing Rules and CSV export screens.

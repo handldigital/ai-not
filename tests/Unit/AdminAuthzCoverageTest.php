@@ -37,6 +37,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 		'onboard_step',
 		'onboard_test_email',
 		'quick_rule',
+		'renew_temp_allow',
 		'save',
 		'send_denial_digest',
 		'send_test_email',
@@ -123,6 +124,10 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array(
 				'action'       => 'bulk_plugin_rules',
 				'nonce_action' => 'handl_aicac_save_policy',
+			),
+			array(
+				'action'       => 'renew_temp_allow',
+				'nonce_action' => 'handl_aicac_renew_temp_allow',
 			),
 			array(
 				'action'       => 'quick_rule',
@@ -319,6 +324,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array( 'handle_save_rules', 'handl_aicac_save_policy' ),
 			array( 'handle_save_log', 'handl_aicac_save_policy' ),
 			array( 'handle_bulk_plugin_rules', 'handl_aicac_save_policy' ),
+			array( 'handle_renew_temp_allow', 'handl_aicac_renew_temp_allow' ),
 			array( 'handle_simulate_policy', 'handl_aicac_save_policy' ),
 			array( 'handle_quick_rule_redirect', 'handl_aicac_quick_rule' ),
 			array( 'handle_undo_quick_rule', 'handl_aicac_undo_quick_rule' ),
