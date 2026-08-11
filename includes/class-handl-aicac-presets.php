@@ -72,7 +72,7 @@ final class Presets {
 			'cost_guard' => array(
 				'id'          => 'cost_guard',
 				'label'       => __( 'Cost guard', 'handl-ai-connector-access-control' ),
-				'description' => __( 'Estimated-spend alerts and rate tables on. Blocking stays off.', 'handl-ai-connector-access-control' ),
+				'description' => __( 'Sets a $25 estimated-spend alert and restores default rate tables. Existing block rules stay in place.', 'handl-ai-connector-access-control' ),
 				'patch'       => array(
 					'default'                 => 'allow',
 					'audit_only'              => false,
