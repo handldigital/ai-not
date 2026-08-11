@@ -417,7 +417,7 @@ final class Anomaly {
 
 		$subject = self::build_subject( $plugin, $metric, $observed, $baseline );
 		$body    = self::build_body( $plugin, $metric, $baseline, $observed, $threshold );
-		$ok      = self::safe_wp_mail( $to, $subject, $body );
+		$ok      = Alerts::safe_wp_mail( $to, $subject, $body );
 
 		// Optional webhook when configured (same URL as denial alerts).
 		$hook_url = Alerts::resolve_webhook( $policy );
@@ -641,14 +641,5 @@ final class Anomaly {
 				'threshold'  => $threshold,
 			)
 		);
-	}
-
-	private static function safe_wp_mail( string $to, string $subject, string $body ): bool {
-		try {
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.wp_mail -- intentional notification path.
-			return (bool) wp_mail( $to, $subject, $body );
-		} catch ( \Throwable $e ) {
-			return false;
-		}
 	}
 }

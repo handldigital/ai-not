@@ -144,7 +144,7 @@ final class Weekly_Report {
 		$subject = self::build_subject( $stats );
 		$body    = self::build_body( $stats, $policy );
 
-		self::safe_wp_mail( $to, $subject, $body );
+		Alerts::safe_wp_mail( $to, $subject, $body );
 	}
 
 	/**
@@ -443,18 +443,5 @@ final class Weekly_Report {
 		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=dashboard' );
 
 		return implode( "\n", $lines ) . "\n";
-	}
-
-	/**
-	 * wp_mail is pluggable; SMTP replacements may throw. A failed weekly report
-	 * must never fatally break a cron request.
-	 */
-	private static function safe_wp_mail( string $to, string $subject, string $body ): bool {
-		try {
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.wp_mail -- intentional notification path.
-			return (bool) wp_mail( $to, $subject, $body );
-		} catch ( \Throwable $e ) {
-			return false;
-		}
 	}
 }

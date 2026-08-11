@@ -105,7 +105,12 @@ final class Site_Health {
 		$issue = 'ok';
 		$tab   = 'dashboard';
 
-		if ( $kill_switch && empty( $exceptions ) ) {
+		$failing_alerts = Alert_Health::failing_channels( $policy );
+
+		if ( ! empty( $failing_alerts ) ) {
+			$issue = 'alert_delivery_failing';
+			$tab   = 'dashboard';
+		} elseif ( $kill_switch && empty( $exceptions ) ) {
 			$issue = 'kill_switch_zero_exceptions';
 			$tab   = 'rules';
 		} elseif ( $alerts_on && ! $logging ) {
@@ -119,9 +124,13 @@ final class Site_Health {
 			$tab   = 'activity';
 		}
 
-		$status = ( 'kill_switch_zero_exceptions' === $issue || 'alerts_without_logging' === $issue )
-			? 'recommended'
-			: 'good';
+		if ( 'alert_delivery_failing' === $issue ) {
+			$status = 'critical';
+		} elseif ( 'kill_switch_zero_exceptions' === $issue || 'alerts_without_logging' === $issue ) {
+			$status = 'recommended';
+		} else {
+			$status = 'good';
+		}
 
 		return array(
 			'status'                  => $status,
@@ -134,6 +143,7 @@ final class Site_Health {
 			'deny_rule_count'         => $deny_count,
 			'has_ai_client_plugins'   => $has_ai_client,
 			'alerts_configured'       => $alerts_on,
+			'failing_alert_channels'  => $failing_alerts,
 		);
 	}
 
@@ -152,7 +162,9 @@ final class Site_Health {
 		$url = self::settings_url( $tab );
 
 		$label = __( 'HandL AI Connector Access Control is configured', 'handl-ai-connector-access-control' );
-		if ( 'kill_switch_zero_exceptions' === $issue ) {
+		if ( 'alert_delivery_failing' === $issue ) {
+			$label = __( 'Alert delivery is failing repeatedly', 'handl-ai-connector-access-control' );
+		} elseif ( 'kill_switch_zero_exceptions' === $issue ) {
 			$label = __( 'Emergency stop blocks all AI Client calls', 'handl-ai-connector-access-control' );
 		} elseif ( 'alerts_without_logging' === $issue ) {
 			$label = __( 'Alerts cannot run because activity logging and Learn mode are off', 'handl-ai-connector-access-control' );
@@ -165,11 +177,11 @@ final class Site_Health {
 		$description = self::build_description( $snapshot );
 
 		$actions = '';
-		if ( 'recommended' === $status || 'no_ai_client_plugins' === $issue ) {
+		if ( 'critical' === $status || 'recommended' === $status || 'no_ai_client_plugins' === $issue ) {
 			$actions = sprintf(
 				'<a href="%s">%s</a>',
 				esc_url( $url ),
-				esc_html__( 'Open HandL AI Connector Access Control settings', 'handl-ai-connector-access-control' )
+				esc_html( __( 'Open HandL AI Connector Access Control settings', 'handl-ai-connector-access-control' ) )
 			);
 		}
 
@@ -235,7 +247,20 @@ final class Site_Health {
 			$lines[] = __( 'AI Client plugins: none detected. Your rules will apply after an AI Client plugin is installed.', 'handl-ai-connector-access-control' );
 		}
 
-		if ( 'kill_switch_zero_exceptions' === $issue ) {
+		if ( 'alert_delivery_failing' === $issue ) {
+			$channels = isset( $snapshot['failing_alert_channels'] ) && is_array( $snapshot['failing_alert_channels'] )
+				? $snapshot['failing_alert_channels']
+				: array();
+			$labels   = array();
+			foreach ( $channels as $ch ) {
+				$labels[] = Alert_Health::channel_label( (string) $ch );
+			}
+			$lines[] = sprintf(
+				/* translators: %s: comma-separated channel labels */
+				__( 'Alert delivery failed at least 3 times in a row for: %s. Check your email or webhook settings, then use Verify now on the Dashboard.', 'handl-ai-connector-access-control' ),
+				implode( ', ', $labels )
+			);
+		} elseif ( 'kill_switch_zero_exceptions' === $issue ) {
 			$lines[] = __( 'Emergency stop blocks every AI Client call because no exceptions are selected. Add an exception or turn off Emergency stop if you want to allow any calls.', 'handl-ai-connector-access-control' );
 		} elseif ( 'alerts_without_logging' === $issue ) {
 			$lines[] = __( 'Email and webhook alerts require activity logging or Learn mode.', 'handl-ai-connector-access-control' );

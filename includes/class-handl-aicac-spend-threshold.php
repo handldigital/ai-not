@@ -240,7 +240,7 @@ final class Spend_Threshold {
 
 		$subject = self::build_subject( $scope, $plugin_basename, $threshold, $current_total );
 		$body    = self::build_body( $scope, $plugin_basename, $threshold, $current_total, $window_label );
-		$ok      = self::safe_wp_mail( $to, $subject, $body );
+		$ok      = Alerts::safe_wp_mail( $to, $subject, $body );
 		if ( ! $ok ) {
 			// Contained failure — do not mark fired so a later attempt can retry.
 			return;
@@ -420,14 +420,5 @@ final class Spend_Threshold {
 		}
 		// Direct write path — do not re-enter evaluate from here.
 		Policy::append_log_event( $event );
-	}
-
-	private static function safe_wp_mail( string $to, string $subject, string $body ): bool {
-		try {
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.wp_mail -- intentional notification path.
-			return (bool) wp_mail( $to, $subject, $body );
-		} catch ( \Throwable $e ) {
-			return false;
-		}
 	}
 }

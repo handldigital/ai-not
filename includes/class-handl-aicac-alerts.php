@@ -813,15 +813,26 @@ final class Alerts {
 	}
 
 	/**
-	 * wp_mail is pluggable; SMTP replacements may throw. A failed notification
-	 * must never turn a denied AI call into a fatal on the filter path (or on
-	 * shutdown after a denial).
+	 * Contained wp_mail wrapper. Records Alert_Health email channel result.
+	 * wp_mail is pluggable; SMTP replacements may throw — never fatal on the
+	 * denial filter path or shutdown after a denial.
 	 */
-	private static function safe_wp_mail( string $to, string $subject, string $body ): bool {
+	public static function safe_wp_mail( string $to, string $subject, string $body ): bool {
 		try {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.wp_mail -- intentional notification path.
-			return (bool) wp_mail( $to, $subject, $body );
+			$ok = (bool) wp_mail( $to, $subject, $body );
+			Alert_Health::record_result(
+				Alert_Health::CHANNEL_EMAIL,
+				$ok,
+				$ok ? '' : 'wp_mail returned false'
+			);
+			return $ok;
 		} catch ( \Throwable $e ) {
+			Alert_Health::record_result(
+				Alert_Health::CHANNEL_EMAIL,
+				false,
+				'wp_mail error'
+			);
 			return false;
 		}
 	}
@@ -829,17 +840,20 @@ final class Alerts {
 	/**
 	 * Contained webhook POST (AC3): never throws; non-2xx / WP_Error / timeout → false.
 	 * Does not follow redirects (SSRF-adjacent admin URL — intentional outbound).
+	 * Records Alert_Health webhook channel result.
 	 *
 	 * @param array<string,mixed> $payload
 	 */
 	public static function safe_wp_remote_post( string $url, array $payload ): bool {
 		$url = self::sanitize_webhook_url( $url );
 		if ( '' === $url ) {
+			Alert_Health::record_result( Alert_Health::CHANNEL_WEBHOOK, false, 'Webhook URL missing or invalid' );
 			return false;
 		}
 
 		$body = wp_json_encode( $payload );
 		if ( ! is_string( $body ) || '' === $body ) {
+			Alert_Health::record_result( Alert_Health::CHANNEL_WEBHOOK, false, 'Webhook payload encode failed' );
 			return false;
 		}
 
@@ -857,15 +871,28 @@ final class Alerts {
 				)
 			);
 		} catch ( \Throwable $e ) {
+			Alert_Health::record_result( Alert_Health::CHANNEL_WEBHOOK, false, 'Webhook request error' );
 			return false;
 		}
 
 		if ( is_wp_error( $response ) ) {
+			$msg = $response->get_error_message();
+			Alert_Health::record_result(
+				Alert_Health::CHANNEL_WEBHOOK,
+				false,
+				'' !== $msg ? $msg : 'Webhook request failed'
+			);
 			return false;
 		}
 
 		$code = (int) wp_remote_retrieve_response_code( $response );
-		return $code >= 200 && $code < 300;
+		$ok   = $code >= 200 && $code < 300;
+		Alert_Health::record_result(
+			Alert_Health::CHANNEL_WEBHOOK,
+			$ok,
+			$ok ? '' : sprintf( 'HTTP %d', $code )
+		);
+		return $ok;
 	}
 
 	/**
