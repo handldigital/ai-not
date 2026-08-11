@@ -233,25 +233,17 @@ final class Usage_Trends {
 	 */
 	public static function format_delta_label( ?float $pct ): string {
 		if ( null === $pct ) {
-			return __( 'vs last week: not enough data', 'handl-ai-connector-access-control' );
+			return __( 'Not enough data', 'handl-ai-connector-access-control' );
 		}
 		$rounded = (int) round( $pct );
 		if ( 0 === $rounded ) {
-			return __( 'vs last week: about the same', 'handl-ai-connector-access-control' );
+			return __( 'About the same', 'handl-ai-connector-access-control' );
 		}
 		if ( $rounded > 0 ) {
-			return sprintf(
-				/* translators: %s: signed percentage, e.g. +40% */
-				__( 'vs last week: %s', 'handl-ai-connector-access-control' ),
-				'+' . number_format_i18n( $rounded ) . '%'
-			);
+			return '+' . number_format_i18n( $rounded ) . '%';
 		}
 
-		return sprintf(
-			/* translators: %s: signed percentage, e.g. -25% */
-			__( 'vs last week: %s', 'handl-ai-connector-access-control' ),
-			number_format_i18n( $rounded ) . '%'
-		);
+		return number_format_i18n( $rounded ) . '%';
 	}
 
 	/**

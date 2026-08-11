@@ -156,8 +156,9 @@ final class UsageTrendsTest extends TestCase {
 		$this->assertEqualsWithDelta( 40.0, (float) Usage_Trends::delta_pct( 7, 5 ), 0.0001 );
 		$this->assertNull( Usage_Trends::delta_pct( 5, 0 ) );
 		$this->assertNull( Usage_Trends::delta_pct( null, 5 ) );
-		$this->assertStringContainsString( '+40%', Usage_Trends::format_delta_label( 40.0 ) );
-		$this->assertStringContainsString( 'not enough data', Usage_Trends::format_delta_label( null ) );
+		$this->assertSame( '+40%', Usage_Trends::format_delta_label( 40.0 ) );
+		$this->assertSame( 'About the same', Usage_Trends::format_delta_label( 0.2 ) );
+		$this->assertSame( 'Not enough data', Usage_Trends::format_delta_label( null ) );
 	}
 
 	/**
