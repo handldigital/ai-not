@@ -37,6 +37,8 @@ final class AdminAuthzCoverageTest extends TestCase {
 		'onboard_reopen',
 		'onboard_step',
 		'onboard_test_email',
+		'policy_restore_confirm',
+		'policy_restore_preview',
 		'preset_apply_confirm',
 		'preset_preview',
 		'quick_rule',
@@ -204,6 +206,14 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'action'       => 'preset_apply_confirm',
 				'nonce_action' => 'handl_aicac_preset_apply_confirm',
 			),
+			array(
+				'action'       => 'policy_restore_preview',
+				'nonce_action' => 'handl_aicac_policy_restore_preview',
+			),
+			array(
+				'action'       => 'policy_restore_confirm',
+				'nonce_action' => 'handl_aicac_policy_restore_confirm',
+			),
 		);
 	}
 
@@ -354,6 +364,8 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array( 'handle_onboard_step', 'handl_aicac_onboard' ),
 			array( 'handle_onboard_test_email', 'handl_aicac_onboard' ),
 			array( 'handle_onboard_reopen', 'handl_aicac_onboard' ),
+			array( 'handle_policy_restore_preview', 'handl_aicac_policy_restore_preview' ),
+			array( 'handle_policy_restore_confirm', 'handl_aicac_policy_restore_confirm' ),
 		);
 	}
 
@@ -382,6 +394,8 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'handle_onboard_step',
 				'handle_onboard_test_email',
 				'handle_onboard_reopen',
+				'handle_policy_restore_preview',
+				'handle_policy_restore_confirm',
 			) as $method
 		) {
 			$this->assertMatchesRegularExpression(
