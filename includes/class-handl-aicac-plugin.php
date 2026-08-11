@@ -52,6 +52,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-site-health.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rest.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
 
 		Policy::instance()->init();
 		Temp_Allow::instance()->init();
@@ -63,6 +64,7 @@ final class Plugin {
 		Network_Admin::instance()->init();
 		Site_Health::instance()->init();
 		Rest::instance()->init();
+		Dashboard_Widget::instance()->init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';

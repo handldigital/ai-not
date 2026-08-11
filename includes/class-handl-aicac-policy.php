@@ -1175,6 +1175,10 @@ final class Policy {
 		Spend_Threshold::maybe_evaluate( $policy );
 		// AICAC-ANOMALY: re-check baseline spikes after policy/log changes.
 		Anomaly::maybe_evaluate( $policy );
+
+		if ( class_exists( Dashboard_Widget::class ) ) {
+			Dashboard_Widget::bust_cache();
+		}
 	}
 
 	/**
