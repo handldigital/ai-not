@@ -80,10 +80,10 @@ final class Whats_New {
 	public static function highlights_catalog(): array {
 		return array(
 			'1.2.2' => array(
-				__( 'After each update, a one-time What’s new notice links to a short highlights panel in the plugin.', 'handl-ai-connector-access-control' ),
-				__( 'Open a plugin’s AI profile from Activity or Dashboard estimated spend to see usage, blocks, and the rules that apply.', 'handl-ai-connector-access-control' ),
-				__( 'First-run setup helps you turn on logging, set an alert email, and send a test message.', 'handl-ai-connector-access-control' ),
-				__( 'Optional estimated-spend alerts and a Site Health check help you catch problems early.', 'handl-ai-connector-access-control' ),
+				__( 'Start with a policy preset and preview every setting that will change before you apply it.', 'handl-ai-connector-access-control' ),
+				__( 'Set temporary Allow rules that expire automatically, then renew an expired rule for 7 days when needed.', 'handl-ai-connector-access-control' ),
+				__( 'See 24-hour AI activity and estimated spend at a glance on the WordPress Dashboard.', 'handl-ai-connector-access-control' ),
+				__( 'Open a printable audit report with current rules, activity, and estimated-spend alerts, then save it as a PDF from your browser.', 'handl-ai-connector-access-control' ),
 			),
 		);
 	}
