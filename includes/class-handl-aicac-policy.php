@@ -1173,6 +1173,8 @@ final class Policy {
 
 		// S-103: threshold set below already-accrued spend fires immediately.
 		Spend_Threshold::maybe_evaluate( $policy );
+		// AICAC-FORECAST: month-end projection vs thresholds (at most once/month).
+		Spend_Forecast::maybe_evaluate( $policy );
 		// AICAC-ANOMALY: re-check baseline spikes after policy/log changes.
 		Anomaly::maybe_evaluate( $policy );
 
@@ -1618,6 +1620,7 @@ final class Policy {
 			update_option( Plugin::LOG_OPTION_KEY, $log, false );
 			// S-103: token patch can move estimated spend over a threshold.
 			Spend_Threshold::maybe_evaluate();
+			Spend_Forecast::maybe_evaluate();
 			Anomaly::maybe_evaluate();
 			return true;
 		}

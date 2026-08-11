@@ -517,6 +517,13 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 			echo '<div class="notice notice-warning"><p>' . esc_html__( 'Emergency stop is on. All AI Client calls are blocked except listed plugins.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 
+		// AICAC-FORECAST: mid-month projection vs configured spend thresholds.
+		if ( 'dashboard' === $tab ) {
+			foreach ( Spend_Forecast::active_warnings( $log, $policy ) as $warn ) {
+				echo '<div class="notice notice-warning"><p>' . esc_html( Spend_Forecast::notice_text( $warn ) ) . '</p></div>';
+			}
+		}
+
 		if ( 'dashboard' === $tab ) {
 			$this->render_dashboard_tab( $log, $policy, $plugins );
 			echo '</div>';
@@ -1866,6 +1873,30 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				? __( 'estimate using default rates', 'handl-ai-connector-access-control' )
 				: __( 'estimate using custom rates', 'handl-ai-connector-access-control' );
 			echo '<span class="description">' . esc_html( $rate_label ) . '</span></p>';
+
+			$forecast = Spend_Forecast::compute( $log, $policy );
+			if ( null !== $forecast ) {
+				echo '<p class="handl-aicac-spend-forecast"><strong>';
+				echo esc_html(
+					sprintf(
+						/* translators: %s: projected month-end USD amount */
+						__( 'Estimated month-end: $%s', 'handl-ai-connector-access-control' ),
+						number_format_i18n( (float) $forecast['projected_site'], 2 )
+					)
+				);
+				echo '</strong> <span class="description">';
+				echo esc_html(
+					sprintf(
+						/* translators: 1: days elapsed this month, 2: days in month, 3: month-to-date USD */
+						__( 'Based on $%3$s so far across %1$d of %2$d days. Estimate only, not a bill.', 'handl-ai-connector-access-control' ),
+						(int) $forecast['days_elapsed'],
+						(int) $forecast['days_in_month'],
+						number_format_i18n( (float) $forecast['mtd_site'], 2 )
+					)
+				);
+				echo '</span></p>';
+			}
+
 			echo '<table class="widefat striped handl-aicac-tile-table"><thead><tr>';
 			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '<th class="column-num">' . esc_html__( 'Estimated $', 'handl-ai-connector-access-control' ) . '</th>';
@@ -2163,6 +2194,32 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 					: ''
 			);
 			echo '</div>';
+		}
+
+		$forecast = Spend_Forecast::compute( $log, $policy );
+		if ( null !== $forecast && ! empty( $forecast['plugins'] ) ) {
+			echo '<div class="handl-aicac-insights-forecast" style="margin:1.25em 0;">';
+			echo '<h3>' . esc_html__( 'Estimated month-end by plugin', 'handl-ai-connector-access-control' ) . '</h3>';
+			echo '<p class="description">' . esc_html__( 'Projected from this month’s estimated spend so far. Estimate only, not a bill.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<table class="widefat striped"><thead><tr>';
+			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th class="column-num">' . esc_html__( 'Estimated so far this month', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th class="column-num">' . esc_html__( 'Estimated month-end', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '</tr></thead><tbody>';
+			$i = 0;
+			foreach ( $forecast['plugins'] as $basename => $row ) {
+				if ( $i >= 12 ) {
+					break;
+				}
+				++$i;
+				$label = Analytics::UNKNOWN_KEY === $basename
+					? __( '(unknown plugin)', 'handl-ai-connector-access-control' )
+					: ( isset( $plugins[ $basename ]['Name'] ) ? (string) $plugins[ $basename ]['Name'] : (string) $basename );
+				echo '<tr><td>' . esc_html( $label ) . '</td>';
+				echo '<td class="column-num">$' . esc_html( number_format_i18n( (float) $row['mtd'], 2 ) ) . '</td>';
+				echo '<td class="column-num">$' . esc_html( number_format_i18n( (float) $row['projected'], 2 ) ) . '</td></tr>';
+			}
+			echo '</tbody></table></div>';
 		}
 
 		$dimensions = array(

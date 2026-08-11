@@ -197,12 +197,14 @@ Yes. With WP-CLI available and this plugin active:
 
 
 = Unreleased =
+* Added an estimated month-end spend projection on the Dashboard when this calendar month has at least three days of logged activity. Uses a simple projection from the saved log. Estimate only, not a bill.
+* Insights shows the same projection broken down by plugin.
+* When a projection would cross a configured estimated-spend alert threshold, the Dashboard shows a warning and (if alert email is set) sends at most one projection warning per calendar month per threshold.
 * Printable audit evidence report on Activity: policy snapshot, activity summary for a chosen window, spend vs alert thresholds, and a CSV export note. Self-contained HTML for Print → PDF; no data leaves the site.
 * Added a WordPress Dashboard widget with mode, Emergency stop state, last-24-hour totals, top plugins, and a Review policy link. Counts use the same Activity paths.
 * Added **policy presets** on the Rules tab (Observe everything, Cost guard, Strict lockdown, Privacy first). Preview lists every setting that would change before apply; re-applying an active preset does nothing. Custom plugin rules are not cleared unless the preview marks an overwrite.
 * Added a read-only **Plugin AI profile**. Click a plugin in Activity or Dashboard estimated spend to see usage by day, operation, and model; blocked calls; direct connections outside the AI Client; estimated spend alerts; and the rules that currently apply. Rule results use the same decision process as enforcement. Links open the existing Rules and CSV export screens.
 * Added an optional, unchecked onboarding choice to receive product news and related offers from HandL Digital. If selected, the plugin sends the alert email address, site URL, plugin version, and consent time to HandL Digital. Privacy / Data documents the transmission and opt-out method.
-
 
 = 1.2.1 =
 * Added a first-run setup wizard. Watch activity, set up alerts, and send a test email.

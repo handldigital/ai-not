@@ -234,6 +234,12 @@ if ( ! function_exists( 'wp_date' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_timezone' ) ) {
+	function wp_timezone(): \DateTimeZone {
+		return new \DateTimeZone( 'UTC' );
+	}
+}
+
 if ( ! function_exists( 'get_bloginfo' ) ) {
 	/**
 	 * @param string $show Field.
@@ -569,6 +575,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cost.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-model-force.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cost.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-spend-threshold.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-forecast.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-anomaly.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-analytics.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alerts.php';
