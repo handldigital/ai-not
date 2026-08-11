@@ -671,7 +671,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 				echo esc_html(
 					sprintf(
 						/* translators: %s: plugin display name */
-						__( 'Review the highlighted row for %s. Choose Allow or Deny, adjust AI type or model route if needed, then Save changes.', 'handl-ai-connector-access-control' ),
+						__( 'Review the highlighted row for %s. Choose Allow or Deny, adjust the AI type, provider, or model if needed, then select Save changes.', 'handl-ai-connector-access-control' ),
 						$grad_label
 					)
 				);
@@ -4842,7 +4842,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			echo '</span>';
 		} else {
 			echo '<a class="button button-small" href="' . esc_url( Graduate::rules_url( $proposal ) ) . '">';
-			echo esc_html__( 'Create rule from this call', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'Create rule for this plugin', 'handl-ai-connector-access-control' );
 			echo '</a>';
 		}
 		echo '</div>';
