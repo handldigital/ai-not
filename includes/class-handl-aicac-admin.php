@@ -153,7 +153,7 @@ final class Admin {
 		if ( 'log' === $tab ) {
 			$tab = 'activity';
 		}
-		if ( ! in_array( $tab, array( 'dashboard', 'rules', 'activity', 'insights' ), true ) ) {
+		if ( ! in_array( $tab, array( 'dashboard', 'rules', 'activity', 'insights', 'profile' ), true ) ) {
 			$tab = 'dashboard';
 		}
 
@@ -479,6 +479,12 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 			return;
 		}
 
+		if ( 'profile' === $tab ) {
+			$this->render_plugin_profile_tab( $log, $policy, $plugins, $active );
+			echo '</div>';
+			return;
+		}
+
 		if ( 'activity' === $tab ) {
 			$this->render_log_tab( $log, $policy, $plugins );
 			echo '</div>';
@@ -657,7 +663,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			$force_p   = (string) ( $force_row['provider'] ?? '' );
 			$force_m   = (string) ( $force_row['model'] ?? '' );
 
-			echo '<tr>';
+			echo '<tr id="handl-aicac-rule-' . esc_attr( md5( $basename ) ) . '">';
 			echo '<th scope="row" class="check-column">';
 			echo '<label class="screen-reader-text" for="handl-aicac-bulk-cb-' . esc_attr( md5( $basename ) ) . '">';
 			echo esc_html(
@@ -736,6 +742,16 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '(function(){var all=document.getElementById("handl-aicac-bulk-select-all");if(!all)return;';
 		echo 'all.addEventListener("change",function(){document.querySelectorAll(".handl-aicac-rules-matrix tbody input.handl-aicac-bulk-cb").forEach(function(cb){cb.checked=all.checked;});});';
 		echo '})();';
+		$focus_plugin = isset( $_REQUEST['handl_aicac_focus_plugin'] )
+			? Plugin_Profile::sanitize_plugin( wp_unslash( (string) $_REQUEST['handl_aicac_focus_plugin'] ) )
+			: '';
+		if ( '' !== $focus_plugin ) {
+			$focus_id = 'handl-aicac-rule-' . md5( $focus_plugin );
+			echo '(function(){var r=document.getElementById(' . wp_json_encode( $focus_id ) . ');if(!r)return;';
+			echo 'r.style.outline="2px solid #2271b1";r.style.outlineOffset="2px";';
+			echo 'if(r.scrollIntoView){r.scrollIntoView({block:"center"});}';
+			echo '})();';
+		}
 		echo '</script>';
 
 		echo '<p class="submit">';
@@ -831,7 +847,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	}
 
 	/**
-	 * @param 'dashboard'|'rules'|'activity'|'insights' $active_tab
+	 * @param 'dashboard'|'rules'|'activity'|'insights'|'profile' $active_tab
 	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $log_filters
 	 */
 	private function render_tabs( string $active_tab, string $plugin_status_filter, string $plugin_access_filter, array $log_filters ): void {
@@ -882,7 +898,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		printf(
 			'<a href="%1$s" class="nav-tab%2$s">%3$s</a>',
 			esc_url( $activity_url ),
-			'activity' === $active_tab ? ' nav-tab-active' : '',
+			( 'activity' === $active_tab || 'profile' === $active_tab ) ? ' nav-tab-active' : '',
 			esc_html__( 'Activity', 'handl-ai-connector-access-control' )
 		);
 		printf(
@@ -1221,6 +1237,295 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	}
 
 	/**
+	 * AICAC-PROFILE: read-only per-plugin drill-down (usage, incidents, effective rules).
+	 *
+	 * @param array<int,mixed>                  $log
+	 * @param array<string,mixed>               $policy
+	 * @param array<string,array<string,mixed>> $plugins
+	 * @param array<string,bool>                $active
+	 */
+	private function render_plugin_profile_tab( array $log, array $policy, array $plugins, array $active ): void {
+		$raw_plugin = isset( $_REQUEST['handl_aicac_plugin'] )
+			? wp_unslash( (string) $_REQUEST['handl_aicac_plugin'] )
+			: '';
+		$plugin     = Plugin_Profile::sanitize_plugin( $raw_plugin );
+
+		echo '<div class="handl-aicac-tab-panel handl-aicac-plugin-profile">';
+		echo '<p><a href="' . esc_url( admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' ) ) . '">&larr; ';
+		echo esc_html__( 'Back to Activity', 'handl-ai-connector-access-control' );
+		echo '</a></p>';
+
+		if ( '' === $plugin ) {
+			echo '<div class="notice notice-error"><p>' . esc_html__( 'This plugin link is not valid. Open a plugin from Activity.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '</div>';
+			return;
+		}
+
+		$profile = Plugin_Profile::build( $plugin, $log, $policy, $plugins, $active );
+		$eff     = $profile['effective'];
+		$usage   = $profile['usage'];
+		$inc     = $profile['incidents'];
+
+		echo '<h2>' . esc_html( (string) $profile['label'] ) . '</h2>';
+		echo '<p class="description"><code>' . esc_html( $plugin ) . '</code>';
+		if ( ! $profile['installed'] ) {
+			echo ' — ' . esc_html__( 'Not installed. Saved activity for this plugin is still available below.', 'handl-ai-connector-access-control' );
+		} elseif ( ! $profile['active'] ) {
+			echo ' — ' . esc_html__( 'Installed but inactive.', 'handl-ai-connector-access-control' );
+		} else {
+			echo ' — ' . esc_html__( 'Active', 'handl-ai-connector-access-control' );
+		}
+		echo '</p>';
+
+		echo '<p>';
+		echo esc_html__( 'First seen:', 'handl-ai-connector-access-control' ) . ' ';
+		echo esc_html( $profile['first_ts'] ? wp_date( 'Y-m-d H:i:s', (int) $profile['first_ts'] ) : '—' );
+		echo ' · ' . esc_html__( 'Last seen:', 'handl-ai-connector-access-control' ) . ' ';
+		echo esc_html( $profile['last_ts'] ? wp_date( 'Y-m-d H:i:s', (int) $profile['last_ts'] ) : '—' );
+		echo '</p>';
+
+		if ( ! $profile['logging_enabled'] ) {
+			echo '<div class="notice notice-warning inline"><p>';
+			echo esc_html__( 'Activity logging and Learn mode are off. This page shows current rules, but it cannot show call history, estimated spend, or incidents until you turn on one of them.', 'handl-ai-connector-access-control' );
+			echo '</p></div>';
+		} elseif ( null !== $profile['retention_days'] ) {
+			echo '<p class="description">';
+			echo esc_html(
+				sprintf(
+					/* translators: %d: retention days */
+					__( 'This page shows activity saved within the last %d days. Older activity was deleted based on your activity time limit.', 'handl-ai-connector-access-control' ),
+					(int) $profile['retention_days']
+				)
+			);
+			echo '</p>';
+		}
+
+		// --- Rules ---
+		echo '<h3>' . esc_html__( 'Rules for this plugin', 'handl-ai-connector-access-control' ) . '</h3>';
+		if ( ! empty( $eff['kill_switch'] ) ) {
+			if ( ! empty( $eff['kill_switch_exception'] ) ) {
+				echo '<p>' . esc_html__( 'Emergency stop is on, but this plugin is on the exception list. Its plugin and AI type rules still apply.', 'handl-ai-connector-access-control' ) . '</p>';
+			} else {
+				echo '<p><strong>' . esc_html__( 'Emergency stop is on. This plugin is not on the exception list, so its AI Client calls are blocked.', 'handl-ai-connector-access-control' ) . '</strong></p>';
+			}
+		}
+
+		$plugin_chip = isset( $eff['plugin_verdict']['chip'] ) ? (string) $eff['plugin_verdict']['chip'] : '';
+		$configured_plugin = isset( $eff['plugin_rule'] ) ? (string) $eff['plugin_rule'] : 'default';
+		echo '<p><strong>' . esc_html__( 'Plugin rule result:', 'handl-ai-connector-access-control' ) . '</strong> ';
+		echo esc_html( $plugin_chip );
+		echo ' <span class="description">(';
+		echo esc_html(
+			sprintf(
+				/* translators: %s: configured rule default|allow|deny */
+				__( 'saved setting: %s', 'handl-ai-connector-access-control' ),
+				$configured_plugin
+			)
+		);
+		echo ')</span></p>';
+
+		echo '<table class="widefat striped" style="max-width:48em;"><thead><tr>';
+		echo '<th>' . esc_html__( 'AI type', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Saved setting', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Result', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '</tr></thead><tbody>';
+		foreach ( (array) ( $eff['families'] ?? array() ) as $fam ) {
+			if ( ! is_array( $fam ) ) {
+				continue;
+			}
+			$cfg = isset( $fam['configured'] ) ? (string) $fam['configured'] : 'inherit';
+			$cfg_label = 'inherit' === $cfg
+				? __( 'Follow plugin rule', 'handl-ai-connector-access-control' )
+				: ( 'deny' === $cfg ? __( 'Deny', 'handl-ai-connector-access-control' ) : __( 'Allow', 'handl-ai-connector-access-control' ) );
+			$chip = isset( $fam['verdict']['chip'] ) ? (string) $fam['verdict']['chip'] : '';
+			echo '<tr>';
+			echo '<td>' . esc_html( (string) ( $fam['label'] ?? '' ) ) . '</td>';
+			echo '<td>' . esc_html( $cfg_label ) . '</td>';
+			echo '<td>' . esc_html( $chip ) . '</td>';
+			echo '</tr>';
+		}
+		echo '</tbody></table>';
+
+		// --- Usage ---
+		echo '<h3>' . esc_html__( 'Usage', 'handl-ai-connector-access-control' ) . '</h3>';
+		if ( $profile['logging_enabled'] ) {
+			echo '<p>';
+			echo esc_html(
+				sprintf(
+					/* translators: 1: call count, 2: estimated USD */
+					__( '%1$s AI Client calls · Estimated spend: $%2$s', 'handl-ai-connector-access-control' ),
+					number_format_i18n( (int) $usage['calls'] ),
+					number_format_i18n( (float) $usage['estimated_usd'], 2 )
+				)
+			);
+			echo '</p>';
+			if ( ! empty( $usage['by_day'] ) ) {
+				echo '<h4>' . esc_html__( 'By day', 'handl-ai-connector-access-control' ) . '</h4>';
+				echo '<table class="widefat striped" style="max-width:36em;"><thead><tr>';
+				echo '<th>' . esc_html__( 'Day', 'handl-ai-connector-access-control' ) . '</th>';
+				echo '<th class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
+				echo '<th class="column-num">' . esc_html__( 'Estimated spend', 'handl-ai-connector-access-control' ) . '</th>';
+				echo '</tr></thead><tbody>';
+				foreach ( (array) $usage['by_day'] as $day_row ) {
+					if ( ! is_array( $day_row ) ) {
+						continue;
+					}
+					echo '<tr>';
+					echo '<td>' . esc_html( (string) ( $day_row['day'] ?? '' ) ) . '</td>';
+					echo '<td class="column-num">' . esc_html( number_format_i18n( (int) ( $day_row['calls'] ?? 0 ) ) ) . '</td>';
+					echo '<td class="column-num">$' . esc_html( number_format_i18n( (float) ( $day_row['usd'] ?? 0 ), 2 ) ) . '</td>';
+					echo '</tr>';
+				}
+				echo '</tbody></table>';
+			}
+			if ( ! empty( $usage['by_operation'] ) ) {
+				echo '<h4>' . esc_html__( 'By operation', 'handl-ai-connector-access-control' ) . '</h4>';
+				$this->render_profile_bucket_table( (array) $usage['by_operation'] );
+			}
+			if ( ! empty( $usage['by_model'] ) ) {
+				echo '<h4>' . esc_html__( 'By model', 'handl-ai-connector-access-control' ) . '</h4>';
+				$this->render_profile_bucket_table( (array) $usage['by_model'] );
+			}
+			if ( 0 === (int) $usage['calls'] && 0 === (int) $profile['row_count'] ) {
+				echo '<p class="description">' . esc_html__( 'No activity is saved for this plugin within the current time limit.', 'handl-ai-connector-access-control' ) . '</p>';
+			}
+		}
+
+		// --- Incidents ---
+		echo '<h3>' . esc_html__( 'Incidents', 'handl-ai-connector-access-control' ) . '</h3>';
+		if ( $profile['logging_enabled'] ) {
+			echo '<p>';
+			echo esc_html(
+				sprintf(
+					/* translators: 1: denial count, 2: shadow call count, 3: spend alert count */
+					__( 'Blocked calls: %1$s · Direct connections outside the AI Client: %2$s · Estimated spend alerts: %3$s', 'handl-ai-connector-access-control' ),
+					number_format_i18n( (int) $inc['denial_count'] ),
+					number_format_i18n( (int) $inc['shadow_call_count'] ),
+					number_format_i18n( (int) $inc['spend_alert_count'] )
+				)
+			);
+			echo '</p>';
+			if ( ! empty( $inc['denials'] ) ) {
+				echo '<h4>' . esc_html__( 'Recent blocked calls', 'handl-ai-connector-access-control' ) . '</h4>';
+				echo '<ul>';
+				foreach ( (array) $inc['denials'] as $d ) {
+					if ( ! is_array( $d ) ) {
+						continue;
+					}
+					$ts = isset( $d['ts'] ) ? (int) $d['ts'] : 0;
+					echo '<li><code>' . esc_html( $ts ? wp_date( 'Y-m-d H:i:s', $ts ) : '—' ) . '</code> ';
+					echo esc_html( (string) ( $d['operation'] ?: '—' ) );
+					if ( ! empty( $d['denial_reason'] ) ) {
+						echo ' — ' . esc_html( $this->format_denial_reason_label( (string) $d['denial_reason'] ) );
+					}
+					echo '</li>';
+				}
+				echo '</ul>';
+			}
+			if ( ! empty( $inc['shadow'] ) ) {
+				echo '<h4>' . esc_html__( 'Direct connections outside the AI Client', 'handl-ai-connector-access-control' ) . '</h4>';
+				echo '<ul>';
+				foreach ( (array) $inc['shadow'] as $s ) {
+					if ( ! is_array( $s ) ) {
+						continue;
+					}
+					$ts = isset( $s['ts'] ) ? (int) $s['ts'] : 0;
+					echo '<li><code>' . esc_html( $ts ? wp_date( 'Y-m-d H:i:s', $ts ) : '—' ) . '</code> ';
+					echo esc_html( (string) ( $s['host'] ?: '—' ) );
+					$count = isset( $s['count'] ) ? (int) $s['count'] : 1;
+					if ( $count > 1 ) {
+						echo ' · ' . esc_html(
+							sprintf(
+								/* translators: %d: call count */
+								_n( '%d call', '%d calls', $count, 'handl-ai-connector-access-control' ),
+								$count
+							)
+						);
+					}
+					echo '</li>';
+				}
+				echo '</ul>';
+			}
+			if ( ! empty( $inc['spend_alerts'] ) ) {
+				echo '<h4>' . esc_html__( 'Estimated spend alerts', 'handl-ai-connector-access-control' ) . '</h4>';
+				echo '<ul>';
+				foreach ( (array) $inc['spend_alerts'] as $a ) {
+					if ( ! is_array( $a ) ) {
+						continue;
+					}
+					$ts = isset( $a['ts'] ) ? (int) $a['ts'] : 0;
+					echo '<li><code>' . esc_html( $ts ? wp_date( 'Y-m-d H:i:s', $ts ) : '—' ) . '</code> ';
+					echo esc_html(
+						sprintf(
+							/* translators: 1: threshold USD, 2: estimate USD */
+							__( 'Alert threshold: $%1$s · Estimated spend: $%2$s', 'handl-ai-connector-access-control' ),
+							number_format_i18n( (float) ( $a['threshold'] ?? 0 ), 2 ),
+							number_format_i18n( (float) ( $a['est_usd'] ?? 0 ), 2 )
+						)
+					);
+					echo '</li>';
+				}
+				echo '</ul>';
+			}
+		}
+
+		// --- Actions (links / existing export surface only) ---
+		// Activity uses a GET form (not <a class="button">): on the profile screen the
+		// Activity nav-tab is already marked active, and an identical-looking href can
+		// no-op in some browsers/automation. Submit always leaves profile → filtered Activity.
+		echo '<h3>' . esc_html__( 'Actions', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<p class="handl-aicac-profile-actions">';
+		echo '<a class="button button-secondary" href="' . esc_url( (string) $profile['actions']['rules_url'] ) . '">' . esc_html__( 'Edit rules for this plugin', 'handl-ai-connector-access-control' ) . '</a> ';
+
+		echo '<form method="get" action="' . esc_url( admin_url( 'options-general.php' ) ) . '" style="display:inline;">';
+		echo '<input type="hidden" name="page" value="handl-ai-connector-access-control" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
+		echo '<input type="hidden" name="handl_aicac_log_plugin" value="' . esc_attr( $plugin ) . '" />';
+		echo '<button type="submit" class="button button-secondary">' . esc_html__( 'View this plugin in Activity', 'handl-ai-connector-access-control' ) . '</button>';
+		echo '</form> ';
+
+		echo '<form method="post" style="display:inline;">';
+		wp_nonce_field( 'handl_aicac_export_log', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="export_log" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
+		echo '<input type="hidden" name="handl_aicac_log_plugin" value="' . esc_attr( $plugin ) . '" />';
+		echo '<button type="submit" class="button">' . esc_html__( 'Download this plugin’s activity as CSV', 'handl-ai-connector-access-control' ) . '</button>';
+		echo '</form>';
+		echo '</p>';
+		echo '<p class="description">' . esc_html__( 'The CSV uses the same Activity export. Rules can only be changed on the Rules tab.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		echo '</div>';
+	}
+
+	/**
+	 * @param list<array{key?:string,calls?:int,usd?:float}> $rows
+	 */
+	private function render_profile_bucket_table( array $rows ): void {
+		echo '<table class="widefat striped" style="max-width:40em;"><thead><tr>';
+		echo '<th>' . esc_html__( 'Name', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th class="column-num">' . esc_html__( 'Estimated spend', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '</tr></thead><tbody>';
+		$shown = 0;
+		foreach ( $rows as $row ) {
+			if ( ! is_array( $row ) || $shown >= 15 ) {
+				break;
+			}
+			++$shown;
+			$key = isset( $row['key'] ) ? (string) $row['key'] : '';
+			if ( Analytics::UNKNOWN_KEY === $key ) {
+				$key = __( 'Unknown', 'handl-ai-connector-access-control' );
+			}
+			echo '<tr>';
+			echo '<td><code>' . esc_html( $key ) . '</code></td>';
+			echo '<td class="column-num">' . esc_html( number_format_i18n( (int) ( $row['calls'] ?? 0 ) ) ) . '</td>';
+			echo '<td class="column-num">$' . esc_html( number_format_i18n( (float) ( $row['usd'] ?? 0 ), 2 ) ) . '</td>';
+			echo '</tr>';
+		}
+		echo '</tbody></table>';
+	}
+
+	/**
 	 * F5 Dashboard — answers: Am I safe? What's spending? Block that one.
 	 *
 	 * @param array<int,mixed> $log
@@ -1458,7 +1763,14 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				$label = '__unknown__' === $p
 					? __( 'unknown', 'handl-ai-connector-access-control' )
 					: ( isset( $plugins[ $p ]['Name'] ) ? (string) $plugins[ $p ]['Name'] : $p );
-				echo '<tr><td>' . esc_html( $label ) . '</td>';
+				$profile_url = ( '__unknown__' !== $p ) ? Plugin_Profile::profile_url( (string) $p ) : '';
+				echo '<tr><td>';
+				if ( '' !== $profile_url ) {
+					echo '<a href="' . esc_url( $profile_url ) . '">' . esc_html( $label ) . '</a>';
+				} else {
+					echo esc_html( $label );
+				}
+				echo '</td>';
 				echo '<td class="column-num">$' . esc_html( number_format_i18n( $row['usd'], 2 ) ) . '</td>';
 				echo '<td class="column-num">' . esc_html( number_format_i18n( $row['calls'] ) ) . '</td></tr>';
 			}
@@ -1917,7 +2229,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$log_filters      = $this->log_filters;
 		$filter_options   = $this->collect_log_filter_options( $log, $plugins );
 
-		echo '<div class="handl-aicac-tab-panel handl-aicac-log-wrap">';
+		echo '<div id="handl-aicac-log-wrap" class="handl-aicac-tab-panel handl-aicac-log-wrap">';
 
 		// Detached POST forms so "Send test email" can sit next to fields without nesting forms.
 		echo '<form method="post" id="handl-aicac-test-email-denial" style="display:none;" hidden>';
@@ -4007,7 +4319,13 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo '<td class="column-tokens">' . $this->render_est_cost_cell( $input_tokens, $output_tokens, $policy, $provider ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo '<td>';
 		if ( $plugin ) {
-			echo '<strong>' . esc_html( $plugin_label ) . '</strong><br /><code>' . esc_html( $plugin ) . '</code>';
+			$profile_url = Plugin_Profile::profile_url( $plugin );
+			if ( '' !== $profile_url ) {
+				echo '<strong><a href="' . esc_url( $profile_url ) . '">' . esc_html( $plugin_label ) . '</a></strong>';
+			} else {
+				echo '<strong>' . esc_html( $plugin_label ) . '</strong>';
+			}
+			echo '<br /><code>' . esc_html( $plugin ) . '</code>';
 			if ( $file ) {
 				echo '<br /><span class="description" style="font-size:11px;">' . esc_html( wp_basename( $file ) ) . '</span>';
 			}

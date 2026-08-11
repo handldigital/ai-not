@@ -65,6 +65,7 @@ No developer experience is required.
 * **Denial alerts:** Get an optional email when a request is blocked.
 * **Weekly report:** Review activity, denials, and estimated spend by email.
 * **Estimated spend:** Use token counts and your provider rates.
+* **Plugin AI profile:** Open a plugin from Activity or Dashboard estimated spend to see its usage, incidents, estimated spend alerts, and current rules in one read-only view. Rule changes and CSV exports stay on their existing screens.
 * **Rules transfer:** Export or import rules as JSON.
 * **Activity limits:** Control how many entries are saved and for how long.
 * **Multisite overview:** View status and activity for each site.
@@ -188,6 +189,8 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = Unreleased =
+* Added a read-only **Plugin AI profile**. Click a plugin in Activity or Dashboard estimated spend to see usage by day, operation, and model; blocked calls; direct connections outside the AI Client; estimated spend alerts; and the rules that currently apply. Rule results use the same decision process as enforcement. Links open the existing Rules and CSV export screens.
+
 
 = 1.2.1 =
 * Added a first-run setup wizard. Watch activity, set up alerts, and send a test email.
