@@ -480,6 +480,21 @@
 	border: 1px dashed #c3c4c7;
 }
 
+.handl-aicac-insights-trends .handl-aicac-trends-table td.handl-aicac-trends-spark {
+	vertical-align: middle;
+	color: #2271b1;
+	width: 130px;
+}
+
+.handl-aicac-trend-spark {
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.handl-aicac-trends-legend {
+	margin-top: 0.75em;
+}
+
 @media screen and (max-width: 960px) {
 	.handl-aicac-insights-toolbar {
 		flex-direction: column;
