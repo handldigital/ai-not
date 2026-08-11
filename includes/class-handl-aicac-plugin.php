@@ -52,6 +52,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin-profile.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-differentiator-messaging.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-whats-new.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-site-health.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rest.php';
@@ -64,6 +65,7 @@ final class Plugin {
 		Model_Force::instance()->init();
 		Shadow_AI::instance()->init();
 		Admin::instance()->init();
+		Whats_New::instance()->init();
 		Network_Admin::instance()->init();
 		Site_Health::instance()->init();
 		Rest::instance()->init();
