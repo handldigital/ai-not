@@ -2435,12 +2435,12 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 		echo '</select> ';
 		submit_button(
-			__( 'Print audit report', 'handl-ai-connector-access-control' ),
+			__( 'Open audit report', 'handl-ai-connector-access-control' ),
 			'secondary',
 			'submit',
 			false
 		);
-		echo ' <span class="description">' . esc_html__( 'Opens a printable HTML report on this site. Use Print → Save as PDF. Nothing is uploaded.', 'handl-ai-connector-access-control' ) . '</span>';
+		echo ' <span class="description">' . esc_html__( 'Opens a printable report in your browser. Use Print → Save as PDF. Nothing is uploaded.', 'handl-ai-connector-access-control' ) . '</span>';
 		echo '</form>';
 
 		echo '<form method="post" style="margin:0 0 1em;">';

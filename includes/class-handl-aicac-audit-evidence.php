@@ -83,7 +83,7 @@ final class Audit_Evidence {
 
 		$title = sprintf(
 			/* translators: %s: site name */
-			__( 'AI governance report — %s', 'handl-ai-connector-access-control' ),
+			__( 'AI governance report: %s', 'handl-ai-connector-access-control' ),
 			(string) ( $meta['site_name'] ?? '' )
 		);
 
@@ -116,7 +116,7 @@ th{background:#f0f0f1;}
 </style>
 </head>
 <body>
-<p class="no-print muted"><?php echo esc_html__( 'Use your browser’s Print dialog and choose Save as PDF. This page stays on your site — nothing is sent elsewhere.', 'handl-ai-connector-access-control' ); ?></p>
+<p class="no-print muted"><?php echo esc_html__( 'Use your browser’s Print dialog and choose Save as PDF. This page stays on your site. Nothing is sent elsewhere.', 'handl-ai-connector-access-control' ); ?></p>
 
 <h1><?php echo esc_html__( 'HandL AI governance report', 'handl-ai-connector-access-control' ); ?></h1>
 <div class="meta section">
@@ -135,7 +135,7 @@ th{background:#f0f0f1;}
 <?php self::render_kv_row( __( 'Activity logging', 'handl-ai-connector-access-control' ), (string) ( $policy['log_enabled_label'] ?? '' ) ); ?>
 <?php self::render_kv_row( __( 'Emergency stop', 'handl-ai-connector-access-control' ), (string) ( $policy['kill_switch_label'] ?? '' ) ); ?>
 <?php self::render_kv_row( __( 'Block direct AI connections', 'handl-ai-connector-access-control' ), (string) ( $policy['shadow_block_label'] ?? '' ) ); ?>
-<?php self::render_kv_row( __( 'Role gate', 'handl-ai-connector-access-control' ), (string) ( $policy['role_gate_label'] ?? '' ) ); ?>
+<?php self::render_kv_row( __( 'User role restrictions', 'handl-ai-connector-access-control' ), (string) ( $policy['role_gate_label'] ?? '' ) ); ?>
 <?php self::render_kv_row( __( 'Unknown AI operations', 'handl-ai-connector-access-control' ), (string) ( $policy['unknown_operation_label'] ?? '' ) ); ?>
 </tbody>
 </table>
@@ -144,14 +144,14 @@ th{background:#f0f0f1;}
 <div class="section section-major">
 <h2><?php echo esc_html__( 'Plugin rules', 'handl-ai-connector-access-control' ); ?></h2>
 <?php if ( empty( $rules ) ) : ?>
-<p class="muted"><?php echo esc_html__( 'No explicit plugin rules — all plugins follow the site default.', 'handl-ai-connector-access-control' ); ?></p>
+<p class="muted"><?php echo esc_html__( 'No explicit plugin rules. All plugins follow the site default.', 'handl-ai-connector-access-control' ); ?></p>
 <?php else : ?>
 <table>
 <thead><tr>
 <th><?php echo esc_html__( 'Plugin', 'handl-ai-connector-access-control' ); ?></th>
 <th><?php echo esc_html__( 'Access', 'handl-ai-connector-access-control' ); ?></th>
 <th><?php echo esc_html__( 'AI type rules', 'handl-ai-connector-access-control' ); ?></th>
-<th><?php echo esc_html__( 'Allow expires', 'handl-ai-connector-access-control' ); ?></th>
+<th><?php echo esc_html__( 'Allow expiry', 'handl-ai-connector-access-control' ); ?></th>
 </tr></thead>
 <tbody>
 <?php foreach ( $rules as $row ) : ?>
@@ -187,7 +187,7 @@ th{background:#f0f0f1;}
 <?php if ( ! empty( $history['available'] ) ) : ?>
 <p><?php echo esc_html__( 'Change history is available.', 'handl-ai-connector-access-control' ); ?></p>
 <?php else : ?>
-<p class="muted"><?php echo esc_html__( 'Not available yet. This section will list who changed which rule and when in a future release.', 'handl-ai-connector-access-control' ); ?></p>
+<p class="muted"><?php echo esc_html__( 'Policy change history is not available in this report.', 'handl-ai-connector-access-control' ); ?></p>
 <?php endif; ?>
 </div>
 
@@ -364,7 +364,7 @@ th{background:#f0f0f1;}
 		$role_label = ! empty( $policy['role_gate_enabled'] )
 			? sprintf(
 				/* translators: %d: number of allowed roles */
-				_n( 'On — %d role allowed', 'On — %d roles allowed', count( $allowed ), 'handl-ai-connector-access-control' ),
+				_n( 'On (%d role allowed)', 'On (%d roles allowed)', count( $allowed ), 'handl-ai-connector-access-control' ),
 				count( $allowed )
 			)
 			: __( 'Off', 'handl-ai-connector-access-control' );
@@ -464,7 +464,7 @@ th{background:#f0f0f1;}
 		}
 		if ( isset( $activity['shadow_ai_observation_count'] ) ) {
 			self::render_kv_row(
-				__( 'Direct AI connection observations', 'handl-ai-connector-access-control' ),
+				__( 'Direct AI connections detected', 'handl-ai-connector-access-control' ),
 				number_format_i18n( (int) $activity['shadow_ai_observation_count'] )
 			);
 		}

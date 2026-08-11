@@ -99,7 +99,7 @@ final class AuditEvidenceTest extends TestCase {
 		$this->assertStringContainsString( '@media print', $html );
 		$this->assertStringContainsString( 'page-break', $html );
 		$this->assertStringContainsString( 'Policy snapshot', $html );
-		$this->assertStringContainsString( 'Not available yet', $html );
+		$this->assertStringContainsString( 'Policy change history is not available in this report.', $html );
 		$this->assertStringContainsString( 'Download CSV', $html );
 		$this->assertDoesNotMatchRegularExpression( '/<link[^>]+stylesheet/i', $html );
 		$this->assertDoesNotMatchRegularExpression( '/<script[^>]+src=/i', $html );
