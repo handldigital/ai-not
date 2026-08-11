@@ -650,6 +650,52 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		$family_labels = Operations::family_labels();
 		$force_map     = Model_Force::force_map( $policy );
 		$unforced_n    = Model_Force::count_unforced_unattributed( $log );
+		$graduate      = Graduate::proposal_from_request();
+
+		if ( is_array( $graduate ) ) {
+			$grad_label = $graduate['plugin'];
+			if ( isset( $plugins[ $graduate['plugin'] ]['Name'] ) ) {
+				$grad_label = (string) $plugins[ $graduate['plugin'] ]['Name'];
+			}
+			$grad_coverage = Graduate::coverage_for( $policy, $graduate );
+			if ( null !== $grad_coverage ) {
+				echo '<div class="notice notice-warning"><p>';
+				echo esc_html( Graduate::coverage_label( $grad_coverage, $plugins ) );
+				echo ' ';
+				echo esc_html__( 'No second rule was created.', 'handl-ai-connector-access-control' );
+				echo '</p></div>';
+			} else {
+				echo '<div class="notice notice-info"><p><strong>';
+				echo esc_html__( 'Create a rule from observed activity', 'handl-ai-connector-access-control' );
+				echo '</strong> ';
+				echo esc_html(
+					sprintf(
+						/* translators: %s: plugin display name */
+						__( 'Review the highlighted row for %s. Choose Allow or Deny, adjust AI type or model route if needed, then Save changes.', 'handl-ai-connector-access-control' ),
+						$grad_label
+					)
+				);
+				$bits = array();
+				if ( '' !== $graduate['family'] ) {
+					$bits[] = sprintf(
+						/* translators: %s: AI type label */
+						__( 'AI type: %s', 'handl-ai-connector-access-control' ),
+						$family_labels[ $graduate['family'] ] ?? $graduate['family']
+					);
+				}
+				if ( '' !== $graduate['provider'] || '' !== $graduate['model'] ) {
+					$bits[] = sprintf(
+						/* translators: %s: provider/model path */
+						__( 'Provider/model: %s', 'handl-ai-connector-access-control' ),
+						trim( $graduate['provider'] . '/' . $graduate['model'], '/' )
+					);
+				}
+				if ( ! empty( $bits ) ) {
+					echo ' <span class="description">' . esc_html( implode( ' · ', $bits ) ) . '</span>';
+				}
+				echo '</p></div>';
+			}
+		}
 
 		echo '<h2>' . esc_html__( 'Plugin rules', 'handl-ai-connector-access-control' ) . '</h2>';
 echo '<p class="description">' . esc_html__( 'Plugin rules set the main access level. AI type columns can refine an allowed plugin, such as allowing text but blocking images. A plugin-level Deny blocks every AI type. Model routing is experimental, uses best-effort plugin detection, and does not guarantee spend. Leave both route fields blank to disable it.', 'handl-ai-connector-access-control' ) . '</p>';
@@ -736,6 +782,15 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			$force_row = $force_map[ $basename ] ?? array( 'provider' => '', 'model' => '' );
 			$force_p   = (string) ( $force_row['provider'] ?? '' );
 			$force_m   = (string) ( $force_row['model'] ?? '' );
+			// AICAC-GRADUATE: prefill empty model-route fields from the observed call.
+			if ( is_array( $graduate ) && $basename === $graduate['plugin'] ) {
+				if ( '' === $force_p && '' !== $graduate['provider'] ) {
+					$force_p = $graduate['provider'];
+				}
+				if ( '' === $force_m && '' !== $graduate['model'] ) {
+					$force_m = $graduate['model'];
+				}
+			}
 
 			echo '<tr id="handl-aicac-rule-' . esc_attr( md5( $basename ) ) . '">';
 			echo '<th scope="row" class="check-column">';
@@ -818,7 +873,11 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '</td>';
 			foreach ( $family_labels as $family_id => $family_label ) {
 				$family_rule = isset( $plugin_ops[ $family_id ] ) ? (string) $plugin_ops[ $family_id ] : '';
-				echo '<td class="handl-aicac-col-family">';
+				$family_td_class = 'handl-aicac-col-family';
+				if ( is_array( $graduate ) && $basename === $graduate['plugin'] && '' !== $graduate['family'] && $family_id === $graduate['family'] ) {
+					$family_td_class .= ' handl-aicac-graduate-family';
+				}
+				echo '<td class="' . esc_attr( $family_td_class ) . '">';
 				echo '<select name="handl_aicac_operation[' . esc_attr( $basename ) . '][' . esc_attr( $family_id ) . ']" form="' . esc_attr( $rules_form_id ) . '" aria-label="' . esc_attr( sprintf(
 					/* translators: 1: plugin name, 2: capability family */
 					__( '%1$s: %2$s', 'handl-ai-connector-access-control' ),
@@ -2062,6 +2121,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				echo '<input type="hidden" name="handl_aicac_return_tab" value="dashboard" />';
 				submit_button( __( 'Block', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false, array( 'class' => 'button button-small button-link-delete' ) );
 				echo '</form>';
+				$this->render_graduate_plugin_action( $p, $policy, $plugins );
 				echo '</td></tr>';
 			}
 			echo '</tbody></table>';
@@ -4408,6 +4468,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			echo '<td>' . $this->render_decision_badge( (string) $row['effective'] ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			echo '<td class="handl-aicac-quick-actions">';
 			$this->render_quick_rule_buttons( (string) $row['plugin'], $log_filters );
+			$this->render_graduate_plugin_action( (string) $row['plugin'], $policy, $plugins );
 			echo '</td>';
 			echo '</tr>';
 		}
@@ -4726,11 +4787,65 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			echo '</span>';
 		} elseif ( $plugin ) {
 			$this->render_quick_rule_buttons( $plugin, $log_filters );
+			$this->render_graduate_action( $row, $policy, $plugins );
 		} else {
 			echo '<span class="handl-aicac-muted">—</span>';
 		}
 		echo '</td>';
 		echo '</tr>';
+	}
+
+	/**
+	 * AICAC-GRADUATE: Create rule from this call (or already-covered status).
+	 *
+	 * @param array<string,mixed>               $row
+	 * @param array<string,mixed>               $policy
+	 * @param array<string,array<string,mixed>> $plugins
+	 */
+	private function render_graduate_action( array $row, array $policy, array $plugins ): void {
+		$proposal = Graduate::proposal_from_log_row( $row );
+		if ( null === $proposal ) {
+			return;
+		}
+
+		$coverage = Graduate::coverage_for( $policy, $proposal );
+		echo '<div class="handl-aicac-graduate-action" style="margin-top:4px;">';
+		if ( null !== $coverage ) {
+			echo '<span class="description" style="font-size:11px;">';
+			echo esc_html( Graduate::coverage_label( $coverage, $plugins ) );
+			echo '</span>';
+		} else {
+			echo '<a class="button button-small" href="' . esc_url( Graduate::rules_url( $proposal ) ) . '">';
+			echo esc_html__( 'Create rule from this call', 'handl-ai-connector-access-control' );
+			echo '</a>';
+		}
+		echo '</div>';
+	}
+
+	/**
+	 * Plugin-level graduate link (Dashboard / Suggested rules).
+	 *
+	 * @param array<string,mixed>               $policy
+	 * @param array<string,array<string,mixed>> $plugins
+	 */
+	private function render_graduate_plugin_action( string $plugin_basename, array $policy, array $plugins ): void {
+		$proposal = Graduate::proposal_from_plugin( $plugin_basename );
+		if ( null === $proposal ) {
+			return;
+		}
+
+		$coverage = Graduate::coverage_for( $policy, $proposal );
+		echo '<div class="handl-aicac-graduate-action" style="margin-top:4px;">';
+		if ( null !== $coverage ) {
+			echo '<span class="description" style="font-size:11px;">';
+			echo esc_html( Graduate::coverage_label( $coverage, $plugins ) );
+			echo '</span>';
+		} else {
+			echo '<a class="button button-small" href="' . esc_url( Graduate::rules_url( $proposal ) ) . '">';
+			echo esc_html__( 'Create rule from this call', 'handl-ai-connector-access-control' );
+			echo '</a>';
+		}
+		echo '</div>';
 	}
 
 	private function render_token_count( ?int $count, ?int $thought_tokens = null ): string {
