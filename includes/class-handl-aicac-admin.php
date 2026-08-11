@@ -2339,6 +2339,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '</tbody></table></div>';
 		}
 
+		$this->render_insights_trends( $log, $policy, $plugins );
+
 		$dimensions = array(
 			'plugin'    => __( 'Plugins', 'handl-ai-connector-access-control' ),
 			'provider'  => __( 'Providers', 'handl-ai-connector-access-control' ),
@@ -2440,6 +2442,106 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 
 		return number_format_i18n( $input + $output );
+	}
+
+	/**
+	 * AICAC-TRENDS: weekly call/spend history (site + per plugin). Hidden when
+	 * fewer than two weeks of retained activity exist.
+	 *
+	 * @param array<int,mixed>                  $log
+	 * @param array<string,mixed>               $policy
+	 * @param array<string,array<string,mixed>> $plugins
+	 */
+	private function render_insights_trends( array $log, array $policy, array $plugins ): void {
+		$trends = Usage_Trends::compute( $log, $policy, $plugins );
+		if ( null === $trends ) {
+			return;
+		}
+
+		echo '<div class="handl-aicac-insights-trends" style="margin:1.5em 0;">';
+		echo '<h3>' . esc_html__( 'Weekly trends', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<p class="description">' . esc_html__( 'Calls and estimated spend by week from the saved log for the last 8 weeks. Weeks without saved data are labeled “No data kept” instead of zero. Estimate only, not a bill.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		echo '<table class="widefat striped handl-aicac-trends-table">';
+		echo '<thead><tr>';
+		echo '<th>' . esc_html__( 'Scope', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Calls trend', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Calls vs last week', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Estimated spend trend', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Estimated spend vs last week', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '</tr></thead><tbody>';
+
+		$this->render_insights_trend_row(
+			__( 'Entire site', 'handl-ai-connector-access-control' ),
+			$trends['site']['weeks'],
+			$trends['site']['calls_delta_pct'],
+			$trends['site']['spend_delta_pct']
+		);
+
+		$shown = 0;
+		foreach ( $trends['plugins'] as $row ) {
+			if ( $shown >= 12 ) {
+				break;
+			}
+			++$shown;
+			$this->render_insights_trend_row(
+				(string) $row['label'],
+				$row['weeks'],
+				$row['calls_delta_pct'],
+				$row['spend_delta_pct']
+			);
+		}
+
+		echo '</tbody></table>';
+
+		echo '<p class="description handl-aicac-trends-legend">';
+		echo esc_html__( 'Weekly details (oldest to newest):', 'handl-ai-connector-access-control' );
+		echo ' ';
+		$parts = array();
+		foreach ( $trends['site']['weeks'] as $i => $w ) {
+			$label = isset( $trends['weeks'][ $i ]['label'] ) ? (string) $trends['weeks'][ $i ]['label'] : (string) $w['key'];
+			if ( 'gap' === ( $w['status'] ?? '' ) ) {
+				$parts[] = sprintf(
+					/* translators: %s: week start label */
+					__( '%s: No data kept', 'handl-ai-connector-access-control' ),
+					$label
+				);
+			} else {
+				$parts[] = sprintf(
+					/* translators: 1: week start label, 2: call count, 3: dollar amount */
+					__( '%1$s: %2$s calls, $%3$s estimated spend', 'handl-ai-connector-access-control' ),
+					$label,
+					number_format_i18n( (int) ( $w['calls'] ?? 0 ) ),
+					number_format_i18n( (float) ( $w['spend'] ?? 0 ), 2 )
+				);
+			}
+		}
+		echo esc_html( implode( '; ', $parts ) );
+		echo '</p>';
+		echo '</div>';
+	}
+
+	/**
+	 * @param list<array{status:string,calls:int|null,spend:float|null}> $weeks
+	 */
+	private function render_insights_trend_row( string $label, array $weeks, ?float $calls_delta, ?float $spend_delta ): void {
+		$calls_svg = Usage_Trends::sparkline_svg( $weeks, 'calls' );
+		$spend_svg = Usage_Trends::sparkline_svg( $weeks, 'spend' );
+		$empty     = esc_html__( 'Not enough data', 'handl-ai-connector-access-control' );
+
+		echo '<tr>';
+		echo '<td>' . esc_html( $label ) . '</td>';
+		echo '<td class="handl-aicac-trends-spark">';
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sparkline_svg escapes attribute values; empty path is escaped above.
+		echo '' !== $calls_svg ? $calls_svg : $empty;
+		echo '</td>';
+		echo '<td>' . esc_html( Usage_Trends::format_delta_label( $calls_delta ) ) . '</td>';
+		echo '<td class="handl-aicac-trends-spark">';
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sparkline_svg escapes attribute values; empty path is escaped above.
+		echo '' !== $spend_svg ? $spend_svg : $empty;
+		echo '</td>';
+		echo '<td>' . esc_html( Usage_Trends::format_delta_label( $spend_delta ) ) . '</td>';
+		echo '</tr>';
 	}
 
 	private function render_insights_stat_card( string $label, string $value, string $hint ): void {
