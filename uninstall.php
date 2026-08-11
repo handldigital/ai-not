@@ -28,11 +28,13 @@ delete_option( 'handl_aicac_spend_threshold_fired' );
 delete_option( 'handl_aicac_forecast_warned' );
 delete_option( 'handl_aicac_anomaly_fired' );
 delete_option( 'handl_aicac_keyscan_findings' );
+delete_option( 'handl_aicac_monthly_report_sent' );
 if ( function_exists( 'wp_clear_scheduled_hook' ) ) {
 	wp_clear_scheduled_hook( 'handl_aicac_send_denial_digest' );
 	// F7: weekly report cron.
 	wp_clear_scheduled_hook( 'handl_aicac_send_weekly_report' );
 	wp_clear_scheduled_hook( 'handl_aicac_keyscan_weekly' );
+	wp_clear_scheduled_hook( 'handl_aicac_send_monthly_report' );
 }
 
 // F4: experimental model-force health state.

@@ -66,6 +66,7 @@ final class Policy_Transfer {
 			'anomaly_floor_calls',
 			'anomaly_floor_spend',
 			'weekly_report_enabled',
+			'monthly_report_enabled',
 			'model_force_plugins',
 			'model_force_unattributed',
 			'model_force_unattributed_provider',
