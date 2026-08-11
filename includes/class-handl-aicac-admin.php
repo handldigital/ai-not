@@ -104,7 +104,7 @@ final class Admin {
 		}
 
 		$posted_action = sanitize_key( wp_unslash( (string) $_POST['handl_aicac_action'] ) );
-		if ( 'export_log' !== $posted_action && 'export_rules' !== $posted_action ) {
+		if ( 'export_log' !== $posted_action && 'export_rules' !== $posted_action && 'export_audit_report' !== $posted_action ) {
 			return;
 		}
 
@@ -121,6 +121,11 @@ final class Admin {
 		if ( 'export_rules' === $posted_action ) {
 			check_admin_referer( 'handl_aicac_export_rules', 'handl_aicac_nonce' );
 			$this->handle_export_rules();
+		}
+
+		if ( 'export_audit_report' === $posted_action ) {
+			check_admin_referer( 'handl_aicac_export_audit_report', 'handl_aicac_nonce' );
+			$this->handle_export_audit_report();
 		}
 	}
 
@@ -2408,6 +2413,35 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		echo '<h2>' . esc_html__( 'Recent calls', 'handl-ai-connector-access-control' ) . '</h2>';
 		$this->render_log_filters( $log_filters, $filter_options, $plugins );
+
+		echo '<form method="post" style="margin:0 0 1em;display:inline-block;">';
+		wp_nonce_field( 'handl_aicac_export_audit_report', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="export_audit_report" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
+		echo '<label for="handl-aicac-report-window" class="screen-reader-text">' . esc_html__( 'Report window', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<select name="handl_aicac_report_window" id="handl-aicac-report-window">';
+		foreach ( array(
+			'7d'  => __( 'Last 7 days', 'handl-ai-connector-access-control' ),
+			'1d'  => __( 'Last 24 hours', 'handl-ai-connector-access-control' ),
+			'30d' => __( 'Last 30 days', 'handl-ai-connector-access-control' ),
+			'all' => __( 'All saved activity', 'handl-ai-connector-access-control' ),
+		) as $win => $win_label ) {
+			printf(
+				'<option value="%1$s"%2$s>%3$s</option>',
+				esc_attr( $win ),
+				'7d' === $win ? ' selected="selected"' : '',
+				esc_html( $win_label )
+			);
+		}
+		echo '</select> ';
+		submit_button(
+			__( 'Open audit report', 'handl-ai-connector-access-control' ),
+			'secondary',
+			'submit',
+			false
+		);
+		echo ' <span class="description">' . esc_html__( 'Opens a printable report in your browser. Use Print → Save as PDF. Nothing is uploaded.', 'handl-ai-connector-access-control' ) . '</span>';
+		echo '</form>';
 
 		echo '<form method="post" style="margin:0 0 1em;">';
 		wp_nonce_field( 'handl_aicac_export_log', 'handl_aicac_nonce' );
@@ -4972,7 +5006,37 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		exit;
 	}
 
-	/**
+/**
+	 * Stream a printable audit evidence report (AICAC-EVIDENCE / #118).
+	 *
+	 * Capability + nonce enforced by maybe_handle_file_downloads() on admin_init.
+	 */
+	private function handle_export_audit_report(): void {
+		$window = isset( $_POST['handl_aicac_report_window'] )
+			? Rest::sanitize_window( wp_unslash( (string) $_POST['handl_aicac_report_window'] ) )
+			: Rest::DEFAULT_WINDOW;
+
+		$policy  = Policy::get_policy();
+		$log     = Policy::get_retained_log();
+		$plugins = function_exists( 'get_plugins' ) ? get_plugins() : array();
+		if ( ! is_array( $plugins ) ) {
+			$plugins = array();
+		}
+
+		$data    = Audit_Evidence::build_report_data( $policy, $log, $window, time(), $plugins );
+		$payload = Audit_Evidence::build_html( $data );
+		$filename = 'handl-aicac-audit-report-' . gmdate( 'Ymd-His' ) . '.html';
+
+		nocache_headers();
+		header( 'Content-Type: text/html; charset=utf-8' );
+		header( 'Content-Disposition: inline; filename="' . $filename . '"' );
+		header( 'Content-Length: ' . (string) strlen( $payload ) );
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped HTML document body.
+		echo $payload;
+		exit;
+	}
+
+/**
 	 * Stash preset id for confirmation screen (no policy write).
 	 */
 	private function handle_preset_preview(): void {
@@ -5011,7 +5075,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		exit;
 	}
 
-	/**
+/**
 	 * Apply pending preset (or no-op when already active) via Policy::save_policy.
 	 */
 	private function handle_preset_apply_confirm(): void {

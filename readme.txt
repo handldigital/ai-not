@@ -69,6 +69,7 @@ No developer experience is required.
 * **Plugin AI profile:** Open a plugin from Activity or Dashboard estimated spend to see its usage, incidents, estimated spend alerts, and current rules in one read-only view. Rule changes and CSV exports stay on their existing screens.
 * **Rules transfer:** Export or import rules as JSON.
 * **Activity limits:** Control how many entries are saved and for how long.
+* **Audit report:** Print a governance summary (rules + activity) as PDF from your browser.
 * **Multisite overview:** View status and activity for each site.
 * **WP-CLI:** List and update AI type rules from the command line.
 
@@ -196,6 +197,7 @@ Yes. With WP-CLI available and this plugin active:
 
 
 = Unreleased =
+* Printable audit evidence report on Activity: policy snapshot, activity summary for a chosen window, spend vs alert thresholds, and a CSV export note. Self-contained HTML for Print → PDF; no data leaves the site.
 * Added a WordPress Dashboard widget with mode, Emergency stop state, last-24-hour totals, top plugins, and a Review policy link. Counts use the same Activity paths.
 * Added **policy presets** on the Rules tab (Observe everything, Cost guard, Strict lockdown, Privacy first). Preview lists every setting that would change before apply; re-applying an active preset does nothing. Custom plugin rules are not cleared unless the preview marks an overwrite.
 * Added a read-only **Plugin AI profile**. Click a plugin in Activity or Dashboard estimated spend to see usage by day, operation, and model; blocked calls; direct connections outside the AI Client; estimated spend alerts; and the rules that currently apply. Rule results use the same decision process as enforcement. Links open the existing Rules and CSV export screens.
