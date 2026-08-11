@@ -193,19 +193,17 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = 1.2.2 =
-* Temporary Allow rules: optional expiry (24h / 7d / 30d / date). Expired allows stop at decision time (no cron dependency); hourly sweep tidies rules, writes an audit row, and emails when denial/shadow alerts are enabled. Rules UI shows remaining/expired state with one-click renew.
-* Added a one-time What’s new notice after each update, with a short in-plugin highlights panel.
+* Temporary Allow rules that expire on their own, with remaining/expired status and one-click renew for 7 days.
+* Policy presets on the Rules tab, with a preview of every setting that will change before you apply.
+* WordPress Dashboard widget for mode, Emergency stop, last-24-hour activity and estimated spend, plus a Review policy link.
+* Printable audit report (rules, activity, spend alerts) you can save as a PDF from your browser — nothing leaves the site.
+* Month-end spend projection on the Dashboard and Insights when the month has enough logged days; optional one-time warning if a projection would cross a spend alert threshold.
+* Dashboard and Site Health visibility when alert emails or webhooks fail repeatedly, with test buttons on the existing paths.
+* One-time What’s new notice after each update, with a short in-plugin highlights panel.
 
 
 = Unreleased =
 * Create a rule from an Activity call: open the Rules form pre-filled with that plugin, AI type, and provider/model. Already-covered plugins show a status instead of adding a second rule.
-* Added Dashboard and Site Health visibility when alert emails or webhooks fail repeatedly, with buttons that send tests through the existing email and webhook paths.
-* Added an estimated month-end spend projection on the Dashboard when this calendar month has at least three days of logged activity. Uses a simple projection from the saved log. Estimate only, not a bill.
-* Insights shows the same projection broken down by plugin.
-* When a projection would cross a configured estimated-spend alert threshold, the Dashboard shows a warning and (if alert email is set) sends at most one projection warning per calendar month per threshold.
-* Printable audit evidence report on Activity: policy snapshot, activity summary for a chosen window, spend vs alert thresholds, and a CSV export note. Self-contained HTML for Print → PDF; no data leaves the site.
-* Added a WordPress Dashboard widget with mode, Emergency stop state, last-24-hour totals, top plugins, and a Review policy link. Counts use the same Activity paths.
-* Added **policy presets** on the Rules tab (Observe everything, Cost guard, Strict lockdown, Privacy first). Preview lists every setting that would change before apply; re-applying an active preset does nothing. Custom plugin rules are not cleared unless the preview marks an overwrite.
 * Added a read-only **Plugin AI profile**. Click a plugin in Activity or Dashboard estimated spend to see usage by day, operation, and model; blocked calls; direct connections outside the AI Client; estimated spend alerts; and the rules that currently apply. Rule results use the same decision process as enforcement. Links open the existing Rules and CSV export screens.
 * Added an optional, unchecked onboarding choice to receive product news and related offers from HandL Digital. If selected, the plugin sends the alert email address, site URL, plugin version, and consent time to HandL Digital. Privacy / Data documents the transmission and opt-out method.
 
