@@ -878,6 +878,7 @@ final class Policy {
 		$policy['anomaly_multiplier']    = Anomaly::sanitize_multiplier( $policy['anomaly_multiplier'] ?? Anomaly::DEFAULT_MULTIPLIER );
 		$policy['anomaly_floor_calls']   = Anomaly::sanitize_floor_calls( $policy['anomaly_floor_calls'] ?? Anomaly::DEFAULT_FLOOR_CALLS );
 		$policy['anomaly_floor_spend']   = Anomaly::sanitize_floor_spend( $policy['anomaly_floor_spend'] ?? Anomaly::DEFAULT_FLOOR_SPEND );
+		$policy['monthly_report_enabled'] = (bool) ( $policy['monthly_report_enabled'] ?? false );
 
 		// F7: weekly report preference — staged selected-by-default until first explicit choice.
 		// Delivery still requires logging/learn (Weekly_Report::is_active). Key absence ≠ off.
@@ -1106,6 +1107,7 @@ final class Policy {
 		$policy['anomaly_multiplier']    = Anomaly::sanitize_multiplier( $policy['anomaly_multiplier'] ?? Anomaly::DEFAULT_MULTIPLIER );
 		$policy['anomaly_floor_calls']   = Anomaly::sanitize_floor_calls( $policy['anomaly_floor_calls'] ?? Anomaly::DEFAULT_FLOOR_CALLS );
 		$policy['anomaly_floor_spend']   = Anomaly::sanitize_floor_spend( $policy['anomaly_floor_spend'] ?? Anomaly::DEFAULT_FLOOR_SPEND );
+		$policy['monthly_report_enabled'] = ! empty( $policy['monthly_report_enabled'] );
 
 		$max_age = self::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
 		if ( null === $max_age ) {
@@ -1165,6 +1167,7 @@ final class Policy {
 		$schedule_policy                           = $policy;
 		$schedule_policy['weekly_report_enabled'] = $weekly_for_schedule;
 		Weekly_Report::maybe_schedule( $schedule_policy );
+		Monthly_Report::maybe_schedule( $policy );
 
 		// Issue 7 / AICAC-SHADOW-ALERT: disabling alert types must not leave
 		// their metadata queued; keep the other type's rows when still enabled.

@@ -46,7 +46,7 @@ final class Alerts {
 	private const DIGEST_QUEUE_MAX = 200;
 
 	/** Allowed admin test-email channels (denial alerts vs weekly report). */
-	public const TEST_EMAIL_CHANNELS = array( 'denial_alert', 'weekly_report' );
+	public const TEST_EMAIL_CHANNELS = array( 'denial_alert', 'weekly_report', 'monthly_report' );
 
 	private static ?Alerts $instance = null;
 
@@ -767,6 +767,14 @@ final class Alerts {
 			);
 		}
 
+		if ( 'monthly_report' === $channel ) {
+			return sprintf(
+				/* translators: %s: site name */
+				__( '[%s] Test: HandL AI Access monthly audit report', 'handl-ai-connector-access-control' ),
+				$site
+			);
+		}
+
 		return sprintf(
 			/* translators: %s: site name */
 			__( '[%s] Test: HandL AICAC denial alert', 'handl-ai-connector-access-control' ),
@@ -787,6 +795,10 @@ final class Alerts {
 			$lines[] = __( 'This is a test. This is not a real weekly report.', 'handl-ai-connector-access-control' );
 			$lines[] = '';
 			$lines[] = __( 'You requested a test of weekly report email delivery from Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' );
+		} elseif ( 'monthly_report' === $channel ) {
+			$lines[] = __( 'This is a test. This is not a monthly audit report.', 'handl-ai-connector-access-control' );
+			$lines[] = '';
+			$lines[] = __( 'You requested a test of monthly audit report delivery from HandL AI Access.', 'handl-ai-connector-access-control' );
 		} else {
 			$lines[] = __( 'This is a test. No denial occurred.', 'handl-ai-connector-access-control' );
 			$lines[] = '';
@@ -817,10 +829,10 @@ final class Alerts {
 	 * wp_mail is pluggable; SMTP replacements may throw — never fatal on the
 	 * denial filter path or shutdown after a denial.
 	 */
-	public static function safe_wp_mail( string $to, string $subject, string $body ): bool {
+	public static function safe_wp_mail( string $to, string $subject, string $body, array $attachments = array() ): bool {
 		try {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.wp_mail -- intentional notification path.
-			$ok = (bool) wp_mail( $to, $subject, $body );
+			$ok = (bool) wp_mail( $to, $subject, $body, '', $attachments );
 			Alert_Health::record_result(
 				Alert_Health::CHANNEL_EMAIL,
 				$ok,

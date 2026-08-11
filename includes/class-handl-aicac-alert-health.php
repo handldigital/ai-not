@@ -148,6 +148,7 @@ final class Alert_Health {
 					! empty( $policy['alert_on_deny'] )
 					|| ! empty( $policy['alert_on_shadow'] )
 					|| ! empty( $policy['weekly_report_enabled'] )
+					|| ! empty( $policy['monthly_report_enabled'] )
 					|| Spend_Threshold::has_any_threshold( $policy )
 					|| ! empty( $policy['anomaly_alert_enabled'] )
 				);

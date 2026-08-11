@@ -2656,6 +2656,12 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
 		echo '<input type="hidden" name="handl_aicac_test_email_channel" value="weekly_report" />';
 		echo '</form>';
+		echo '<form method="post" id="handl-aicac-test-email-monthly" style="display:none;" hidden>';
+		wp_nonce_field( 'handl_aicac_send_test_email', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="send_test_email" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
+		echo '<input type="hidden" name="handl_aicac_test_email_channel" value="monthly_report" />';
+		echo '</form>';
 
 		echo '<form method="post" style="margin-bottom:1.5em;">';
 		wp_nonce_field( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
@@ -3282,6 +3288,30 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			)
 		);
 		echo ' <span class="description">' . esc_html__( 'Sends a labeled test weekly report to the saved recipient, or the site admin email. Limited to one test email per minute.', 'handl-ai-connector-access-control' ) . '</span>';
+		echo '</p>';
+		echo '</td>';
+		echo '</tr>';
+
+		// AICAC-REPORT-SCHED: monthly printable audit report email (off by default).
+		$monthly_on = ! empty( $policy['monthly_report_enabled'] );
+		echo '<tr>';
+		echo '<th scope="row">' . esc_html__( 'Monthly audit report', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<td>';
+		echo '<label><input type="checkbox" name="handl_aicac_monthly_report_enabled" value="1" ' . checked( $monthly_on, true, false ) . ' /> ';
+		echo esc_html__( 'Email the printable audit report once a month', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Off by default. Sends starting on the first of each month while Activity logging or Learn mode is on. It goes to the saved alert email, or the site administrator email if none is saved. The email includes a short summary and a printable HTML report. If no activity was retained, it sends a note without an attachment.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p style="margin-top:8px;">';
+		submit_button(
+			__( 'Send test email', 'handl-ai-connector-access-control' ),
+			'secondary',
+			'submit',
+			false,
+			array(
+				'form' => 'handl-aicac-test-email-monthly',
+				'id'   => 'handl-aicac-send-test-monthly-email',
+			)
+		);
+		echo ' <span class="description">' . esc_html__( 'Sends a labeled test to the saved alert email, or the site administrator email if none is saved. Limited to one test per minute.', 'handl-ai-connector-access-control' ) . '</span>';
 		echo '</p>';
 		echo '</td>';
 		echo '</tr>';
@@ -4279,6 +4309,9 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			$policy['weekly_report_enabled']  = true;
 			$policy['_weekly_report_write']   = 'omit';
 		}
+
+		// AICAC-REPORT-SCHED: monthly audit email (off by default; anomaly-style checkbox).
+		$policy['monthly_report_enabled'] = ! empty( filter_input( INPUT_POST, 'handl_aicac_monthly_report_enabled', FILTER_UNSAFE_RAW ) );
 
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate(
 			filter_input( INPUT_POST, 'handl_aicac_est_usd_input_per_m', FILTER_UNSAFE_RAW ),

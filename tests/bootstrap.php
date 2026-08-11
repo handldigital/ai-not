@@ -422,22 +422,46 @@ if ( ! defined( 'WEEK_IN_SECONDS' ) ) {
 }
 
 if ( ! function_exists( 'wp_next_scheduled' ) ) {
+	/**
+	 * @param string $hook Hook.
+	 * @param array  $args Args.
+	 * @return int|false
+	 */
 	function wp_next_scheduled( $hook, $args = array() ) {
-		unset( $hook, $args );
-		return false;
+		unset( $args );
+		$cron = $GLOBALS['handl_aicac_test_cron'] ?? array();
+		return isset( $cron[ (string) $hook ] ) ? (int) $cron[ (string) $hook ] : false;
 	}
 }
 
 if ( ! function_exists( 'wp_schedule_event' ) ) {
-	function wp_schedule_event( $timestamp, $recurrence, $hook, $args = array() ) {
-		unset( $timestamp, $recurrence, $hook, $args );
+	/**
+	 * @param int    $timestamp Timestamp.
+	 * @param string $recurrence Recurrence.
+	 * @param string $hook Hook.
+	 * @param array  $args Args.
+	 */
+	function wp_schedule_event( $timestamp, $recurrence, $hook, $args = array() ): bool {
+		unset( $recurrence, $args );
+		if ( ! isset( $GLOBALS['handl_aicac_test_cron'] ) || ! is_array( $GLOBALS['handl_aicac_test_cron'] ) ) {
+			$GLOBALS['handl_aicac_test_cron'] = array();
+		}
+		$GLOBALS['handl_aicac_test_cron'][ (string) $hook ] = (int) $timestamp;
 		return true;
 	}
 }
 
 if ( ! function_exists( 'wp_unschedule_event' ) ) {
-	function wp_unschedule_event( $timestamp, $hook, $args = array() ) {
-		unset( $timestamp, $hook, $args );
+	/**
+	 * @param int    $timestamp Timestamp.
+	 * @param string $hook Hook.
+	 * @param array  $args Args.
+	 */
+	function wp_unschedule_event( $timestamp, $hook, $args = array() ): bool {
+		unset( $timestamp, $args );
+		if ( isset( $GLOBALS['handl_aicac_test_cron'][ (string) $hook ] ) ) {
+			unset( $GLOBALS['handl_aicac_test_cron'][ (string) $hook ] );
+		}
 		return true;
 	}
 }
@@ -471,10 +495,16 @@ if ( ! function_exists( 'wp_mail' ) ) {
 	 * @param string              $message Body.
 	 */
 	function wp_mail( $to, $subject, $message, $headers = '', $attachments = array() ): bool {
-		unset( $headers, $attachments );
 		if ( isset( $GLOBALS['handl_aicac_wp_mail'] ) && is_callable( $GLOBALS['handl_aicac_wp_mail'] ) ) {
+			$cb = new \ReflectionFunction( \Closure::fromCallable( $GLOBALS['handl_aicac_wp_mail'] ) );
+			$n  = $cb->getNumberOfParameters();
+			if ( $n >= 5 ) {
+				return (bool) call_user_func( $GLOBALS['handl_aicac_wp_mail'], $to, $subject, $message, $headers, $attachments );
+			}
+			unset( $headers, $attachments );
 			return (bool) call_user_func( $GLOBALS['handl_aicac_wp_mail'], $to, $subject, $message );
 		}
+		unset( $headers, $attachments );
 		return true;
 	}
 }
@@ -582,6 +612,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-analytics.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alerts.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alert-health.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-weekly-report.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-monthly-report.php';
 
 if ( ! defined( 'HANDL_AICAC_FILE' ) ) {
 	define( 'HANDL_AICAC_FILE', HANDL_AICAC_DIR . '/handl-ai-connector-access-control.php' );
