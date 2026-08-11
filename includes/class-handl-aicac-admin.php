@@ -1076,7 +1076,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		// AICAC-LEADS: opt-in only, unchecked by default (WP.org guideline 7).
 		echo '<p><label><input type="checkbox" name="handl_aicac_onboard_leads_consent" value="1" /> ';
-		echo esc_html__( 'Also send this email and my site address to HandL Digital for product news and related offers. Optional. You can ask to be removed anytime by emailing support@handldigital.com.', 'handl-ai-connector-access-control' ) . '</label></p>';
+		echo esc_html__( 'I agree to send my alert email address and site URL to HandL Digital so it can email me product news and related offers. Optional. You can unsubscribe at any time by emailing support@handldigital.com.', 'handl-ai-connector-access-control' ) . '</label></p>';
 
 		echo '<p>';
 		echo '<button type="submit" name="handl_aicac_action" value="onboard_step" class="button button-primary">' . esc_html__( 'Continue', 'handl-ai-connector-access-control' ) . '</button>';

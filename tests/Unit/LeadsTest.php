@@ -104,6 +104,22 @@ final class LeadsTest extends TestCase {
 		$this->assertStringContainsString( 'product news and related offers', $readme );
 		$this->assertStringContainsString( 'off by default', $readme );
 		$this->assertStringContainsString( 'support@handldigital.com', $readme );
+		$this->assertStringContainsString(
+			'By default, this plugin does not send data to HandL Digital.',
+			$readme
+		);
+		$this->assertStringContainsString(
+			'If you agree and finish setup, the plugin sends your alert email address, site URL, plugin version, and consent time to HandL Digital.',
+			$readme
+		);
+	}
+
+	public function test_consent_checkbox_uses_krusty_deck(): void {
+		$src = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php' );
+		$this->assertStringContainsString(
+			'I agree to send my alert email address and site URL to HandL Digital so it can email me product news and related offers. Optional. You can unsubscribe at any time by emailing support@handldigital.com.',
+			$src
+		);
 	}
 
 	public function test_release_and_deploy_exclude_server(): void {
