@@ -69,7 +69,7 @@ final class BeyondConnectorApprovalsMessagingTest extends TestCase {
 		$this->assertStringContainsString( 'tool-arming denial', $readme );
 		$this->assertStringContainsString( 'shadow-AI detection', $readme );
 		$this->assertStringContainsString( 'spend / denial alerting', $readme );
-		$this->assertStringContainsString( 'AICAC-11', $readme );
+		$this->assertStringContainsString( 'differs from Connector Approvals', $readme );
 		$this->assertStringContainsString( '= 1.2.1 =', $readme );
 	}
 

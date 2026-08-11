@@ -190,21 +190,21 @@ Yes. With WP-CLI available and this plugin active:
 = Unreleased =
 
 = 1.2.1 =
-* First-run setup wizard: start in observe mode, set up alerts, and send a test email.
-* Policy simulator: dry-run a sample AI call against your rules before you save.
-* Read-only REST API for policy summary, activity aggregates, and Site Health status.
-* Optional blocking of direct calls to known AI providers (shadow AI). Off by default.
-* Usage spike alerts when a plugin’s call volume or estimated spend rises sharply vs its recent average.
-* Estimated-spend threshold alerts, site-wide and per plugin.
-* Alerts when a plugin connects directly to an AI provider outside the AI Client (digest and de-duplication).
-* Test-send buttons for blocked-call alerts and the weekly report email.
-* CSV export of the activity log and rules.
-* Site Health status test for AI access control.
-* Clearer bulk-action and emergency-stop warning copy.
-* In-product messaging that differentiates HandL from the WordPress AI plugin’s Connector Approvals experiment (AICAC-11).
-* Clearer WordPress.org plugin description (no-surprise estimated spend).
-* Security hardening: capability and nonce checks re-verified on admin actions.
-* Fix: plus-addressed emails (user+tag@) are no longer mangled in test-email confirmations.
+* Added a first-run setup wizard. Watch activity, set up alerts, and send a test email.
+* Added a policy simulator. Preview how unsaved rules would handle a sample AI call.
+* Added read-only REST API endpoints for policy, activity summaries, and Site Health.
+* Added optional blocking for direct calls to known AI providers. It is off by default.
+* Added optional usage spike alerts. They compare today's call volume and estimated spend with the recent daily average.
+* Added optional estimated-spend alerts for site-wide and per-plugin thresholds.
+* Added optional email alerts for direct AI provider connections. Choose immediate alerts or an hourly summary.
+* Added test email buttons for blocked-call alerts and weekly reports.
+* Added CSV exports for the activity log and rules.
+* Added a Site Health check for AI access control.
+* Improved bulk-action and Emergency stop warnings.
+* Added clear guidance about how HandL differs from Connector Approvals in WordPress AI.
+* Rewrote the WordPress.org description with shorter sentences and clearer estimated-spend language. Estimates are not bills.
+* Strengthened permission and security checks for admin actions.
+* Fixed plus-addressed emails such as user+tag@example.com in test-email confirmations.
 
 = 1.2.0 =
 * Rewrote the WordPress.org listing in plain language so site owners can quickly understand what the plugin does.
