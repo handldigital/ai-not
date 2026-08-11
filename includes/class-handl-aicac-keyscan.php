@@ -104,7 +104,7 @@ final class Keyscan {
 			$tests['direct'] = array();
 		}
 		$tests['direct'][ self::SITE_HEALTH_SLUG ] = array(
-			'label' => __( 'HandL AI Access: embedded API keys', 'handl-ai-connector-access-control' ),
+			'label' => __( 'HandL AI Access: possible embedded API keys', 'handl-ai-connector-access-control' ),
 			'test'  => array( $this, 'run_site_health_test' ),
 		);
 		return $tests;
@@ -120,7 +120,7 @@ final class Keyscan {
 
 		if ( $count > 0 ) {
 			return array(
-				'label'       => __( 'Installed plugins may contain AI API keys', 'handl-ai-connector-access-control' ),
+				'label'       => __( 'Active plugins may contain AI API keys', 'handl-ai-connector-access-control' ),
 				'status'      => 'recommended',
 				'badge'       => array(
 					'label' => __( 'Security', 'handl-ai-connector-access-control' ),
@@ -130,8 +130,8 @@ final class Keyscan {
 					sprintf(
 						/* translators: %d: number of masked key findings */
 						_n(
-							'%d possible AI API key was found in an installed plugin (shown masked only). Review the HandL AI Access dashboard.',
-							'%d possible AI API keys were found in installed plugins (shown masked only). Review the HandL AI Access dashboard.',
+							'%d possible AI API key was found in active plugins. Only the last 4 characters are stored. Review the HandL AI Access dashboard.',
+							'%d possible AI API keys were found in active plugins. Only the last 4 characters are stored. Review the HandL AI Access dashboard.',
 							$count,
 							'handl-ai-connector-access-control'
 						),
@@ -148,13 +148,13 @@ final class Keyscan {
 		}
 
 		return array(
-			'label'       => __( 'No embedded AI API keys detected in active plugins', 'handl-ai-connector-access-control' ),
+			'label'       => __( 'No possible AI API keys detected in active plugins', 'handl-ai-connector-access-control' ),
 			'status'      => 'good',
 			'badge'       => array(
 				'label' => __( 'Security', 'handl-ai-connector-access-control' ),
 				'color' => 'blue',
 			),
-			'description' => '<p>' . esc_html__( 'A read-only scan of active plugin files and options did not find known AI key patterns. Full keys are never stored.', 'handl-ai-connector-access-control' ) . '</p>',
+			'description' => '<p>' . esc_html__( 'A read-only scan of active plugin files and saved settings did not find known AI key patterns. Full keys are never stored.', 'handl-ai-connector-access-control' ) . '</p>',
 			'actions'     => '',
 			'test'        => self::SITE_HEALTH_SLUG,
 		);
@@ -187,9 +187,10 @@ final class Keyscan {
 		}
 
 		return array(
-			'findings'  => $clean,
-			'last_scan' => isset( $raw['last_scan'] ) ? (int) $raw['last_scan'] : 0,
-			'cursor'    => isset( $raw['cursor'] ) && is_array( $raw['cursor'] ) ? $raw['cursor'] : array(),
+			'findings'       => $clean,
+			'last_scan'      => isset( $raw['last_scan'] ) ? (int) $raw['last_scan'] : 0,
+			'cursor'         => isset( $raw['cursor'] ) && is_array( $raw['cursor'] ) ? $raw['cursor'] : array(),
+			'completed_once' => ! empty( $raw['completed_once'] ),
 		);
 	}
 
@@ -395,12 +396,14 @@ final class Keyscan {
 			}
 		);
 
+		$completed_once = ! empty( $state['completed_once'] ) || $done;
 		update_option(
 			self::OPTION_KEY,
 			array(
-				'findings'  => $findings,
-				'last_scan' => $now,
-				'cursor'    => $new_cursor,
+				'findings'       => $findings,
+				'last_scan'      => $now,
+				'cursor'         => $new_cursor,
+				'completed_once' => $completed_once,
 			),
 			false
 		);
