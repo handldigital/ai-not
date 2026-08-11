@@ -262,6 +262,7 @@ final class Rest {
 		$est_total         = 0.0;
 		$est_any           = false;
 		$shadow_count      = 0;
+		$shadow_blocks     = 0;
 		$client_calls      = 0;
 
 		foreach ( $filtered as $row ) {
@@ -272,7 +273,12 @@ final class Rest {
 			$is_direct = isset( $row['channel'] ) && 'direct_http' === (string) $row['channel'];
 			if ( $is_direct ) {
 				$c = isset( $row['count'] ) ? (int) $row['count'] : 1;
-				$shadow_count += $c > 0 ? $c : 1;
+				$c = $c > 0 ? $c : 1;
+				$shadow_count += $c;
+				$decision = isset( $row['decision'] ) ? sanitize_key( (string) $row['decision'] ) : 'observe';
+				if ( 'deny' === $decision ) {
+					$shadow_blocks += $c;
+				}
 				continue;
 			}
 
@@ -352,6 +358,7 @@ final class Rest {
 				'ai_client_call_count'         => $client_calls,
 				'top_plugins'                  => $top,
 				'shadow_ai_observation_count'  => $shadow_count,
+				'shadow_ai_block_count'        => $shadow_blocks,
 			)
 		);
 

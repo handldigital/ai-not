@@ -356,6 +356,51 @@ if ( ! function_exists( 'current_user_can' ) ) {
 }
 
 
+
+if ( ! function_exists( 'get_transient' ) ) {
+	function get_transient( $key ) {
+		$store = $GLOBALS['handl_aicac_test_transients'] ?? array();
+		return array_key_exists( (string) $key, $store ) ? $store[ (string) $key ] : false;
+	}
+}
+if ( ! function_exists( 'set_transient' ) ) {
+	function set_transient( $key, $value, $expiration = 0 ): bool {
+		unset( $expiration );
+		if ( ! isset( $GLOBALS['handl_aicac_test_transients'] ) || ! is_array( $GLOBALS['handl_aicac_test_transients'] ) ) {
+			$GLOBALS['handl_aicac_test_transients'] = array();
+		}
+		$GLOBALS['handl_aicac_test_transients'][ (string) $key ] = $value;
+		return true;
+	}
+}
+if ( ! function_exists( 'delete_transient' ) ) {
+	function delete_transient( $key ): bool {
+		if ( isset( $GLOBALS['handl_aicac_test_transients'] ) && is_array( $GLOBALS['handl_aicac_test_transients'] ) ) {
+			unset( $GLOBALS['handl_aicac_test_transients'][ (string) $key ] );
+		}
+		return true;
+	}
+}
+
+if ( ! function_exists( 'number_format_i18n' ) ) {
+	function number_format_i18n( $number, $decimals = 0 ) {
+		return number_format( (float) $number, (int) $decimals, '.', ',' );
+	}
+}
+
+if ( ! function_exists( 'esc_attr' ) ) {
+	function esc_attr( $text ): string {
+		return htmlspecialchars( (string) $text, ENT_QUOTES, 'UTF-8' );
+	}
+}
+
+if ( ! function_exists( 'esc_html__' ) ) {
+	function esc_html__( $text, $domain = 'default' ): string {
+		unset( $domain );
+		return htmlspecialchars( (string) $text, ENT_QUOTES, 'UTF-8' );
+	}
+}
+
 if ( ! defined( 'WEEK_IN_SECONDS' ) ) {
 	define( 'WEEK_IN_SECONDS', 604800 );
 }
@@ -565,3 +610,4 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-site-health.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rest.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';

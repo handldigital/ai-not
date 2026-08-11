@@ -166,6 +166,7 @@ final class RestApiTest extends TestCase {
 		$this->assertSame( array( 'allow' => 2, 'deny' => 1 ), $payload['calls_by_decision'] );
 		$this->assertSame( 3, $payload['ai_client_call_count'] );
 		$this->assertSame( 3, $payload['shadow_ai_observation_count'] );
+		$this->assertSame( 0, $payload['shadow_ai_block_count'] );
 		$this->assertSame( 2.5, $payload['estimated_spend_usd'] );
 
 		$this->assertNotEmpty( $payload['top_plugins'] );
