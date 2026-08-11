@@ -1074,6 +1074,10 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<p><label><input type="checkbox" name="handl_aicac_onboard_alert_on_deny" value="1" ' . checked( $deny_on, true, false ) . ' /> ';
 		echo esc_html__( 'Email me when a call is blocked', 'handl-ai-connector-access-control' ) . '</label></p>';
 
+		// AICAC-LEADS: opt-in only, unchecked by default (WP.org guideline 7).
+		echo '<p><label><input type="checkbox" name="handl_aicac_onboard_leads_consent" value="1" /> ';
+		echo esc_html__( 'I agree to send my alert email address and site URL to HandL Digital so it can email me product news and related offers. Optional. You can unsubscribe at any time by emailing support@handldigital.com.', 'handl-ai-connector-access-control' ) . '</label></p>';
+
 		echo '<p>';
 		echo '<button type="submit" name="handl_aicac_action" value="onboard_step" class="button button-primary">' . esc_html__( 'Continue', 'handl-ai-connector-access-control' ) . '</button>';
 		echo ' ';
@@ -1203,21 +1207,32 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				? wp_unslash( (string) $_POST['handl_aicac_onboard_alert_email'] )
 				: '';
 			$enable = isset( $_POST['handl_aicac_onboard_alert_on_deny'] );
-			$policy = Onboarding::apply_alerts_to_policy( Policy::get_policy(), $email, $enable );
+			// Unchecked by default — only true when the opt-in box is submitted checked.
+			$leads_consent = isset( $_POST['handl_aicac_onboard_leads_consent'] );
+			$policy        = Onboarding::apply_alerts_to_policy( Policy::get_policy(), $email, $enable );
 			Policy::save_policy( $policy );
-			$state['step']   = 3;
-			$state['status'] = Onboarding::STATUS_ACTIVE;
+			$state['leads_consent'] = $leads_consent;
+			$state['step']          = 3;
+			$state['status']        = Onboarding::STATUS_ACTIVE;
 			Onboarding::save_state( $state );
 			$this->redirect_onboard_dashboard();
 		}
 
-		// Step 3 — finish.
+		// Step 3 — finish. Opt-in lead POST only when consent was checked on step 2.
 		$set_reminder = isset( $_POST['handl_aicac_onboard_set_reminder'] );
 		$days         = Onboarding::sanitize_observe_days( $state['observe_days'] ?? Onboarding::DEFAULT_OBSERVE_DAYS );
 		$state['review_due_ts'] = $set_reminder ? Onboarding::review_due_timestamp( $days ) : 0;
 		$state['step']          = 3;
 		$state['status']        = Onboarding::STATUS_COMPLETE;
 		Onboarding::save_state( $state );
+
+		// Failures are silent and never block wizard completion (no retry queue v1).
+		if ( ! empty( $state['leads_consent'] ) ) {
+			$policy = Policy::get_policy();
+			$email  = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
+			Leads::maybe_register( $email, true );
+		}
+
 		$this->redirect_onboard_dashboard( array( 'handl_aicac_onboard_done' => '1' ) );
 	}
 

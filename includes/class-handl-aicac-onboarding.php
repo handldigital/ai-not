@@ -56,7 +56,8 @@ final class Onboarding {
 	 *   step:int,
 	 *   mode:string,
 	 *   observe_days:int,
-	 *   review_due_ts:int
+	 *   review_due_ts:int,
+	 *   leads_consent:bool
 	 * }
 	 */
 	public static function get_state(): array {
@@ -244,7 +245,8 @@ final class Onboarding {
 	 *   step:int,
 	 *   mode:string,
 	 *   observe_days:int,
-	 *   review_due_ts:int
+	 *   review_due_ts:int,
+	 *   leads_consent:bool
 	 * }
 	 */
 	public static function sanitize_state( array $raw ): array {
@@ -271,6 +273,8 @@ final class Onboarding {
 			'mode'           => $mode,
 			'observe_days'   => self::sanitize_observe_days( $raw['observe_days'] ?? self::DEFAULT_OBSERVE_DAYS ),
 			'review_due_ts'  => max( 0, (int) ( $raw['review_due_ts'] ?? 0 ) ),
+			// Opt-in product news / cross-promo (AICAC-LEADS). Never default true.
+			'leads_consent'  => ! empty( $raw['leads_consent'] ),
 		);
 	}
 }

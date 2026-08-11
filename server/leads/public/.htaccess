@@ -1,0 +1,7 @@
+# Route all requests to the intake script (Apache).
+DirectoryIndex index.php
+<IfModule mod_rewrite.c>
+	RewriteEngine On
+	RewriteCond %{REQUEST_FILENAME} !-f
+	RewriteRule ^ index.php [L]
+</IfModule>

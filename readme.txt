@@ -92,7 +92,7 @@ See Privacy / Data below for every stored or transmitted field.
 
 == Privacy / Data ==
 
-By default this plugin does **not** send data to any external service. Features that store or transmit call metadata are **opt-in** (logging, denial alerts / webhook, shadow-AI observe alerts) or **default-on only while logging/learn mode is on** (weekly report) — each has an explicit Settings toggle.
+By default, this plugin does not send data to HandL Digital. Features that send data outside your site are optional and require an explicit setting or onboarding choice. The weekly report uses your site’s configured email system and runs only while logging or Learn mode is on.
 
 If you enable **recent-call logging** in Settings → HandL AI Connector Access Control, it stores a local log in the WordPress options table containing:
 
@@ -148,6 +148,8 @@ If you enable the **weekly report email** (Activity tab), the plugin sends one m
 
 Weekly report mail does **not** include prompt preview, user identity, request paths, hosts, denial reason detail rows, or any per-call URI. Recipient is the same address as denial alerts (or site `admin_email` if empty). Every email includes a link to turn the report off. The weekly cron is cleared when the report is disabled, logging is off, or the plugin is uninstalled.
 
+During first-run setup, you can optionally agree to receive product news and related offers from HandL Digital. The checkbox is off by default. If you agree and finish setup, the plugin sends your alert email address, site URL, plugin version, and consent time to HandL Digital. HandL Digital stores this information on its server for those emails. If you leave the box unchecked, the plugin sends nothing to HandL Digital for this purpose. You can unsubscribe at any time by emailing support@handldigital.com. This registration is separate from denial alerts, webhooks, and the weekly report.
+
 == Installation ==
 
 1. Upload the plugin folder to `/wp-content/plugins/handl-ai-connector-access-control/`
@@ -190,6 +192,7 @@ Yes. With WP-CLI available and this plugin active:
 
 = Unreleased =
 * Added a read-only **Plugin AI profile**. Click a plugin in Activity or Dashboard estimated spend to see usage by day, operation, and model; blocked calls; direct connections outside the AI Client; estimated spend alerts; and the rules that currently apply. Rule results use the same decision process as enforcement. Links open the existing Rules and CSV export screens.
+* Added an optional, unchecked onboarding choice to receive product news and related offers from HandL Digital. If selected, the plugin sends the alert email address, site URL, plugin version, and consent time to HandL Digital. Privacy / Data documents the transmission and opt-out method.
 
 
 = 1.2.1 =
