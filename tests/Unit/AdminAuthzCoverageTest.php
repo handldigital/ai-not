@@ -36,6 +36,8 @@ final class AdminAuthzCoverageTest extends TestCase {
 		'onboard_reopen',
 		'onboard_step',
 		'onboard_test_email',
+		'preset_apply_confirm',
+		'preset_preview',
 		'quick_rule',
 		'renew_temp_allow',
 		'save',
@@ -188,6 +190,14 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array(
 				'action'       => 'onboard_reopen',
 				'nonce_action' => 'handl_aicac_onboard',
+			),
+			array(
+				'action'       => 'preset_preview',
+				'nonce_action' => 'handl_aicac_preset_preview',
+			),
+			array(
+				'action'       => 'preset_apply_confirm',
+				'nonce_action' => 'handl_aicac_preset_apply_confirm',
 			),
 		);
 	}
