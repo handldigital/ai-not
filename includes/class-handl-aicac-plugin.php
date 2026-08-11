@@ -31,13 +31,14 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-prompt-snapshot.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-operations.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cost.php';
-require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-spend-threshold.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-spend-threshold.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alerts.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-weekly-report.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-model-force.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-shadow-ai.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-simulator.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-onboarding.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-transfer.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-audit-export.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-analytics.php';

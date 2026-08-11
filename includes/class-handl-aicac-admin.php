@@ -220,12 +220,19 @@ final class Admin {
 					$channel = 'denial_alert';
 				}
 				$result = Alerts::send_test_email( Policy::get_policy(), $channel );
+				$return_tab = 'activity';
+				if ( isset( $_POST['handl_aicac_tab'] ) ) {
+					$candidate = sanitize_key( wp_unslash( (string) $_POST['handl_aicac_tab'] ) );
+					if ( in_array( $candidate, array( 'activity', 'dashboard' ), true ) ) {
+						$return_tab = $candidate;
+					}
+				}
 				$redirect = add_query_arg(
 					array(
-						'page'                       => 'handl-ai-connector-access-control',
-						'handl_aicac_tab'            => 'activity',
-						'handl_aicac_test_email'     => (string) $result['status'],
-						'handl_aicac_test_email_to'  => (string) $result['to'],
+						'page'                      => 'handl-ai-connector-access-control',
+						'handl_aicac_tab'           => $return_tab,
+						'handl_aicac_test_email'    => (string) $result['status'],
+						'handl_aicac_test_email_to' => Alerts::encode_email_query_arg( (string) $result['to'] ),
 					),
 					admin_url( 'options-general.php' )
 				);
@@ -252,6 +259,22 @@ final class Admin {
 			if ( 'simulate_policy' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
 				$this->handle_simulate_policy();
+			}
+			if ( 'onboard_dismiss' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_onboard', 'handl_aicac_nonce' );
+				$this->handle_onboard_dismiss();
+			}
+			if ( 'onboard_step' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_onboard', 'handl_aicac_nonce' );
+				$this->handle_onboard_step();
+			}
+			if ( 'onboard_test_email' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_onboard', 'handl_aicac_nonce' );
+				$this->handle_onboard_test_email();
+			}
+			if ( 'onboard_reopen' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_onboard', 'handl_aicac_nonce' );
+				$this->handle_onboard_reopen();
 			}
 		}
 
@@ -883,6 +906,321 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	}
 
 	/**
+	 * AICAC-ONBOARD: Dashboard wizard, re-open link, and review reminder.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function render_onboarding_dashboard_section( array $policy ): void {
+		$state = Onboarding::ensure_initialized();
+		$force = isset( $_GET['handl_aicac_onboard'] ) && '1' === (string) $_GET['handl_aicac_onboard'];
+
+		if ( Onboarding::should_show_review_notice( $state ) ) {
+			$activity_url = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' );
+			$rules_url    = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules' );
+			echo '<div class="notice notice-info handl-aicac-onboard-review"><p>';
+			echo esc_html__( 'Your watch period has ended. Review Activity to see which plugins used AI, then use Rules to allow or block them.', 'handl-ai-connector-access-control' );
+			echo ' <a href="' . esc_url( $activity_url ) . '">' . esc_html__( 'Open Activity', 'handl-ai-connector-access-control' ) . '</a>';
+			echo ' · <a href="' . esc_url( $rules_url ) . '">' . esc_html__( 'Open Rules', 'handl-ai-connector-access-control' ) . '</a>';
+			echo '</p></div>';
+		}
+
+		if ( Onboarding::should_render_wizard( $state, $force ) ) {
+			$this->render_onboarding_wizard( $policy, $state );
+			return;
+		}
+
+		if ( Onboarding::should_show_reentry( $state ) ) {
+			echo '<div class="handl-aicac-onboard-reentry" style="margin:0 0 1em;">';
+			echo '<form method="post" style="display:inline;">';
+			wp_nonce_field( 'handl_aicac_onboard', 'handl_aicac_nonce' );
+			echo '<input type="hidden" name="handl_aicac_action" value="onboard_reopen" />';
+			echo '<input type="hidden" name="handl_aicac_tab" value="dashboard" />';
+			submit_button(
+				__( 'Run setup again', 'handl-ai-connector-access-control' ),
+				'secondary',
+				'submit',
+				false
+			);
+			echo '</form>';
+			echo '</div>';
+		}
+	}
+
+	/**
+	 * @param array<string,mixed> $policy
+	 * @param array<string,mixed> $state
+	 */
+	private function render_onboarding_wizard( array $policy, array $state ): void {
+		$step = Onboarding::sanitize_step( $state['step'] ?? 1 );
+		echo '<div class="handl-aicac-onboard card" style="max-width:46em;padding:1em 1.25em;margin:0 0 1.5em;">';
+		echo '<h2 style="margin-top:0;">' . esc_html__( 'Quick setup', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<p class="description">' . esc_html(
+			sprintf(
+				/* translators: %d: current step number 1–3 */
+				__( 'Step %d of 3: set up monitoring and alerts in about two minutes.', 'handl-ai-connector-access-control' ),
+				$step
+			)
+		) . '</p>';
+
+		echo '<form method="post" style="margin:0 0 0.75em;">';
+		wp_nonce_field( 'handl_aicac_onboard', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="onboard_dismiss" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="dashboard" />';
+		submit_button( __( 'Skip setup', 'handl-ai-connector-access-control' ), 'link', 'submit', false );
+		echo '</form>';
+
+		if ( 1 === $step ) {
+			$this->render_onboarding_step_mode( $policy, $state );
+		} elseif ( 2 === $step ) {
+			$this->render_onboarding_step_alerts( $policy );
+		} else {
+			$this->render_onboarding_step_review( $state );
+		}
+
+		echo '</div>';
+	}
+
+	/**
+	 * @param array<string,mixed> $policy
+	 * @param array<string,mixed> $state
+	 */
+	private function render_onboarding_step_mode( array $policy, array $state ): void {
+		$network_locked = Onboarding::is_network_enforced();
+		$mode           = Onboarding::sanitize_mode( $state['mode'] ?? Onboarding::MODE_OBSERVE );
+		if ( '' === (string) ( $state['mode'] ?? '' ) ) {
+			$mode = Onboarding::MODE_OBSERVE;
+		}
+		$days = Onboarding::sanitize_observe_days( $state['observe_days'] ?? Onboarding::DEFAULT_OBSERVE_DAYS );
+
+		echo '<h3>' . esc_html__( '1. How do you want to start?', 'handl-ai-connector-access-control' ) . '</h3>';
+
+		if ( $network_locked ) {
+			echo '<p class="notice notice-warning inline" style="padding:8px 12px;">' . esc_html__( 'Your network admin controls the site-wide AI mode. You can still set alerts and a review reminder.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<form method="post">';
+			wp_nonce_field( 'handl_aicac_onboard', 'handl_aicac_nonce' );
+			echo '<input type="hidden" name="handl_aicac_action" value="onboard_step" />';
+			echo '<input type="hidden" name="handl_aicac_tab" value="dashboard" />';
+			echo '<input type="hidden" name="handl_aicac_onboard_step" value="1" />';
+			echo '<input type="hidden" name="handl_aicac_onboard_mode" value="' . esc_attr( Onboarding::MODE_OBSERVE ) . '" />';
+			submit_button( __( 'Continue', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
+			echo '</form>';
+			return;
+		}
+
+		echo '<form method="post">';
+		wp_nonce_field( 'handl_aicac_onboard', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="onboard_step" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="dashboard" />';
+		echo '<input type="hidden" name="handl_aicac_onboard_step" value="1" />';
+
+		echo '<fieldset style="border:0;margin:0;padding:0;">';
+		echo '<legend class="screen-reader-text">' . esc_html__( 'Starting mode', 'handl-ai-connector-access-control' ) . '</legend>';
+
+		echo '<p><label><input type="radio" name="handl_aicac_onboard_mode" value="' . esc_attr( Onboarding::MODE_OBSERVE ) . '" ' . checked( $mode, Onboarding::MODE_OBSERVE, false ) . ' /> ';
+		echo '<strong>' . esc_html__( 'Watch first (recommended)', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
+		echo '<span class="description" style="margin-left:1.75em;">' . esc_html__( 'Log AI activity without blocking it. Start here while you learn which plugins need access.', 'handl-ai-connector-access-control' ) . '</span></p>';
+
+		echo '<p><label><input type="radio" name="handl_aicac_onboard_mode" value="' . esc_attr( Onboarding::MODE_ENFORCE ) . '" ' . checked( $mode, Onboarding::MODE_ENFORCE, false ) . ' /> ';
+		echo '<strong>' . esc_html__( 'Enforce now', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
+		echo '<span class="description" style="margin-left:1.75em;">' . esc_html__( 'Apply your Rules immediately. Choose this only if your policy is already set.', 'handl-ai-connector-access-control' ) . '</span></p>';
+		echo '</fieldset>';
+
+		echo '<p><label for="handl-aicac-onboard-days">' . esc_html__( 'Watch window (days)', 'handl-ai-connector-access-control' ) . '</label><br />';
+		echo '<input type="number" class="small-text" id="handl-aicac-onboard-days" name="handl_aicac_onboard_observe_days" min="' . esc_attr( (string) Onboarding::MIN_OBSERVE_DAYS ) . '" max="' . esc_attr( (string) Onboarding::MAX_OBSERVE_DAYS ) . '" step="1" value="' . esc_attr( (string) $days ) . '" /> ';
+		echo '<span class="description">' . esc_html__( 'Watch first keeps 7–14 days of activity. Older entries are deleted.', 'handl-ai-connector-access-control' ) . '</span></p>';
+
+		unset( $policy );
+		submit_button( __( 'Continue', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
+		echo '</form>';
+	}
+
+	/**
+	 * @param array<string,mixed> $policy
+	 */
+	private function render_onboarding_step_alerts( array $policy ): void {
+		$email = isset( $policy['alert_email'] ) ? (string) $policy['alert_email'] : '';
+		if ( '' === $email ) {
+			$email = (string) get_option( 'admin_email' );
+		}
+		$deny_on = ! empty( $policy['alert_on_deny'] );
+
+		echo '<h3>' . esc_html__( '2. Where should we send alerts?', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<p class="description">' . esc_html__( 'Choose where to send blocked-call alerts. You can also send a test email.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		echo '<form method="post">';
+		wp_nonce_field( 'handl_aicac_onboard', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_tab" value="dashboard" />';
+		echo '<input type="hidden" name="handl_aicac_onboard_step" value="2" />';
+
+		echo '<p><label for="handl-aicac-onboard-email">' . esc_html__( 'Alert email', 'handl-ai-connector-access-control' ) . '</label><br />';
+		echo '<input type="email" class="regular-text" id="handl-aicac-onboard-email" name="handl_aicac_onboard_alert_email" value="' . esc_attr( $email ) . '" /></p>';
+
+		echo '<p><label><input type="checkbox" name="handl_aicac_onboard_alert_on_deny" value="1" ' . checked( $deny_on, true, false ) . ' /> ';
+		echo esc_html__( 'Email me when a call is blocked', 'handl-ai-connector-access-control' ) . '</label></p>';
+
+		echo '<p>';
+		echo '<button type="submit" name="handl_aicac_action" value="onboard_step" class="button button-primary">' . esc_html__( 'Continue', 'handl-ai-connector-access-control' ) . '</button>';
+		echo ' ';
+		echo '<button type="submit" name="handl_aicac_action" value="onboard_test_email" class="button">' . esc_html__( 'Send test email', 'handl-ai-connector-access-control' ) . '</button>';
+		echo '</p>';
+		echo '</form>';
+	}
+
+	/**
+	 * @param array<string,mixed> $state
+	 */
+	private function render_onboarding_step_review( array $state ): void {
+		$days = Onboarding::sanitize_observe_days( $state['observe_days'] ?? Onboarding::DEFAULT_OBSERVE_DAYS );
+		echo '<h3>' . esc_html__( '3. Set a review reminder', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<p class="description">' . esc_html(
+			sprintf(
+				/* translators: %d: observe window in days */
+				__( 'After %d days, show a Dashboard reminder to review Activity and update Rules.', 'handl-ai-connector-access-control' ),
+				$days
+			)
+		) . '</p>';
+
+		echo '<form method="post">';
+		wp_nonce_field( 'handl_aicac_onboard', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="onboard_step" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="dashboard" />';
+		echo '<input type="hidden" name="handl_aicac_onboard_step" value="3" />';
+
+		echo '<p><label><input type="checkbox" name="handl_aicac_onboard_set_reminder" value="1" checked="checked" /> ';
+		echo esc_html__( 'Remind me when the watch window ends', 'handl-ai-connector-access-control' ) . '</label></p>';
+
+		submit_button( __( 'Finish setup', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
+		echo '</form>';
+	}
+
+	/**
+	 * Step 2: validate/save the entered alert address, send a denial-alert test, stay on step 2.
+	 */
+	private function handle_onboard_test_email(): void {
+		$this->require_admin_mutation( 'handl_aicac_onboard' );
+		$state = Onboarding::ensure_initialized();
+		if ( empty( $state['eligible'] ) ) {
+			$this->redirect_onboard_dashboard();
+		}
+
+		$email  = isset( $_POST['handl_aicac_onboard_alert_email'] )
+			? wp_unslash( (string) $_POST['handl_aicac_onboard_alert_email'] )
+			: '';
+		$enable = isset( $_POST['handl_aicac_onboard_alert_on_deny'] );
+		$policy = Onboarding::apply_alerts_to_policy( Policy::get_policy(), $email, $enable );
+		Policy::save_policy( $policy );
+
+		// Keep the wizard on alerts; do not advance the step.
+		$state['step']   = 2;
+		$state['status'] = Onboarding::STATUS_ACTIVE;
+		Onboarding::save_state( $state );
+
+		$result = Alerts::send_test_email( $policy, 'denial_alert' );
+		$this->redirect_onboard_dashboard(
+			array(
+				'handl_aicac_test_email'    => (string) $result['status'],
+				'handl_aicac_test_email_to' => Alerts::encode_email_query_arg( (string) $result['to'] ),
+			)
+		);
+	}
+
+	private function handle_onboard_dismiss(): void {
+		$this->require_admin_mutation( 'handl_aicac_onboard' );
+		$state           = Onboarding::ensure_initialized();
+		$state['status'] = Onboarding::STATUS_DISMISSED;
+		Onboarding::save_state( $state );
+		$this->redirect_onboard_dashboard();
+	}
+
+	private function handle_onboard_reopen(): void {
+		$this->require_admin_mutation( 'handl_aicac_onboard' );
+		$state = Onboarding::ensure_initialized();
+		if ( empty( $state['eligible'] ) ) {
+			$this->redirect_onboard_dashboard();
+		}
+		$state['status'] = Onboarding::STATUS_ACTIVE;
+		$state['step']   = 1;
+		Onboarding::save_state( $state );
+		$this->redirect_onboard_dashboard( array( 'handl_aicac_onboard' => '1' ) );
+	}
+
+	private function handle_onboard_step(): void {
+		$this->require_admin_mutation( 'handl_aicac_onboard' );
+		$state = Onboarding::ensure_initialized();
+		if ( empty( $state['eligible'] ) ) {
+			$this->redirect_onboard_dashboard();
+		}
+
+		$step = Onboarding::sanitize_step(
+			isset( $_POST['handl_aicac_onboard_step'] )
+				? wp_unslash( (string) $_POST['handl_aicac_onboard_step'] )
+				: 1
+		);
+
+		if ( 1 === $step ) {
+			$mode = Onboarding::sanitize_mode(
+				isset( $_POST['handl_aicac_onboard_mode'] )
+					? wp_unslash( (string) $_POST['handl_aicac_onboard_mode'] )
+					: Onboarding::MODE_OBSERVE
+			);
+			$days = Onboarding::sanitize_observe_days(
+				isset( $_POST['handl_aicac_onboard_observe_days'] )
+					? wp_unslash( (string) $_POST['handl_aicac_onboard_observe_days'] )
+					: Onboarding::DEFAULT_OBSERVE_DAYS
+			);
+
+			if ( ! Onboarding::is_network_enforced() ) {
+				$policy = Onboarding::apply_mode_to_policy( Policy::get_policy(), $mode, $days );
+				Policy::save_policy( $policy );
+			}
+
+			$state['mode']         = $mode;
+			$state['observe_days'] = $days;
+			$state['step']         = 2;
+			$state['status']       = Onboarding::STATUS_ACTIVE;
+			Onboarding::save_state( $state );
+			$this->redirect_onboard_dashboard();
+		}
+
+		if ( 2 === $step ) {
+			$email = isset( $_POST['handl_aicac_onboard_alert_email'] )
+				? wp_unslash( (string) $_POST['handl_aicac_onboard_alert_email'] )
+				: '';
+			$enable = isset( $_POST['handl_aicac_onboard_alert_on_deny'] );
+			$policy = Onboarding::apply_alerts_to_policy( Policy::get_policy(), $email, $enable );
+			Policy::save_policy( $policy );
+			$state['step']   = 3;
+			$state['status'] = Onboarding::STATUS_ACTIVE;
+			Onboarding::save_state( $state );
+			$this->redirect_onboard_dashboard();
+		}
+
+		// Step 3 — finish.
+		$set_reminder = isset( $_POST['handl_aicac_onboard_set_reminder'] );
+		$days         = Onboarding::sanitize_observe_days( $state['observe_days'] ?? Onboarding::DEFAULT_OBSERVE_DAYS );
+		$state['review_due_ts'] = $set_reminder ? Onboarding::review_due_timestamp( $days ) : 0;
+		$state['step']          = 3;
+		$state['status']        = Onboarding::STATUS_COMPLETE;
+		Onboarding::save_state( $state );
+		$this->redirect_onboard_dashboard( array( 'handl_aicac_onboard_done' => '1' ) );
+	}
+
+	/**
+	 * @param array<string,string> $extra
+	 */
+	private function redirect_onboard_dashboard( array $extra = array() ): void {
+		$args = array_merge(
+			array(
+				'page'            => 'handl-ai-connector-access-control',
+				'handl_aicac_tab' => 'dashboard',
+			),
+			$extra
+		);
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'options-general.php' ) ) );
+		exit;
+	}
+
+	/**
 	 * F5 Dashboard — answers: Am I safe? What's spending? Block that one.
 	 *
 	 * @param array<int,mixed> $log
@@ -986,6 +1324,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		);
 
 		echo '<div class="handl-aicac-tab-panel handl-aicac-dashboard">';
+
+		// AICAC-ONBOARD: first-run wizard + review reminder (Dashboard only).
+		$this->render_onboarding_dashboard_section( $policy );
 
 		// AICAC-11: name differentiators vs WordPress AI Connector Approvals (Dashboard-primary).
 		$this->render_beyond_connector_approvals_callout();
