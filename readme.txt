@@ -4,7 +4,7 @@ Tags: ai, governance, security, handl, ai client
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -188,16 +188,23 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = Unreleased =
-* Rewrote the WordPress.org description: lead with no-surprise estimated spend, short sentences, and bullets. Estimates are not bills; your AI provider controls actual billing.
-* Added opt-in **Usage spike alerts** on the Activity tab. Compares each plugin’s call volume and estimated spend with its previous 7-day daily average. The default trigger is 3× with floors of 20 calls or $1 estimated spend. Reuses the blocked-call email address and optional webhook, limits each plugin and metric to one alert per 24 hours, and pauses with a clear notice when logging or the activity time limit is insufficient.
-* Opt-in **Block direct calls to known AI providers** (Rules tab, off by default): short-circuit WordPress HTTP to curated AI hosts outside the AI Client, with optional per-plugin exceptions. Recommend Learn mode first. Fail-open on internal errors.
-* Read-only REST API (`handl-aicac/v1`): policy summary, activity aggregates, and Site Health verdict for external dashboards. Requires manage_options (application passwords work). No write endpoints in v1.
-* Optional estimated-spend threshold email alerts (site-wide and per-plugin; empty = off). Reuses the denial-alert recipient; no enforcement.
-* Opt-in Direct AI connection email alerts (off by default) when a plugin connects directly to an AI provider outside the AI Client — immediate or hourly summary; labeled Observed, not blocked; email-only.
-* AICAC-11: In-product messaging that differentiates HandL from the WordPress AI plugin’s Connector Approvals experiment (Dashboard callout, settings subtitle, Rules note, FAQ).
 
-
-
+= 1.2.1 =
+* Added a first-run setup wizard. Watch activity, set up alerts, and send a test email.
+* Added a policy simulator. Preview how unsaved rules would handle a sample AI call.
+* Added read-only REST API endpoints for policy, activity summaries, and Site Health.
+* Added optional blocking for direct calls to known AI providers. It is off by default.
+* Added optional usage spike alerts. They compare today's call volume and estimated spend with the recent daily average.
+* Added optional estimated-spend alerts for site-wide and per-plugin thresholds.
+* Added optional email alerts for direct AI provider connections. Choose immediate alerts or an hourly summary.
+* Added test email buttons for blocked-call alerts and weekly reports.
+* Added CSV exports for the activity log and rules.
+* Added a Site Health check for AI access control.
+* Improved bulk-action and Emergency stop warnings.
+* Added clear guidance about how HandL differs from Connector Approvals in WordPress AI.
+* Rewrote the WordPress.org description with shorter sentences and clearer estimated-spend language. Estimates are not bills.
+* Strengthened permission and security checks for admin actions.
+* Fixed plus-addressed emails such as user+tag@example.com in test-email confirmations.
 
 = 1.2.0 =
 * Rewrote the WordPress.org listing in plain language so site owners can quickly understand what the plugin does.

@@ -69,15 +69,15 @@ final class BeyondConnectorApprovalsMessagingTest extends TestCase {
 		$this->assertStringContainsString( 'tool-arming denial', $readme );
 		$this->assertStringContainsString( 'shadow-AI detection', $readme );
 		$this->assertStringContainsString( 'spend / denial alerting', $readme );
-		$this->assertStringContainsString( 'AICAC-11', $readme );
-		$this->assertStringContainsString( '= Unreleased =', $readme );
+		$this->assertStringContainsString( 'differs from Connector Approvals', $readme );
+		$this->assertStringContainsString( '= 1.2.1 =', $readme );
 	}
 
 	public function test_plugin_version_stays_current_release(): void {
 		$main = file_get_contents( HANDL_AICAC_DIR . '/handl-ai-connector-access-control.php' );
 		$this->assertNotFalse( $main );
-		// Messaging ships without a forced version bump (1.2.0 already live).
-		$this->assertMatchesRegularExpression( "/define\(\s*'HANDL_AICAC_VERSION',\s*'1\.2\.0'\s*\)/", $main );
-		$this->assertStringContainsString( 'Version: 1.2.0', $main );
+		// Release stamp must stay aligned across header + constant.
+		$this->assertMatchesRegularExpression( "/define\(\s*'HANDL_AICAC_VERSION',\s*'1\.2\.1'\s*\)/", $main );
+		$this->assertStringContainsString( 'Version: 1.2.1', $main );
 	}
 }
