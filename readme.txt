@@ -198,6 +198,7 @@ Yes. With WP-CLI available and this plugin active:
 
 
 = Unreleased =
+* Create a rule from an Activity call: open the Rules form pre-filled with that plugin, AI type, and provider/model. Already-covered plugins show a status instead of adding a second rule.
 * Added Dashboard and Site Health visibility when alert emails or webhooks fail repeatedly, with buttons that send tests through the existing email and webhook paths.
 * Added an estimated month-end spend projection on the Dashboard when this calendar month has at least three days of logged activity. Uses a simple projection from the saved log. Estimate only, not a bill.
 * Insights shows the same projection broken down by plugin.
