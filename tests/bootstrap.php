@@ -19,7 +19,7 @@ if ( ! defined( 'HANDL_AICAC_DIR' ) ) {
 }
 
 if ( ! defined( 'HANDL_AICAC_VERSION' ) ) {
-	define( 'HANDL_AICAC_VERSION', 'test' );
+	define( 'HANDL_AICAC_VERSION', '1.2.2' );
 }
 
 if ( ! defined( 'HOUR_IN_SECONDS' ) ) {
@@ -600,7 +600,54 @@ if ( ! function_exists( 'wp_normalize_path' ) ) {
 }
 if ( ! function_exists( 'get_current_user_id' ) ) {
 	function get_current_user_id(): int {
-		return 0;
+		return isset( $GLOBALS['handl_aicac_test_user_id'] ) ? (int) $GLOBALS['handl_aicac_test_user_id'] : 0;
+	}
+}
+if ( ! function_exists( 'get_user_meta' ) ) {
+	/**
+	 * @param int    $user_id User id.
+	 * @param string $key     Meta key.
+	 * @param bool   $single  Single.
+	 * @return mixed
+	 */
+	function get_user_meta( $user_id, $key = '', $single = false ) {
+		$store = $GLOBALS['handl_aicac_test_user_meta'] ?? array();
+		$uid   = (string) (int) $user_id;
+		$k     = (string) $key;
+		if ( ! isset( $store[ $uid ] ) || ! is_array( $store[ $uid ] ) || ! array_key_exists( $k, $store[ $uid ] ) ) {
+			return $single ? '' : array();
+		}
+		return $single ? $store[ $uid ][ $k ] : array( $store[ $uid ][ $k ] );
+	}
+}
+if ( ! function_exists( 'update_user_meta' ) ) {
+	/**
+	 * @param int    $user_id User id.
+	 * @param string $key     Meta key.
+	 * @param mixed  $value   Value.
+	 */
+	function update_user_meta( $user_id, $key, $value, $prev = '' ): bool {
+		unset( $prev );
+		if ( ! isset( $GLOBALS['handl_aicac_test_user_meta'] ) || ! is_array( $GLOBALS['handl_aicac_test_user_meta'] ) ) {
+			$GLOBALS['handl_aicac_test_user_meta'] = array();
+		}
+		$uid = (string) (int) $user_id;
+		if ( ! isset( $GLOBALS['handl_aicac_test_user_meta'][ $uid ] ) || ! is_array( $GLOBALS['handl_aicac_test_user_meta'][ $uid ] ) ) {
+			$GLOBALS['handl_aicac_test_user_meta'][ $uid ] = array();
+		}
+		$GLOBALS['handl_aicac_test_user_meta'][ $uid ][ (string) $key ] = $value;
+		return true;
+	}
+}
+if ( ! function_exists( 'delete_user_meta' ) ) {
+	function delete_user_meta( $user_id, $key, $meta_value = '' ): bool {
+		unset( $meta_value );
+		$uid = (string) (int) $user_id;
+		$k   = (string) $key;
+		if ( isset( $GLOBALS['handl_aicac_test_user_meta'][ $uid ] ) && is_array( $GLOBALS['handl_aicac_test_user_meta'][ $uid ] ) ) {
+			unset( $GLOBALS['handl_aicac_test_user_meta'][ $uid ][ $k ] );
+		}
+		return true;
 	}
 }
 if ( ! function_exists( 'get_plugins' ) ) {
@@ -618,6 +665,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-temp-allow.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-simulator.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-onboarding.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-whats-new.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-leads.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-transfer.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-presets.php';

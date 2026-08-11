@@ -18,6 +18,11 @@ delete_option( 'handl_aicac_denial_digest_queue' );
 delete_option( 'handl_aicac_denial_email_rate' );
 delete_option( 'handl_aicac_test_email_rate' );
 delete_option( 'handl_aicac_alert_health' );
+delete_option( 'handl_aicac_whats_new_seen_version' );
+delete_option( 'handl_aicac_whats_new_announce' );
+if ( function_exists( 'delete_metadata' ) ) {
+	delete_metadata( 'user', 0, 'handl_aicac_whats_new_dismissed', '', true );
+}
 delete_option( 'handl_aicac_spend_threshold_fired' );
 delete_option( 'handl_aicac_forecast_warned' );
 delete_option( 'handl_aicac_anomaly_fired' );

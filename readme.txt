@@ -194,6 +194,7 @@ Yes. With WP-CLI available and this plugin active:
 
 = 1.2.2 =
 * Temporary Allow rules: optional expiry (24h / 7d / 30d / date). Expired allows stop at decision time (no cron dependency); hourly sweep tidies rules, writes an audit row, and emails when denial/shadow alerts are enabled. Rules UI shows remaining/expired state with one-click renew.
+* Added a one-time What’s new notice after each update, with a short in-plugin highlights panel.
 
 
 = Unreleased =

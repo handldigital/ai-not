@@ -158,7 +158,7 @@ final class Admin {
 		if ( 'log' === $tab ) {
 			$tab = 'activity';
 		}
-		if ( ! in_array( $tab, array( 'dashboard', 'rules', 'activity', 'insights', 'profile' ), true ) ) {
+		if ( ! in_array( $tab, array( 'dashboard', 'rules', 'activity', 'insights', 'profile', 'whats-new' ), true ) ) {
 			$tab = 'dashboard';
 		}
 
@@ -539,6 +539,13 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 
 		if ( 'profile' === $tab ) {
 			$this->render_plugin_profile_tab( $log, $policy, $plugins, $active );
+			echo '</div>';
+			return;
+		}
+
+		if ( 'whats-new' === $tab ) {
+			Whats_New::dismiss_for_user( get_current_user_id() );
+			Whats_New::render_panel();
 			echo '</div>';
 			return;
 		}

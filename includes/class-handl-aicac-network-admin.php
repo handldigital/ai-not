@@ -74,6 +74,14 @@ final class Network_Admin {
 
 		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__( 'HandL AI Access: Network', 'handl-ai-connector-access-control' ) . '</h1>';
+
+		$show_whats_new = isset( $_GET['handl_aicac_whats_new'] ) && '1' === (string) wp_unslash( (string) $_GET['handl_aicac_whats_new'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only panel.
+		if ( $show_whats_new ) {
+			$ver = isset( $_GET['handl_aicac_ver'] ) ? Whats_New::sanitize_version( wp_unslash( (string) $_GET['handl_aicac_ver'] ) ) : Whats_New::current_version(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			Whats_New::dismiss_for_user( get_current_user_id(), $ver );
+			Whats_New::render_panel( $ver );
+		}
+
 		echo '<p class="description">' . esc_html__( 'Read-only overview of sites where this plugin is active. Open a site’s Activity tab for details. Change rules inside each site.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<p class="description">';
 		printf(
