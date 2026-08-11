@@ -1072,6 +1072,9 @@ final class Policy {
 	 * @param array<string,mixed> $policy
 	 */
 	public static function save_policy( array $policy ): void {
+		// AICAC-UNDO: snapshot current policy before overwrite (restore also hits this path).
+		Policy_Snapshots::capture_before_save();
+
 		if ( ! empty( $policy['audit_only'] ) ) {
 			$policy['log_enabled'] = true;
 		}

@@ -272,6 +272,14 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_preset_apply_confirm', 'handl_aicac_nonce' );
 				$this->handle_preset_apply_confirm();
 			}
+			if ( 'policy_restore_preview' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_policy_restore_preview', 'handl_aicac_nonce' );
+				$this->handle_policy_restore_preview();
+			}
+			if ( 'policy_restore_confirm' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_policy_restore_confirm', 'handl_aicac_nonce' );
+				$this->handle_policy_restore_confirm();
+			}
 			if ( 'bulk_plugin_rules' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
 				$this->handle_bulk_plugin_rules();
@@ -321,6 +329,8 @@ final class Admin {
 		$show_preset_preview = isset( $_GET['handl_aicac_preset_preview'] ) && '1' === (string) $_GET['handl_aicac_preset_preview'];
 		$preset_status       = isset( $_GET['handl_aicac_preset'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_preset'] ) ) : '';
 		$preset_id_q         = isset( $_GET['handl_aicac_preset_id'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_preset_id'] ) ) : '';
+		$show_restore_preview = isset( $_GET['handl_aicac_restore_preview'] ) && '1' === (string) $_GET['handl_aicac_restore_preview'];
+		$restore_status       = isset( $_GET['handl_aicac_restore'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_restore'] ) ) : '';
 
 		if ( isset( $_POST['handl_aicac_action'] ) && 'save' === $_POST['handl_aicac_action'] ) {
 			check_admin_referer( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
@@ -603,6 +613,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		echo '</script>';
 
 		$this->render_presets_section( $policy, $show_preset_preview );
+		$this->render_policy_restore_section( $policy, $show_restore_preview, $restore_status );
 
 		// Settings demoted: collapsible panel, not the first thing you see (F5 IA).
 		echo '<details class="handl-aicac-settings-panel">';
@@ -5367,7 +5378,173 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		exit;
 	}
 
-/**
+	/**
+	 * AICAC-UNDO: restore previous policy (confirm-before-restore).
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function render_policy_restore_section( array $policy, bool $show_preview, string $status ): void {
+		$latest = Policy_Snapshots::latest();
+
+		echo '<div id="handl-aicac-policy-restore" class="handl-aicac-policy-restore" style="margin:0 0 1.5em;">';
+		echo '<h2>' . esc_html__( 'Restore previous policy', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<p class="description">' . esc_html__( 'The last 5 versions of your rules and settings are saved on this site before each change. Use a restore point if a preset or policy change causes a problem. Nothing leaves this site.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		if ( 'restored' === $status ) {
+			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'Previous policy restored.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		} elseif ( 'error' === $status ) {
+			echo '<div class="notice notice-error inline"><p>' . esc_html__( 'Could not restore the previous policy. Review the latest restore point and try again.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+
+		if ( null === $latest ) {
+			echo '<p class="description">' . esc_html__( 'No restore point yet. Save your rules or settings once to create one.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '</div>';
+			return;
+		}
+
+		$when = function_exists( 'wp_date' )
+			? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (int) $latest['ts'] )
+			: gmdate( 'Y-m-d H:i', (int) $latest['ts'] );
+		$summary = (string) ( $latest['summary'] ?? Policy_Snapshots::summary_line( $latest['policy'] ) );
+
+		echo '<p><strong>' . esc_html__( 'Latest restore point', 'handl-ai-connector-access-control' ) . ':</strong> ';
+		echo esc_html( $when );
+		echo '. ' . esc_html( $summary );
+		echo '</p>';
+
+		if ( ! $show_preview ) {
+			echo '<form method="post" style="margin:0;">';
+			wp_nonce_field( 'handl_aicac_policy_restore_preview', 'handl_aicac_nonce' );
+			echo '<input type="hidden" name="handl_aicac_action" value="policy_restore_preview" />';
+			echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+			submit_button( __( 'Review restore', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+			echo '</form>';
+			echo '</div>';
+			return;
+		}
+
+		$user_id = get_current_user_id();
+		$pending = get_transient( Policy_Snapshots::preview_transient_key( $user_id ) );
+		if ( ! is_array( $pending ) || empty( $pending['ts'] ) || (int) $pending['ts'] !== (int) $latest['ts'] ) {
+			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Restore preview expired or was not found. Review again.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '</div>';
+			return;
+		}
+
+		$rows = Policy_Snapshots::diff_rows( $policy, $latest['policy'] );
+
+		echo '<div class="handl-aicac-restore-preview" style="border:1px solid #c3c4c7;padding:12px 16px;background:#fff;max-width:52em;margin-top:0.5em;">';
+		echo '<h3>' . esc_html__( 'Restore preview', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<p>' . esc_html__( 'The rules and settings below will change. Restoring also saves the current policy, so you can reverse this restore.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		if ( empty( $rows ) ) {
+			echo '<p class="description">' . esc_html__( 'The current policy already matches this restore point. Restoring it will not change your rules or settings.', 'handl-ai-connector-access-control' ) . '</p>';
+		} else {
+			echo '<table class="widefat striped" style="margin:0.5em 0 1em;">';
+			echo '<thead><tr>';
+			echo '<th>' . esc_html__( 'Setting', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'Current', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'After restore', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '</tr></thead><tbody>';
+			foreach ( $rows as $row ) {
+				if ( ! is_array( $row ) ) {
+					continue;
+				}
+				echo '<tr>';
+				echo '<td>' . esc_html( (string) ( $row['label'] ?? '' ) ) . '</td>';
+				echo '<td>' . esc_html( (string) ( $row['current'] ?? '' ) ) . '</td>';
+				echo '<td>' . esc_html( (string) ( $row['new'] ?? '' ) ) . '</td>';
+				echo '</tr>';
+			}
+			echo '</tbody></table>';
+		}
+
+		echo '<form method="post">';
+		wp_nonce_field( 'handl_aicac_policy_restore_confirm', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="policy_restore_confirm" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		submit_button( __( 'Restore previous policy', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
+		echo '</form>';
+		echo '</div>';
+		echo '</div>';
+	}
+
+	/**
+	 * Stash restore intent for confirmation screen (no policy write).
+	 */
+	private function handle_policy_restore_preview(): void {
+		$this->require_admin_mutation( 'handl_aicac_policy_restore_preview' );
+
+		$redirect_base = array(
+			'page'            => 'handl-ai-connector-access-control',
+			'handl_aicac_tab' => 'rules',
+		);
+
+		$latest = Policy_Snapshots::latest();
+		if ( null === $latest ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge( $redirect_base, array( 'handl_aicac_restore' => 'error' ) ),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		set_transient(
+			Policy_Snapshots::preview_transient_key( get_current_user_id() ),
+			array( 'ts' => (int) $latest['ts'] ),
+			Policy_Snapshots::PREVIEW_TTL
+		);
+
+		wp_safe_redirect(
+			add_query_arg(
+				array_merge( $redirect_base, array( 'handl_aicac_restore_preview' => '1' ) ),
+				admin_url( 'options-general.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * Apply pending restore via Policy::save_policy (snapshots first).
+	 */
+	private function handle_policy_restore_confirm(): void {
+		$this->require_admin_mutation( 'handl_aicac_policy_restore_confirm' );
+
+		$redirect_base = array(
+			'page'            => 'handl-ai-connector-access-control',
+			'handl_aicac_tab' => 'rules',
+		);
+
+		$key     = Policy_Snapshots::preview_transient_key( get_current_user_id() );
+		$pending = get_transient( $key );
+		delete_transient( $key );
+
+		$latest = Policy_Snapshots::latest();
+		if ( ! is_array( $pending ) || null === $latest || (int) ( $pending['ts'] ?? 0 ) !== (int) $latest['ts'] ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge( $redirect_base, array( 'handl_aicac_restore' => 'error' ) ),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		$result = Policy_Snapshots::restore_latest();
+		$status = ! empty( $result['ok'] ) ? 'restored' : 'error';
+
+		wp_safe_redirect(
+			add_query_arg(
+				array_merge( $redirect_base, array( 'handl_aicac_restore' => $status ) ),
+				admin_url( 'options-general.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
 	 * Stash preset id for confirmation screen (no policy write).
 	 */
 	private function handle_preset_preview(): void {

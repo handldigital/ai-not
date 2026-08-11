@@ -670,6 +670,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-whats-new.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-leads.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-transfer.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-presets.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-snapshots.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-audit-export.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-audit-evidence.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin-profile.php';
