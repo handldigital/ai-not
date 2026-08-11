@@ -417,9 +417,11 @@ final class Policy_Snapshots {
 				);
 			case 'spend_threshold_site':
 				if ( null === $value || '' === $value ) {
-					return __( '(none)', 'handl-ai-connector-access-control' );
+					return __( 'No alert', 'handl-ai-connector-access-control' );
 				}
-				return (string) $value;
+				// Dollar amount for the confirm table (not a raw number).
+				$amount = is_numeric( $value ) ? (float) $value : 0.0;
+				return '$' . rtrim( rtrim( number_format( $amount, 2, '.', '' ), '0' ), '.' );
 			default:
 				if ( is_bool( $value ) ) {
 					return $value ? __( 'On', 'handl-ai-connector-access-control' ) : __( 'Off', 'handl-ai-connector-access-control' );

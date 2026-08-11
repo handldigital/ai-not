@@ -5286,16 +5286,16 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 
 		echo '<div id="handl-aicac-policy-restore" class="handl-aicac-policy-restore" style="margin:0 0 1.5em;">';
 		echo '<h2>' . esc_html__( 'Restore previous policy', 'handl-ai-connector-access-control' ) . '</h2>';
-		echo '<p class="description">' . esc_html__( 'Every save keeps a local snapshot of your rules and settings (last 5). Use this when a preset or rule change went wrong. Nothing leaves the site.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'The last 5 versions of your rules and settings are saved on this site before each change. Use a restore point if a preset or policy change causes a problem. Nothing leaves this site.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( 'restored' === $status ) {
 			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'Previous policy restored.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		} elseif ( 'error' === $status ) {
-			echo '<div class="notice notice-error inline"><p>' . esc_html__( 'Could not restore the previous policy. Try saving a change first so a snapshot exists.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<div class="notice notice-error inline"><p>' . esc_html__( 'Could not restore the previous policy. Review the latest restore point and try again.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 
 		if ( null === $latest ) {
-			echo '<p class="description">' . esc_html__( 'No snapshot yet. Save your rules once to create the first restore point.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'No restore point yet. Save your rules or settings once to create one.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '</div>';
 			return;
 		}
@@ -5305,9 +5305,9 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			: gmdate( 'Y-m-d H:i', (int) $latest['ts'] );
 		$summary = (string) ( $latest['summary'] ?? Policy_Snapshots::summary_line( $latest['policy'] ) );
 
-		echo '<p><strong>' . esc_html__( 'Last saved', 'handl-ai-connector-access-control' ) . ':</strong> ';
+		echo '<p><strong>' . esc_html__( 'Latest restore point', 'handl-ai-connector-access-control' ) . ':</strong> ';
 		echo esc_html( $when );
-		echo ' — ' . esc_html( $summary );
+		echo '. ' . esc_html( $summary );
 		echo '</p>';
 
 		if ( ! $show_preview ) {
@@ -5333,10 +5333,10 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 
 		echo '<div class="handl-aicac-restore-preview" style="border:1px solid #c3c4c7;padding:12px 16px;background:#fff;max-width:52em;margin-top:0.5em;">';
 		echo '<h3>' . esc_html__( 'Restore preview', 'handl-ai-connector-access-control' ) . '</h3>';
-		echo '<p>' . esc_html__( 'These settings will change if you restore. Restoring also saves a snapshot of the current policy so you can undo the restore.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p>' . esc_html__( 'The rules and settings below will change. Restoring also saves the current policy, so you can reverse this restore.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( empty( $rows ) ) {
-			echo '<p class="description">' . esc_html__( 'Current settings already match this snapshot. Restoring will not change anything visible.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'The current policy already matches this restore point. Restoring it will not change your rules or settings.', 'handl-ai-connector-access-control' ) . '</p>';
 		} else {
 			echo '<table class="widefat striped" style="margin:0.5em 0 1em;">';
 			echo '<thead><tr>';
