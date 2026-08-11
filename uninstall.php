@@ -17,6 +17,7 @@ delete_option( 'handl_aicac_onboard' );
 delete_option( 'handl_aicac_denial_digest_queue' );
 delete_option( 'handl_aicac_denial_email_rate' );
 delete_option( 'handl_aicac_test_email_rate' );
+delete_option( 'handl_aicac_alert_health' );
 delete_option( 'handl_aicac_spend_threshold_fired' );
 delete_option( 'handl_aicac_forecast_warned' );
 delete_option( 'handl_aicac_anomaly_fired' );

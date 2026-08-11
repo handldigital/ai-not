@@ -203,10 +203,17 @@ final class Admin {
 			if ( 'send_test_webhook' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_send_test_webhook', 'handl_aicac_nonce' );
 				$ok = Alerts::send_test_webhook( Policy::get_policy() );
+				$return_tab = 'activity';
+				if ( isset( $_POST['handl_aicac_tab'] ) ) {
+					$candidate = sanitize_key( wp_unslash( (string) $_POST['handl_aicac_tab'] ) );
+					if ( in_array( $candidate, array( 'activity', 'dashboard' ), true ) ) {
+						$return_tab = $candidate;
+					}
+				}
 				$redirect = add_query_arg(
 					array(
 						'page'                       => 'handl-ai-connector-access-control',
-						'handl_aicac_tab'            => 'activity',
+						'handl_aicac_tab'            => $return_tab,
 						'handl_aicac_webhook_tested' => $ok ? '1' : '0',
 					),
 					admin_url( 'options-general.php' )
@@ -1862,6 +1869,49 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			)
 		) . '</p>';
 		echo '</div></div>';
+
+		// --- Alert delivery health (AICAC-ALERT-HEALTH) ---
+		$email_to     = Alerts::resolve_email( $policy );
+		$webhook_url  = Alerts::resolve_webhook( $policy );
+		$show_email   = '' !== $email_to;
+		$show_webhook = '' !== $webhook_url;
+		if ( $show_email || $show_webhook ) {
+			$health = Alert_Health::get_state();
+			echo '<div class="postbox handl-aicac-tile handl-aicac-tile--alert-health">';
+			echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Alert delivery', 'handl-ai-connector-access-control' ) . '</h2></div>';
+			echo '<div class="inside">';
+			echo '<p class="description">' . esc_html__( 'Shows whether recent email sends were accepted and whether webhook requests succeeded. Send a test using your saved settings.', 'handl-ai-connector-access-control' ) . '</p>';
+			if ( $show_email ) {
+				$email_row = $health[ Alert_Health::CHANNEL_EMAIL ];
+				$line      = Alert_Health::format_status_line( Alert_Health::CHANNEL_EMAIL, $email_row );
+				$failing   = (int) $email_row['consecutive_failures'] >= Alert_Health::FAILURE_THRESHOLD;
+				echo $failing ? '<p class="handl-aicac-danger">' : '<p>';
+				echo esc_html( $line );
+				echo '</p>';
+				echo '<form method="post" style="margin:0 0 1em;">';
+				wp_nonce_field( 'handl_aicac_send_test_email', 'handl_aicac_nonce' );
+				echo '<input type="hidden" name="handl_aicac_action" value="send_test_email" />';
+				echo '<input type="hidden" name="handl_aicac_test_email_channel" value="denial_alert" />';
+				echo '<input type="hidden" name="handl_aicac_tab" value="dashboard" />';
+				submit_button( __( 'Send test email', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+				echo '</form>';
+			}
+			if ( $show_webhook ) {
+				$hook_row = $health[ Alert_Health::CHANNEL_WEBHOOK ];
+				$line     = Alert_Health::format_status_line( Alert_Health::CHANNEL_WEBHOOK, $hook_row );
+				$failing  = (int) $hook_row['consecutive_failures'] >= Alert_Health::FAILURE_THRESHOLD;
+				echo $failing ? '<p class="handl-aicac-danger">' : '<p>';
+				echo esc_html( $line );
+				echo '</p>';
+				echo '<form method="post" style="margin:0;">';
+				wp_nonce_field( 'handl_aicac_send_test_webhook', 'handl_aicac_nonce' );
+				echo '<input type="hidden" name="handl_aicac_action" value="send_test_webhook" />';
+				echo '<input type="hidden" name="handl_aicac_tab" value="dashboard" />';
+				submit_button( __( 'Send test webhook', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+				echo '</form>';
+			}
+			echo '</div></div>';
+		}
 
 		// --- Spend ---
 		echo '<div class="postbox handl-aicac-tile handl-aicac-tile--spend">';
