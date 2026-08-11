@@ -245,6 +245,17 @@ final class Alerts {
 	}
 
 	/**
+	 * Encode an email for add_query_arg() redirects.
+	 *
+	 * WordPress build_query() leaves "+" unencoded; PHP query parsing turns
+	 * unencoded "+" into a space, which sanitize_email() then strips — so
+	 * plus-addressed recipients (user+tag@domain) corrupt in admin notices.
+	 */
+	public static function encode_email_query_arg( string $email ): string {
+		return rawurlencode( $email );
+	}
+
+	/**
 	 * Recipient: configured address or site admin_email.
 	 *
 	 * @param array<string,mixed> $policy

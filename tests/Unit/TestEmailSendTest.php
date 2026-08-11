@@ -125,6 +125,38 @@ final class TestEmailSendTest extends TestCase {
 		$this->assertCount( 0, self::$mails );
 	}
 
+	/**
+	 * Plus-addressed recipients must survive admin redirect notices.
+	 * WP build_query leaves "+" raw; PHP turns that into a space in $_GET.
+	 */
+	public function test_encode_email_query_arg_preserves_plus_addressing_through_redirect(): void {
+		$email = 'haktan+aicac-onboard@handldigital.com';
+		$this->assertSame( $email, Alerts::sanitize_email( $email ) );
+
+		// Reproduce QA failure: unencoded "+" becomes space, then sanitize strips it.
+		parse_str( 'handl_aicac_test_email_to=' . $email, $broken_args );
+		$this->assertSame(
+			'haktanaicac-onboard@handldigital.com',
+			Alerts::sanitize_email( (string) ( $broken_args['handl_aicac_test_email_to'] ?? '' ) ),
+			'Unencoded "+" must reproduce the QA failure mode'
+		);
+
+		$encoded = Alerts::encode_email_query_arg( $email );
+		$this->assertSame( 'haktan%2Baicac-onboard%40handldigital.com', $encoded );
+		parse_str( 'handl_aicac_test_email_to=' . $encoded, $fixed_args );
+		$this->assertSame(
+			$email,
+			Alerts::sanitize_email( (string) ( $fixed_args['handl_aicac_test_email_to'] ?? '' ) )
+		);
+
+		$source = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php' );
+		$this->assertSame(
+			2,
+			substr_count( $source, 'Alerts::encode_email_query_arg' ),
+			'Activity + onboard test-email redirects must both encode the recipient'
+		);
+	}
+
 	public function test_build_helpers_contain_no_per_call_data(): void {
 		$subject = Alerts::build_test_email_subject( 'denial_alert' );
 		$body    = Alerts::build_test_email_body( 'weekly_report' );

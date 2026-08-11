@@ -11,6 +11,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 delete_option( 'handl_aicac_policy' );
 delete_option( 'handl_aicac_recent_calls' );
+delete_option( 'handl_aicac_onboard' );
 
 // F3: denial alert metadata — must not survive uninstall (privacy).
 delete_option( 'handl_aicac_denial_digest_queue' );

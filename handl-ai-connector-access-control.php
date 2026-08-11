@@ -26,6 +26,14 @@ define( 'HANDL_AICAC_URL', plugin_dir_url( __FILE__ ) );
 
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin.php';
 
+register_activation_hook(
+	__FILE__,
+	static function (): void {
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-onboarding.php';
+		\HandL\AICAC\Onboarding::ensure_initialized();
+	}
+);
+
 add_action(
 	'plugins_loaded',
 	static function (): void {
