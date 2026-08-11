@@ -220,7 +220,7 @@ final class Alert_Health {
 				self::format_time( $success )
 			);
 		} else {
-			$parts[] = __( 'No successful sends yet.', 'handl-ai-connector-access-control' );
+			$parts[] = __( 'No successful sends yet', 'handl-ai-connector-access-control' );
 		}
 
 		if ( null !== $failure ) {
