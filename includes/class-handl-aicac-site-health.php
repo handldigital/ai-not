@@ -163,7 +163,7 @@ final class Site_Health {
 
 		$label = __( 'HandL AI Connector Access Control is configured', 'handl-ai-connector-access-control' );
 		if ( 'alert_delivery_failing' === $issue ) {
-			$label = __( 'Alert delivery is failing repeatedly', 'handl-ai-connector-access-control' );
+			$label = __( 'Alert sending is failing repeatedly', 'handl-ai-connector-access-control' );
 		} elseif ( 'kill_switch_zero_exceptions' === $issue ) {
 			$label = __( 'Emergency stop blocks all AI Client calls', 'handl-ai-connector-access-control' );
 		} elseif ( 'alerts_without_logging' === $issue ) {
@@ -257,7 +257,7 @@ final class Site_Health {
 			}
 			$lines[] = sprintf(
 				/* translators: %s: comma-separated channel labels */
-				__( 'Alert delivery failed at least 3 times in a row for: %s. Check your email or webhook settings, then use Verify now on the Dashboard.', 'handl-ai-connector-access-control' ),
+				__( 'Alert sending failed at least 3 times in a row for: %s. Check your email or webhook settings, then send a test from the Dashboard.', 'handl-ai-connector-access-control' ),
 				implode( ', ', $labels )
 			);
 		} elseif ( 'kill_switch_zero_exceptions' === $issue ) {

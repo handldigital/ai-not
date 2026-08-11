@@ -151,8 +151,9 @@ final class AlertHealthTest extends TestCase {
 		);
 		$line = Alert_Health::format_status_line( 'webhook', $row );
 		$this->assertStringContainsString( 'Webhook', $line );
-		$this->assertStringContainsString( 'Last delivered:', $line );
-		$this->assertStringContainsString( 'Last failure:', $line );
+		$this->assertStringContainsString( 'Last successful send:', $line );
+		$this->assertStringContainsString( 'Last failed send:', $line );
 		$this->assertStringContainsString( 'HTTP 500', $line );
+		$this->assertStringNotContainsString( ' — ', $line );
 	}
 }

@@ -209,18 +209,18 @@ final class Alert_Health {
 		$failure = $row['last_failure_at'];
 
 		if ( null === $success && null === $failure ) {
-			$parts[] = __( 'No delivery attempts recorded yet.', 'handl-ai-connector-access-control' );
-			return implode( ' — ', $parts );
+			$parts[] = __( 'No send attempts recorded yet.', 'handl-ai-connector-access-control' );
+			return implode( '. ', $parts );
 		}
 
 		if ( null !== $success ) {
 			$parts[] = sprintf(
 				/* translators: %s: localized date/time */
-				__( 'Last delivered: %s', 'handl-ai-connector-access-control' ),
+				__( 'Last successful send: %s', 'handl-ai-connector-access-control' ),
 				self::format_time( $success )
 			);
 		} else {
-			$parts[] = __( 'Last delivered: never', 'handl-ai-connector-access-control' );
+			$parts[] = __( 'No successful sends yet.', 'handl-ai-connector-access-control' );
 		}
 
 		if ( null !== $failure ) {
@@ -228,14 +228,14 @@ final class Alert_Health {
 			if ( '' !== $reason ) {
 				$parts[] = sprintf(
 					/* translators: 1: localized date/time, 2: failure reason */
-					__( 'Last failure: %1$s (%2$s)', 'handl-ai-connector-access-control' ),
+					__( 'Last failed send: %1$s (%2$s)', 'handl-ai-connector-access-control' ),
 					self::format_time( $failure ),
 					$reason
 				);
 			} else {
 				$parts[] = sprintf(
 					/* translators: %s: localized date/time */
-					__( 'Last failure: %s', 'handl-ai-connector-access-control' ),
+					__( 'Last failed send: %s', 'handl-ai-connector-access-control' ),
 					self::format_time( $failure )
 				);
 			}
@@ -245,12 +245,12 @@ final class Alert_Health {
 		if ( $consec >= self::FAILURE_THRESHOLD ) {
 			$parts[] = sprintf(
 				/* translators: %d: consecutive failure count */
-				__( '%d failed attempts in a row.', 'handl-ai-connector-access-control' ),
+				__( '%d failed send attempts in a row.', 'handl-ai-connector-access-control' ),
 				$consec
 			);
 		}
 
-		return implode( ' — ', $parts );
+		return implode( '. ', $parts );
 	}
 
 	private static function format_time( int $ts ): string {

@@ -1880,7 +1880,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '<div class="postbox handl-aicac-tile handl-aicac-tile--alert-health">';
 			echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Alert delivery', 'handl-ai-connector-access-control' ) . '</h2></div>';
 			echo '<div class="inside">';
-			echo '<p class="description">' . esc_html__( 'Shows whether alert emails and webhooks are getting through. Use Verify now to send a test with your saved settings.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Shows whether recent email sends were accepted and whether webhook requests succeeded. Send a test using your saved settings.', 'handl-ai-connector-access-control' ) . '</p>';
 			if ( $show_email ) {
 				$email_row = $health[ Alert_Health::CHANNEL_EMAIL ];
 				$line      = Alert_Health::format_status_line( Alert_Health::CHANNEL_EMAIL, $email_row );
@@ -1893,7 +1893,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				echo '<input type="hidden" name="handl_aicac_action" value="send_test_email" />';
 				echo '<input type="hidden" name="handl_aicac_test_email_channel" value="denial_alert" />';
 				echo '<input type="hidden" name="handl_aicac_tab" value="dashboard" />';
-				submit_button( __( 'Verify email now', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+				submit_button( __( 'Send test email', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
 				echo '</form>';
 			}
 			if ( $show_webhook ) {
@@ -1907,7 +1907,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				wp_nonce_field( 'handl_aicac_send_test_webhook', 'handl_aicac_nonce' );
 				echo '<input type="hidden" name="handl_aicac_action" value="send_test_webhook" />';
 				echo '<input type="hidden" name="handl_aicac_tab" value="dashboard" />';
-				submit_button( __( 'Verify webhook now', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+				submit_button( __( 'Send test webhook', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
 				echo '</form>';
 			}
 			echo '</div></div>';

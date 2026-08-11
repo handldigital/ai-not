@@ -197,7 +197,7 @@ Yes. With WP-CLI available and this plugin active:
 
 
 = Unreleased =
-* Added Dashboard and Site Health visibility when alert emails or webhooks fail repeatedly, with Verify now buttons that reuse the existing test-send path.
+* Added Dashboard and Site Health visibility when alert emails or webhooks fail repeatedly, with test-send buttons that reuse the existing test-send path.
 * Added an estimated month-end spend projection on the Dashboard when this calendar month has at least three days of logged activity. Uses a simple projection from the saved log. Estimate only, not a bill.
 * Insights shows the same projection broken down by plugin.
 * When a projection would cross a configured estimated-spend alert threshold, the Dashboard shows a warning and (if alert email is set) sends at most one projection warning per calendar month per threshold.
