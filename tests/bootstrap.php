@@ -355,6 +355,39 @@ if ( ! function_exists( 'current_user_can' ) ) {
 	}
 }
 
+
+if ( ! defined( 'WEEK_IN_SECONDS' ) ) {
+	define( 'WEEK_IN_SECONDS', 604800 );
+}
+
+if ( ! function_exists( 'wp_next_scheduled' ) ) {
+	function wp_next_scheduled( $hook, $args = array() ) {
+		unset( $hook, $args );
+		return false;
+	}
+}
+
+if ( ! function_exists( 'wp_schedule_event' ) ) {
+	function wp_schedule_event( $timestamp, $recurrence, $hook, $args = array() ) {
+		unset( $timestamp, $recurrence, $hook, $args );
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_unschedule_event' ) ) {
+	function wp_unschedule_event( $timestamp, $hook, $args = array() ) {
+		unset( $timestamp, $hook, $args );
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_clear_scheduled_hook' ) ) {
+	function wp_clear_scheduled_hook( $hook, $args = array() ) {
+		unset( $hook, $args );
+		return true;
+	}
+}
+
 if ( ! function_exists( 'apply_filters' ) ) {
 	/**
 	 * @param string $hook Hook name.
@@ -524,6 +557,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-simulator.php
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-onboarding.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-leads.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-transfer.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-presets.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-audit-export.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin-profile.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-differentiator-messaging.php';

@@ -252,6 +252,14 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_import_rules_confirm', 'handl_aicac_nonce' );
 				$this->handle_import_rules_confirm();
 			}
+			if ( 'preset_preview' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_preset_preview', 'handl_aicac_nonce' );
+				$this->handle_preset_preview();
+			}
+			if ( 'preset_apply_confirm' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_preset_apply_confirm', 'handl_aicac_nonce' );
+				$this->handle_preset_apply_confirm();
+			}
 			if ( 'bulk_plugin_rules' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
 				$this->handle_bulk_plugin_rules();
@@ -298,6 +306,9 @@ final class Admin {
 		$import_ignored_q = isset( $_GET['handl_aicac_import_ignored'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['handl_aicac_import_ignored'] ) ) : '';
 		$show_import_preview = isset( $_GET['handl_aicac_import_preview'] ) && '1' === (string) $_GET['handl_aicac_import_preview'];
 		$renewed_ok = isset( $_GET['handl_aicac_renewed'] ) && '1' === (string) $_GET['handl_aicac_renewed'];
+		$show_preset_preview = isset( $_GET['handl_aicac_preset_preview'] ) && '1' === (string) $_GET['handl_aicac_preset_preview'];
+		$preset_status       = isset( $_GET['handl_aicac_preset'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_preset'] ) ) : '';
+		$preset_id_q         = isset( $_GET['handl_aicac_preset_id'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_preset_id'] ) ) : '';
 
 		if ( isset( $_POST['handl_aicac_action'] ) && 'save' === $_POST['handl_aicac_action'] ) {
 			check_admin_referer( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
@@ -424,6 +435,26 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		if ( '' !== $import_err ) {
 			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $this->import_error_message( $import_err ) ) . '</p></div>';
 		}
+		if ( 'applied' === $preset_status ) {
+			$preset_label = $preset_id_q;
+			$preset_def   = '' !== $preset_id_q ? Presets::get( $preset_id_q ) : null;
+			if ( is_array( $preset_def ) ) {
+				$preset_label = (string) $preset_def['label'];
+			}
+			echo '<div class="notice notice-success is-dismissible"><p>';
+			echo esc_html(
+				sprintf(
+					/* translators: %s: preset name */
+					__( 'Applied preset: %s.', 'handl-ai-connector-access-control' ),
+					$preset_label
+				)
+			);
+			echo '</p></div>';
+		} elseif ( 'noop' === $preset_status ) {
+			echo '<div class="notice notice-info is-dismissible"><p>' . esc_html__( 'That preset is already active. No settings were changed.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		} elseif ( 'error' === $preset_status ) {
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Could not apply that preset. Your current settings were not changed.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
 		if ( '' !== $blocked_ok ) {
 			$blocked_label = isset( $plugins[ $blocked_ok ]['Name'] ) ? (string) $plugins[ $blocked_ok ]['Name'] : $blocked_ok;
 			echo '<div class="notice notice-success is-dismissible"><p>';
@@ -544,6 +575,8 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		echo 'form.addEventListener("submit",function(e){var b=e.submitter;if(b&&b.getAttribute("data-aicac-action")){action.value=b.getAttribute("data-aicac-action");}});';
 		echo '})();';
 		echo '</script>';
+
+		$this->render_presets_section( $policy, $show_preset_preview );
 
 		// Settings demoted: collapsible panel, not the first thing you see (F5 IA).
 		echo '<details class="handl-aicac-settings-panel">';
@@ -1018,6 +1051,12 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '</form>';
 			echo '</div>';
 		}
+
+		// Soft link only — presets live on Rules; no hard dependency on onboarding.
+		$presets_url = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules#handl-aicac-presets' );
+		echo '<p class="description handl-aicac-preset-link" style="margin:0 0 1em;">';
+		echo '<a href="' . esc_url( $presets_url ) . '">' . esc_html__( 'Or start from a policy preset', 'handl-ai-connector-access-control' ) . '</a>';
+		echo '</p>';
 	}
 
 	/**
@@ -4662,6 +4701,128 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	}
 
 	/**
+	 * One-click policy presets (AICAC-PRESET / #106).
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function render_presets_section( array $policy, bool $show_preview ): void {
+		echo '<div id="handl-aicac-presets" class="handl-aicac-presets" style="margin:0 0 1.5em;">';
+		echo '<h2>' . esc_html__( 'Policy presets', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<p class="description">' . esc_html__( 'Start from a curated template. You will see every setting that would change before anything is saved. Your custom plugin rules are not cleared unless a preset says it will change them.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		$defs = Presets::definitions();
+		echo '<div class="handl-aicac-preset-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(14em,1fr));gap:12px;max-width:56em;">';
+		foreach ( $defs as $def ) {
+			$id    = (string) $def['id'];
+			$active = Presets::is_active( $id, $policy );
+			echo '<div class="handl-aicac-preset-card" style="border:1px solid #c3c4c7;padding:12px;background:#fff;">';
+			echo '<p style="margin:0 0 6px;"><strong>' . esc_html( (string) $def['label'] ) . '</strong>';
+			if ( $active ) {
+				echo ' <span class="description">(' . esc_html__( 'Active', 'handl-ai-connector-access-control' ) . ')</span>';
+			}
+			echo '</p>';
+			echo '<p class="description" style="margin:0 0 10px;">' . esc_html( (string) $def['description'] ) . '</p>';
+			echo '<form method="post" style="margin:0;">';
+			wp_nonce_field( 'handl_aicac_preset_preview', 'handl_aicac_nonce' );
+			echo '<input type="hidden" name="handl_aicac_action" value="preset_preview" />';
+			echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+			echo '<input type="hidden" name="handl_aicac_preset_id" value="' . esc_attr( $id ) . '" />';
+			submit_button(
+				$active ? __( 'Review (already active)', 'handl-ai-connector-access-control' ) : __( 'Preview changes', 'handl-ai-connector-access-control' ),
+				'secondary',
+				'submit',
+				false
+			);
+			echo '</form>';
+			echo '</div>';
+		}
+		echo '</div>';
+
+		if ( ! $show_preview ) {
+			echo '</div>';
+			return;
+		}
+
+		$user_id = get_current_user_id();
+		$pending = get_transient( Presets::preview_transient_key( $user_id ) );
+		if ( ! is_array( $pending ) || empty( $pending['preset_id'] ) ) {
+			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Preset preview expired or was not found. Choose a preset again.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '</div>';
+			return;
+		}
+
+		$preset_id = sanitize_key( (string) $pending['preset_id'] );
+		$def       = Presets::get( $preset_id );
+		$diff      = Presets::diff( $preset_id, $policy );
+
+		echo '<div class="handl-aicac-preset-preview" style="border:1px solid #c3c4c7;padding:12px 16px;background:#fff;max-width:52em;margin-top:1em;">';
+		echo '<h3>' . esc_html__( 'Preset preview', 'handl-ai-connector-access-control' ) . '</h3>';
+		if ( is_array( $def ) ) {
+			echo '<p><strong>' . esc_html( (string) $def['label'] ) . '</strong> — ' . esc_html( (string) $def['description'] ) . '</p>';
+		}
+
+		if ( ! empty( $diff['active'] ) ) {
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'That preset is already active. Applying it again will not change any settings.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<form method="post">';
+			wp_nonce_field( 'handl_aicac_preset_apply_confirm', 'handl_aicac_nonce' );
+			echo '<input type="hidden" name="handl_aicac_action" value="preset_apply_confirm" />';
+			echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+			submit_button( __( 'Dismiss', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+			echo '</form>';
+			echo '</div></div>';
+			return;
+		}
+
+		if ( empty( $diff['ok'] ) ) {
+			echo '<div class="notice notice-error inline"><p>' . esc_html__( 'Could not build a preview for that preset.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '</div></div>';
+			return;
+		}
+
+		if ( ! empty( $diff['overwrites'] ) ) {
+			echo '<div class="notice notice-warning inline"><p><strong>' . esc_html__( 'This preset will overwrite custom rules.', 'handl-ai-connector-access-control' ) . '</strong> ';
+			echo esc_html__( 'Rows marked overwrite replace existing plugin or AI-type rules.', 'handl-ai-connector-access-control' );
+			echo '</p></div>';
+		}
+
+		$rows = isset( $diff['rows'] ) && is_array( $diff['rows'] ) ? $diff['rows'] : array();
+		if ( empty( $rows ) ) {
+			echo '<p class="description">' . esc_html__( 'No settings would change.', 'handl-ai-connector-access-control' ) . '</p>';
+		} else {
+			echo '<table class="widefat striped" style="margin:0.5em 0 1em;">';
+			echo '<thead><tr>';
+			echo '<th>' . esc_html__( 'Setting', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'Current', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'New', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '</tr></thead><tbody>';
+			foreach ( $rows as $row ) {
+				if ( ! is_array( $row ) ) {
+					continue;
+				}
+				echo '<tr>';
+				echo '<td>' . esc_html( (string) ( $row['label'] ?? '' ) );
+				if ( ! empty( $row['overwrite'] ) ) {
+					echo ' <span class="description">(' . esc_html__( 'overwrite', 'handl-ai-connector-access-control' ) . ')</span>';
+				}
+				echo '</td>';
+				echo '<td>' . esc_html( (string) ( $row['current'] ?? '' ) ) . '</td>';
+				echo '<td>' . esc_html( (string) ( $row['new'] ?? '' ) ) . '</td>';
+				echo '</tr>';
+			}
+			echo '</tbody></table>';
+		}
+
+		echo '<form method="post">';
+		wp_nonce_field( 'handl_aicac_preset_apply_confirm', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="preset_apply_confirm" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		submit_button( __( 'Apply preset', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
+		echo '</form>';
+		echo '</div>';
+		echo '</div>';
+	}
+
+	/**
 	 * Rules-tab export / import (AICAC-102).
 	 *
 	 * @param array<string,mixed> $policy
@@ -4808,6 +4969,89 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		header( 'Content-Length: ' . (string) strlen( $payload ) );
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- raw CSV download body.
 		echo $payload;
+		exit;
+	}
+
+	/**
+	 * Stash preset id for confirmation screen (no policy write).
+	 */
+	private function handle_preset_preview(): void {
+		$this->require_admin_mutation( 'handl_aicac_preset_preview' );
+
+		$redirect_base = array(
+			'page'            => 'handl-ai-connector-access-control',
+			'handl_aicac_tab' => 'rules',
+		);
+
+		$preset_id = isset( $_POST['handl_aicac_preset_id'] )
+			? sanitize_key( wp_unslash( (string) $_POST['handl_aicac_preset_id'] ) )
+			: '';
+		if ( null === Presets::get( $preset_id ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge( $redirect_base, array( 'handl_aicac_preset' => 'error' ) ),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		set_transient(
+			Presets::preview_transient_key( get_current_user_id() ),
+			array( 'preset_id' => $preset_id ),
+			Presets::PREVIEW_TTL
+		);
+
+		wp_safe_redirect(
+			add_query_arg(
+				array_merge( $redirect_base, array( 'handl_aicac_preset_preview' => '1' ) ),
+				admin_url( 'options-general.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * Apply pending preset (or no-op when already active) via Policy::save_policy.
+	 */
+	private function handle_preset_apply_confirm(): void {
+		$this->require_admin_mutation( 'handl_aicac_preset_apply_confirm' );
+
+		$redirect_base = array(
+			'page'            => 'handl-ai-connector-access-control',
+			'handl_aicac_tab' => 'rules',
+		);
+
+		$key     = Presets::preview_transient_key( get_current_user_id() );
+		$pending = get_transient( $key );
+		delete_transient( $key );
+
+		if ( ! is_array( $pending ) || empty( $pending['preset_id'] ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge( $redirect_base, array( 'handl_aicac_preset' => 'error' ) ),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		$preset_id = sanitize_key( (string) $pending['preset_id'] );
+		$result    = Presets::apply( $preset_id, Policy::get_policy() );
+		$status    = ! empty( $result['ok'] ) ? (string) ( $result['status'] ?? 'applied' ) : 'error';
+
+		wp_safe_redirect(
+			add_query_arg(
+				array_merge(
+					$redirect_base,
+					array(
+						'handl_aicac_preset'    => $status,
+						'handl_aicac_preset_id' => $preset_id,
+					)
+				),
+				admin_url( 'options-general.php' )
+			)
+		);
 		exit;
 	}
 
