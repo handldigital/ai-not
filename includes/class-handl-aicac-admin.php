@@ -264,6 +264,10 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_import_rules_confirm', 'handl_aicac_nonce' );
 				$this->handle_import_rules_confirm();
 			}
+			if ( 'keyscan_run' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_keyscan_run', 'handl_aicac_nonce' );
+				$this->handle_keyscan_run();
+			}
 			if ( 'preset_preview' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_preset_preview', 'handl_aicac_nonce' );
 				$this->handle_preset_preview();
@@ -331,6 +335,7 @@ final class Admin {
 		$preset_id_q         = isset( $_GET['handl_aicac_preset_id'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_preset_id'] ) ) : '';
 		$show_restore_preview = isset( $_GET['handl_aicac_restore_preview'] ) && '1' === (string) $_GET['handl_aicac_restore_preview'];
 		$restore_status       = isset( $_GET['handl_aicac_restore'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_restore'] ) ) : '';
+
 
 		if ( isset( $_POST['handl_aicac_action'] ) && 'save' === $_POST['handl_aicac_action'] ) {
 			check_admin_referer( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
@@ -1843,6 +1848,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		// AICAC-11: name differentiators vs WordPress AI Connector Approvals (Dashboard-primary).
 		$this->render_beyond_connector_approvals_callout();
+
+		// AICAC-KEYSCAN: embedded AI API keys in active plugins (masked only).
+		$this->render_keyscan_dashboard_tile();
 
 		// --- Coverage tile (Δ1 + Δ5) ---
 		echo '<div class="postbox handl-aicac-tile handl-aicac-tile--coverage">';
@@ -5538,6 +5546,121 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		wp_safe_redirect(
 			add_query_arg(
 				array_merge( $redirect_base, array( 'handl_aicac_restore' => $status ) ),
+				admin_url( 'options-general.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * AICAC-KEYSCAN: Dashboard tile — masked findings + on-demand scan.
+	 */
+	private function render_keyscan_dashboard_tile(): void {
+		$status   = isset( $_GET['handl_aicac_keyscan'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_keyscan'] ) ) : '';
+		$findings = Keyscan::active_findings();
+		$state    = Keyscan::get_state();
+		$last     = (int) ( $state['last_scan'] ?? 0 );
+
+		echo '<div id="handl-aicac-keyscan" class="postbox handl-aicac-tile handl-aicac-tile--keyscan">';
+		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Embedded AI API keys', 'handl-ai-connector-access-control' ) . '</h2></div>';
+		echo '<div class="inside">';
+		echo '<p class="description">' . esc_html__( 'Looks for known AI key patterns in active plugin files and options. Only a masked preview is shown. Full keys are never stored or sent anywhere.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		if ( 'ok' === $status ) {
+			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'Scan finished. Results below are masked.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		} elseif ( 'partial' === $status ) {
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Scan is still running across more files. Click Scan again to continue.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+
+		if ( $last > 0 ) {
+			$when = function_exists( 'wp_date' )
+				? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $last )
+				: gmdate( 'Y-m-d H:i', $last );
+			echo '<p><strong>' . esc_html__( 'Last scan', 'handl-ai-connector-access-control' ) . ':</strong> ' . esc_html( $when ) . '</p>';
+		} else {
+			echo '<p class="description">' . esc_html__( 'No scan yet. Run a scan to check active plugins.', 'handl-ai-connector-access-control' ) . '</p>';
+		}
+
+		if ( empty( $findings ) ) {
+			echo '<p>' . esc_html__( 'No embedded AI API keys found in active plugins.', 'handl-ai-connector-access-control' ) . '</p>';
+		} else {
+			echo '<table class="widefat striped" style="margin:0.5em 0 1em;">';
+			echo '<thead><tr>';
+			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'Where', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'Type', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'Key (masked)', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'First seen', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '</tr></thead><tbody>';
+			foreach ( $findings as $row ) {
+				if ( ! is_array( $row ) ) {
+					continue;
+				}
+				$plugin = (string) ( $row['plugin'] ?? '' );
+				$label  = $plugin;
+				if ( function_exists( 'get_plugins' ) ) {
+					$all = get_plugins();
+					if ( isset( $all[ $plugin ]['Name'] ) ) {
+						$label = (string) $all[ $plugin ]['Name'];
+					}
+				}
+				$source   = (string) ( $row['source'] ?? '' );
+				$location = (string) ( $row['location'] ?? '' );
+				$where    = ( 'option' === $source )
+					? sprintf(
+						/* translators: %s: option name */
+						__( 'Option: %s', 'handl-ai-connector-access-control' ),
+						$location
+					)
+					: sprintf(
+						/* translators: %s: relative file path */
+						__( 'File: %s', 'handl-ai-connector-access-control' ),
+						$location
+					);
+				$mask = (string) ( $row['mask'] ?? ( '••••' . (string) ( $row['suffix'] ?? '' ) ) );
+				$fs   = isset( $row['first_seen'] ) ? (int) $row['first_seen'] : 0;
+				$fs_l = $fs > 0
+					? ( function_exists( 'wp_date' ) ? wp_date( get_option( 'date_format' ), $fs ) : gmdate( 'Y-m-d', $fs ) )
+					: '—';
+
+				echo '<tr>';
+				echo '<td>' . esc_html( $label ) . '</td>';
+				echo '<td><code>' . esc_html( $where ) . '</code></td>';
+				echo '<td>' . esc_html( Keyscan::provider_label( (string) ( $row['provider'] ?? '' ) ) ) . '</td>';
+				echo '<td><code>' . esc_html( $mask ) . '</code></td>';
+				echo '<td>' . esc_html( $fs_l ) . '</td>';
+				echo '</tr>';
+			}
+			echo '</tbody></table>';
+		}
+
+		echo '<form method="post" style="margin:0;">';
+		wp_nonce_field( 'handl_aicac_keyscan_run', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="keyscan_run" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="dashboard" />';
+		submit_button( __( 'Scan for keys now', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+		echo '</form>';
+		echo '</div></div>';
+	}
+
+	/**
+	 * On-demand keyscan chunk (manage_options + nonce).
+	 */
+	private function handle_keyscan_run(): void {
+		$this->require_admin_mutation( 'handl_aicac_keyscan_run' );
+
+		$state  = Keyscan::get_state();
+		$reset  = empty( $state['cursor'] );
+		$result = Keyscan::run_scan_chunk( $reset );
+		$status = ! empty( $result['done'] ) ? 'ok' : 'partial';
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'               => 'handl-ai-connector-access-control',
+					'handl_aicac_tab'    => 'dashboard',
+					'handl_aicac_keyscan' => $status,
+				),
 				admin_url( 'options-general.php' )
 			)
 		);
