@@ -54,6 +54,21 @@ final class Operations {
 	}
 
 	/**
+	 * Canonical AI Client operation used to probe a family's effective rule via Policy::evaluate().
+	 */
+	public static function canonical_operation_for_family( string $family ): string {
+		$map = array(
+			self::FAMILY_TEXT   => 'generate_text',
+			self::FAMILY_IMAGE  => 'generate_image',
+			self::FAMILY_SPEECH => 'generate_speech',
+			self::FAMILY_TTS    => 'convert_text_to_speech',
+			self::FAMILY_VIDEO  => 'generate_video',
+		);
+
+		return $map[ $family ] ?? 'generate_result';
+	}
+
+	/**
 	 * Resolve a capability family from an AI Client method name.
 	 *
 	 * Unknown or empty operations return FAMILY_UNKNOWN so callers can apply

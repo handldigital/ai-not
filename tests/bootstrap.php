@@ -248,6 +248,30 @@ if ( ! function_exists( 'admin_url' ) ) {
 	}
 }
 
+if ( ! function_exists( 'add_query_arg' ) ) {
+	/**
+	 * Minimal add_query_arg stand-in for unit tests (uses http_build_query).
+	 *
+	 * @param array<string,mixed>|string $key
+	 * @param mixed                      $value
+	 * @param string|null                $url
+	 */
+	function add_query_arg( $key, $value = null, $url = null ): string {
+		if ( is_array( $key ) ) {
+			$params = $key;
+			$url    = is_string( $value ) ? $value : (string) $url;
+		} else {
+			$params = array( (string) $key => $value );
+			$url    = (string) $url;
+		}
+		if ( '' === $url ) {
+			$url = 'https://example.test/wp-admin/options-general.php';
+		}
+		$sep = false !== strpos( $url, '?' ) ? '&' : '?';
+		return $url . $sep . http_build_query( $params );
+	}
+}
+
 if ( ! function_exists( 'get_option' ) ) {
 	/**
 	 * @param string $key Option key.
@@ -454,6 +478,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-simulator.php
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-onboarding.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-transfer.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-audit-export.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin-profile.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-differentiator-messaging.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
