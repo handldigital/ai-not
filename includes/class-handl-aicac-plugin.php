@@ -40,6 +40,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-simulator.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-onboarding.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-leads.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-transfer.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-audit-export.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-analytics.php';

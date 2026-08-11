@@ -28,12 +28,14 @@ jobs:
             --exclude "dist/" \
             --exclude ".DS_Store" \
             --exclude "wordpress-org/" \
+            --exclude "server/" \
             --exclude "vendor/" \
             --exclude "tests/" \
             --exclude "composer.json" \
             --exclude "composer.lock" \
             --exclude "phpunit.xml.dist" \
             --exclude ".gitignore" \
+            --exclude "deploy.sh" \
             --exclude "*.md" \
             ./ dist/"${PLUGIN_SLUG}"/
 
