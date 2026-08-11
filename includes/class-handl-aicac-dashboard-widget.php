@@ -240,7 +240,7 @@ final class Dashboard_Widget {
 
 		$status = isset( $activity['status'] ) ? (string) $activity['status'] : '';
 		if ( 'logging_disabled' === $status ) {
-			echo '<p class="description">' . esc_html__( 'Activity logging is off, so there are no last-24-hour totals yet.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Activity logging is off. Turn it on to see 24-hour totals.', 'handl-ai-connector-access-control' ) . '</p>';
 		} elseif ( 'no_data' === $status ) {
 			echo '<p class="description">' . esc_html__( 'No AI activity in the last 24 hours.', 'handl-ai-connector-access-control' ) . '</p>';
 		} elseif ( 'ok' === $status ) {
@@ -269,8 +269,8 @@ final class Dashboard_Widget {
 			) . '</li>';
 			echo '<li>' . esc_html(
 				sprintf(
-					/* translators: 1: blocked direct connections, 2: observed direct connections */
-					__( '%1$d direct AI blocks (%2$d observed)', 'handl-ai-connector-access-control' ),
+					/* translators: 1: blocked direct connections, 2: total direct connections detected */
+					__( '%2$d direct AI connections detected (%1$d blocked)', 'handl-ai-connector-access-control' ),
 					$blocks,
 					$shadow
 				)
