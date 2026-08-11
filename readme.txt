@@ -55,6 +55,7 @@ Caller identification is **best-effort**. Calls made through cron, REST requests
 = More controls when you need them =
 
 * **Estimated spend alerts:** Optional email when estimated spend in the saved log crosses a site-wide or per-plugin dollar threshold (off when empty). Uses the same recipient as denial alerts. Estimates only, not billing.
+* **Usage spike alerts:** Get an optional email or webhook when a plugin’s AI Client call volume or estimated spend rises above its previous 7-day daily average. Off by default and does not block calls.
 * **Denial alerts:** Send an optional email when a prompt is blocked, either immediately or in an hourly digest. You can also send the same privacy-scoped data to a webhook URL for services such as Slack or Teams.
 * **Weekly report:** Receive a summary of coverage, denials, estimated spend, and model-pin activity. The option is selected by default, sends only while logging or Learn mode is on, and can be turned off at any time.
 * **Estimated spend:** View a rough estimate based on token counts and the rates you provide, including optional rates by provider. This is an estimate, **not billing**.
@@ -186,6 +187,7 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = Unreleased =
+* Added opt-in **Usage spike alerts** on the Activity tab. Compares each plugin’s call volume and estimated spend with its previous 7-day daily average. The default trigger is 3× with floors of 20 calls or $1 estimated spend. Reuses the blocked-call email address and optional webhook, limits each plugin and metric to one alert per 24 hours, and pauses with a clear notice when logging or the activity time limit is insufficient.
 * Opt-in **Block direct calls to known AI providers** (Rules tab, off by default): short-circuit WordPress HTTP to curated AI hosts outside the AI Client, with optional per-plugin exceptions. Recommend Learn mode first. Fail-open on internal errors.
 * Read-only REST API (`handl-aicac/v1`): policy summary, activity aggregates, and Site Health verdict for external dashboards. Requires manage_options (application passwords work). No write endpoints in v1.
 * Optional estimated-spend threshold email alerts (site-wide and per-plugin; empty = off). Reuses the denial-alert recipient; no enforcement.
