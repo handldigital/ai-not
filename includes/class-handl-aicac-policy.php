@@ -215,9 +215,10 @@ final class Policy {
 	 * @param string|null         $operation AI Client method name when known.
 	 * @param list<string>|null   $armed_tools Tool/ability names armed on the prompt.
 	 * @param string|null         $capability_family Pre-resolved family from snapshot (preferred).
+	 * @param int|null            $now Injectable unix clock for temporary-allow expiry (AICAC-TEMP-ALLOW).
 	 * @return array{prevent:bool,reason:string,matched_tools:list<string>}
 	 */
-	public static function evaluate( array $policy, ?string $plugin_basename, ?string $operation = null, ?array $armed_tools = null, ?string $capability_family = null ): array {
+	public static function evaluate( array $policy, ?string $plugin_basename, ?string $operation = null, ?array $armed_tools = null, ?string $capability_family = null, ?int $now = null ): array {
 		if ( ! empty( $policy['kill_switch'] ) ) {
 			$exceptions = self::get_kill_switch_exceptions( $policy );
 			if ( $plugin_basename && in_array( $plugin_basename, $exceptions, true ) ) {
@@ -247,7 +248,7 @@ final class Policy {
 		}
 
 		$instance = self::instance();
-		return $instance->decide_detailed( $policy, $plugin_basename, $operation, $armed_tools ?? array(), $capability_family );
+		return $instance->decide_detailed( $policy, $plugin_basename, $operation, $armed_tools ?? array(), $capability_family, $now );
 	}
 
 	/**
@@ -539,16 +540,17 @@ final class Policy {
 	 * @param string|null         $operation AI Client method name when known.
 	 * @param list<string>        $armed_tools
 	 * @param string|null         $capability_family Pre-resolved family (from snapshot inference).
+	 * @param int|null            $now Injectable unix clock for temporary-allow expiry.
 	 * @return array{prevent:bool,reason:string,matched_tools:list<string>}
 	 */
-	private function decide_detailed( array $policy, ?string $plugin_basename, ?string $operation, array $armed_tools, ?string $capability_family = null ): array {
+	private function decide_detailed( array $policy, ?string $plugin_basename, ?string $operation, array $armed_tools, ?string $capability_family = null, ?int $now = null ): array {
 		$allow = array(
 			'prevent'       => false,
 			'reason'        => '',
 			'matched_tools' => array(),
 		);
 
-		$plugin_decision = $this->plugin_level_decision( $policy, $plugin_basename );
+		$plugin_decision = $this->plugin_level_decision( $policy, $plugin_basename, $now );
 
 		// Outer gate: plugin deny blocks every family and tool arming.
 		if ( 'deny' === $plugin_decision ) {
@@ -747,15 +749,27 @@ final class Policy {
 	/**
 	 * Plugin-level allow/deny (no family refinement).
 	 *
+	 * Expired temporary Allow rules fall through to the site default (AICAC-TEMP-ALLOW).
+	 *
 	 * @param array<string,mixed> $policy
+	 * @param int|null            $now Injectable unix clock.
 	 * @return 'allow'|'deny'
 	 */
-	private function plugin_level_decision( array $policy, ?string $plugin_basename ): string {
+	private function plugin_level_decision( array $policy, ?string $plugin_basename, ?int $now = null ): string {
 		$default = ( $policy['default'] ?? 'allow' ) === 'deny' ? 'deny' : 'allow';
 		$rules   = is_array( $policy['plugins'] ?? null ) ? (array) $policy['plugins'] : array();
 
 		if ( $plugin_basename && isset( $rules[ $plugin_basename ] ) ) {
-			return 'deny' === $rules[ $plugin_basename ] ? 'deny' : 'allow';
+			$rule = (string) $rules[ $plugin_basename ];
+			if ( 'deny' === $rule ) {
+				return 'deny';
+			}
+			if ( 'allow' === $rule ) {
+				if ( Temp_Allow::is_expired( $policy, $plugin_basename, $now ) ) {
+					return $default;
+				}
+				return 'allow';
+			}
 		}
 
 		return $default;
@@ -813,6 +827,9 @@ final class Policy {
 
 		$policy['default'] = ( $policy['default'] ?? 'allow' ) === 'deny' ? 'deny' : 'allow';
 		$policy['plugins'] = is_array( $policy['plugins'] ?? null ) ? (array) $policy['plugins'] : array();
+		// AICAC-TEMP-ALLOW: optional unix expiry per explicit Allow rule (no new top-level feature flag).
+		$policy['plugin_expires'] = Temp_Allow::sanitize_plugin_expires( $policy['plugin_expires'] ?? array() );
+		$policy                   = Temp_Allow::normalize_expires_against_plugins( $policy );
 		// Opt-in: logging stores local request metadata (e.g. user id / URI).
 		$policy['log_enabled'] = (bool) ( $policy['log_enabled'] ?? false );
 		$policy['audit_only']  = (bool) ( $policy['audit_only'] ?? false );
@@ -1067,6 +1084,8 @@ final class Policy {
 		$policy['denied_tools']           = self::sanitize_denied_tools( $policy['denied_tools'] ?? $policy['denied_abilities'] ?? array() );
 		// Drop legacy key on save so the option stores the honest name.
 		unset( $policy['denied_abilities'] );
+		$policy['plugin_expires'] = Temp_Allow::sanitize_plugin_expires( $policy['plugin_expires'] ?? array() );
+		$policy                   = Temp_Allow::normalize_expires_against_plugins( $policy );
 
 		$policy['alert_on_deny']     = ! empty( $policy['alert_on_deny'] );
 		$policy['alert_on_shadow']   = ! empty( $policy['alert_on_shadow'] );
@@ -1138,6 +1157,7 @@ final class Policy {
 
 		update_option( Plugin::OPTION_KEY, $policy, false );
 		Alerts::maybe_schedule( $policy );
+		Temp_Allow::maybe_schedule( $policy );
 		// maybe_schedule needs preference + log/learn from this save; not the stripped store shape.
 		$schedule_policy                           = $policy;
 		$schedule_policy['weekly_report_enabled'] = $weekly_for_schedule;
@@ -1178,6 +1198,7 @@ final class Policy {
 		$plugins = isset( $policy['plugins'] ) && is_array( $policy['plugins'] )
 			? $policy['plugins']
 			: array();
+		$expires = Temp_Allow::sanitize_plugin_expires( $policy['plugin_expires'] ?? array() );
 
 		$updated = 0;
 		$skipped = 0;
@@ -1193,10 +1214,13 @@ final class Policy {
 				continue;
 			}
 			$plugins[ $basename ] = $rule;
+			// Bulk allow/deny clears temporary expiry for touched rows.
+			unset( $expires[ $basename ] );
 			++$updated;
 		}
 
-		$policy['plugins'] = $plugins;
+		$policy['plugins']        = $plugins;
+		$policy['plugin_expires'] = $expires;
 
 		return array(
 			'policy'  => $policy,
@@ -1229,6 +1253,10 @@ final class Policy {
 		} else {
 			$policy['plugins'][ $plugin_basename ] = $rule;
 		}
+		// Quick allow/deny is permanent unless renewed elsewhere — drop stale expiry.
+		$expires = Temp_Allow::sanitize_plugin_expires( $policy['plugin_expires'] ?? array() );
+		unset( $expires[ $plugin_basename ] );
+		$policy['plugin_expires'] = $expires;
 		self::save_policy( $policy );
 
 		return true;

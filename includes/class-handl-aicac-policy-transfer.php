@@ -37,6 +37,7 @@ final class Policy_Transfer {
 		return array(
 			'default',
 			'plugins',
+			'plugin_expires',
 			'log_enabled',
 			'audit_only',
 			'kill_switch',
