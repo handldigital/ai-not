@@ -27,10 +27,12 @@ if ( function_exists( 'delete_metadata' ) ) {
 delete_option( 'handl_aicac_spend_threshold_fired' );
 delete_option( 'handl_aicac_forecast_warned' );
 delete_option( 'handl_aicac_anomaly_fired' );
+delete_option( 'handl_aicac_keyscan_findings' );
 if ( function_exists( 'wp_clear_scheduled_hook' ) ) {
 	wp_clear_scheduled_hook( 'handl_aicac_send_denial_digest' );
 	// F7: weekly report cron.
 	wp_clear_scheduled_hook( 'handl_aicac_send_weekly_report' );
+	wp_clear_scheduled_hook( 'handl_aicac_keyscan_weekly' );
 }
 
 // F4: experimental model-force health state.
