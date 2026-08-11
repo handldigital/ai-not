@@ -2200,10 +2200,10 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		if ( null !== $forecast && ! empty( $forecast['plugins'] ) ) {
 			echo '<div class="handl-aicac-insights-forecast" style="margin:1.25em 0;">';
 			echo '<h3>' . esc_html__( 'Estimated month-end by plugin', 'handl-ai-connector-access-control' ) . '</h3>';
-			echo '<p class="description">' . esc_html__( 'Linear run rate from this calendar month so far. Estimate only, not a bill.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Projected from this month’s estimated spend so far. Estimate only, not a bill.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '<table class="widefat striped"><thead><tr>';
 			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th class="column-num">' . esc_html__( 'So far this month', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th class="column-num">' . esc_html__( 'Estimated so far this month', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '<th class="column-num">' . esc_html__( 'Estimated month-end', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '</tr></thead><tbody>';
 			$i = 0;
@@ -2213,7 +2213,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				}
 				++$i;
 				$label = Analytics::UNKNOWN_KEY === $basename
-					? __( 'unknown', 'handl-ai-connector-access-control' )
+					? __( '(unknown plugin)', 'handl-ai-connector-access-control' )
 					: ( isset( $plugins[ $basename ]['Name'] ) ? (string) $plugins[ $basename ]['Name'] : (string) $basename );
 				echo '<tr><td>' . esc_html( $label ) . '</td>';
 				echo '<td class="column-num">$' . esc_html( number_format_i18n( (float) $row['mtd'], 2 ) ) . '</td>';

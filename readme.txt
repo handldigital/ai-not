@@ -197,7 +197,7 @@ Yes. With WP-CLI available and this plugin active:
 
 
 = Unreleased =
-* Added an estimated month-end spend projection on the Dashboard when this calendar month has at least three days of logged activity. Uses a simple run rate from the saved log. Estimate only, not a bill.
+* Added an estimated month-end spend projection on the Dashboard when this calendar month has at least three days of logged activity. Uses a simple projection from the saved log. Estimate only, not a bill.
 * Insights shows the same projection broken down by plugin.
 * When a projection would cross a configured estimated-spend alert threshold, the Dashboard shows a warning and (if alert email is set) sends at most one projection warning per calendar month per threshold.
 * Printable audit evidence report on Activity: policy snapshot, activity summary for a chosen window, spend vs alert thresholds, and a CSV export note. Self-contained HTML for Print → PDF; no data leaves the site.

@@ -265,7 +265,7 @@ final class Spend_Forecast {
 		if ( 'plugin' === $warn['scope'] ) {
 			return sprintf(
 				/* translators: 1: site name, 2: plugin label, 3: threshold USD */
-				__( '[%1$s] HandL spend forecast: %2$s may cross $%3$s this month', 'handl-ai-connector-access-control' ),
+				__( '[%1$s] HandL estimated-spend forecast: %2$s may cross $%3$s this month', 'handl-ai-connector-access-control' ),
 				$site,
 				self::plugin_label( (string) $warn['plugin'] ),
 				Spend_Threshold::format_amount( (float) $warn['threshold'] )
@@ -274,7 +274,7 @@ final class Spend_Forecast {
 
 		return sprintf(
 			/* translators: 1: site name, 2: threshold USD */
-			__( '[%1$s] HandL spend forecast: Site estimate may cross $%2$s this month', 'handl-ai-connector-access-control' ),
+			__( '[%1$s] HandL estimated-spend forecast: Site may cross $%2$s this month', 'handl-ai-connector-access-control' ),
 			$site,
 			Spend_Threshold::format_amount( (float) $warn['threshold'] )
 		);
@@ -286,7 +286,7 @@ final class Spend_Forecast {
 	 */
 	public static function build_body( array $warn, array $forecast ): string {
 		$lines   = array();
-		$lines[] = __( 'HandL AI Connector Access Control spend forecast warning', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'HandL AI Connector Access Control estimated-spend forecast warning', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 
 		if ( 'plugin' === $warn['scope'] ) {
@@ -311,7 +311,7 @@ final class Spend_Forecast {
 		);
 		$lines[] = sprintf(
 			/* translators: %s: projected month-end estimated spend */
-			__( 'Estimated month-end (current run rate): $%s', 'handl-ai-connector-access-control' ),
+			__( 'Estimated month-end (current pace): $%s', 'handl-ai-connector-access-control' ),
 			Spend_Threshold::format_amount( (float) $warn['projected'] )
 		);
 		$lines[] = sprintf(
