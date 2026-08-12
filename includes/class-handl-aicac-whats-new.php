@@ -79,6 +79,13 @@ final class Whats_New {
 	 */
 	public static function highlights_catalog(): array {
 		return array(
+			'1.5.0' => array(
+				__( 'Set per-plugin estimated monthly budgets on the Rules tab, with a Dashboard banner, budget-hit email, and Site Health notice when the ceiling is reached. Amounts are estimates, not bills.', 'handl-ai-connector-access-control' ),
+				__( 'Turn on an optional weekly governance digest: last 7 days of AI Client calls, estimated spend vs the previous week, blocked calls, direct connections, and top plugins.', 'handl-ai-connector-access-control' ),
+				__( 'Get one alert the first time a plugin uses a new AI provider (or model). The first recorded call sets a baseline and does not send an alert.', 'handl-ai-connector-access-control' ),
+				__( 'See the last 20 webhook delivery attempts on Activity, send a test webhook next to the URL, and get one automatic retry after a server error or timeout.', 'handl-ai-connector-access-control' ),
+				__( 'Inspect policy and activity from the command line with `wp handl-aicac policy list` and `wp handl-aicac log summary` (table or JSON).', 'handl-ai-connector-access-control' ),
+			),
 			'1.4.0' => array(
 				__( 'Save policy checks on the Rules tab; the plugin warns before a preset, restore, or import would change an expected Allow or Deny result.', 'handl-ai-connector-access-control' ),
 				__( 'Set weekly Quiet hours on the Activity tab to block AI Client calls or use Observe-only mode. Emergency stop still takes priority.', 'handl-ai-connector-access-control' ),
