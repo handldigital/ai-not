@@ -99,8 +99,8 @@ final class New_Plugin {
 			sprintf(
 				/* translators: %d: number of plugins awaiting AI policy review */
 				_n(
-					'%d new plugin needs an AI access decision before it can use AI freely.',
-					'%d new plugins need an AI access decision before they can use AI freely.',
+					'%d new plugin needs an AI access decision.',
+					'%d new plugins need an AI access decision.',
 					$count,
 					'handl-ai-connector-access-control'
 				),

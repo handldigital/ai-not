@@ -4558,7 +4558,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	 */
 	
 	/**
-	 * AICAC-NEWPLUGIN: Rules settings — new plugins start restricted.
+	 * AICAC-NEWPLUGIN: Rules settings — new plugins require review.
 	 *
 	 * @param array<string,mixed> $policy
 	 */
@@ -4568,12 +4568,12 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 
 		echo '<tr><th scope="row">' . esc_html__( 'New plugins', 'handl-ai-connector-access-control' ) . '</th><td>';
 		echo '<label><input type="checkbox" name="handl_aicac_new_plugin_review_enabled" value="1" form="' . esc_attr( $form_id ) . '" ' . checked( $enabled, true, false ) . ' /> ';
-		echo esc_html__( 'New plugins start restricted', 'handl-ai-connector-access-control' ) . '</label>';
-		echo '<p class="description">' . esc_html__( 'When on, a newly activated plugin waits for your Allow or Deny choice. Plugins already on the site when you turn this on are left alone.', 'handl-ai-connector-access-control' ) . '</p>';
-		echo '<p><label for="handl-aicac-new-plugin-interim">' . esc_html__( 'Until you review', 'handl-ai-connector-access-control' ) . '</label> ';
+		echo esc_html__( 'New plugins require review', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'When on, newly activated plugins are blocked or logged until you choose Allow or Deny. Plugins already active when you turn this on are left alone.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p><label for="handl-aicac-new-plugin-interim">' . esc_html__( 'Before you review', 'handl-ai-connector-access-control' ) . '</label> ';
 		echo '<select name="handl_aicac_new_plugin_interim" id="handl-aicac-new-plugin-interim" form="' . esc_attr( $form_id ) . '">';
-		$this->render_option( 'deny', $interim, __( 'Deny AI calls', 'handl-ai-connector-access-control' ) );
-		$this->render_option( 'observe', $interim, __( 'Observe only (allow and log)', 'handl-ai-connector-access-control' ) );
+		$this->render_option( 'deny', $interim, __( 'Block AI calls', 'handl-ai-connector-access-control' ) );
+		$this->render_option( 'observe', $interim, __( 'Allow and log AI calls', 'handl-ai-connector-access-control' ) );
 		echo '</select></p>';
 		echo '</td></tr>';
 	}
