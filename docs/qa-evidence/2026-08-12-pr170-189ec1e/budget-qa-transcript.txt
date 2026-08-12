@@ -1,0 +1,31 @@
+PR #170 sandbox accounting QA at 189ec1e
+
+Controlled fixture:
+- plugin: akismet/akismet.php
+- budget: $1.00
+- rate: $1.00 per 1M input tokens
+- two token patches: 1M input, then 2M input
+
+Observed result:
+{
+  "first_patch": true,
+  "second_patch": true,
+  "status": {
+    "period": "2026-08",
+    "spend": 2,
+    "budget": 1,
+    "percent_used": 200,
+    "unlimited": false
+  },
+  "period_timezone_check": {
+    "utc": "2026-08",
+    "chicago": "2026-07"
+  },
+  "spend_map": {
+    "2026-08": {
+      "akismet/akismet.php": 2
+    }
+  }
+}
+
+Sandbox policy, log, and spend options restored after capture.
