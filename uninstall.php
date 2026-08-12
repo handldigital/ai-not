@@ -27,6 +27,7 @@ if ( function_exists( 'delete_metadata' ) ) {
 delete_option( 'handl_aicac_spend_threshold_fired' );
 delete_option( 'handl_aicac_forecast_warned' );
 delete_option( 'handl_aicac_anomaly_fired' );
+delete_option( 'handl_aicac_temp_allow_warned' );
 delete_option( 'handl_aicac_keyscan_findings' );
 delete_option( 'handl_aicac_monthly_report_sent' );
 if ( function_exists( 'wp_clear_scheduled_hook' ) ) {

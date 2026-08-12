@@ -1,10 +1,11 @@
 <?php
 /**
  * AICAC-TEMP-ALLOW: Optional expiry on explicit Allow plugin rules (#100).
+ * AICAC-EXPIRY-WARN: one email ~24h before expiry (#142).
  *
  * Decision-time check is authoritative (no cron dependency for correctness).
- * Hourly sweep tidies expired entries, writes an audit row, and emails when
- * denial/shadow alert infrastructure is enabled.
+ * Hourly sweep: (1) warn for allows entering the 24h window, (2) tidy expired
+ * entries, audit, and email when denial/shadow alert infrastructure is enabled.
  *
  * @package HandL_AICAC
  */
@@ -24,6 +25,15 @@ final class Temp_Allow {
 
 	/** Default renew window when an admin renews an expired allow (seconds). */
 	public const RENEW_SECONDS = 604800; // 7 days
+
+	/** AICAC-EXPIRY-WARN: send one warning when remaining time is at most this (seconds). */
+	public const WARN_WINDOW = 86400; // 24 hours
+
+	/**
+	 * Basename => expiry unix we already warned about (idempotent per expiry).
+	 * Cleared on renew / expiry remove.
+	 */
+	public const WARNED_OPTION_KEY = 'handl_aicac_temp_allow_warned';
 
 	/** @var list<string> */
 	public const PRESETS = array( '', '24h', '7d', '30d', 'custom' );
@@ -323,21 +333,132 @@ final class Temp_Allow {
 		$expires[ $plugin_basename ] = $from + self::RENEW_SECONDS;
 		$policy['plugin_expires']    = $expires;
 
+		// AICAC-EXPIRY-WARN: renew cancels any pending warning for this rule.
+		self::clear_warned( $plugin_basename );
+
 		return self::normalize_expires_against_plugins( $policy );
 	}
 
 	/**
+	 * AICAC-EXPIRY-WARN: basenames already warned for a given expiry timestamp.
+	 *
+	 * @return array<string,int> basename => expiry unix that was warned
+	 */
+	public static function get_warned_map(): array {
+		$raw = get_option( self::WARNED_OPTION_KEY );
+		if ( ! is_array( $raw ) ) {
+			return array();
+		}
+		$out = array();
+		foreach ( $raw as $basename => $ts ) {
+			$basename = sanitize_text_field( (string) $basename );
+			$ts       = (int) $ts;
+			if ( '' === $basename || $ts <= 0 ) {
+				continue;
+			}
+			$out[ $basename ] = $ts;
+		}
+		return $out;
+	}
+
+	/**
+	 * @param array<string,int> $map
+	 */
+	public static function set_warned_map( array $map ): void {
+		update_option( self::WARNED_OPTION_KEY, $map, false );
+	}
+
+	public static function clear_warned( string $plugin_basename ): void {
+		$plugin_basename = sanitize_text_field( $plugin_basename );
+		if ( '' === $plugin_basename ) {
+			return;
+		}
+		$map = self::get_warned_map();
+		if ( ! isset( $map[ $plugin_basename ] ) ) {
+			return;
+		}
+		unset( $map[ $plugin_basename ] );
+		self::set_warned_map( $map );
+	}
+
+	/**
+	 * True when $expiry is in the future but within the warn window (inclusive remaining ≤ 24h).
+	 */
+	public static function is_in_warn_window( int $expiry, int $now ): bool {
+		if ( $expiry <= $now ) {
+			return false;
+		}
+		return ( $expiry - $now ) <= self::WARN_WINDOW;
+	}
+
+	/**
+	 * Send at most one warning per rule expiry while remaining ≤ 24h.
+	 *
+	 * @param array<string,mixed> $policy
+	 * @return list<string> basenames warned this run
+	 */
+	public static function sweep_expiry_warnings( array $policy, ?int $now = null ): array {
+		$now = null === $now ? time() : $now;
+		if ( $now <= 0 ) {
+			$now = time();
+		}
+
+		$plugins = isset( $policy['plugins'] ) && is_array( $policy['plugins'] )
+			? $policy['plugins']
+			: array();
+		$expires = self::sanitize_plugin_expires( $policy['plugin_expires'] ?? array() );
+		$warned  = self::get_warned_map();
+		$sent    = array();
+
+		// Drop warned entries for basenames no longer on an allow+expiry.
+		foreach ( array_keys( $warned ) as $basename ) {
+			$rule = isset( $plugins[ $basename ] ) ? (string) $plugins[ $basename ] : '';
+			$ts   = isset( $expires[ $basename ] ) ? (int) $expires[ $basename ] : 0;
+			if ( 'allow' !== $rule || $ts <= 0 ) {
+				unset( $warned[ $basename ] );
+			}
+		}
+
+		foreach ( $expires as $basename => $ts ) {
+			$rule = isset( $plugins[ $basename ] ) ? (string) $plugins[ $basename ] : '';
+			if ( 'allow' !== $rule ) {
+				continue;
+			}
+			$ts = (int) $ts;
+			if ( ! self::is_in_warn_window( $ts, $now ) ) {
+				continue;
+			}
+			// Already warned for this exact expiry → skip (idempotent).
+			if ( isset( $warned[ $basename ] ) && (int) $warned[ $basename ] === $ts ) {
+				continue;
+			}
+			if ( self::maybe_email_expiry_warning( $basename, $ts, $policy ) ) {
+				$warned[ $basename ] = $ts;
+				$sent[]              = $basename;
+			}
+		}
+
+		self::set_warned_map( $warned );
+
+		return $sent;
+	}
+
+	/**
 	 * Tidy expired allow rules: remove explicit allow + expiry, audit, email.
+	 * Also runs the 24h pre-expiry warning pass (AICAC-EXPIRY-WARN).
 	 *
 	 * @param array<string,mixed> $policy
 	 * @param int|null            $now
-	 * @return array{removed:list<string>,policy:array<string,mixed>}
+	 * @return array{removed:list<string>,warned:list<string>,policy:array<string,mixed>}
 	 */
 	public static function sweep_expired( array $policy, ?int $now = null ): array {
 		$now = null === $now ? time() : $now;
 		if ( $now <= 0 ) {
 			$now = time();
 		}
+
+		// AICAC-EXPIRY-WARN before expiry removals (still-active rules only).
+		$warned_sent = self::sweep_expiry_warnings( $policy, $now );
 
 		$plugins = isset( $policy['plugins'] ) && is_array( $policy['plugins'] )
 			? $policy['plugins']
@@ -349,6 +470,7 @@ final class Temp_Allow {
 			$rule = isset( $plugins[ $basename ] ) ? (string) $plugins[ $basename ] : '';
 			if ( 'allow' !== $rule ) {
 				unset( $expires[ $basename ] );
+				self::clear_warned( $basename );
 				continue;
 			}
 			if ( $ts > $now ) {
@@ -356,6 +478,7 @@ final class Temp_Allow {
 			}
 			unset( $plugins[ $basename ], $expires[ $basename ] );
 			$removed[] = $basename;
+			self::clear_warned( $basename );
 		}
 
 		$policy['plugins']        = $plugins;
@@ -375,8 +498,61 @@ final class Temp_Allow {
 
 		return array(
 			'removed' => $removed,
+			'warned'  => $warned_sent,
 			'policy'  => $policy,
 		);
+	}
+
+	/**
+	 * AICAC-EXPIRY-WARN: one email when a temporary Allow is within 24h of expiry.
+	 *
+	 * @param array<string,mixed> $policy
+	 * @return bool True when a send was attempted (and should mark warned).
+	 */
+	public static function maybe_email_expiry_warning( string $plugin_basename, int $expiry_ts, array $policy ): bool {
+		// Same opt-in gate as expiry-removed mail (#100): denial or shadow alerts on.
+		if ( empty( $policy['alert_on_deny'] ) && empty( $policy['alert_on_shadow'] ) ) {
+			return false;
+		}
+		$to = Alerts::resolve_email( $policy );
+		if ( '' === $to ) {
+			return false;
+		}
+
+		$site  = function_exists( 'wp_specialchars_decode' )
+			? wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES )
+			: (string) get_bloginfo( 'name' );
+		$label = self::plugin_label( $plugin_basename );
+		$when  = function_exists( 'wp_date' )
+			? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $expiry_ts )
+			: gmdate( 'Y-m-d H:i', $expiry_ts );
+
+		$subject = sprintf(
+			/* translators: 1: site name, 2: plugin label */
+			__( '[%1$s] Temporary AI allow expires soon: %2$s', 'handl-ai-connector-access-control' ),
+			$site,
+			$label
+		);
+
+		$body  = __( 'HandL AI Connector Access Control temporary allow expires soon', 'handl-ai-connector-access-control' ) . "\n\n";
+		$body .= sprintf(
+			/* translators: %s: plugin display name or basename */
+			__( 'Plugin: %s', 'handl-ai-connector-access-control' ),
+			$label
+		) . "\n";
+		$body .= sprintf(
+			/* translators: %s: local-formatted expiry datetime */
+			__( 'Expires: %s', 'handl-ai-connector-access-control' ),
+			$when
+		) . "\n\n";
+		$body .= __( 'This temporary Allow will end soon. After it ends, the plugin follows the site default.', 'handl-ai-connector-access-control' ) . "\n\n";
+		$body .= __( 'To renew or change the rule, open Rules and use Renew (7 days) or set a new expiry:', 'handl-ai-connector-access-control' ) . "\n";
+		$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules' ) . "\n";
+
+		// Delivery failures record into alert-health (#123) via safe_wp_mail.
+		Alerts::safe_wp_mail( $to, $subject, $body );
+
+		return true;
 	}
 
 	/**
@@ -405,7 +581,7 @@ final class Temp_Allow {
 			$label
 		);
 
-		$body  = __( 'HandL AI Connector Access Control — temporary allow expired', 'handl-ai-connector-access-control' ) . "\n\n";
+		$body  = __( 'HandL AI Connector Access Control temporary allow expired', 'handl-ai-connector-access-control' ) . "\n\n";
 		$body .= sprintf(
 			/* translators: %s: plugin display name or basename */
 			__( 'Plugin: %s', 'handl-ai-connector-access-control' ),
@@ -420,12 +596,7 @@ final class Temp_Allow {
 		$body .= __( 'Manage rules:', 'handl-ai-connector-access-control' ) . "\n";
 		$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules' ) . "\n";
 
-		try {
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.wp_mail -- intentional notification path.
-			wp_mail( $to, $subject, $body );
-		} catch ( \Throwable $e ) {
-			// Contained — tidy already persisted.
-		}
+		Alerts::safe_wp_mail( $to, $subject, $body );
 	}
 
 	private static function append_expiry_audit( string $plugin_basename, int $now ): void {
