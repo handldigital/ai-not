@@ -52,6 +52,14 @@ final class Policy_Simulator {
 		$label   = self::reason_label( $reason );
 
 		if ( ! $prevent ) {
+			if ( ! empty( $eval['budget_over'] ) ) {
+				return array(
+					'allowed'    => true,
+					'reason'     => 'budget',
+					'chip'       => __( 'Allowed — estimated budget reached (Observe-only mode)', 'handl-ai-connector-access-control' ),
+					'rule_label' => __( 'Estimated budget', 'handl-ai-connector-access-control' ),
+				);
+			}
 			return array(
 				'allowed'    => true,
 				'reason'     => '',
@@ -64,6 +72,8 @@ final class Policy_Simulator {
 			$chip = __( 'Blocked by Emergency stop', 'handl-ai-connector-access-control' );
 		} elseif ( 'quiet_hours' === $reason ) {
 			$chip = __( 'Blocked by quiet hours', 'handl-ai-connector-access-control' );
+		} elseif ( 'budget' === $reason ) {
+			$chip = __( 'Blocked — estimated budget reached', 'handl-ai-connector-access-control' );
 		} else {
 			$chip = sprintf(
 				/* translators: %s: short rule name that decided the block */
@@ -89,6 +99,7 @@ final class Policy_Simulator {
 			'quiet_hours'       => __( 'Quiet hours', 'handl-ai-connector-access-control' ),
 			'role'              => __( 'User role rule', 'handl-ai-connector-access-control' ),
 			'plugin'            => __( 'Plugin rule', 'handl-ai-connector-access-control' ),
+			'budget'            => __( 'Estimated budget', 'handl-ai-connector-access-control' ),
 			'capability_family' => __( 'AI type rule', 'handl-ai-connector-access-control' ),
 			'unknown_operation' => __( 'Unknown operation rule', 'handl-ai-connector-access-control' ),
 			'tool_armed'        => __( 'Blocked tool rule', 'handl-ai-connector-access-control' ),
