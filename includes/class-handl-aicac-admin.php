@@ -5372,7 +5372,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 
 		if ( ! empty( $not_comp ) ) {
 			echo '<div class="notice notice-info inline"><p>';
-			echo esc_html__( 'These fields from a newer export are not comparable:', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'These settings could not be compared because this version of HandL does not recognize them:', 'handl-ai-connector-access-control' );
 			echo ' <code>' . esc_html( implode( ', ', array_map( 'strval', $not_comp ) ) ) . '</code>';
 			echo '</p></div>';
 		}
@@ -6115,7 +6115,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			'upload_failed'         => __( 'Compare failed: the file could not be uploaded. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
 			'too_large'             => __( 'Compare failed: the file is larger than 1 MB. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
 			'invalid_json'          => __( 'Compare failed: the file is not valid JSON. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
-			'missing_required_keys' => __( 'Compare failed: the file is missing plugin_version or exported_at. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
+			'missing_required_keys' => __( 'Compare failed: this does not appear to be a valid HandL rules export. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
 		);
 
 		return $messages[ $code ] ?? __( 'Compare failed. Your current rules were not changed.', 'handl-ai-connector-access-control' );
