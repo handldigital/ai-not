@@ -1,0 +1,83 @@
+Time	Decision	Operation / AI type	Provider	Model	Input tokens	Output tokens	Estimated $	Plugin	Prompt	User	Request URL	Actions
+2026-08-12 04:43:25	DENY
+Blocked by HandL: plugin rule	generate_text
+Text	openai	gpt-qa-149-activity-row	12	3	<$0.01
+estimate using default rates	HandL UTM Grabber v3
+handl-utm-grabber-v3/handl-utm-grabber-v3.php	—	—	—	
+Already covered by Deny rule for HandL UTM Grabber v3
+
+2026-08-12 04:43:25	alert_snooze_start	—	—	—	—	—	—	HandL UTM Grabber v3
+handl-utm-grabber-v3/handl-utm-grabber-v3.php	—	—	—	
+Already covered by Deny rule for HandL UTM Grabber v3
+
+2026-08-12 04:38:29	alert_snooze_summary	—	—	—	—	—	—	HandL UTM Grabber v3
+handl-utm-grabber-v3/handl-utm-grabber-v3.php	—	—	—	
+Already covered by Deny rule for HandL UTM Grabber v3
+
+2026-08-12 04:38:29	alert_snooze_cancel	—	—	—	—	—	—	HandL UTM Grabber v3
+handl-utm-grabber-v3/handl-utm-grabber-v3.php	—	—	—	
+Already covered by Deny rule for HandL UTM Grabber v3
+
+2026-08-12 04:38:12	alert_snooze_start	—	—	—	—	—	—	HandL UTM Grabber v3
+handl-utm-grabber-v3/handl-utm-grabber-v3.php	—	—	—	
+Already covered by Deny rule for HandL UTM Grabber v3
+
+2026-08-12 04:38:12	DENY
+Blocked by HandL: plugin rule	generate_text
+Text	openai	gpt-qa-fixture-149-post	—	—	—	HandL UTM Grabber v3
+handl-utm-grabber-v3/handl-utm-grabber-v3.php	—	—	—	
+Already covered by Deny rule for HandL UTM Grabber v3
+
+2026-08-12 04:38:12	alert_snooze_summary	—	—	—	—	—	—	HandL UTM Grabber v3
+handl-utm-grabber-v3/handl-utm-grabber-v3.php	—	—	—	
+Already covered by Deny rule for HandL UTM Grabber v3
+
+2026-08-12 04:38:12	alert_snooze_cancel	—	—	—	—	—	—	HandL UTM Grabber v3
+handl-utm-grabber-v3/handl-utm-grabber-v3.php	—	—	—	
+Already covered by Deny rule for HandL UTM Grabber v3
+
+2026-08-12 04:38:12	DENY
+Blocked by HandL: plugin rule	generate_text
+Text	openai	gpt-qa-fixture-149	—	—	—	HandL UTM Grabber v3
+handl-utm-grabber-v3/handl-utm-grabber-v3.php	—	—	—	
+Already covered by Deny rule for HandL UTM Grabber v3
+
+2026-08-12 04:38:12	alert_snooze_start	—	—	—	—	—	—	HandL UTM Grabber v3
+handl-utm-grabber-v3/handl-utm-grabber-v3.php	—	—	—	
+Already covered by Deny rule for HandL UTM Grabber v3
+
+2026-08-12 04:34:41	DENY
+Blocked by HandL: plugin rule	generate_text
+Text	openai	gpt-qa-fixture-149-post	—	—	—	HandL UTM Grabber v3
+handl-utm-grabber-v3/handl-utm-grabber-v3.php	—	—	—	
+Already covered by Deny rule for HandL UTM Grabber v3
+
+2026-08-12 04:34:21	alert_snooze_summary	—	—	—	—	—	—	HandL UTM Grabber v3
+handl-utm-grabber-v3/handl-utm-grabber-v3.php	—	—	—	
+Already covered by Deny rule for HandL UTM Grabber v3
+
+2026-08-12 04:34:21	alert_snooze_cancel	—	—	—	—	—	—	HandL UTM Grabber v3
+handl-utm-grabber-v3/handl-utm-grabber-v3.php	—	—	—	
+Already covered by Deny rule for HandL UTM Grabber v3
+
+2026-08-12 04:34:14	DENY
+Blocked by HandL: plugin rule	generate_text
+Text	openai	gpt-qa-fixture-149	—	—	—	HandL UTM Grabber v3
+handl-utm-grabber-v3/handl-utm-grabber-v3.php	—	—	—	
+Already covered by Deny rule for HandL UTM Grabber v3
+
+2026-08-12 04:33:15	alert_snooze_start	—	—	—	—	—	—	HandL UTM Grabber v3
+handl-utm-grabber-v3/handl-utm-grabber-v3.php	—	—	—	
+Already covered by Deny rule for HandL UTM Grabber v3
+
+2026-08-12 04:32:08	alert_snooze_start	—	—	—	—	—	—	HandL UTM Grabber v3
+handl-utm-grabber-v3/handl-utm-grabber-v3.php	—	—	—	
+Already covered by Deny rule for HandL UTM Grabber v3
+
+2026-08-12 04:28:44	alert_snooze_start	—	—	—	—	—	—	HandL UTM Grabber v3
+handl-utm-grabber-v3/handl-utm-grabber-v3.php	—	—	—	
+Already covered by Deny rule for HandL UTM Grabber v3
+
+2026-08-12 04:27:25	alert_snooze_cancel	—	—	—	—	—	—	HandL UTM Grabber v3
+handl-utm-grabber-v3/handl-utm-grabber-v3.php	—	—	—	
+Already covered by Deny rule for HandL UTM Grabber v3

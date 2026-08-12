@@ -30,3 +30,10 @@ PASS criteria covered
 Notes
 - Sandbox PHPMailer default Mailer=mail with Sendmail path /usr/sbin/sendmail (not MAMP mhsendmail). Mute suppression is independent of transport; post-unmute control used phpmailer_init SMTP → 127.0.0.1:1025 for MailHog visibility.
 - Live path restored to feature/aicac-150-storage @ b704bbb after capture so Database storage lane is not left overlaid.
+
+--- RECAPTURE 2026-08-12 (Activity deny row) ---
+Frink FAIL: prior 06b was provider-rate table, not Activity denial row.
+Fixed: recaptured table.handl-aicac-log-table on Activity tab filtered to handl-utm-grabber-v3.
+Fixture row: decision=DENY, operation=generate_text, provider=openai, model=gpt-qa-149-activity-row,
+plugin=HandL UTM Grabber v3 (handl-utm-grabber-v3/handl-utm-grabber-v3.php), while muted (suppressed=1).
+Board #149 returned to In Progress for this fix.
