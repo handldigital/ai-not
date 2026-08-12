@@ -3257,11 +3257,18 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '</p>';
 		}
 
-		// Any typed day ≤ this threshold would purge Insights-feeding rows (0 = never).
+		// Largest day-value that still triggers an Insights purge warning (0 = never).
+		// Binary search: at most ~6 compute pairs instead of scanning 1..56.
 		$warn_max_days = 0;
-		for ( $d = 1; $d <= Log_Storage::SUGGESTED_RETENTION_DAYS; $d++ ) {
-			if ( null !== Log_Storage::insights_purge_warning( $log, $policy, $d ) ) {
-				$warn_max_days = $d;
+		$lo            = 1;
+		$hi            = Log_Storage::SUGGESTED_RETENTION_DAYS;
+		while ( $lo <= $hi ) {
+			$mid = (int) ( ( $lo + $hi ) / 2 );
+			if ( null !== Log_Storage::insights_purge_warning( $log, $policy, $mid ) ) {
+				$warn_max_days = $mid;
+				$lo            = $mid + 1;
+			} else {
+				$hi = $mid - 1;
 			}
 		}
 
