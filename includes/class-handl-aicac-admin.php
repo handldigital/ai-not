@@ -385,7 +385,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Temporary allow renewed for 7 more days.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $snoozed_ok ) {
-			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Alerts muted for that plugin. Rules still enforce and activity still logs.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Alert emails and webhooks are muted for this plugin. Rules still apply, and activity is still logged.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $snooze_cancelled_ok ) {
 			$suppressed_n = isset( $_GET['handl_aicac_snooze_suppressed'] ) ? max( 0, (int) $_GET['handl_aicac_snooze_suppressed'] ) : 0;
@@ -395,8 +395,8 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 					sprintf(
 						/* translators: %d: number of alerts that would have been sent while muted */
 						_n(
-							'Alert mute cancelled. While muted: %d alert would have been sent.',
-							'Alert mute cancelled. While muted: %d alerts would have been sent.',
+							'Alert mute canceled. %d alert would have been sent while alerts were muted.',
+							'Alert mute canceled. %d alerts would have been sent while alerts were muted.',
 							$suppressed_n,
 							'handl-ai-connector-access-control'
 						),
@@ -404,7 +404,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 					)
 				);
 			} else {
-				echo esc_html__( 'Alert mute cancelled. Alerts for that plugin will send again.', 'handl-ai-connector-access-control' );
+				echo esc_html__( 'Alert mute canceled. Alert emails and webhooks for this plugin can be sent again.', 'handl-ai-connector-access-control' );
 			}
 			echo '</p></div>';
 		}
@@ -4784,7 +4784,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 				// cancel always returns to rules unless we add a second cancel shell. Accept rules return.
 			}
 		} else {
-			echo '<p class="description" style="margin:0 0 4px;">' . esc_html__( 'Mute alerts (rules still enforce):', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description" style="margin:0 0 4px;">' . esc_html__( 'Mute alert emails and webhooks. Rules still apply:', 'handl-ai-connector-access-control' ) . '</p>';
 			// One button per duration so plugin+preset stay paired without nested forms.
 			$presets = array(
 				'1h'  => __( '1 hour', 'handl-ai-connector-access-control' ),
@@ -4847,7 +4847,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			echo '</li>';
 		}
 		echo '</ul>';
-		echo '<p class="description" style="margin:6px 0 0;">' . esc_html__( 'Muted plugins still follow your rules and still write to the activity log. Only alert emails and webhooks are quiet.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description" style="margin:6px 0 0;">' . esc_html__( 'Muted plugins still follow your rules and still write to the activity log. Alert emails and webhooks are not sent during the mute.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</div>';
 	}
 
