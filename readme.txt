@@ -194,8 +194,8 @@ Yes. With WP-CLI available and this plugin active:
 
 = 1.4.0 =
 * Policy checks on the Rules tab: save sample AI calls with expected Allow or Deny results. The plugin re-checks them before rules, presets, restores, or imports are applied and warns if a result would change.
-* Added optional Quiet hours on the Activity tab. Set weekly schedules to block AI Client calls or log activity without adding a block. The Dashboard shows when a schedule is active, and Emergency stop always takes priority.
-* Activity settings now shows how much space the activity log uses and estimates what shorter time limits would remove. The suggested limit only fills the field. Select Save Activity settings to apply it.
+* Added optional Quiet hours on the Activity tab. Set weekly schedules to block AI Client calls or use Observe-only mode, which logs activity without blocking. The Dashboard shows when a schedule is active, and Emergency stop always takes priority.
+* The Activity settings screen now shows how much space the activity log uses and estimates what shorter time limits would remove. The suggested limit only fills the field. Select Save Activity settings to apply it.
 * Mute alert emails and webhooks for one plugin for 1 hour, 8 hours, 24 hours, or 7 days. Rules still apply and activity still logs. The plugin records how many alerts would have been sent during the mute.
 * Compare a previous JSON rules export with your current policy on the Rules tab. See every setting that differs before you import. Unknown fields from a newer export are listed as not comparable. Nothing is changed until you use Import.
 * Temporary Allow rules can send one warning email when about 24 hours remain before expiry. Renewing a rule clears the warning for that rule.

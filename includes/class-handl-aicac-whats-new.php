@@ -81,7 +81,7 @@ final class Whats_New {
 		return array(
 			'1.4.0' => array(
 				__( 'Save policy checks on the Rules tab; the plugin warns before a preset, restore, or import would change an expected Allow or Deny result.', 'handl-ai-connector-access-control' ),
-				__( 'Set weekly Quiet hours on the Activity tab to block AI Client calls or log activity on a schedule. Emergency stop still takes priority.', 'handl-ai-connector-access-control' ),
+				__( 'Set weekly Quiet hours on the Activity tab to block AI Client calls or use Observe-only mode. Emergency stop still takes priority.', 'handl-ai-connector-access-control' ),
 				__( 'Compare a previous rules export with your current policy and see every difference before you import.', 'handl-ai-connector-access-control' ),
 				__( 'Mute alert emails and webhooks per plugin for 1 hour to 7 days without changing rules or activity logging.', 'handl-ai-connector-access-control' ),
 				__( 'Open a read-only Plugin AI profile from Activity or Dashboard estimated spend to see usage, incidents, and rules in one place.', 'handl-ai-connector-access-control' ),
