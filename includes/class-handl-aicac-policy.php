@@ -61,7 +61,8 @@ final class Policy {
 			? array_values( array_map( 'strval', $armed_raw ) )
 			: array();
 
-		$would_eval = self::evaluate( $policy, $plugin, $operation, $armed, $family );
+		$now_ts     = time();
+		$would_eval = self::evaluate( $policy, $plugin, $operation, $armed, $family, $now_ts );
 		$eval       = ! empty( $policy['audit_only'] )
 			? array( 'prevent' => false, 'reason' => '', 'matched_tools' => array() )
 			: $would_eval;
@@ -71,7 +72,7 @@ final class Policy {
 
 		$event = array_merge(
 			array(
-				'ts'                => time(),
+				'ts'                => $now_ts,
 				'plugin'            => $plugin,
 				'file'              => $attrib['file'] ?? null,
 				'caller'            => $attrib['method'] ?? null,
@@ -88,6 +89,13 @@ final class Policy {
 			),
 			$snapshot
 		);
+
+		// AICAC-HOURS: tag rows while a window is live (Deny or Observe).
+		$qh_active = Quiet_Hours::active_window( $policy, $now_ts );
+		if ( null !== $qh_active ) {
+			$event['quiet_hours_window'] = (string) ( $qh_active['name'] ?? '' );
+			$event['quiet_hours_mode']   = (string) ( $qh_active['mode'] ?? '' );
+		}
 
 		if ( ! empty( $policy['audit_only'] ) ) {
 			$event['audit_only'] = true;
@@ -203,11 +211,13 @@ final class Policy {
 	 * Decision order:
 	 * 1. Kill switch — non-excepted callers blocked; exceptions fall through to normal rules
 	 *    (plugin + family + tool arming), not unconditional allow.
-	 * 2. Role gate (optional) — user-context requests only; cron/CLI (no user) bypass.
-	 * 3. Plugin-level deny (all families denied).
-	 * 4. Capability-family rule when plugin is allowed (or inherits allow).
-	 * 5. Unknown-operation fallback when the method has no family mapping.
-	 * 6. Tool deny-at-arming — prompt arms a denied tool (F2).
+	 * 2. Quiet hours (AICAC-HOURS) — Deny windows block site-wide; Observe windows never block.
+	 *    Same site-wide layer as Emergency stop; Emergency stop still wins when it is on.
+	 * 3. Role gate (optional) — user-context requests only; cron/CLI (no user) bypass.
+	 * 4. Plugin-level deny (all families denied).
+	 * 5. Capability-family rule when plugin is allowed (or inherits allow).
+	 * 6. Unknown-operation fallback when the method has no family mapping.
+	 * 7. Tool deny-at-arming — prompt arms a denied tool (F2).
 	 *
 	 * Matched tools are collected on every denial regardless of which rule fired.
 	 *
@@ -215,7 +225,8 @@ final class Policy {
 	 * @param string|null         $operation AI Client method name when known.
 	 * @param list<string>|null   $armed_tools Tool/ability names armed on the prompt.
 	 * @param string|null         $capability_family Pre-resolved family from snapshot (preferred).
-	 * @param int|null            $now Injectable unix clock for temporary-allow expiry (AICAC-TEMP-ALLOW).
+	 * @param int|null            $now Injectable unix clock for temporary-allow expiry (AICAC-TEMP-ALLOW)
+	 *                             and quiet-hours evaluation (AICAC-HOURS).
 	 * @return array{prevent:bool,reason:string,matched_tools:list<string>}
 	 */
 	public static function evaluate( array $policy, ?string $plugin_basename, ?string $operation = null, ?array $armed_tools = null, ?string $capability_family = null, ?int $now = null ): array {
@@ -233,6 +244,19 @@ final class Policy {
 					$armed_tools ?? array()
 				);
 			}
+		}
+
+		// AICAC-HOURS: Deny quiet-hours window (Observe never prevents here).
+		$qh = Quiet_Hours::evaluate_gate( $policy, $now );
+		if ( null !== $qh && ! empty( $qh['prevent'] ) ) {
+			return self::with_matched_tools(
+				array(
+					'prevent' => true,
+					'reason'  => 'quiet_hours',
+				),
+				$policy,
+				$armed_tools ?? array()
+			);
 		}
 
 		// Optional role gate: only user-context requests; cron/CLI bypass (user id 0).
@@ -842,6 +866,8 @@ final class Policy {
 		$policy['audit_only']  = (bool) ( $policy['audit_only'] ?? false );
 		$policy['kill_switch'] = (bool) ( $policy['kill_switch'] ?? false );
 		$policy['kill_switch_exceptions'] = self::get_kill_switch_exceptions( $policy );
+		// AICAC-HOURS: optional weekly quiet-hours / maintenance windows (empty = off).
+		$policy['quiet_hours'] = Quiet_Hours::sanitize_windows( $policy['quiet_hours'] ?? array() );
 		// Optional role gate (AICAC-ROLE): off by default = all roles may initiate AI.
 		$policy['role_gate_enabled'] = (bool) ( $policy['role_gate_enabled'] ?? false );
 		$policy['allowed_roles']     = self::sanitize_allowed_roles( $policy['allowed_roles'] ?? array() );
@@ -1088,6 +1114,7 @@ final class Policy {
 		}
 
 		$policy['kill_switch_exceptions'] = self::get_kill_switch_exceptions( $policy );
+		$policy['quiet_hours']            = Quiet_Hours::sanitize_windows( $policy['quiet_hours'] ?? array() );
 		$policy['role_gate_enabled']      = ! empty( $policy['role_gate_enabled'] );
 		$policy['allowed_roles']          = self::sanitize_allowed_roles( $policy['allowed_roles'] ?? array() );
 		$policy['operations']             = self::sanitize_operations( $policy['operations'] ?? array() );

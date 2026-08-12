@@ -62,6 +62,8 @@ final class Policy_Simulator {
 
 		if ( 'kill_switch' === $reason ) {
 			$chip = __( 'Blocked by Emergency stop', 'handl-ai-connector-access-control' );
+		} elseif ( 'quiet_hours' === $reason ) {
+			$chip = __( 'Blocked by quiet hours', 'handl-ai-connector-access-control' );
 		} else {
 			$chip = sprintf(
 				/* translators: %s: short rule name that decided the block */
@@ -84,6 +86,7 @@ final class Policy_Simulator {
 	public static function reason_label( string $reason ): string {
 		$map = array(
 			'kill_switch'       => __( 'Emergency stop', 'handl-ai-connector-access-control' ),
+			'quiet_hours'       => __( 'Quiet hours', 'handl-ai-connector-access-control' ),
 			'role'              => __( 'User role rule', 'handl-ai-connector-access-control' ),
 			'plugin'            => __( 'Plugin rule', 'handl-ai-connector-access-control' ),
 			'capability_family' => __( 'AI type rule', 'handl-ai-connector-access-control' ),
