@@ -61,6 +61,7 @@ final class Policy_Transfer {
 			'est_usd_provider_rates',
 		'spend_threshold_site',
 		'spend_threshold_plugins',
+			'plugin_budgets',
 			'anomaly_alert_enabled',
 			'anomaly_multiplier',
 			'anomaly_floor_calls',
