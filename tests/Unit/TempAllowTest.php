@@ -179,4 +179,97 @@ final class TempAllowTest extends TestCase {
 		$out = Temp_Allow::normalize_expires_against_plugins( $policy );
 		$this->assertSame( array(), $out['plugin_expires'] );
 	}
+
+	/** AICAC-EXPIRY-WARN (#142). */
+	public function test_is_in_warn_window(): void {
+		$now = 1_700_000_000;
+		$this->assertFalse( Temp_Allow::is_in_warn_window( $now, $now ) );
+		$this->assertFalse( Temp_Allow::is_in_warn_window( $now - 1, $now ) );
+		$this->assertTrue( Temp_Allow::is_in_warn_window( $now + 1, $now ) );
+		$this->assertTrue( Temp_Allow::is_in_warn_window( $now + Temp_Allow::WARN_WINDOW, $now ) );
+		$this->assertFalse( Temp_Allow::is_in_warn_window( $now + Temp_Allow::WARN_WINDOW + 1, $now ) );
+	}
+
+	public function test_warn_sends_exactly_one_email_in_window_idempotent(): void {
+		$now    = 1_700_000_000;
+		$plugin = 'warn/me.php';
+		$expiry = $now + ( 12 * HOUR_IN_SECONDS );
+		$policy = array(
+			'default'        => 'deny',
+			'plugins'        => array( $plugin => 'allow' ),
+			'plugin_expires' => array( $plugin => $expiry ),
+			'alert_on_deny'  => true,
+			'alert_email'    => 'haktan+expiry-warn@handldigital.com',
+		);
+		update_option( Plugin::OPTION_KEY, $policy, false );
+		delete_option( Temp_Allow::WARNED_OPTION_KEY );
+
+		$first = Temp_Allow::sweep_expired( $policy, $now );
+		$this->assertSame( array( $plugin ), $first['warned'] );
+		$this->assertSame( array(), $first['removed'] );
+		$this->assertCount( 1, self::$mails );
+		$this->assertStringContainsString( 'expires within 24 hours', self::$mails[0]['subject'] );
+		$this->assertStringContainsString( 'Expires:', self::$mails[0]['message'] );
+		$this->assertStringContainsString( 'handl_aicac_tab=rules', self::$mails[0]['message'] );
+
+		// Second sweep: no second mail.
+		$second = Temp_Allow::sweep_expired( $policy, $now + 60 );
+		$this->assertSame( array(), $second['warned'] );
+		$this->assertCount( 1, self::$mails );
+	}
+
+	public function test_renew_clears_warned_flag_so_new_expiry_can_warn_again(): void {
+		$now    = 1_700_000_000;
+		$plugin = 'renew-warn/me.php';
+		$expiry = $now + ( 6 * HOUR_IN_SECONDS );
+		$policy = array(
+			'plugins'        => array( $plugin => 'allow' ),
+			'plugin_expires' => array( $plugin => $expiry ),
+			'alert_on_deny'  => true,
+			'alert_email'    => 'admin@example.com',
+		);
+		update_option( Plugin::OPTION_KEY, $policy, false );
+		delete_option( Temp_Allow::WARNED_OPTION_KEY );
+
+		Temp_Allow::sweep_expired( $policy, $now );
+		$this->assertCount( 1, self::$mails );
+		$map = Temp_Allow::get_warned_map();
+		$this->assertSame( $expiry, $map[ $plugin ] ?? 0 );
+
+		// Renew → new expiry far out; warned cleared.
+		$renewed = Temp_Allow::renew_allow_on_policy( $policy, $plugin, $now );
+		$this->assertIsArray( $renewed );
+		$this->assertArrayNotHasKey( $plugin, Temp_Allow::get_warned_map() );
+
+		// Approach new expiry (7d from now) — not yet in window.
+		$new_exp = (int) $renewed['plugin_expires'][ $plugin ];
+		self::$mails = array();
+		$mid = Temp_Allow::sweep_expired( $renewed, $now + DAY_IN_SECONDS );
+		$this->assertSame( array(), $mid['warned'] );
+		$this->assertCount( 0, self::$mails );
+
+		// Enter window for the new expiry.
+		$near = $new_exp - ( 12 * HOUR_IN_SECONDS );
+		$again = Temp_Allow::sweep_expired( $renewed, $near );
+		$this->assertSame( array( $plugin ), $again['warned'] );
+		$this->assertCount( 1, self::$mails );
+	}
+
+	public function test_warn_skipped_when_alerts_off(): void {
+		$now    = 1_700_000_000;
+		$plugin = 'noalert/plugin.php';
+		$policy = array(
+			'plugins'         => array( $plugin => 'allow' ),
+			'plugin_expires'  => array( $plugin => $now + HOUR_IN_SECONDS ),
+			'alert_on_deny'   => false,
+			'alert_on_shadow' => false,
+			'alert_email'     => 'x@example.com',
+		);
+		update_option( Plugin::OPTION_KEY, $policy, false );
+		delete_option( Temp_Allow::WARNED_OPTION_KEY );
+
+		$out = Temp_Allow::sweep_expired( $policy, $now );
+		$this->assertSame( array(), $out['warned'] );
+		$this->assertSame( array(), self::$mails );
+	}
 }
