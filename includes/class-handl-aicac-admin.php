@@ -651,6 +651,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		$this->render_kill_switch_settings_rows( $policy, $rules_form_id, $plugins );
 		$this->render_shadow_block_settings_rows( $policy, $rules_form_id, $plugins );
 		$this->render_role_gate_settings_rows( $policy, $rules_form_id );
+		$this->render_new_plugin_settings_rows( $policy, $rules_form_id );
 		echo '</table>';
 
 		$this->render_ability_arming_settings( $policy, $rules_form_id );
@@ -822,6 +823,11 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '<input type="checkbox" class="handl-aicac-bulk-cb" id="handl-aicac-bulk-cb-' . esc_attr( md5( $basename ) ) . '" name="handl_aicac_bulk_plugins[]" value="' . esc_attr( $basename ) . '" form="' . esc_attr( $bulk_form_id ) . '" />';
 			echo '</th>';
 			echo '<td><strong>' . esc_html( $name ) . '</strong>';
+			if ( New_Plugin::is_pending( $policy, $basename ) ) {
+				echo ' <span class="handl-aicac-needs-review" style="display:inline-block;margin-left:6px;padding:1px 6px;border-radius:3px;background:#f0b849;color:#1d2327;font-size:11px;font-weight:600;">';
+				echo esc_html__( 'Needs review', 'handl-ai-connector-access-control' );
+				echo '</span>';
+			}
 			if ( '' !== $force_p && '' !== $force_m && $unforced_n > 0 ) {
 				echo '<br /><span class="description handl-aicac-unforced-hint" style="font-size:11px;">';
 				echo esc_html(
@@ -1845,6 +1851,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		// AICAC-ONBOARD: first-run wizard + review reminder (Dashboard only).
 		$this->render_onboarding_dashboard_section( $policy );
+		// AICAC-NEWPLUGIN: plugins awaiting first AI access decision.
+		$this->render_new_plugin_dashboard_line( $policy, $plugins );
 
 		// AICAC-11: name differentiators vs WordPress AI Connector Approvals (Dashboard-primary).
 		$this->render_beyond_connector_approvals_callout();
@@ -3603,7 +3611,11 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		$this->apply_kill_switch_settings_from_post( $policy );
 		$this->apply_shadow_block_settings_from_post( $policy );
 		$this->apply_role_gate_settings_from_post( $policy );
+		$this->apply_new_plugin_settings_from_post( $policy );
 		$this->apply_model_force_settings_from_post( $policy );
+
+		// AICAC-NEWPLUGIN: explicit Allow/Deny on save completes review.
+		$policy = New_Plugin::clear_reviewed_from_plugins_map( $policy );
 
 		return $policy;
 	}
@@ -4544,6 +4556,84 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	 *
 	 * @param array<string,mixed> $policy
 	 */
+	
+	/**
+	 * AICAC-NEWPLUGIN: Rules settings — new plugins require review.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function render_new_plugin_settings_rows( array $policy, string $form_id ): void {
+		$enabled = ! empty( $policy['new_plugin_review_enabled'] );
+		$interim = New_Plugin::interim_mode( $policy );
+
+		echo '<tr><th scope="row">' . esc_html__( 'New plugins', 'handl-ai-connector-access-control' ) . '</th><td>';
+		echo '<label><input type="checkbox" name="handl_aicac_new_plugin_review_enabled" value="1" form="' . esc_attr( $form_id ) . '" ' . checked( $enabled, true, false ) . ' /> ';
+		echo esc_html__( 'New plugins require review', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'When on, newly activated plugins are blocked or logged until you choose Allow or Deny. Plugins already active when you turn this on are left alone.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p><label for="handl-aicac-new-plugin-interim">' . esc_html__( 'Before you review', 'handl-ai-connector-access-control' ) . '</label> ';
+		echo '<select name="handl_aicac_new_plugin_interim" id="handl-aicac-new-plugin-interim" form="' . esc_attr( $form_id ) . '">';
+		$this->render_option( 'deny', $interim, __( 'Block AI calls', 'handl-ai-connector-access-control' ) );
+		$this->render_option( 'observe', $interim, __( 'Allow and log AI calls', 'handl-ai-connector-access-control' ) );
+		echo '</select></p>';
+		echo '</td></tr>';
+	}
+
+	/**
+	 * @param array<string,mixed> $policy
+	 */
+	private function apply_new_plugin_settings_from_post( array &$policy ): void {
+		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
+		$previous = Policy::get_policy();
+		$posted   = filter_input( INPUT_POST, 'handl_aicac_new_plugin_review_enabled', FILTER_UNSAFE_RAW );
+		$policy['new_plugin_review_enabled'] = ! empty( $posted );
+		$policy['new_plugin_interim']        = New_Plugin::sanitize_interim(
+			filter_input( INPUT_POST, 'handl_aicac_new_plugin_interim', FILTER_UNSAFE_RAW )
+		);
+		// Preserve known/pending maps; transition may grandfather on first enable.
+		$policy['new_plugin_known']   = $previous['new_plugin_known'] ?? array();
+		$policy['new_plugin_pending'] = $previous['new_plugin_pending'] ?? array();
+		$policy                       = New_Plugin::apply_settings_transition( $policy, $previous );
+	}
+
+	/**
+	 * Dashboard line: plugins awaiting review with Rules prefill links.
+	 *
+	 * @param array<string,mixed>               $policy
+	 * @param array<string,array<string,mixed>> $plugins
+	 */
+	private function render_new_plugin_dashboard_line( array $policy, array $plugins ): void {
+		$pending = New_Plugin::pending_plugins( $policy );
+		if ( empty( $pending ) ) {
+			return;
+		}
+
+		$count = count( $pending );
+		echo '<div class="notice notice-warning inline handl-aicac-new-plugin-pending" style="margin:12px 0;padding:8px 12px;">';
+		echo '<p style="margin:0 0 6px;"><strong>';
+		echo esc_html(
+			sprintf(
+				/* translators: %d: number of plugins awaiting AI policy review */
+				_n(
+					'%d plugin awaiting AI access review',
+					'%d plugins awaiting AI access review',
+					$count,
+					'handl-ai-connector-access-control'
+				),
+				$count
+			)
+		);
+		echo '</strong></p><ul style="margin:0 0 0 1.2em;list-style:disc;">';
+		foreach ( $pending as $basename ) {
+			$label = isset( $plugins[ $basename ]['Name'] ) ? (string) $plugins[ $basename ]['Name'] : $basename;
+			$url   = New_Plugin::review_rules_url( $basename );
+			echo '<li><a href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a>';
+			echo ' <span class="description">(' . esc_html( $basename ) . ')</span></li>';
+		}
+		echo '</ul></div>';
+	}
+
+
 	private function render_role_gate_settings_rows( array $policy, string $form_id ): void {
 		$enabled  = ! empty( $policy['role_gate_enabled'] );
 		$available = Policy::available_roles_for_gate();

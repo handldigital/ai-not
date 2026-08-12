@@ -772,6 +772,11 @@ final class Policy {
 			}
 		}
 
+		// AICAC-NEWPLUGIN: pending + interim Deny blocks until an admin chooses Allow/Deny.
+		if ( New_Plugin::should_deny_interim( $policy, $plugin_basename ) ) {
+			return 'deny';
+		}
+
 		return $default;
 	}
 
@@ -830,6 +835,8 @@ final class Policy {
 		// AICAC-TEMP-ALLOW: optional unix expiry per explicit Allow rule (no new top-level feature flag).
 		$policy['plugin_expires'] = Temp_Allow::sanitize_plugin_expires( $policy['plugin_expires'] ?? array() );
 		$policy                   = Temp_Allow::normalize_expires_against_plugins( $policy );
+		// AICAC-NEWPLUGIN: review-first for newly activated plugins (off by default).
+		$policy = New_Plugin::normalize_policy( $policy );
 		// Opt-in: logging stores local request metadata (e.g. user id / URI).
 		$policy['log_enabled'] = (bool) ( $policy['log_enabled'] ?? false );
 		$policy['audit_only']  = (bool) ( $policy['audit_only'] ?? false );
@@ -1090,6 +1097,7 @@ final class Policy {
 		unset( $policy['denied_abilities'] );
 		$policy['plugin_expires'] = Temp_Allow::sanitize_plugin_expires( $policy['plugin_expires'] ?? array() );
 		$policy                   = Temp_Allow::normalize_expires_against_plugins( $policy );
+		$policy                   = New_Plugin::normalize_policy( $policy );
 
 		$policy['alert_on_deny']     = ! empty( $policy['alert_on_deny'] );
 		$policy['alert_on_shadow']   = ! empty( $policy['alert_on_shadow'] );
@@ -1228,6 +1236,8 @@ final class Policy {
 			$plugins[ $basename ] = $rule;
 			// Bulk allow/deny clears temporary expiry for touched rows.
 			unset( $expires[ $basename ] );
+			// AICAC-NEWPLUGIN: bulk Allow/Deny completes review for that plugin.
+			$policy = New_Plugin::clear_review( $policy, $basename );
 			++$updated;
 		}
 
@@ -1269,6 +1279,10 @@ final class Policy {
 		$expires = Temp_Allow::sanitize_plugin_expires( $policy['plugin_expires'] ?? array() );
 		unset( $expires[ $plugin_basename ] );
 		$policy['plugin_expires'] = $expires;
+		// AICAC-NEWPLUGIN: explicit Allow/Deny completes review.
+		if ( 'allow' === $rule || 'deny' === $rule ) {
+			$policy = New_Plugin::clear_review( $policy, $plugin_basename );
+		}
 		self::save_policy( $policy );
 
 		return true;
