@@ -2,7 +2,7 @@
 /**
  * Plugin Name: HandL AI Connector Access Control
  * Description: See AI activity from WordPress plugins, decide what each plugin may do, and block unwanted prompts through the WordPress AI Client.
- * Version: 1.3.0
+ * Version: 1.4.0
  * Author: Haktan Suren
  * Requires at least: 7.0
  * Requires PHP: 7.4
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HANDL_AICAC_VERSION', '1.3.0' );
+define( 'HANDL_AICAC_VERSION', '1.4.0' );
 define( 'HANDL_AICAC_FILE', __FILE__ );
 define( 'HANDL_AICAC_DIR', __DIR__ );
 define( 'HANDL_AICAC_URL', plugin_dir_url( __FILE__ ) );
