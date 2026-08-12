@@ -200,7 +200,7 @@ Yes. With WP-CLI available and this plugin active:
 = 1.3.0 =
 * Insights: weekly call and estimated-spend trends (last 8 weeks) with per-plugin sparklines and week-over-week change. Weeks with no retained log data show as “no data kept,” not zero.
 * Optional monthly email of the printable audit report, off by default. It sends a short summary and HTML attachment starting on the first of each month. If no activity was retained, it sends a no-activity note without an attachment.
-* Restore previous policy on the Rules tab: automatic snapshots before each save (last 5), with a confirm step that shows what will change.
+* Restore a previous policy from the Rules tab. The plugin keeps the last 5 versions of your rules and settings, and shows what will change before you restore.
 * Scan active plugins for possible embedded AI API keys. Possible findings appear on the Dashboard and in Site Health. The Dashboard shows only the last 4 characters, and full keys are never stored.
 
 = 1.2.2 =
