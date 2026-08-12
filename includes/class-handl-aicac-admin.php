@@ -796,7 +796,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		}
 
 		echo '<h2>' . esc_html__( 'Plugin rules', 'handl-ai-connector-access-control' ) . '</h2>';
-echo '<p class="description">' . esc_html__( 'Plugin rules set the main access level. AI type columns can refine an allowed plugin, such as allowing text but blocking images. A plugin-level Deny blocks every AI type. Model routing is experimental, uses best-effort plugin detection, and does not guarantee spend. Leave both route fields blank to disable it.', 'handl-ai-connector-access-control' ) . '</p>';
+echo '<p class="description">' . esc_html__( 'Plugin rules set the main access level. AI type columns can refine an allowed plugin, such as allowing text but blocking images. A plugin-level Deny blocks every AI type. An estimated budget is a monthly ceiling based on your saved rate table. It is an estimate, not a bill. Leave the amount blank for no ceiling. Model routing is experimental, uses best-effort plugin detection, and does not guarantee spend. Leave both route fields blank to disable it.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<p class="description handl-aicac-beyond-ca-rules">' . esc_html( Differentiator_Messaging::rules_note() ) . '</p>';
 		if ( $unforced_n > 0 && ! empty( $force_map ) ) {
 			echo '<div class="notice notice-warning inline"><p>';
@@ -842,11 +842,14 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 		echo '<th class="handl-aicac-col-force">' . esc_html__( 'Provider route (experimental)', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th class="handl-aicac-col-force">' . esc_html__( 'Model route (experimental)', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th class="handl-aicac-col-budget">' . esc_html__( 'Estimated budget', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Plugin file', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead>';
 		echo '<tbody>';
 
 		$operations = is_array( $policy['operations'] ?? null ) ? (array) $policy['operations'] : array();
+		$plugin_budgets = Budget::sanitize_plugin_budgets( $policy['plugin_budgets'] ?? array() );
+		$plugin_budget_modes = Budget::sanitize_plugin_budget_modes( $policy['plugin_budget_modes'] ?? array() );
 
 		foreach ( $plugins as $basename => $data ) {
 			$name    = isset( $data['Name'] ) ? (string) $data['Name'] : $basename;
@@ -1008,6 +1011,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				__( '%s model route', 'handl-ai-connector-access-control' ),
 				$name
 			) ) . '" />';
+			echo '</td>';
+			echo '<td class="handl-aicac-col-budget">';
+			$this->render_plugin_budget_cell( (string) $basename, $name, $policy, $plugin_budgets, $plugin_budget_modes, $rules_form_id );
 			echo '</td>';
 			echo '<td><code>' . esc_html( $basename ) . '</code></td>';
 			echo '</tr>';
@@ -1942,6 +1948,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$this->render_alert_snooze_dashboard_line( $plugins );
 		// AICAC-DRIFT: recent provider/model change alerts.
 		$this->render_drift_dashboard_line( $plugins );
+		// AICAC-BUDGET-C: over estimated-budget banner.
+		$this->render_budget_dashboard_banner( $policy, $plugins );
 
 		// AICAC-11: name differentiators vs WordPress AI Connector Approvals (Dashboard-primary).
 		$this->render_beyond_connector_approvals_callout();
@@ -4046,6 +4054,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		$this->apply_role_gate_settings_from_post( $policy );
 		$this->apply_new_plugin_settings_from_post( $policy );
 		$this->apply_model_force_settings_from_post( $policy );
+		$this->apply_plugin_budget_settings_from_post( $policy, $base );
 
 		// AICAC-NEWPLUGIN: explicit Allow/Deny on save completes review.
 		$policy = New_Plugin::clear_reviewed_from_plugins_map( $policy );
@@ -5148,6 +5157,218 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo '</ul>';
 		echo '<p class="description" style="margin:6px 0 0;">' . esc_html__( 'One alert per new pair. These rows do not change allow or deny rules.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</div>';
+	}
+
+	/**
+	 * AICAC-BUDGET-C: Dashboard banner when any plugin is over its estimated budget.
+	 *
+	 * @param array<string,mixed>               $policy
+	 * @param array<string,array<string,mixed>> $plugins
+	 */
+	private function render_budget_dashboard_banner( array $policy, array $plugins ): void {
+		$list = Budget::over_budget_list( $policy );
+		if ( empty( $list ) ) {
+			return;
+		}
+
+		$count = count( $list );
+		echo '<div class="notice notice-warning inline handl-aicac-budget-banner" style="margin:12px 0;padding:8px 12px;">';
+		echo '<p style="margin:0 0 6px;"><strong>';
+		echo esc_html(
+			sprintf(
+				/* translators: %d: number of plugins over estimated budget */
+				_n(
+					'Estimated budget reached for %d plugin',
+					'Estimated budget reached for %d plugins',
+					$count,
+					'handl-ai-connector-access-control'
+				),
+				$count
+			)
+		);
+		echo '</strong></p>';
+		echo '<ul style="margin:0;padding-left:1.2em;">';
+		$shown = 0;
+		foreach ( $list as $row ) {
+			if ( $shown >= 8 ) {
+				break;
+			}
+			++$shown;
+			$basename = (string) ( $row['plugin'] ?? '' );
+			$label    = ( '' !== $basename && isset( $plugins[ $basename ]['Name'] ) )
+				? (string) $plugins[ $basename ]['Name']
+				: ( '' !== $basename ? $basename : __( 'Unknown plugin', 'handl-ai-connector-access-control' ) );
+			$mode = (string) ( $row['mode'] ?? Budget::MODE_DENY );
+			$mode_label = Budget::MODE_OBSERVE === $mode
+				? __( 'Observe-only mode', 'handl-ai-connector-access-control' )
+				: __( 'Blocking new calls', 'handl-ai-connector-access-control' );
+			$line = sprintf(
+				/* translators: 1: plugin name, 2: estimated spend, 3: estimated budget, 4: mode label */
+				__( '%1$s — estimated $%2$s of $%3$s this month (%4$s)', 'handl-ai-connector-access-control' ),
+				$label,
+				Budget::format_amount( (float) ( $row['spend'] ?? 0 ) ),
+				Budget::format_amount( (float) ( $row['budget'] ?? 0 ) ),
+				$mode_label
+			);
+			echo '<li style="margin:0 0 4px;">' . esc_html( $line ) . '</li>';
+		}
+		if ( $count > $shown ) {
+			echo '<li style="margin:0 0 4px;">' . esc_html(
+				sprintf(
+					/* translators: %d: additional plugins not listed */
+					__( '…and %d more', 'handl-ai-connector-access-control' ),
+					$count - $shown
+				)
+			) . '</li>';
+		}
+		echo '</ul>';
+		$rules_url = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules' );
+		echo '<p style="margin:8px 0 0;"><a href="' . esc_url( $rules_url ) . '">' . esc_html__( 'Review estimated budgets on the Rules tab', 'handl-ai-connector-access-control' ) . '</a></p>';
+		echo '</div>';
+	}
+
+	/**
+	 * AICAC-BUDGET-C: amount + mode + progress for one rules-matrix row.
+	 *
+	 * @param array<string,mixed>  $policy
+	 * @param array<string,float>  $plugin_budgets
+	 * @param array<string,string> $plugin_budget_modes
+	 */
+	private function render_plugin_budget_cell(
+		string $basename,
+		string $name,
+		array $policy,
+		array $plugin_budgets,
+		array $plugin_budget_modes,
+		string $rules_form_id
+	): void {
+		$amount = isset( $plugin_budgets[ $basename ] ) ? (string) $plugin_budgets[ $basename ] : '';
+		$mode   = isset( $plugin_budget_modes[ $basename ] )
+			? Budget::sanitize_mode( $plugin_budget_modes[ $basename ] )
+			: Budget::MODE_DENY;
+		$status = Budget::status( $policy, $basename );
+		$fill   = Budget::progress_fill_percent( $status );
+		$over   = ! $status['unlimited'] && Budget::is_over_budget( $policy, $basename );
+		$hash   = md5( $basename );
+
+		echo '<label class="screen-reader-text" for="handl-aicac-budget-' . esc_attr( $hash ) . '">';
+		echo esc_html(
+			sprintf(
+				/* translators: %s: plugin name */
+				__( 'Estimated monthly budget (USD) for %s', 'handl-ai-connector-access-control' ),
+				$name
+			)
+		);
+		echo '</label>';
+		echo '<input type="number" step="0.01" min="0" max="1000000" class="small-text handl-aicac-budget-amount" id="handl-aicac-budget-' . esc_attr( $hash ) . '" name="handl_aicac_plugin_budgets[' . esc_attr( $basename ) . ']" form="' . esc_attr( $rules_form_id ) . '" value="' . esc_attr( $amount ) . '" placeholder="' . esc_attr__( 'None', 'handl-ai-connector-access-control' ) . '" />';
+		echo '<label class="screen-reader-text" for="handl-aicac-budget-mode-' . esc_attr( $hash ) . '">';
+		echo esc_html(
+			sprintf(
+				/* translators: %s: plugin name */
+				__( 'When estimated budget is reached for %s', 'handl-ai-connector-access-control' ),
+				$name
+			)
+		);
+		echo '</label>';
+		echo '<select class="handl-aicac-budget-mode" id="handl-aicac-budget-mode-' . esc_attr( $hash ) . '" name="handl_aicac_plugin_budget_modes[' . esc_attr( $basename ) . ']" form="' . esc_attr( $rules_form_id ) . '">';
+		$this->render_option( Budget::MODE_DENY, $mode, __( 'Block when reached', 'handl-ai-connector-access-control' ) );
+		$this->render_option( Budget::MODE_OBSERVE, $mode, __( 'Observe-only when reached', 'handl-ai-connector-access-control' ) );
+		echo '</select>';
+
+		if ( $status['unlimited'] ) {
+			if ( (float) $status['spend'] > 0 ) {
+				echo '<p class="description handl-aicac-budget-progress-label" style="margin:4px 0 0;">';
+				echo esc_html(
+					sprintf(
+						/* translators: %s: estimated spend USD */
+						__( 'Estimated $%s this month · no budget', 'handl-ai-connector-access-control' ),
+						Budget::format_amount( (float) $status['spend'] )
+					)
+				);
+				echo '</p>';
+			} else {
+				echo '<p class="description handl-aicac-budget-progress-label" style="margin:4px 0 0;">' . esc_html__( 'No estimated budget', 'handl-ai-connector-access-control' ) . '</p>';
+			}
+			return;
+		}
+
+		$bar_class = 'handl-aicac-budget-bar';
+		if ( $over ) {
+			$bar_class .= ' handl-aicac-budget-bar--over';
+		} elseif ( $fill >= 80 ) {
+			$bar_class .= ' handl-aicac-budget-bar--warn';
+		}
+		echo '<div class="' . esc_attr( $bar_class ) . '" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' . esc_attr( (string) $fill ) . '">';
+		echo '<span class="handl-aicac-budget-bar__fill" style="width:' . esc_attr( (string) $fill ) . '%;"></span>';
+		echo '</div>';
+		echo '<p class="description handl-aicac-budget-progress-label" style="margin:4px 0 0;">';
+		echo esc_html(
+			sprintf(
+				/* translators: 1: estimated spend, 2: estimated budget, 3: percent used */
+				__( 'Estimated $%1$s of $%2$s this month (%3$s%%)', 'handl-ai-connector-access-control' ),
+				Budget::format_amount( (float) $status['spend'] ),
+				Budget::format_amount( (float) $status['budget'] ),
+				number_format_i18n( (float) ( $status['percent_used'] ?? 0 ), 0 )
+			)
+		);
+		echo '</p>';
+		if ( $over ) {
+			echo '<p class="description handl-aicac-budget-over-note" style="margin:2px 0 0;color:#b32d2e;">';
+			if ( Budget::MODE_OBSERVE === $mode ) {
+				echo esc_html__( 'Estimated budget reached — Observe-only mode', 'handl-ai-connector-access-control' );
+			} else {
+				echo esc_html__( 'Estimated budget reached — new calls blocked', 'handl-ai-connector-access-control' );
+			}
+			echo '</p>';
+		}
+	}
+
+	/**
+	 * AICAC-BUDGET-C: merge posted budget amounts/modes into policy (keep unposted plugins).
+	 *
+	 * @param array<string,mixed> $policy
+	 * @param array<string,mixed> $base
+	 */
+	private function apply_plugin_budget_settings_from_post( array &$policy, array $base ): void {
+		$budgets = Budget::sanitize_plugin_budgets( $base['plugin_budgets'] ?? array() );
+		$modes   = Budget::sanitize_plugin_budget_modes( $base['plugin_budget_modes'] ?? array() );
+
+		$posted_budgets = filter_input( INPUT_POST, 'handl_aicac_plugin_budgets', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		$posted_modes   = filter_input( INPUT_POST, 'handl_aicac_plugin_budget_modes', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		if ( ! is_array( $posted_budgets ) ) {
+			$posted_budgets = array();
+		}
+		if ( ! is_array( $posted_modes ) ) {
+			$posted_modes = array();
+		}
+
+		foreach ( $posted_budgets as $basename => $raw_amount ) {
+			$basename = Plugin_Profile::sanitize_plugin( (string) $basename );
+			if ( '' === $basename ) {
+				continue;
+			}
+			$amount = Budget::sanitize_budget_amount( $raw_amount );
+			if ( null === $amount ) {
+				unset( $budgets[ $basename ], $modes[ $basename ] );
+				continue;
+			}
+			$budgets[ $basename ] = $amount;
+			if ( array_key_exists( $basename, $posted_modes ) ) {
+				$modes[ $basename ] = Budget::sanitize_mode( $posted_modes[ $basename ] );
+			} elseif ( ! isset( $modes[ $basename ] ) ) {
+				$modes[ $basename ] = Budget::MODE_DENY;
+			}
+		}
+
+		// Drop modes for plugins without a budget.
+		foreach ( array_keys( $modes ) as $basename ) {
+			if ( ! isset( $budgets[ $basename ] ) ) {
+				unset( $modes[ $basename ] );
+			}
+		}
+
+		$policy['plugin_budgets']      = $budgets;
+		$policy['plugin_budget_modes'] = $modes;
 	}
 
 	/**

@@ -2,7 +2,7 @@
 /**
  * AICAC-SNOOZE: per-plugin temporary mute for alert delivery (#149).
  *
- * Suppresses denial, shadow-AI, spend, anomaly, and drift ALERTS for one plugin.
+ * Suppresses denial, shadow-AI, spend, anomaly, drift, and budget ALERTS for one plugin.
  * Enforcement and logging continue unchanged. Separate option storage so
  * export/import policy surface is untouched.
  *

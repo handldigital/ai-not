@@ -106,6 +106,7 @@ final class Site_Health {
 		$tab   = 'dashboard';
 
 		$failing_alerts = Alert_Health::failing_channels( $policy );
+		$over_budget    = Budget::over_budget_list( $policy );
 
 		if ( ! empty( $failing_alerts ) ) {
 			$issue = 'alert_delivery_failing';
@@ -116,6 +117,9 @@ final class Site_Health {
 		} elseif ( $alerts_on && ! $logging ) {
 			$issue = 'alerts_without_logging';
 			$tab   = 'activity';
+		} elseif ( ! empty( $over_budget ) ) {
+			$issue = 'over_budget';
+			$tab   = 'rules';
 		} elseif ( ! $has_ai_client ) {
 			$issue = 'no_ai_client_plugins';
 			$tab   = 'dashboard';
@@ -126,7 +130,7 @@ final class Site_Health {
 
 		if ( 'alert_delivery_failing' === $issue ) {
 			$status = 'critical';
-		} elseif ( 'kill_switch_zero_exceptions' === $issue || 'alerts_without_logging' === $issue ) {
+		} elseif ( 'kill_switch_zero_exceptions' === $issue || 'alerts_without_logging' === $issue || 'over_budget' === $issue ) {
 			$status = 'recommended';
 		} else {
 			$status = 'good';
@@ -144,6 +148,8 @@ final class Site_Health {
 			'has_ai_client_plugins'   => $has_ai_client,
 			'alerts_configured'       => $alerts_on,
 			'failing_alert_channels'  => $failing_alerts,
+			'over_budget_count'       => count( $over_budget ),
+			'over_budget_plugins'     => $over_budget,
 		);
 	}
 
@@ -168,6 +174,8 @@ final class Site_Health {
 			$label = __( 'Emergency stop blocks all AI Client calls', 'handl-ai-connector-access-control' );
 		} elseif ( 'alerts_without_logging' === $issue ) {
 			$label = __( 'Alerts cannot run because activity logging and Learn mode are off', 'handl-ai-connector-access-control' );
+		} elseif ( 'over_budget' === $issue ) {
+			$label = __( 'One or more plugins reached their estimated budget', 'handl-ai-connector-access-control' );
 		} elseif ( 'no_ai_client_plugins' === $issue ) {
 			$label = __( 'No AI Client plugins are installed', 'handl-ai-connector-access-control' );
 		} elseif ( 'observing' === $issue ) {
@@ -264,6 +272,18 @@ final class Site_Health {
 			$lines[] = __( 'Emergency stop blocks every AI Client call because no exceptions are selected. Add an exception or turn off Emergency stop if you want to allow any calls.', 'handl-ai-connector-access-control' );
 		} elseif ( 'alerts_without_logging' === $issue ) {
 			$lines[] = __( 'Email and webhook alerts require activity logging or Learn mode.', 'handl-ai-connector-access-control' );
+		} elseif ( 'over_budget' === $issue ) {
+			$count = (int) ( $snapshot['over_budget_count'] ?? 0 );
+			$lines[] = sprintf(
+				/* translators: %d: number of plugins over estimated budget */
+				_n(
+					'%d plugin reached its estimated budget for this calendar month. Open the Rules tab to review the budget and whether new calls are blocked or allowed in Observe-only mode.',
+					'%d plugins reached their estimated budget for this calendar month. Open the Rules tab to review budgets and whether new calls are blocked or allowed in Observe-only mode.',
+					$count,
+					'handl-ai-connector-access-control'
+				),
+				$count
+			);
 		}
 
 		$html = '';

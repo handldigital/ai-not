@@ -1,10 +1,10 @@
 <?php
 /**
- * AICAC-BUDGET-A: per-plugin estimated-spend accounting + calendar-month periods (#166).
+ * AICAC-BUDGET: per-plugin estimated-spend ceiling (A accounting, B enforce, C UI/alerts).
  *
  * Accumulates estimated USD (rate table) keyed by period id (Y-m) in the site
  * timezone. Period key is authoritative — a mid-month timezone change cannot
- * double-count already-recorded spend. No enforcement and no UI (B/C).
+ * double-count already-recorded spend.
  *
  * @package HandL_AICAC
  */
@@ -16,15 +16,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Spend accumulator + budget value storage + enforcement gate (AICAC-BUDGET-A/B).
- *
- * Part A: period accounting. Part B: hard-deny / degrade-to-observe when the
- * estimated spend reaches the configured budget. No admin UI (part C).
+ * Spend accumulator + budget storage + enforcement + UI/alert helpers (AICAC-BUDGET-A/B/C).
  */
 final class Budget {
 
 	/** period_id => [ plugin_basename => estimated_usd ]. */
 	public const SPEND_OPTION_KEY = 'handl_aicac_budget_spend';
+
+	/** Fired-state for budget-hit emails: plugin:basename => { period, at, budget }. */
+	public const FIRED_OPTION_KEY = 'handl_aicac_budget_fired';
 
 	/** Keep a few past months so B/C can report; drop older keys on write. */
 	public const RETAIN_PERIODS = 6;
@@ -392,6 +392,274 @@ final class Budget {
 	}
 
 	/**
+	 * Plugins that currently have a finite budget and estimated spend at/over it.
+	 *
+	 * @param array<string,mixed> $policy
+	 * @return list<array{
+	 *   plugin:string,
+	 *   period:string,
+	 *   spend:float,
+	 *   budget:float,
+	 *   percent_used:float,
+	 *   mode:string
+	 * }>
+	 */
+	public static function over_budget_list( array $policy, ?int $now = null, ?\DateTimeZone $tz = null ): array {
+		$budgets = self::sanitize_plugin_budgets( $policy['plugin_budgets'] ?? array() );
+		$out     = array();
+		foreach ( array_keys( $budgets ) as $plugin ) {
+			if ( ! self::is_over_budget( $policy, $plugin, $now, $tz ) ) {
+				continue;
+			}
+			$status = self::status( $policy, $plugin, $now, $tz );
+			$out[]  = array(
+				'plugin'       => $plugin,
+				'period'       => (string) $status['period'],
+				'spend'        => (float) $status['spend'],
+				'budget'       => (float) $status['budget'],
+				'percent_used' => null !== $status['percent_used'] ? (float) $status['percent_used'] : 100.0,
+				'mode'         => self::get_mode( $policy, $plugin ),
+			);
+		}
+		usort(
+			$out,
+			static function ( $a, $b ) {
+				return $b['percent_used'] <=> $a['percent_used'];
+			}
+		);
+
+		return $out;
+	}
+
+	/**
+	 * Bar fill 0–100 for progress UI (caps display; label may show higher %).
+	 *
+	 * @param array<string,mixed> $status From status().
+	 */
+	public static function progress_fill_percent( array $status ): int {
+		if ( ! empty( $status['unlimited'] ) || null === ( $status['percent_used'] ?? null ) ) {
+			return 0;
+		}
+		$pct = (float) $status['percent_used'];
+		if ( $pct <= 0 ) {
+			return 0;
+		}
+		if ( $pct >= 100 ) {
+			return 100;
+		}
+
+		return (int) max( 1, (int) round( $pct ) );
+	}
+
+	/**
+	 * Evaluate budgets and send a one-shot estimated-budget-reached email per plugin/period.
+	 *
+	 * @param array<string,mixed>|null $policy
+	 */
+	public static function maybe_evaluate_alerts( ?array $policy = null ): void {
+		$policy = is_array( $policy ) ? $policy : Policy::get_policy();
+		$budgets = self::sanitize_plugin_budgets( $policy['plugin_budgets'] ?? array() );
+		if ( empty( $budgets ) ) {
+			return;
+		}
+
+		$to = Alerts::resolve_email( $policy );
+		if ( '' === $to ) {
+			return;
+		}
+
+		foreach ( array_keys( $budgets ) as $plugin ) {
+			if ( ! self::is_over_budget( $policy, $plugin ) ) {
+				self::clear_fire_key( $plugin );
+				continue;
+			}
+			self::maybe_fire_hit( $policy, $to, $plugin );
+		}
+	}
+
+	/**
+	 * @param array<string,mixed> $policy
+	 */
+	private static function maybe_fire_hit( array $policy, string $to, string $plugin ): void {
+		if ( Alert_Snooze::should_suppress( $plugin, 'budget' ) ) {
+			return;
+		}
+
+		$status = self::status( $policy, $plugin );
+		$budget = (float) ( $status['budget'] ?? 0.0 );
+		$period = (string) ( $status['period'] ?? '' );
+		$spend  = (float) ( $status['spend'] ?? 0.0 );
+		$mode   = self::get_mode( $policy, $plugin );
+
+		if ( $budget <= 0.0 || '' === $period ) {
+			return;
+		}
+		if ( self::is_deduped( $plugin, $period, $budget ) ) {
+			return;
+		}
+
+		$subject = self::build_hit_subject( $plugin );
+		$body    = self::build_hit_body( $plugin, $spend, $budget, $period, $mode );
+		$ok      = Alerts::safe_wp_mail( $to, $subject, $body );
+		if ( ! $ok ) {
+			return;
+		}
+
+		self::record_fire( $plugin, $period, $budget );
+		self::append_audit_row( $plugin, $spend, $budget, $period, $mode );
+	}
+
+	public static function build_hit_subject( string $plugin ): string {
+		$site  = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
+		$label = self::plugin_label( $plugin );
+
+		return sprintf(
+			/* translators: 1: site name, 2: plugin name */
+			__( '[%1$s] HandL estimated budget reached: %2$s', 'handl-ai-connector-access-control' ),
+			$site,
+			$label
+		);
+	}
+
+	public static function build_hit_body(
+		string $plugin,
+		float $spend,
+		float $budget,
+		string $period,
+		string $mode
+	): string {
+		$lines   = array();
+		$lines[] = __( 'HandL AI Connector Access Control estimated budget alert', 'handl-ai-connector-access-control' );
+		$lines[] = '';
+		$lines[] = sprintf(
+			/* translators: %s: plugin display name or basename */
+			__( 'Plugin: %s', 'handl-ai-connector-access-control' ),
+			self::plugin_label( $plugin )
+		);
+		$lines[] = sprintf(
+			/* translators: %s: budget USD amount */
+			__( 'Estimated budget: $%s', 'handl-ai-connector-access-control' ),
+			self::format_amount( $budget )
+		);
+		$lines[] = sprintf(
+			/* translators: %s: current estimated spend USD */
+			__( 'Current estimated spend: $%s', 'handl-ai-connector-access-control' ),
+			self::format_amount( $spend )
+		);
+		$lines[] = sprintf(
+			/* translators: %s: period id Y-m */
+			__( 'Budget period: %s (calendar month)', 'handl-ai-connector-access-control' ),
+			$period
+		);
+		if ( self::MODE_OBSERVE === $mode ) {
+			$lines[] = __( 'Mode: Observe-only. New AI Client calls still run, and each is logged with an estimated-budget warning.', 'handl-ai-connector-access-control' );
+		} else {
+			$lines[] = __( 'Mode: Block. New AI Client calls from this plugin are blocked for the rest of the period.', 'handl-ai-connector-access-control' );
+		}
+		$lines[] = '';
+		$lines[] = __( 'Amounts are estimates from logged token usage and your rates. They are not a bill.', 'handl-ai-connector-access-control' );
+		$lines[] = '';
+		$lines[] = __( 'Manage estimated budgets:', 'handl-ai-connector-access-control' );
+		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules' );
+
+		return implode( "\n", $lines ) . "\n";
+	}
+
+	public static function format_amount( float $amount ): string {
+		if ( $amount > 0 && $amount < 0.01 ) {
+			return '0.01';
+		}
+
+		return function_exists( 'number_format_i18n' )
+			? number_format_i18n( $amount, 2 )
+			: number_format( $amount, 2, '.', '' );
+	}
+
+	private static function plugin_label( string $basename ): string {
+		if ( '' === $basename ) {
+			return __( '(unknown plugin)', 'handl-ai-connector-access-control' );
+		}
+		if ( ! function_exists( 'get_plugins' ) ) {
+			$plugin_php = ABSPATH . 'wp-admin/includes/plugin.php';
+			if ( is_string( $plugin_php ) && is_readable( $plugin_php ) ) {
+				require_once $plugin_php;
+			}
+		}
+		if ( function_exists( 'get_plugins' ) ) {
+			$plugins = get_plugins();
+			if ( isset( $plugins[ $basename ]['Name'] ) && is_string( $plugins[ $basename ]['Name'] ) ) {
+				return (string) $plugins[ $basename ]['Name'];
+			}
+		}
+
+		return $basename;
+	}
+
+	private static function is_deduped( string $plugin, string $period, float $budget ): bool {
+		$state = get_option( self::FIRED_OPTION_KEY, array() );
+		if ( ! is_array( $state ) || ! isset( $state[ $plugin ] ) || ! is_array( $state[ $plugin ] ) ) {
+			return false;
+		}
+		$row = $state[ $plugin ];
+		$p   = isset( $row['period'] ) ? (string) $row['period'] : '';
+		$th  = isset( $row['budget'] ) ? (float) $row['budget'] : 0.0;
+		if ( $p !== $period ) {
+			return false;
+		}
+		if ( abs( $th - $budget ) >= 0.0001 ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	private static function record_fire( string $plugin, string $period, float $budget ): void {
+		$state = get_option( self::FIRED_OPTION_KEY, array() );
+		if ( ! is_array( $state ) ) {
+			$state = array();
+		}
+		$state[ $plugin ] = array(
+			'period' => $period,
+			'budget' => $budget,
+			'at'     => time(),
+		);
+		update_option( self::FIRED_OPTION_KEY, $state, false );
+	}
+
+	private static function clear_fire_key( string $plugin ): void {
+		$state = get_option( self::FIRED_OPTION_KEY, array() );
+		if ( ! is_array( $state ) || ! isset( $state[ $plugin ] ) ) {
+			return;
+		}
+		unset( $state[ $plugin ] );
+		update_option( self::FIRED_OPTION_KEY, $state, false );
+	}
+
+	/**
+	 * @param 'deny'|'observe' $mode
+	 */
+	private static function append_audit_row(
+		string $plugin,
+		float $spend,
+		float $budget,
+		string $period,
+		string $mode
+	): void {
+		Policy::append_log_event(
+			array(
+				'ts'       => time(),
+				'decision' => 'budget_alert',
+				'channel'  => 'budget',
+				'plugin'   => $plugin,
+				'est_usd'  => $spend,
+				'budget'   => $budget,
+				'period'   => $period,
+				'mode'     => $mode,
+			)
+		);
+	}
+
+	/**
 	 * Record estimated-spend delta when a log row gains or increases tokens.
 	 *
 	 * @param array<string,mixed> $before Row before patch (may lack tokens).
@@ -400,7 +668,7 @@ final class Budget {
 	 */
 	public static function maybe_record_from_row( array $before, array $after, array $policy ): void {
 		$channel = isset( $after['channel'] ) ? (string) $after['channel'] : '';
-		if ( in_array( $channel, array( 'direct_http', 'anomaly', 'spend_threshold', 'drift', 'alert_snooze' ), true ) ) {
+		if ( in_array( $channel, array( 'direct_http', 'anomaly', 'spend_threshold', 'drift', 'alert_snooze', 'budget' ), true ) ) {
 			return;
 		}
 		$plugin = isset( $after['plugin'] ) ? Plugin_Profile::sanitize_plugin( (string) $after['plugin'] ) : '';

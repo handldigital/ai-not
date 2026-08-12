@@ -1254,6 +1254,8 @@ final class Policy {
 
 		// S-103: threshold set below already-accrued spend fires immediately.
 		Spend_Threshold::maybe_evaluate( $policy );
+		// AICAC-BUDGET-C: estimated budget-hit email when period spend reaches the ceiling.
+		Budget::maybe_evaluate_alerts( $policy );
 		// AICAC-FORECAST: month-end projection vs thresholds (at most once/month).
 		Spend_Forecast::maybe_evaluate( $policy );
 		// AICAC-ANOMALY: re-check baseline spikes after policy/log changes.
@@ -1565,7 +1567,7 @@ final class Policy {
 
 		// AICAC-ANOMALY: re-check after new retained rows (skip our own audit rows).
 		$channel = isset( $event['channel'] ) ? (string) $event['channel'] : '';
-		if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift' ), true ) ) {
+		if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget' ), true ) ) {
 			Anomaly::maybe_evaluate( $policy );
 		}
 	}
@@ -1719,6 +1721,7 @@ final class Policy {
 			Budget::maybe_record_from_row( $before, $log[ $i ], self::get_policy() );
 			// S-103: token patch can move estimated spend over a threshold.
 			Spend_Threshold::maybe_evaluate();
+			Budget::maybe_evaluate_alerts();
 			Spend_Forecast::maybe_evaluate();
 			Anomaly::maybe_evaluate();
 			return true;
