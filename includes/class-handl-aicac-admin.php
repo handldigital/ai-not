@@ -264,6 +264,10 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_import_rules_confirm', 'handl_aicac_nonce' );
 				$this->handle_import_rules_confirm();
 			}
+			if ( 'compare_rules_preview' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_compare_rules', 'handl_aicac_nonce' );
+				$this->handle_compare_rules_preview();
+			}
 			if ( 'keyscan_run' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_keyscan_run', 'handl_aicac_nonce' );
 				$this->handle_keyscan_run();
@@ -329,6 +333,8 @@ final class Admin {
 		$import_err  = isset( $_GET['handl_aicac_import_error'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_import_error'] ) ) : '';
 		$import_ignored_q = isset( $_GET['handl_aicac_import_ignored'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['handl_aicac_import_ignored'] ) ) : '';
 		$show_import_preview = isset( $_GET['handl_aicac_import_preview'] ) && '1' === (string) $_GET['handl_aicac_import_preview'];
+		$show_compare_preview = isset( $_GET['handl_aicac_compare_preview'] ) && '1' === (string) $_GET['handl_aicac_compare_preview'];
+		$compare_err = isset( $_GET['handl_aicac_compare_error'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_compare_error'] ) ) : '';
 		$renewed_ok = isset( $_GET['handl_aicac_renewed'] ) && '1' === (string) $_GET['handl_aicac_renewed'];
 		$show_preset_preview = isset( $_GET['handl_aicac_preset_preview'] ) && '1' === (string) $_GET['handl_aicac_preset_preview'];
 		$preset_status       = isset( $_GET['handl_aicac_preset'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_preset'] ) ) : '';
@@ -461,6 +467,9 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		}
 		if ( '' !== $import_err ) {
 			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $this->import_error_message( $import_err ) ) . '</p></div>';
+		}
+		if ( '' !== $compare_err ) {
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $this->compare_error_message( $compare_err ) ) . '</p></div>';
 		}
 		if ( 'applied' === $preset_status ) {
 			$preset_label = $preset_id_q;
@@ -954,7 +963,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		echo '</form>';
 
-		$this->render_rules_transfer_section( $policy, $show_import_preview );
+		$this->render_rules_transfer_section( $policy, $show_import_preview, $show_compare_preview );
 
 		echo '</div>'; // .handl-aicac-tab-panel
 		echo '</div>'; // .wrap
@@ -5240,11 +5249,11 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	}
 
 	/**
-	 * Rules-tab export / import (AICAC-102).
+	 * Rules-tab export / import / compare (AICAC-102 + AICAC-DIFF / #146).
 	 *
 	 * @param array<string,mixed> $policy
 	 */
-	private function render_rules_transfer_section( array $policy, bool $show_preview ): void {
+	private function render_rules_transfer_section( array $policy, bool $show_preview, bool $show_compare = false ): void {
 		echo '<hr />';
 		echo '<h2>' . esc_html__( 'Export or import rules', 'handl-ai-connector-access-control' ) . '</h2>';
 		echo '<p class="description">' . esc_html__( 'Download your current rules as a JSON file, or upload a previous export. Importing replaces all current access-control settings. The activity log is not included.', 'handl-ai-connector-access-control' ) . '</p>';
@@ -5267,6 +5276,22 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo '<p class="description">' . esc_html__( 'Choose a JSON file up to 1 MB. You can preview added, changed, and removed rules before anything changes.', 'handl-ai-connector-access-control' ) . '</p>';
 		submit_button( __( 'Upload and preview', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
 		echo '</form>';
+
+		echo '<form method="post" enctype="multipart/form-data" style="margin-bottom:1em;">';
+		wp_nonce_field( 'handl_aicac_compare_rules', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="compare_rules_preview" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		echo '<p>';
+		echo '<label for="handl-aicac-compare-file"><strong>' . esc_html__( 'Compare with current', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
+		echo '<input type="file" id="handl-aicac-compare-file" name="handl_aicac_compare_file" accept="application/json,.json" required />';
+		echo '</p>';
+		echo '<p class="description">' . esc_html__( 'Upload a previous export to see what differs from your current rules. Nothing is changed. Use Import if you want to replace them.', 'handl-ai-connector-access-control' ) . '</p>';
+		submit_button( __( 'Compare', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+		echo '</form>';
+
+		if ( $show_compare ) {
+			$this->render_compare_preview( $policy );
+		}
 
 		if ( ! $show_preview ) {
 			return;
@@ -5320,6 +5345,74 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		submit_button( __( 'Confirm and replace rules', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
 		echo '</form>';
 		echo '</div>';
+	}
+
+	/**
+	 * Read-only compare preview (AICAC-DIFF). Reuses restore confirm-diff table.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function render_compare_preview( array $policy ): void {
+		$user_id = get_current_user_id();
+		$pending = get_transient( Policy_Transfer::compare_transient_key( $user_id ) );
+		if ( ! is_array( $pending ) || ! isset( $pending['policy'] ) || ! is_array( $pending['policy'] ) ) {
+			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Compare preview expired or was not found. Upload the file again.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			return;
+		}
+
+		$incoming = $pending['policy'];
+		$ignored  = isset( $pending['ignored'] ) && is_array( $pending['ignored'] ) ? $pending['ignored'] : array();
+		$compare  = Policy_Transfer::compare_diff( $policy, $incoming, $ignored );
+		$rows     = $compare['rows'];
+		$not_comp = $compare['not_comparable'];
+
+		echo '<div class="handl-aicac-compare-preview" style="border:1px solid #c3c4c7;padding:12px 16px;background:#fff;max-width:52em;margin-bottom:1em;">';
+		echo '<h3>' . esc_html__( 'Compare with uploaded backup', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<p>' . esc_html__( 'This comparison does not change your rules. Use Import if you want to replace them with the uploaded file.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		if ( ! empty( $not_comp ) ) {
+			echo '<div class="notice notice-info inline"><p>';
+			echo esc_html__( 'These fields from a newer export are not comparable:', 'handl-ai-connector-access-control' );
+			echo ' <code>' . esc_html( implode( ', ', array_map( 'strval', $not_comp ) ) ) . '</code>';
+			echo '</p></div>';
+		}
+
+		$this->render_confirm_diff_table(
+			$rows,
+			__( 'In backup', 'handl-ai-connector-access-control' ),
+			__( 'Current rules match this backup for the settings this plugin can compare.', 'handl-ai-connector-access-control' )
+		);
+		echo '</div>';
+	}
+
+	/**
+	 * Shared Setting / Current / New confirm-diff table (presets + restore + compare).
+	 *
+	 * @param list<array{key?:string,label?:string,current?:string,new?:string}> $rows
+	 */
+	private function render_confirm_diff_table( array $rows, string $new_column_label, string $empty_message ): void {
+		if ( empty( $rows ) ) {
+			echo '<p class="description">' . esc_html( $empty_message ) . '</p>';
+			return;
+		}
+
+		echo '<table class="widefat striped" style="margin:0.5em 0 1em;">';
+		echo '<thead><tr>';
+		echo '<th>' . esc_html__( 'Setting', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Current', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html( $new_column_label ) . '</th>';
+		echo '</tr></thead><tbody>';
+		foreach ( $rows as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			echo '<tr>';
+			echo '<td>' . esc_html( (string) ( $row['label'] ?? '' ) ) . '</td>';
+			echo '<td>' . esc_html( (string) ( $row['current'] ?? '' ) ) . '</td>';
+			echo '<td>' . esc_html( (string) ( $row['new'] ?? '' ) ) . '</td>';
+			echo '</tr>';
+		}
+		echo '</tbody></table>';
 	}
 
 	/**
@@ -5478,27 +5571,11 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo '<h3>' . esc_html__( 'Restore preview', 'handl-ai-connector-access-control' ) . '</h3>';
 		echo '<p>' . esc_html__( 'The rules and settings below will change. Restoring also saves the current policy, so you can reverse this restore.', 'handl-ai-connector-access-control' ) . '</p>';
 
-		if ( empty( $rows ) ) {
-			echo '<p class="description">' . esc_html__( 'The current policy already matches this restore point. Restoring it will not change your rules or settings.', 'handl-ai-connector-access-control' ) . '</p>';
-		} else {
-			echo '<table class="widefat striped" style="margin:0.5em 0 1em;">';
-			echo '<thead><tr>';
-			echo '<th>' . esc_html__( 'Setting', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'Current', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'After restore', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '</tr></thead><tbody>';
-			foreach ( $rows as $row ) {
-				if ( ! is_array( $row ) ) {
-					continue;
-				}
-				echo '<tr>';
-				echo '<td>' . esc_html( (string) ( $row['label'] ?? '' ) ) . '</td>';
-				echo '<td>' . esc_html( (string) ( $row['current'] ?? '' ) ) . '</td>';
-				echo '<td>' . esc_html( (string) ( $row['new'] ?? '' ) ) . '</td>';
-				echo '</tr>';
-			}
-			echo '</tbody></table>';
-		}
+		$this->render_confirm_diff_table(
+			$rows,
+			__( 'After restore', 'handl-ai-connector-access-control' ),
+			__( 'The current policy already matches this restore point. Restoring it will not change your rules or settings.', 'handl-ai-connector-access-control' )
+		);
 
 		echo '<form method="post">';
 		wp_nonce_field( 'handl_aicac_policy_restore_confirm', 'handl_aicac_nonce' );
@@ -5802,81 +5879,19 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			'handl_aicac_tab' => 'rules',
 		);
 
-		if ( empty( $_FILES['handl_aicac_import_file'] ) || ! is_array( $_FILES['handl_aicac_import_file'] ) ) {
+		$read = $this->read_uploaded_rules_json( 'handl_aicac_import_file' );
+		if ( empty( $read['ok'] ) ) {
+			$code = isset( $read['error'] ) ? (string) $read['error'] : 'upload_failed';
 			wp_safe_redirect(
 				add_query_arg(
-					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'no_file' ) ),
+					array_merge( $redirect_base, array( 'handl_aicac_import_error' => $code ) ),
 					admin_url( 'options-general.php' )
 				)
 			);
 			exit;
 		}
 
-		$file = $_FILES['handl_aicac_import_file'];
-		$err  = isset( $file['error'] ) ? (int) $file['error'] : UPLOAD_ERR_NO_FILE;
-		if ( UPLOAD_ERR_NO_FILE === $err ) {
-			wp_safe_redirect(
-				add_query_arg(
-					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'empty' ) ),
-					admin_url( 'options-general.php' )
-				)
-			);
-			exit;
-		}
-		if ( UPLOAD_ERR_OK !== $err ) {
-			wp_safe_redirect(
-				add_query_arg(
-					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'upload_failed' ) ),
-					admin_url( 'options-general.php' )
-				)
-			);
-			exit;
-		}
-
-		$size = isset( $file['size'] ) ? (int) $file['size'] : 0;
-		if ( $size <= 0 ) {
-			wp_safe_redirect(
-				add_query_arg(
-					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'empty' ) ),
-					admin_url( 'options-general.php' )
-				)
-			);
-			exit;
-		}
-		if ( $size > Policy_Transfer::MAX_UPLOAD_BYTES ) {
-			wp_safe_redirect(
-				add_query_arg(
-					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'too_large' ) ),
-					admin_url( 'options-general.php' )
-				)
-			);
-			exit;
-		}
-
-		$tmp = isset( $file['tmp_name'] ) ? (string) $file['tmp_name'] : '';
-		if ( '' === $tmp || ! is_uploaded_file( $tmp ) ) {
-			wp_safe_redirect(
-				add_query_arg(
-					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'upload_failed' ) ),
-					admin_url( 'options-general.php' )
-				)
-			);
-			exit;
-		}
-
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local upload tmp only.
-		$raw = file_get_contents( $tmp );
-		if ( ! is_string( $raw ) ) {
-			wp_safe_redirect(
-				add_query_arg(
-					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'upload_failed' ) ),
-					admin_url( 'options-general.php' )
-				)
-			);
-			exit;
-		}
-
-		$parsed = Policy_Transfer::parse_import( $raw );
+		$parsed = Policy_Transfer::parse_import( (string) $read['raw'] );
 		if ( empty( $parsed['ok'] ) ) {
 			$code = isset( $parsed['error'] ) ? (string) $parsed['error'] : 'invalid_json';
 			wp_safe_redirect(
@@ -5953,6 +5968,127 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	}
 
 	/**
+	 * Read-only compare against uploaded JSON backup (AICAC-DIFF / #146). Never writes policy.
+	 */
+	private function handle_compare_rules_preview(): void {
+		$this->require_admin_mutation( 'handl_aicac_compare_rules' );
+
+		$redirect_base = array(
+			'page'            => 'handl-ai-connector-access-control',
+			'handl_aicac_tab' => 'rules',
+		);
+
+		$read = $this->read_uploaded_rules_json( 'handl_aicac_compare_file' );
+		if ( empty( $read['ok'] ) ) {
+			$code = isset( $read['error'] ) ? (string) $read['error'] : 'upload_failed';
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge( $redirect_base, array( 'handl_aicac_compare_error' => $code ) ),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		$parsed = Policy_Transfer::parse_import( (string) $read['raw'] );
+		if ( empty( $parsed['ok'] ) ) {
+			$code = isset( $parsed['error'] ) ? (string) $parsed['error'] : 'invalid_json';
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge( $redirect_base, array( 'handl_aicac_compare_error' => $code ) ),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		$user_id = get_current_user_id();
+		set_transient(
+			Policy_Transfer::compare_transient_key( $user_id ),
+			array(
+				'policy'         => $parsed['policy'],
+				'ignored'        => $parsed['ignored'],
+				'plugin_version' => $parsed['plugin_version'],
+				'exported_at'    => $parsed['exported_at'],
+			),
+			Policy_Transfer::PREVIEW_TTL
+		);
+
+		wp_safe_redirect(
+			add_query_arg(
+				array_merge( $redirect_base, array( 'handl_aicac_compare_preview' => '1' ) ),
+				admin_url( 'options-general.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * Shared upload reader for import + compare (same size / empty / JSON path).
+	 *
+	 * @return array{ok:true,raw:string}|array{ok:false,error:string}
+	 */
+	private function read_uploaded_rules_json( string $file_field ): array {
+		if ( empty( $_FILES[ $file_field ] ) || ! is_array( $_FILES[ $file_field ] ) ) {
+			return array(
+				'ok'    => false,
+				'error' => 'no_file',
+			);
+		}
+
+		$file = $_FILES[ $file_field ];
+		$err  = isset( $file['error'] ) ? (int) $file['error'] : UPLOAD_ERR_NO_FILE;
+		if ( UPLOAD_ERR_NO_FILE === $err ) {
+			return array(
+				'ok'    => false,
+				'error' => 'empty',
+			);
+		}
+		if ( UPLOAD_ERR_OK !== $err ) {
+			return array(
+				'ok'    => false,
+				'error' => 'upload_failed',
+			);
+		}
+
+		$size = isset( $file['size'] ) ? (int) $file['size'] : 0;
+		if ( $size <= 0 ) {
+			return array(
+				'ok'    => false,
+				'error' => 'empty',
+			);
+		}
+		if ( $size > Policy_Transfer::MAX_UPLOAD_BYTES ) {
+			return array(
+				'ok'    => false,
+				'error' => 'too_large',
+			);
+		}
+
+		$tmp = isset( $file['tmp_name'] ) ? (string) $file['tmp_name'] : '';
+		if ( '' === $tmp || ! is_uploaded_file( $tmp ) ) {
+			return array(
+				'ok'    => false,
+				'error' => 'upload_failed',
+			);
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local upload tmp only.
+		$raw = file_get_contents( $tmp );
+		if ( ! is_string( $raw ) ) {
+			return array(
+				'ok'    => false,
+				'error' => 'upload_failed',
+			);
+		}
+
+		return array(
+			'ok'  => true,
+			'raw' => $raw,
+		);
+	}
+
+	/**
 	 * Map import error codes to admin-facing messages (AC4).
 	 */
 	private function import_error_message( string $code ): string {
@@ -5967,6 +6103,22 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		);
 
 		return $messages[ $code ] ?? __( 'Import failed. Your current rules were not changed.', 'handl-ai-connector-access-control' );
+	}
+
+	/**
+	 * Map compare error codes to admin-facing messages (AICAC-DIFF).
+	 */
+	private function compare_error_message( string $code ): string {
+		$messages = array(
+			'empty'                 => __( 'Compare failed: the file was empty. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
+			'no_file'               => __( 'Compare failed: no file was selected. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
+			'upload_failed'         => __( 'Compare failed: the file could not be uploaded. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
+			'too_large'             => __( 'Compare failed: the file is larger than 1 MB. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
+			'invalid_json'          => __( 'Compare failed: the file is not valid JSON. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
+			'missing_required_keys' => __( 'Compare failed: the file is missing plugin_version or exported_at. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
+		);
+
+		return $messages[ $code ] ?? __( 'Compare failed. Your current rules were not changed.', 'handl-ai-connector-access-control' );
 	}
 }
 
