@@ -1,0 +1,36 @@
+PR #171 sandbox enforcement QA at 4173259
+
+Controlled fixture:
+- plugin: akismet/akismet.php
+- policy Allow, active temporary Allow, estimated budget $5.00
+- current-period accumulated spend $5.00
+
+Hard-deny mode result:
+{
+  "prevent": true,
+  "reason": "budget",
+  "simulator": {
+    "allowed": false,
+    "chip": "Blocked — estimated budget reached",
+    "rule_label": "Estimated budget"
+  }
+}
+
+Observe-only mode result:
+{
+  "prevent": false,
+  "reason": "budget",
+  "budget_over": true,
+  "budget_mode": "observe",
+  "simulator": {
+    "allowed": true,
+    "chip": "Allowed — estimated budget reached (Observe-only mode)",
+    "rule_label": "Estimated budget"
+  }
+}
+
+Auto soft-warning threshold: $4.00 (80% of the $5.00 budget).
+
+Browser capture was unavailable because the connected Chrome tab was in use;
+the controlled sandbox Activity fixture was created then fully restored along
+with policy, log, spend, and alert-threshold state.
