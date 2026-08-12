@@ -321,7 +321,7 @@ final class Governance_Digest {
 				} else {
 					$lines[] = sprintf(
 						/* translators: %s: estimated USD */
-						__( 'Estimated spend: $%s (no previous-7-days estimate to compare)', 'handl-ai-connector-access-control' ),
+						__( 'Estimated spend: $%s (no estimate from the previous 7 days to compare)', 'handl-ai-connector-access-control' ),
 						self::format_amount( (float) $est )
 					);
 				}
