@@ -5430,6 +5430,11 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 				echo '</span>';
 			}
 		}
+		if ( ! $is_direct_http && ! empty( $row['budget_over'] ) && 'allow' === $decision ) {
+			echo '<br /><span class="description handl-aicac-budget-observe" style="font-size:11px;">';
+			echo esc_html__( 'over estimated budget — would have been blocked', 'handl-ai-connector-access-control' );
+			echo '</span>';
+		}
 		$reason = isset( $row['denial_reason'] ) ? (string) $row['denial_reason'] : '';
 		if ( '' !== $reason && ( 'deny' === $decision || ( ! empty( $policy['audit_only'] ) && 'deny' === ( $row['would_decision'] ?? '' ) ) ) ) {
 			echo '<br /><span class="description handl-aicac-denial-reason">' . esc_html( $this->format_denial_reason_label( $reason ) ) . '</span>';
@@ -5832,6 +5837,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			'quiet_hours'         => __( 'Blocked by HandL: scheduled quiet hours', 'handl-ai-connector-access-control' ),
 			'role'                => __( 'Blocked by HandL: role not allowed', 'handl-ai-connector-access-control' ),
 			'plugin'              => __( 'Blocked by HandL: plugin rule', 'handl-ai-connector-access-control' ),
+			'budget'              => __( 'Blocked by HandL: estimated spend budget', 'handl-ai-connector-access-control' ),
 			'capability_family'   => __( 'Blocked by HandL: AI type rule', 'handl-ai-connector-access-control' ),
 			'unknown_operation'   => __( 'Blocked by HandL: unknown operation rule', 'handl-ai-connector-access-control' ),
 			'tool_armed'          => __( 'Blocked by HandL: prompt offered a blocked tool', 'handl-ai-connector-access-control' ),

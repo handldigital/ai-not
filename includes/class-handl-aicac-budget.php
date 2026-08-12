@@ -16,7 +16,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Spend accumulator + budget value storage (observability / accounting only).
+ * Spend accumulator + budget value storage + enforcement gate (AICAC-BUDGET-A/B).
+ *
+ * Part A: period accounting. Part B: hard-deny / degrade-to-observe when the
+ * estimated spend reaches the configured budget. No admin UI (part C).
  */
 final class Budget {
 
@@ -25,6 +28,12 @@ final class Budget {
 
 	/** Keep a few past months so B/C can report; drop older keys on write. */
 	public const RETAIN_PERIODS = 6;
+
+	public const MODE_DENY    = 'deny';
+	public const MODE_OBSERVE = 'observe';
+
+	/** Soft-warning fraction of budget when no explicit spend threshold is set. */
+	public const SOFT_WARN_RATIO = 0.8;
 
 	/**
 	 * Calendar-month period id in site timezone (e.g. 2026-08).
@@ -271,6 +280,115 @@ final class Budget {
 			'percent_used' => $percent,
 			'unlimited'    => $unlimited,
 		);
+	}
+
+	/**
+	 * Per-plugin enforcement mode. Default hard-deny. Only meaningful when a budget is set.
+	 *
+	 * @param mixed $raw
+	 * @return 'deny'|'observe'
+	 */
+	public static function sanitize_mode( $raw ): string {
+		$key = sanitize_key( (string) $raw );
+		return self::MODE_OBSERVE === $key ? self::MODE_OBSERVE : self::MODE_DENY;
+	}
+
+	/**
+	 * @param mixed $raw basename => mode map
+	 * @return array<string,string>
+	 */
+	public static function sanitize_plugin_budget_modes( $raw ): array {
+		if ( ! is_array( $raw ) ) {
+			return array();
+		}
+		$out = array();
+		foreach ( $raw as $basename => $mode ) {
+			$basename = Plugin_Profile::sanitize_plugin( (string) $basename );
+			if ( '' === $basename ) {
+				continue;
+			}
+			$out[ $basename ] = self::sanitize_mode( $mode );
+		}
+
+		return $out;
+	}
+
+	/**
+	 * @param array<string,mixed> $policy
+	 * @return 'deny'|'observe'
+	 */
+	public static function get_mode( array $policy, string $plugin ): string {
+		$plugin = Plugin_Profile::sanitize_plugin( $plugin );
+		if ( '' === $plugin ) {
+			return self::MODE_DENY;
+		}
+		$map = self::sanitize_plugin_budget_modes( $policy['plugin_budget_modes'] ?? array() );
+
+		return $map[ $plugin ] ?? self::MODE_DENY;
+	}
+
+	/**
+	 * True when the plugin has a finite budget and current-period estimated spend has reached it.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	public static function is_over_budget( array $policy, string $plugin, ?int $now = null, ?\DateTimeZone $tz = null ): bool {
+		$status = self::status( $policy, $plugin, $now, $tz );
+		if ( $status['unlimited'] || null === $status['budget'] ) {
+			return false;
+		}
+
+		return (float) $status['spend'] >= (float) $status['budget'];
+	}
+
+	/**
+	 * Decision-path gate. Temp-allow / plugin Allow cannot pierce this.
+	 *
+	 * @param array<string,mixed> $policy
+	 * @return array{prevent:bool,mode:string,reason:string}|null Null when no budget or under budget.
+	 */
+	public static function evaluate_gate( array $policy, ?string $plugin, ?int $now = null, ?\DateTimeZone $tz = null ): ?array {
+		$plugin = Plugin_Profile::sanitize_plugin( (string) $plugin );
+		if ( '' === $plugin || ! self::is_over_budget( $policy, $plugin, $now, $tz ) ) {
+			return null;
+		}
+		$mode = self::get_mode( $policy, $plugin );
+		if ( self::MODE_OBSERVE === $mode ) {
+			return array(
+				'prevent' => false,
+				'mode'    => self::MODE_OBSERVE,
+				'reason'  => 'budget',
+			);
+		}
+
+		return array(
+			'prevent' => true,
+			'mode'    => self::MODE_DENY,
+			'reason'  => 'budget',
+		);
+	}
+
+	/**
+	 * Auto 80% soft-warning thresholds for plugins that have a budget but no explicit spend threshold.
+	 *
+	 * @param array<string,mixed> $policy
+	 * @return array<string,float>
+	 */
+	public static function soft_warn_thresholds( array $policy ): array {
+		$explicit = Spend_Threshold::sanitize_plugin_thresholds( $policy['spend_threshold_plugins'] ?? array() );
+		$budgets  = self::sanitize_plugin_budgets( $policy['plugin_budgets'] ?? array() );
+		$out      = array();
+		foreach ( $budgets as $plugin => $budget ) {
+			if ( isset( $explicit[ $plugin ] ) ) {
+				continue;
+			}
+			$soft = round( (float) $budget * self::SOFT_WARN_RATIO, 4 );
+			if ( $soft > 0 ) {
+				$out[ $plugin ] = $soft;
+			}
+		}
+
+		return $out;
 	}
 
 	/**

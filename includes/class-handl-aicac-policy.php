@@ -90,6 +90,14 @@ final class Policy {
 			$snapshot
 		);
 
+		// AICAC-BUDGET-B: degrade-to-observe — call continues; row records would-have-blocked.
+		if ( ! $prevent && ! empty( $would_eval['budget_over'] ) && Budget::MODE_OBSERVE === (string) ( $would_eval['budget_mode'] ?? '' ) ) {
+			$event['budget_over']    = true;
+			$event['budget_mode']    = Budget::MODE_OBSERVE;
+			$event['would_decision'] = 'deny';
+			$event['denial_reason']  = 'budget';
+		}
+
 		// AICAC-HOURS: tag rows while a window is live (Deny or Observe).
 		$qh_active = Quiet_Hours::active_window( $policy, $now_ts );
 		if ( null !== $qh_active ) {
@@ -588,6 +596,20 @@ final class Policy {
 			);
 		}
 
+		// AICAC-BUDGET-B: estimated-spend ceiling. Temp-allow / plugin Allow cannot pierce.
+		$budget_gate     = Budget::evaluate_gate( $policy, $plugin_basename, $now );
+		$budget_observe  = is_array( $budget_gate ) && Budget::MODE_OBSERVE === (string) ( $budget_gate['mode'] ?? '' );
+		if ( is_array( $budget_gate ) && ! empty( $budget_gate['prevent'] ) ) {
+			return self::with_matched_tools(
+				array(
+					'prevent' => true,
+					'reason'  => 'budget',
+				),
+				$policy,
+				$armed_tools
+			);
+		}
+
 		// Capability family (F1) — only when operation is known.
 		if ( null !== $operation && '' !== $operation ) {
 			$family = ( is_string( $capability_family ) && '' !== $capability_family )
@@ -631,7 +653,14 @@ final class Policy {
 		}
 
 		// Even on allow, surface matches if any (empty when nothing matched).
-		return self::with_matched_tools( $allow, $policy, $armed_tools );
+		$result = self::with_matched_tools( $allow, $policy, $armed_tools );
+		if ( $budget_observe ) {
+			$result['budget_over']  = true;
+			$result['budget_mode']  = Budget::MODE_OBSERVE;
+			$result['reason']       = 'budget';
+		}
+
+		return $result;
 	}
 
 	/**
@@ -908,6 +937,7 @@ final class Policy {
 		$policy['spend_threshold_site']    = Spend_Threshold::sanitize_threshold( $policy['spend_threshold_site'] ?? null );
 		$policy['spend_threshold_plugins'] = Spend_Threshold::sanitize_plugin_thresholds( $policy['spend_threshold_plugins'] ?? array() );
 		$policy['plugin_budgets']          = Budget::sanitize_plugin_budgets( $policy['plugin_budgets'] ?? array() );
+		$policy['plugin_budget_modes']     = Budget::sanitize_plugin_budget_modes( $policy['plugin_budget_modes'] ?? array() );
 		$policy['anomaly_alert_enabled'] = (bool) ( $policy['anomaly_alert_enabled'] ?? false );
 		$policy['anomaly_multiplier']    = Anomaly::sanitize_multiplier( $policy['anomaly_multiplier'] ?? Anomaly::DEFAULT_MULTIPLIER );
 		$policy['anomaly_floor_calls']   = Anomaly::sanitize_floor_calls( $policy['anomaly_floor_calls'] ?? Anomaly::DEFAULT_FLOOR_CALLS );
@@ -1141,6 +1171,7 @@ final class Policy {
 		$policy['spend_threshold_site']    = Spend_Threshold::sanitize_threshold( $policy['spend_threshold_site'] ?? null );
 		$policy['spend_threshold_plugins'] = Spend_Threshold::sanitize_plugin_thresholds( $policy['spend_threshold_plugins'] ?? array() );
 		$policy['plugin_budgets']          = Budget::sanitize_plugin_budgets( $policy['plugin_budgets'] ?? array() );
+		$policy['plugin_budget_modes']     = Budget::sanitize_plugin_budget_modes( $policy['plugin_budget_modes'] ?? array() );
 		$policy['anomaly_alert_enabled'] = ! empty( $policy['anomaly_alert_enabled'] );
 		$policy['anomaly_multiplier']    = Anomaly::sanitize_multiplier( $policy['anomaly_multiplier'] ?? Anomaly::DEFAULT_MULTIPLIER );
 		$policy['anomaly_floor_calls']   = Anomaly::sanitize_floor_calls( $policy['anomaly_floor_calls'] ?? Anomaly::DEFAULT_FLOOR_CALLS );

@@ -62,6 +62,7 @@ final class Policy_Transfer {
 		'spend_threshold_site',
 		'spend_threshold_plugins',
 			'plugin_budgets',
+			'plugin_budget_modes',
 			'anomaly_alert_enabled',
 			'anomaly_multiplier',
 			'anomaly_floor_calls',

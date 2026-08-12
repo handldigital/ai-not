@@ -88,8 +88,11 @@ final class Spend_Threshold {
 		if ( null !== self::sanitize_threshold( $policy['spend_threshold_site'] ?? null ) ) {
 			return true;
 		}
-
-		return ! empty( self::sanitize_plugin_thresholds( $policy['spend_threshold_plugins'] ?? array() ) );
+		if ( ! empty( self::sanitize_plugin_thresholds( $policy['spend_threshold_plugins'] ?? array() ) ) ) {
+			return true;
+		}
+		// AICAC-BUDGET-B: auto 80% soft-warning when a budget is set without an explicit threshold.
+		return ! empty( Budget::soft_warn_thresholds( $policy ) );
 	}
 
 	/**
@@ -145,6 +148,30 @@ final class Spend_Threshold {
 				$threshold,
 				$plugin_total,
 				(string) $spend['window_label']
+			);
+		}
+
+		// AICAC-BUDGET-B: auto 80% of budget via period accumulator when no explicit plugin threshold.
+		foreach ( Budget::soft_warn_thresholds( $policy ) as $basename => $threshold ) {
+			$status       = Budget::status( $policy, $basename );
+			$plugin_total = (float) $status['spend'];
+			if ( $plugin_total < $threshold ) {
+				self::clear_fire_key( 'plugin:' . $basename );
+				continue;
+			}
+			$period_label = sprintf(
+				/* translators: %s: period id Y-m */
+				__( 'estimated budget period %s', 'handl-ai-connector-access-control' ),
+				(string) $status['period']
+			);
+			self::maybe_fire(
+				$policy,
+				$to,
+				'plugin',
+				$basename,
+				$threshold,
+				$plugin_total,
+				$period_label
 			);
 		}
 
