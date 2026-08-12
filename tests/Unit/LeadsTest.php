@@ -122,13 +122,16 @@ final class LeadsTest extends TestCase {
 		);
 	}
 
-	public function test_release_and_deploy_exclude_server(): void {
+	public function test_release_and_deploy_package_only_production_files(): void {
 		$release = (string) file_get_contents( HANDL_AICAC_DIR . '/.github/workflows/release.yml' );
 		$this->assertStringContainsString( '--exclude "server/"', $release );
 
 		$deploy = (string) file_get_contents( HANDL_AICAC_DIR . '/deploy.sh' );
-		$this->assertStringContainsString( 'server', $deploy );
-		$this->assertMatchesRegularExpression( '/exclude.*server|server\/\*\*/', $deploy );
+		$this->assertStringContainsString( "--include='/includes/'", $deploy );
+		$this->assertStringContainsString( "--include='/assets/'", $deploy );
+		$this->assertStringContainsString( "--exclude='*'", $deploy );
+		$this->assertStringNotContainsString( "--include='/server/", $deploy );
+		$this->assertStringNotContainsString( "--include='/vendor/", $deploy );
 
 		// Server intake must exist in-repo for deploy, but not load in the plugin bootstrap.
 		$this->assertFileExists( HANDL_AICAC_DIR . '/server/leads/public/index.php' );

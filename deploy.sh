@@ -1,6 +1,7 @@
 #!/bin/bash
-# Deploy handl-ai-connector-access-control: zip + WordPress.org SVN
+# Deploy handl-ai-connector-access-control: production ZIP + WordPress.org SVN
 # Run from anywhere: ./deploy.sh
+# Build only the ZIP for inspection: ./deploy.sh --package-only
 # This file is excluded from the zip and SVN trunk packages.
 #
 # AICAC-LEADS: server/ is HandL-host only — never ship in WP.org zip/SVN.
@@ -14,6 +15,16 @@ SVN_URL="https://plugins.svn.wordpress.org/${PLUGIN_SLUG}/"
 SVN_DIR="${PARENT_DIR}/${PLUGIN_SLUG}-svn"
 MAIN_PLUGIN_FILE="${PLUGIN_DIR}/${PLUGIN_SLUG}.php"
 ZIP_PATH="${PARENT_DIR}/${PLUGIN_SLUG}.zip"
+PACKAGE_ONLY=false
+
+case "${1:-}" in
+	"") ;;
+	--package-only) PACKAGE_ONLY=true ;;
+	*)
+		echo "Usage: $0 [--package-only]" >&2
+		exit 1
+		;;
+esac
 
 PLUGIN_VERSION=$(awk '/^[[:space:]]*\*[[:space:]]+Version:[[:space:]]+/ {sub(/^[[:space:]]*\*[[:space:]]+Version:[[:space:]]+/, ""); print; exit}' "${MAIN_PLUGIN_FILE}")
 
@@ -24,45 +35,44 @@ fi
 
 echo "Deploying ${PLUGIN_SLUG} version ${PLUGIN_VERSION}"
 
+PACKAGE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/${PLUGIN_SLUG}-package.XXXXXX")"
+trap 'rm -rf "${PACKAGE_DIR}"' EXIT
+
+# Keep the distributable intentionally small. Composer's dev-only PHPUnit tree
+# (including vendor/sebastian) and every future development directory are out
+# by default; a runtime file must be added here deliberately.
+PRODUCTION_RSYNC_FILTERS=(
+	--include='/assets/'
+	--include='/assets/***'
+	--include='/includes/'
+	--include='/includes/***'
+	--include='/languages/'
+	--include='/languages/***'
+	--include='/handl-ai-connector-access-control.php'
+	--include='/uninstall.php'
+	--include='/readme.txt'
+	--include='/LICENSE.txt'
+	--exclude='*'
+)
+
+mkdir -p "${PACKAGE_DIR}/${PLUGIN_SLUG}"
+rsync -rc --delete "${PRODUCTION_RSYNC_FILTERS[@]}" "${PLUGIN_DIR}/" "${PACKAGE_DIR}/${PLUGIN_SLUG}/"
 rm -f "${ZIP_PATH}"
 (
-  cd "${PARENT_DIR}"
-  zip -r9 "${PLUGIN_SLUG}.zip" "${PLUGIN_SLUG}/" \
-    -x "*.git*" "*/.github/**\*" "*/wordpress-org/**\*" "*/server/**\*" "*/node_modules/**\*" \
-    "*.idea*" "*.vscode*" "*.DS_Store" \
-    "*package-lock.json*" "*composer.lock*" "*pnpm-lock.yaml*" "*yarn.lock*" \
-    "*phpcs.xml*" "*phpcs.xml.dist*" "*phpunit.xml*" "*phpunit.xml.dist*" \
-    "*/tests/**\*" "*/test/**\*" "*/docs/**\*" "*/doc/**\*" \
-    "*/README.md*" "*/readme.md*" \
-    "*/deploy.sh" "*deploy.sh"
+	cd "${PACKAGE_DIR}"
+	zip -r9 "${ZIP_PATH}" "${PLUGIN_SLUG}"
 )
+
+if [ "${PACKAGE_ONLY}" = true ]; then
+	echo "Package contents:"
+	unzip -Z1 "${ZIP_PATH}"
+	exit 0
+fi
 
 rm -rf "${SVN_DIR}"
 svn checkout "${SVN_URL}" "${SVN_DIR}"
 
-rsync -rc --delete "${PLUGIN_DIR}/" "${SVN_DIR}/trunk/" \
-  --exclude ".git" \
-  --exclude ".github" \
-  --exclude "wordpress-org" \
-  --exclude "server" \
-  --exclude ".idea" \
-  --exclude ".vscode" \
-  --exclude "node_modules" \
-  --exclude "tests" \
-  --exclude "test" \
-  --exclude "docs" \
-  --exclude "doc" \
-  --exclude "package-lock.json" \
-  --exclude "composer.lock" \
-  --exclude "pnpm-lock.yaml" \
-  --exclude "yarn.lock" \
-  --exclude "phpcs.xml" \
-  --exclude "phpcs.xml.dist" \
-  --exclude "phpunit.xml" \
-  --exclude "phpunit.xml.dist" \
-  --exclude "deploy.sh" \
-  --exclude "README.md" \
-  --exclude "readme.md"
+rsync -rc --delete "${PRODUCTION_RSYNC_FILTERS[@]}" "${PLUGIN_DIR}/" "${SVN_DIR}/trunk/"
 
 # WordPress.org plugin directory assets live in SVN assets/ (not trunk).
 # https://developer.wordpress.org/plugins/wordpress-org/plugin-assets/
