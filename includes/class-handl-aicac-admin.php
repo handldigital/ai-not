@@ -1964,7 +1964,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		} else {
 			$qh_windows = Quiet_Hours::sanitize_windows( $policy['quiet_hours'] ?? array() );
 			if ( ! empty( $qh_windows ) ) {
-				echo '<p class="description">' . esc_html__( 'Quiet hours are configured. No window is active right now.', 'handl-ai-connector-access-control' ) . '</p>';
+				echo '<p class="description">' . esc_html__( 'Quiet hours are set, but none are active now.', 'handl-ai-connector-access-control' ) . '</p>';
 			}
 		}
 		echo '<p>' . esc_html(
@@ -4901,7 +4901,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 				$qh_name
 			);
 			if ( Quiet_Hours::MODE_OBSERVE === $qh_mode ) {
-				$qh_line .= ' (' . __( 'observe', 'handl-ai-connector-access-control' ) . ')';
+				$qh_line .= ' (' . __( 'logging only', 'handl-ai-connector-access-control' ) . ')';
 			}
 			echo '<br /><span class="description handl-aicac-quiet-hours" style="font-size:11px;">' . esc_html( $qh_line ) . '</span>';
 		}
@@ -5186,7 +5186,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo '<tr>';
 		echo '<th scope="row">' . esc_html__( 'Quiet hours', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<td>';
-		echo '<p class="description" style="max-width:46em;margin-top:0;">' . esc_html__( 'Optional weekly windows when AI Client calls should pause or only be logged. Times use this site’s timezone. Quiet hours sit at the same site-wide layer as Emergency stop: Emergency stop still wins when it is on. Plugin Allow/Deny rules apply only when no Deny quiet-hours window is active. Observe windows never block.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description" style="max-width:46em;margin-top:0;">' . esc_html__( 'Set up to three weekly schedules. Each schedule can block AI Client calls or record them in Activity without adding a block. Times use this site’s timezone. Emergency stop takes priority, and your normal access rules still apply.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<p class="description">' . esc_html(
 			sprintf(
 				/* translators: %s: timezone name, e.g. America/Chicago */
@@ -5237,7 +5237,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			echo '<input type="time" id="handl-aicac-qh-start-' . (int) $i . '" name="handl_aicac_qh[' . (int) $i . '][start]" value="' . esc_attr( $start ) . '" /> ';
 			echo '<label for="handl-aicac-qh-end-' . (int) $i . '" style="margin-left:12px;">' . esc_html__( 'End', 'handl-ai-connector-access-control' ) . '</label> ';
 			echo '<input type="time" id="handl-aicac-qh-end-' . (int) $i . '" name="handl_aicac_qh[' . (int) $i . '][end]" value="' . esc_attr( $end ) . '" />';
-			echo ' <span class="description">' . esc_html__( 'If end is earlier than start, the window runs overnight into the next morning.', 'handl-ai-connector-access-control' ) . '</span>';
+			echo ' <span class="description">' . esc_html__( 'Choose the day when the window starts. If the end time is earlier than the start time, the window continues into the next morning. Matching start and end times makes it active all day.', 'handl-ai-connector-access-control' ) . '</span>';
 			echo '</p>';
 
 			echo '<p style="margin:0;">';
@@ -5251,11 +5251,11 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			printf(
 				'<option value="observe"%s>%s</option>',
 				selected( $mode, Quiet_Hours::MODE_OBSERVE, false ),
-				esc_html__( 'Observe only (log, never block)', 'handl-ai-connector-access-control' )
+				esc_html__( 'Log activity without adding a block', 'handl-ai-connector-access-control' )
 			);
 			echo '</select>';
 			echo '</p>';
-			echo '<p class="description" style="margin:8px 0 0;">' . esc_html__( 'Leave Name blank to clear this slot.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description" style="margin:8px 0 0;">' . esc_html__( 'Enter a name, at least one day, a start time, and an end time to save this window. Clear the name to remove it.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '</fieldset>';
 		}
 
@@ -5284,7 +5284,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	private function format_denial_reason_label( string $reason ): string {
 		$map = array(
 			'kill_switch'         => __( 'Blocked by HandL: emergency stop', 'handl-ai-connector-access-control' ),
-			'quiet_hours'         => __( 'Blocked by HandL: quiet hours', 'handl-ai-connector-access-control' ),
+			'quiet_hours'         => __( 'Blocked by HandL: scheduled quiet hours', 'handl-ai-connector-access-control' ),
 			'role'                => __( 'Blocked by HandL: role not allowed', 'handl-ai-connector-access-control' ),
 			'plugin'              => __( 'Blocked by HandL: plugin rule', 'handl-ai-connector-access-control' ),
 			'capability_family'   => __( 'Blocked by HandL: AI type rule', 'handl-ai-connector-access-control' ),

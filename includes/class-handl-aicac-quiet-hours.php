@@ -202,14 +202,14 @@ final class Quiet_Hours {
 		if ( self::MODE_OBSERVE === $active['mode'] ) {
 			return sprintf(
 				/* translators: 1: window name, 2: local end time HH:MM */
-				__( 'Quiet hours (“%1$s”) active until %2$s — observing only (not blocking).', 'handl-ai-connector-access-control' ),
+				__( 'Quiet hours (“%1$s”) are active until %2$s. Normal access rules are still in effect.', 'handl-ai-connector-access-control' ),
 				$name,
 				$until
 			);
 		}
 		return sprintf(
 			/* translators: 1: window name, 2: local end time HH:MM */
-			__( 'Quiet hours (“%1$s”) active until %2$s — AI Client calls are blocked.', 'handl-ai-connector-access-control' ),
+			__( 'Quiet hours (“%1$s”) are active. AI Client calls are blocked until %2$s.', 'handl-ai-connector-access-control' ),
 			$name,
 			$until
 		);
