@@ -738,3 +738,43 @@
 	font-size: 12px;
 }
 
+.handl-aicac-col-budget {
+	min-width: 11em;
+	max-width: 14em;
+	vertical-align: top;
+}
+
+.handl-aicac-budget-amount {
+	display: block;
+	margin: 0 0 4px;
+	max-width: 7em;
+}
+
+.handl-aicac-budget-mode {
+	display: block;
+	max-width: 13em;
+	margin: 0 0 6px;
+}
+
+.handl-aicac-budget-bar {
+	height: 6px;
+	max-width: 12em;
+	background: #dcdcde;
+	border-radius: 3px;
+	overflow: hidden;
+}
+
+.handl-aicac-budget-bar__fill {
+	display: block;
+	height: 100%;
+	background: #2271b1;
+}
+
+.handl-aicac-budget-bar--warn .handl-aicac-budget-bar__fill {
+	background: #dba617;
+}
+
+.handl-aicac-budget-bar--over .handl-aicac-budget-bar__fill {
+	background: #d63638;
+}
+

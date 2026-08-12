@@ -370,6 +370,9 @@ final class Usage_Trends {
 		$channel = isset( $row['channel'] ) ? (string) $row['channel'] : '';
 		if ( 'direct_http' === $channel
 			|| 'spend_threshold' === $channel
+			|| 'budget' === $channel
+			|| 'drift' === $channel
+			|| 'alert_snooze' === $channel
 			|| 'anomaly' === $channel
 			|| 'forecast_warn' === $channel ) {
 			return false;

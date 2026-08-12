@@ -164,7 +164,7 @@ final class Drift {
 		$mode = self::sanitize_mode( $policy['drift_alert_mode'] ?? self::MODE_PROVIDER );
 
 		$channel = isset( $event['channel'] ) ? (string) $event['channel'] : '';
-		if ( in_array( $channel, array( 'direct_http', 'anomaly', 'spend_threshold', 'drift', 'alert_snooze' ), true ) ) {
+		if ( in_array( $channel, array( 'direct_http', 'anomaly', 'spend_threshold', 'drift', 'alert_snooze', 'budget' ), true ) ) {
 			$empty['reason'] = 'skip_channel';
 			return $empty;
 		}
