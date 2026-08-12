@@ -1,0 +1,13 @@
+Compare with uploaded backup
+
+This comparison does not change your rules. Use Import if you want to replace them with the uploaded file.
+
+These settings could not be compared because this version of HandL does not recognize them: another_new_key, future_feature_x
+
+Setting	Current	In backup
+Default policy	Allow	Deny
+Learn mode (observe only)	Off	On
+Blocked-call email alerts	On	Off
+Per-plugin rules	6 plugin rules	2 plugin rules
+Capability-family rules	(none)	1 plugin with AI-type rules
+Blocked AI tools	(none)	1 blocked tool

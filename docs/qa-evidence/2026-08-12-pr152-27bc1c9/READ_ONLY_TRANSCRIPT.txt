@@ -1,0 +1,16 @@
+POLICY_BEFORE sha256=4897c40659ef90688a051668f21955ff2f37124a0e316e87207c6894040859ee bytes=1830
+after_login https://handl-sandbox/wp-admin/admin.php?page=magnus-org-chart
+saved 01-rules-compare-control.png size=14929 box=1238x126
+PREVIEW_LEN=527
+hasVersionNotice=true
+hasFutureKeys=true
+hasCols=true
+hasApplyInPreview=false
+saved 02-valid-compare-diff-and-version-notice.png size=43232 box=710x459
+saved 02a-version-recognition-notice.png size=7833 box=676x69
+saved 02b-diff-table.png size=23089 box=676x252
+POLICY_AFTER_VALID sha256=4897c40659ef90688a051668f21955ff2f37124a0e316e87207c6894040859ee unchanged=true
+ERR_TEXT=Compare failed: this does not appear to be a valid HandL rules export. Your current rules were not changed. Dismiss this notice.
+saved 03-invalid-compare-error.png size=6760 box=1238x49
+POLICY_AFTER_INVALID sha256=4897c40659ef90688a051668f21955ff2f37124a0e316e87207c6894040859ee unchanged=true
+READ_ONLY_OK=true
