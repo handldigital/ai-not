@@ -92,7 +92,9 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
+			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-audit.php';
 			CLI::register();
+			CLI_Audit::register();
 		}
 	}
 

@@ -196,6 +196,7 @@ Yes. With WP-CLI available and this plugin active:
 * Shared email layout for HandL alerts and reports: same header, intro, and footer on every message, with a plain-text and HTML part. Per-message wording inside the content block is unchanged.
 * Optional weekly governance digest email: last 7 days of AI Client calls, estimated spend vs the previous 7 days, blocked calls, direct connections, usage spike alerts, and top plugins. Off by default.
 * Per-plugin estimated monthly budgets on the Rules tab, with progress, a Dashboard banner when a budget is reached, a budget-hit email, and a Site Health notice. Choose Block or Observe-only when the estimated spend reaches the ceiling. Amounts are estimates, not bills.
+* WP-CLI read-only inspection: `wp handl-aicac policy list` and `wp handl-aicac log summary` (table or JSON) for scripted audits without opening wp-admin.
 * Webhook delivery log for the last 20 attempts on Activity, a Send test webhook button next to the Webhook URL, one automatic retry after a server error or timeout, and a failure email if the retry does not succeed.
 
 = 1.4.0 =
