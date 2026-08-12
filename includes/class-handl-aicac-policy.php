@@ -907,6 +907,7 @@ final class Policy {
 		$policy['est_usd_provider_rates'] = Cost::sanitize_provider_rates( $policy['est_usd_provider_rates'] ?? array() );
 		$policy['spend_threshold_site']    = Spend_Threshold::sanitize_threshold( $policy['spend_threshold_site'] ?? null );
 		$policy['spend_threshold_plugins'] = Spend_Threshold::sanitize_plugin_thresholds( $policy['spend_threshold_plugins'] ?? array() );
+		$policy['plugin_budgets']          = Budget::sanitize_plugin_budgets( $policy['plugin_budgets'] ?? array() );
 		$policy['anomaly_alert_enabled'] = (bool) ( $policy['anomaly_alert_enabled'] ?? false );
 		$policy['anomaly_multiplier']    = Anomaly::sanitize_multiplier( $policy['anomaly_multiplier'] ?? Anomaly::DEFAULT_MULTIPLIER );
 		$policy['anomaly_floor_calls']   = Anomaly::sanitize_floor_calls( $policy['anomaly_floor_calls'] ?? Anomaly::DEFAULT_FLOOR_CALLS );
@@ -1138,6 +1139,7 @@ final class Policy {
 		$policy['est_usd_provider_rates'] = Cost::sanitize_provider_rates( $policy['est_usd_provider_rates'] ?? array() );
 		$policy['spend_threshold_site']    = Spend_Threshold::sanitize_threshold( $policy['spend_threshold_site'] ?? null );
 		$policy['spend_threshold_plugins'] = Spend_Threshold::sanitize_plugin_thresholds( $policy['spend_threshold_plugins'] ?? array() );
+		$policy['plugin_budgets']          = Budget::sanitize_plugin_budgets( $policy['plugin_budgets'] ?? array() );
 		$policy['anomaly_alert_enabled'] = ! empty( $policy['anomaly_alert_enabled'] );
 		$policy['anomaly_multiplier']    = Anomaly::sanitize_multiplier( $policy['anomaly_multiplier'] ?? Anomaly::DEFAULT_MULTIPLIER );
 		$policy['anomaly_floor_calls']   = Anomaly::sanitize_floor_calls( $policy['anomaly_floor_calls'] ?? Anomaly::DEFAULT_FLOOR_CALLS );
@@ -1663,8 +1665,11 @@ final class Policy {
 			if ( ( $log[ $i ]['log_key'] ?? '' ) !== $log_key ) {
 				continue;
 			}
+			$before = $log[ $i ];
 			$log[ $i ] = array_merge( $log[ $i ], $patch );
 			update_option( Plugin::LOG_OPTION_KEY, $log, false );
+			// AICAC-BUDGET-A: attribute estimated-spend delta to the period bucket.
+			Budget::maybe_record_from_row( $before, $log[ $i ], self::get_policy() );
 			// S-103: token patch can move estimated spend over a threshold.
 			Spend_Threshold::maybe_evaluate();
 			Spend_Forecast::maybe_evaluate();

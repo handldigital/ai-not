@@ -605,6 +605,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cost.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-model-force.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cost.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-spend-threshold.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-budget.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-forecast.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-usage-trends.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-log-storage.php';

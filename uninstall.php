@@ -27,6 +27,7 @@ if ( function_exists( 'delete_metadata' ) ) {
 	delete_metadata( 'user', 0, 'handl_aicac_whats_new_dismissed', '', true );
 }
 delete_option( 'handl_aicac_spend_threshold_fired' );
+delete_option( 'handl_aicac_budget_spend' );
 delete_option( 'handl_aicac_forecast_warned' );
 delete_option( 'handl_aicac_anomaly_fired' );
 delete_option( 'handl_aicac_temp_allow_warned' );
