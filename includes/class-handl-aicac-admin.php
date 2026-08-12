@@ -3160,7 +3160,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo esc_html(
 			sprintf(
 				/* translators: 1: entry count, 2: approximate size (e.g. 48 KB) */
-				__( 'Current activity log: %1$s entries, about %2$s in the database.', 'handl-ai-connector-access-control' ),
+				__( 'Current activity log: %1$s entries using about %2$s on this site.', 'handl-ai-connector-access-control' ),
 				number_format_i18n( $row_count ),
 				Log_Storage::format_bytes( $bytes )
 			)
@@ -3180,7 +3180,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo esc_html(
 				sprintf(
 					/* translators: %s: human age of oldest retained entry */
-					__( 'Oldest retained entry: %s ago.', 'handl-ai-connector-access-control' ),
+					__( 'Oldest saved entry: %s ago.', 'handl-ai-connector-access-control' ),
 					$age_label
 				)
 			);
@@ -3188,20 +3188,26 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 
 		if ( null !== $footprint['rows_per_week'] && (int) $footprint['weeks_spanned'] > 0 ) {
+			$weeks_spanned = (int) $footprint['weeks_spanned'];
 			echo '<p class="description" style="margin:0 0 6px;">';
 			echo esc_html(
 				sprintf(
 					/* translators: 1: average rows per week, 2: weeks counted */
-					__( 'About %1$s entries per week over the last %2$d weeks with activity (approximation from the retained log).', 'handl-ai-connector-access-control' ),
+					_n(
+						'About %1$s entries per week, based on %2$d week with activity in the saved log.',
+						'About %1$s entries per week, based on %2$d weeks with activity in the saved log.',
+						$weeks_spanned,
+						'handl-ai-connector-access-control'
+					),
 					number_format_i18n( (int) round( (float) $footprint['rows_per_week'] ) ),
-					(int) $footprint['weeks_spanned']
+					$weeks_spanned
 				)
 			);
 			echo '</p>';
 		}
 
 		if ( $row_count > 0 ) {
-			echo '<p class="description" style="margin:8px 0 4px;"><strong>' . esc_html__( 'If you set a time limit', 'handl-ai-connector-access-control' ) . '</strong></p>';
+			echo '<p class="description" style="margin:8px 0 4px;"><strong>' . esc_html__( 'What shorter time limits would remove', 'handl-ai-connector-access-control' ) . '</strong></p>';
 			echo '<ul class="description" style="margin:0 0 8px 1.25em;list-style:disc;">';
 			foreach ( Log_Storage::ESTIMATE_DAY_OPTIONS as $days ) {
 				$est = Log_Storage::estimate_if_retention_days( $log, (int) $days );
@@ -3209,7 +3215,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 					echo '<li>' . esc_html(
 						sprintf(
 							/* translators: %d: retention days */
-							__( 'If retention were %d days: no entries would be removed right now.', 'handl-ai-connector-access-control' ),
+							__( 'A %d-day limit would not remove any entries right now.', 'handl-ai-connector-access-control' ),
 							(int) $days
 						)
 					) . '</li>';
@@ -3218,7 +3224,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				echo '<li>' . esc_html(
 					sprintf(
 						/* translators: 1: retention days, 2: rows that would be removed, 3: approximate bytes saved */
-						__( 'If retention were %1$d days: about %2$s older entries would be removed (roughly %3$s less storage).', 'handl-ai-connector-access-control' ),
+						__( 'A %1$d-day limit would remove about %2$s older entries and reduce storage by about %3$s.', 'handl-ai-connector-access-control' ),
 						(int) $days,
 						number_format_i18n( (int) $est['rows_purged'] ),
 						Log_Storage::format_bytes( (int) $est['approx_bytes_saved'] )
@@ -3238,8 +3244,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		// Live warning when the typed TTL would create Insights gaps.
 		echo '<p class="description handl-aicac-log-storage-warn" id="handl-aicac-log-storage-warn" style="margin:8px 0 0;' . ( null === $warning ? 'display:none;' : '' ) . '">';
-		echo '<strong>' . esc_html__( 'Heads up:', 'handl-ai-connector-access-control' ) . '</strong> ';
-		echo esc_html__( 'That time limit would remove older entries Insights still uses for weekly trends, so some weeks may show “no data kept.” Save only if you are okay with that.', 'handl-ai-connector-access-control' );
+		echo '<strong>' . esc_html__( 'Before you save:', 'handl-ai-connector-access-control' ) . '</strong> ';
+		echo esc_html__( 'This time limit would remove entries used for weekly trends in Insights. Some weeks would show “No data kept.” Save only if that is acceptable.', 'handl-ai-connector-access-control' );
 		echo '</p>';
 
 		if ( null !== $suggested ) {
@@ -3253,7 +3259,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				)
 			);
 			echo '</button>';
-			echo ' <span class="description">' . esc_html__( 'Fills the field only. Nothing is saved until you click Save Activity settings.', 'handl-ai-connector-access-control' ) . '</span>';
+			echo ' <span class="description">' . esc_html__( 'Keeps the full eight-week Insights window. Fills the field only; select Save Activity settings to apply it.', 'handl-ai-connector-access-control' ) . '</span>';
 			echo '</p>';
 		}
 
