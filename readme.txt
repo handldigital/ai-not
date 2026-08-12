@@ -192,6 +192,9 @@ Yes. With WP-CLI available and this plugin active:
 
 == Changelog ==
 
+= Unreleased =
+* Shared email layout for HandL alerts and reports: same header, intro, and footer on every message, with a plain-text and HTML part. Per-message wording inside the content block is unchanged.
+
 = 1.4.0 =
 * Policy checks on the Rules tab: save sample AI calls with expected Allow or Deny results. The plugin re-checks them before rules, presets, restores, or imports are applied and warns if a result would change.
 * Added optional Quiet hours on the Activity tab. Set weekly schedules to block AI Client calls or use Observe-only mode, which logs activity without blocking. The Dashboard shows when a schedule is active, and Emergency stop always takes priority.

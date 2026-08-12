@@ -843,13 +843,24 @@ final class Alerts {
 
 	/**
 	 * Contained wp_mail wrapper. Records Alert_Health email channel result.
-	 * wp_mail is pluggable; SMTP replacements may throw — never fatal on the
-	 * denial filter path or shutdown after a denial.
+	 * AICAC-EMAIL-BRAND: wraps the content block in shared chrome + multipart
+	 * plain/HTML alternative. wp_mail is pluggable; SMTP replacements may throw
+	 * — never fatal on the denial filter path or shutdown after a denial.
+	 *
+	 * @param list<string> $attachments
 	 */
 	public static function safe_wp_mail( string $to, string $subject, string $body, array $attachments = array() ): bool {
+		$headers = array();
+		if ( ! Email_Template::is_wrapped( $body ) ) {
+			$parts   = Email_Template::compose( $body );
+			$payload = Email_Template::multipart_payload( $parts );
+			$body    = $payload['body'];
+			$headers = $payload['headers'];
+		}
+
 		try {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.wp_mail -- intentional notification path.
-			$ok = (bool) wp_mail( $to, $subject, $body, '', $attachments );
+			$ok = (bool) wp_mail( $to, $subject, $body, $headers, $attachments );
 			Alert_Health::record_result(
 				Alert_Health::CHANNEL_EMAIL,
 				$ok,
