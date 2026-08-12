@@ -535,8 +535,12 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 				$audit_notice .= ' <a href="' . esc_url( admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' ) ) . '">' . esc_html__( 'Open Activity', 'handl-ai-connector-access-control' ) . '</a>';
 			}
 			echo '<div class="notice notice-info"><p>' . wp_kses_post( $audit_notice ) . '</p></div>';
-		} elseif ( ! empty( $policy['kill_switch'] ) ) {
+		} else		if ( ! empty( $policy['kill_switch'] ) ) {
 			echo '<div class="notice notice-warning"><p>' . esc_html__( 'Emergency stop is on. All AI Client calls are blocked except listed plugins.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		$qh_banner = Quiet_Hours::active_banner_text( $policy );
+		if ( null !== $qh_banner ) {
+			echo '<div class="notice notice-info"><p>' . esc_html( $qh_banner ) . '</p></div>';
 		}
 
 		// AICAC-FORECAST: mid-month projection vs configured spend thresholds.
@@ -1954,6 +1958,15 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		if ( ! empty( $policy['kill_switch'] ) ) {
 			echo '<p class="handl-aicac-danger"><strong>' . esc_html__( 'Emergency stop is on.', 'handl-ai-connector-access-control' ) . '</strong></p>';
 		}
+		$qh_line = Quiet_Hours::active_banner_text( $policy );
+		if ( null !== $qh_line ) {
+			echo '<p><strong>' . esc_html( $qh_line ) . '</strong></p>';
+		} else {
+			$qh_windows = Quiet_Hours::sanitize_windows( $policy['quiet_hours'] ?? array() );
+			if ( ! empty( $qh_windows ) ) {
+				echo '<p class="description">' . esc_html__( 'Quiet hours are configured. No window is active right now.', 'handl-ai-connector-access-control' ) . '</p>';
+			}
+		}
 		echo '<p>' . esc_html(
 			sprintf(
 				/* translators: %d: deny count in retained log */
@@ -3213,6 +3226,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '</td>';
 		echo '</tr>';
 
+		$this->render_quiet_hours_settings_rows( $policy );
+
 		// F3: denial alerts + AICAC-SHADOW-ALERT shadow-AI observe emails.
 		$alert_on      = ! empty( $policy['alert_on_deny'] );
 		$alert_shadow  = ! empty( $policy['alert_on_shadow'] );
@@ -4282,6 +4297,8 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			$policy['log_max_age_days'] = Policy::sanitize_log_max_age_days( $posted_max_age );
 		}
 
+		$this->apply_quiet_hours_settings_from_post( $policy );
+
 		$posted_alert = filter_input( INPUT_POST, 'handl_aicac_alert_on_deny', FILTER_UNSAFE_RAW );
 		$policy['alert_on_deny'] = ! empty( $posted_alert );
 		$posted_shadow = filter_input( INPUT_POST, 'handl_aicac_alert_on_shadow', FILTER_UNSAFE_RAW );
@@ -4875,6 +4892,19 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		if ( '' !== $reason && ( 'deny' === $decision || ( ! empty( $policy['audit_only'] ) && 'deny' === ( $row['would_decision'] ?? '' ) ) ) ) {
 			echo '<br /><span class="description handl-aicac-denial-reason">' . esc_html( $this->format_denial_reason_label( $reason ) ) . '</span>';
 		}
+		$qh_name = isset( $row['quiet_hours_window'] ) ? (string) $row['quiet_hours_window'] : '';
+		if ( '' !== $qh_name ) {
+			$qh_mode = isset( $row['quiet_hours_mode'] ) ? (string) $row['quiet_hours_mode'] : '';
+			$qh_line = sprintf(
+				/* translators: %s: quiet hours window name */
+				__( 'Quiet hours: %s', 'handl-ai-connector-access-control' ),
+				$qh_name
+			);
+			if ( Quiet_Hours::MODE_OBSERVE === $qh_mode ) {
+				$qh_line .= ' (' . __( 'observe', 'handl-ai-connector-access-control' ) . ')';
+			}
+			echo '<br /><span class="description handl-aicac-quiet-hours" style="font-size:11px;">' . esc_html( $qh_line ) . '</span>';
+		}
 		$user_role = isset( $row['user_role'] ) ? (string) $row['user_role'] : '';
 		if ( '' !== $user_role ) {
 			echo '<br /><span class="description handl-aicac-user-role" style="font-size:11px;">' . esc_html__( 'Role:', 'handl-ai-connector-access-control' ) . ' <code>' . esc_html( $user_role ) . '</code></span>';
@@ -5143,11 +5173,118 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	}
 
 	/**
+	 * AICAC-HOURS: quiet hours / maintenance windows on Activity settings (not Rules).
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function render_quiet_hours_settings_rows( array $policy ): void {
+		$windows = Quiet_Hours::sanitize_windows( $policy['quiet_hours'] ?? array() );
+		$labels  = Quiet_Hours::day_labels();
+		$tz      = Quiet_Hours::timezone();
+		$tz_name = $tz->getName();
+
+		echo '<tr>';
+		echo '<th scope="row">' . esc_html__( 'Quiet hours', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<td>';
+		echo '<p class="description" style="max-width:46em;margin-top:0;">' . esc_html__( 'Optional weekly windows when AI Client calls should pause or only be logged. Times use this site’s timezone. Quiet hours sit at the same site-wide layer as Emergency stop: Emergency stop still wins when it is on. Plugin Allow/Deny rules apply only when no Deny quiet-hours window is active. Observe windows never block.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html(
+			sprintf(
+				/* translators: %s: timezone name, e.g. America/Chicago */
+				__( 'Site timezone: %s', 'handl-ai-connector-access-control' ),
+				$tz_name
+			)
+		) . '</p>';
+
+		for ( $i = 0; $i < Quiet_Hours::MAX_WINDOWS; $i++ ) {
+			$win   = $windows[ $i ] ?? array(
+				'id'    => '',
+				'name'  => '',
+				'days'  => array(),
+				'start' => '',
+				'end'   => '',
+				'mode'  => Quiet_Hours::MODE_DENY,
+			);
+			$name  = (string) ( $win['name'] ?? '' );
+			$start = (string) ( $win['start'] ?? '' );
+			$end   = (string) ( $win['end'] ?? '' );
+			$mode  = Quiet_Hours::sanitize_mode( $win['mode'] ?? Quiet_Hours::MODE_DENY );
+			$days  = Quiet_Hours::sanitize_days( $win['days'] ?? array() );
+			$id    = (string) ( $win['id'] ?? '' );
+
+			echo '<fieldset style="margin:0 0 1em;padding:10px 12px;border:1px solid #c3c4c7;max-width:46em;">';
+			echo '<legend>' . esc_html(
+				sprintf(
+					/* translators: %d: window slot number starting at 1 */
+					__( 'Window %d', 'handl-ai-connector-access-control' ),
+					$i + 1
+				)
+			) . '</legend>';
+			if ( '' !== $id ) {
+				echo '<input type="hidden" name="handl_aicac_qh[' . (int) $i . '][id]" value="' . esc_attr( $id ) . '" />';
+			}
+			echo '<p style="margin:0 0 8px;"><label for="handl-aicac-qh-name-' . (int) $i . '">' . esc_html__( 'Name', 'handl-ai-connector-access-control' ) . '</label><br />';
+			echo '<input type="text" class="regular-text" id="handl-aicac-qh-name-' . (int) $i . '" name="handl_aicac_qh[' . (int) $i . '][name]" value="' . esc_attr( $name ) . '" placeholder="' . esc_attr__( 'e.g. Overnight', 'handl-ai-connector-access-control' ) . '" /></p>';
+
+			echo '<p style="margin:0 0 8px;"><span class="description">' . esc_html__( 'Days', 'handl-ai-connector-access-control' ) . '</span><br />';
+			foreach ( $labels as $dow => $lab ) {
+				$checked = in_array( (int) $dow, $days, true );
+				echo '<label style="margin-right:10px;"><input type="checkbox" name="handl_aicac_qh[' . (int) $i . '][days][]" value="' . (int) $dow . '" ' . checked( $checked, true, false ) . ' /> ' . esc_html( $lab ) . '</label>';
+			}
+			echo '</p>';
+
+			echo '<p style="margin:0 0 8px;">';
+			echo '<label for="handl-aicac-qh-start-' . (int) $i . '">' . esc_html__( 'Start', 'handl-ai-connector-access-control' ) . '</label> ';
+			echo '<input type="time" id="handl-aicac-qh-start-' . (int) $i . '" name="handl_aicac_qh[' . (int) $i . '][start]" value="' . esc_attr( $start ) . '" /> ';
+			echo '<label for="handl-aicac-qh-end-' . (int) $i . '" style="margin-left:12px;">' . esc_html__( 'End', 'handl-ai-connector-access-control' ) . '</label> ';
+			echo '<input type="time" id="handl-aicac-qh-end-' . (int) $i . '" name="handl_aicac_qh[' . (int) $i . '][end]" value="' . esc_attr( $end ) . '" />';
+			echo ' <span class="description">' . esc_html__( 'If end is earlier than start, the window runs overnight into the next morning.', 'handl-ai-connector-access-control' ) . '</span>';
+			echo '</p>';
+
+			echo '<p style="margin:0;">';
+			echo '<label for="handl-aicac-qh-mode-' . (int) $i . '">' . esc_html__( 'During this window', 'handl-ai-connector-access-control' ) . '</label><br />';
+			echo '<select id="handl-aicac-qh-mode-' . (int) $i . '" name="handl_aicac_qh[' . (int) $i . '][mode]">';
+			printf(
+				'<option value="deny"%s>%s</option>',
+				selected( $mode, Quiet_Hours::MODE_DENY, false ),
+				esc_html__( 'Block all AI Client calls', 'handl-ai-connector-access-control' )
+			);
+			printf(
+				'<option value="observe"%s>%s</option>',
+				selected( $mode, Quiet_Hours::MODE_OBSERVE, false ),
+				esc_html__( 'Observe only (log, never block)', 'handl-ai-connector-access-control' )
+			);
+			echo '</select>';
+			echo '</p>';
+			echo '<p class="description" style="margin:8px 0 0;">' . esc_html__( 'Leave Name blank to clear this slot.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '</fieldset>';
+		}
+
+		echo '</td>';
+		echo '</tr>';
+	}
+
+	/**
+	 * @param array<string,mixed> $policy
+	 */
+	private function apply_quiet_hours_settings_from_post( array &$policy ): void {
+		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
+		$posted = filter_input( INPUT_POST, 'handl_aicac_qh', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		if ( ! is_array( $posted ) ) {
+			// Activity save always posts the quiet-hours fields; missing array = clear.
+			$policy['quiet_hours'] = array();
+			return;
+		}
+		$policy['quiet_hours'] = Quiet_Hours::sanitize_windows( $posted );
+	}
+
+	/**
 	 * Human label for denial_reason codes (loud denials — admin blames this plugin).
 	 */
 	private function format_denial_reason_label( string $reason ): string {
 		$map = array(
 			'kill_switch'         => __( 'Blocked by HandL: emergency stop', 'handl-ai-connector-access-control' ),
+			'quiet_hours'         => __( 'Blocked by HandL: quiet hours', 'handl-ai-connector-access-control' ),
 			'role'                => __( 'Blocked by HandL: role not allowed', 'handl-ai-connector-access-control' ),
 			'plugin'              => __( 'Blocked by HandL: plugin rule', 'handl-ai-connector-access-control' ),
 			'capability_family'   => __( 'Blocked by HandL: AI type rule', 'handl-ai-connector-access-control' ),

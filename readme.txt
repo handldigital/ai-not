@@ -193,6 +193,7 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = Unreleased =
+* Optional Quiet hours on Activity settings: weekly windows (site timezone) that block AI Client calls or observe only. Dashboard shows when a window is live. Emergency stop still wins when it is on.
 * Optional: flag newly activated plugins for review and either block or log their AI calls until you choose Allow or Deny. Existing plugins are left alone when you turn this on.
 * Create a rule from an Activity call: open the Rules form pre-filled with that plugin, AI type, and provider/model. Already-covered plugins show a status instead of adding a second rule.
 * Added a read-only **Plugin AI profile**. Click a plugin in Activity or Dashboard estimated spend to see usage by day, operation, and model; blocked calls; direct connections outside the AI Client; estimated spend alerts; and the rules that currently apply. Rule results use the same decision process as enforcement. Links open the existing Rules and CSV export screens.
