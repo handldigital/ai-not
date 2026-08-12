@@ -3596,10 +3596,10 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo '<th scope="row">' . esc_html__( 'Weekly governance digest', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<td>';
 		echo '<label><input type="checkbox" name="handl_aicac_governance_digest_enabled" value="1" ' . checked( $digest_on, true, false ) . ' /> ';
-		echo esc_html__( 'Email a weekly governance digest (calls, estimated spend vs last week, blocks, direct connections, usage spikes)', 'handl-ai-connector-access-control' ) . '</label>';
+		echo esc_html__( 'Email a weekly governance digest (calls, estimated spend vs the previous 7 days, blocks, direct connections, usage spikes)', 'handl-ai-connector-access-control' ) . '</label>';
 		echo '<p class="description">' . esc_html__( 'Off by default. Uses the last 7 days of saved Activity — the same window as the Activity summary. Sends at most once per week to the blocked-call alert email. Clear the checkbox and save to turn it off.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<p style="margin-top:8px;"><label><input type="checkbox" name="handl_aicac_governance_digest_always_send" value="1" ' . checked( $digest_always, true, false ) . ' /> ';
-		echo esc_html__( 'Also send when there was no AI activity that week', 'handl-ai-connector-access-control' ) . '</label></p>';
+		echo esc_html__( 'Also send when no AI activity was recorded in the last 7 days', 'handl-ai-connector-access-control' ) . '</label></p>';
 		echo '<p style="margin-top:8px;">';
 		submit_button(
 			__( 'Send test email', 'handl-ai-connector-access-control' ),
@@ -3611,7 +3611,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 				'id'   => 'handl-aicac-send-test-digest-email',
 			)
 		);
-		echo ' <span class="description">' . esc_html__( 'Sends a labeled test digest to the saved recipient, or the site admin email. Limited to one test email per minute.', 'handl-ai-connector-access-control' ) . '</span>';
+		echo ' <span class="description">' . esc_html__( 'Sends a labeled test digest to the blocked-call alert email, or the site admin email if none is saved. Limited to one test email per minute.', 'handl-ai-connector-access-control' ) . '</span>';
 		echo '</p>';
 		echo '</td>';
 		echo '</tr>';

@@ -304,10 +304,16 @@ final class Governance_Digest {
 				$prev = $stats['estimated_spend_prev'] ?? null;
 				if ( null !== $prev ) {
 					$delta = (float) $est - (float) $prev;
-					$sign  = $delta > 0.00005 ? '+' : '';
+					if ( $delta > 0.00005 ) {
+						$sign = '+';
+					} elseif ( $delta < -0.00005 ) {
+						$sign = '-';
+					} else {
+						$sign = '';
+					}
 					$lines[] = sprintf(
-						/* translators: 1: this week estimated USD, 2: signed delta vs prior week */
-						__( 'Estimated spend: $%1$s (%2$s$%3$s vs prior 7 days)', 'handl-ai-connector-access-control' ),
+						/* translators: 1: this week estimated USD, 2: + or - or empty, 3: absolute delta vs previous 7 days */
+						__( 'Estimated spend: $%1$s (%2$s$%3$s vs the previous 7 days)', 'handl-ai-connector-access-control' ),
 						self::format_amount( (float) $est ),
 						$sign,
 						self::format_amount( abs( $delta ) )
@@ -315,7 +321,7 @@ final class Governance_Digest {
 				} else {
 					$lines[] = sprintf(
 						/* translators: %s: estimated USD */
-						__( 'Estimated spend: $%s (no prior-week estimate to compare)', 'handl-ai-connector-access-control' ),
+						__( 'Estimated spend: $%s (no previous-7-days estimate to compare)', 'handl-ai-connector-access-control' ),
 						self::format_amount( (float) $est )
 					);
 				}

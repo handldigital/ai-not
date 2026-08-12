@@ -135,6 +135,23 @@ final class GovernanceDigestTest extends TestCase {
 		$this->assertStringNotContainsString( 'admin@example.com', $body );
 	}
 
+	public function test_spend_decrease_shows_minus_sign(): void {
+		$stats = array(
+			'status'               => 'ok',
+			'has_activity'         => true,
+			'ai_client_calls'      => 2,
+			'blocked_calls'        => 0,
+			'shadow_count'         => 0,
+			'anomaly_count'        => 0,
+			'estimated_spend'      => 5.0,
+			'estimated_spend_prev' => 8.0,
+			'top_plugins'          => array(),
+		);
+		$body = Governance_Digest::build_body( $stats );
+		$this->assertStringContainsString( '(-$', $body );
+		$this->assertStringContainsString( 'vs the previous 7 days', $body );
+	}
+
 	public function test_zero_activity_skips_unless_always_send(): void {
 		$now    = strtotime( '2026-08-12 15:00:00 UTC' );
 		$policy = $this->persist_policy(
