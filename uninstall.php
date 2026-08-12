@@ -21,6 +21,8 @@ delete_option( 'handl_aicac_denial_digest_queue' );
 delete_option( 'handl_aicac_denial_email_rate' );
 delete_option( 'handl_aicac_test_email_rate' );
 delete_option( 'handl_aicac_alert_health' );
+delete_option( 'handl_aicac_webhook_delivery_log' );
+delete_option( 'handl_aicac_webhook_fail_mail_at' );
 delete_option( 'handl_aicac_whats_new_seen_version' );
 delete_option( 'handl_aicac_whats_new_announce' );
 if ( function_exists( 'delete_metadata' ) ) {

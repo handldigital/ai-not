@@ -704,12 +704,28 @@ final class Alerts {
 	 * @return bool True when the endpoint returned 2xx.
 	 */
 	public static function send_test_webhook( array $policy ): bool {
+		$result = self::send_test_webhook_detailed( $policy );
+		return ! empty( $result['ok'] );
+	}
+
+	/**
+	 * Same as send_test_webhook(), with HTTP status / retry detail for admin notices.
+	 *
+	 * @param array<string,mixed> $policy
+	 * @return array{ok:bool,http_status:?int,retries:int,error:string}
+	 */
+	public static function send_test_webhook_detailed( array $policy ): array {
 		$url = self::resolve_webhook( $policy );
 		if ( '' === $url ) {
-			return false;
+			return array(
+				'ok'          => false,
+				'http_status' => null,
+				'retries'     => 0,
+				'error'       => 'Webhook URL missing or invalid',
+			);
 		}
 
-		return self::safe_wp_remote_post( $url, self::build_test_webhook_payload() );
+		return self::deliver_webhook( $url, self::build_test_webhook_payload(), 'test' );
 	}
 
 	/**
@@ -892,23 +908,161 @@ final class Alerts {
 	/**
 	 * Contained webhook POST (AC3): never throws; non-2xx / WP_Error / timeout → false.
 	 * Does not follow redirects (SSRF-adjacent admin URL — intentional outbound).
-	 * Records Alert_Health webhook channel result.
+	 * Records Alert_Health webhook channel result and a delivery-log row.
+	 * On 5xx / timeout: one automatic retry with backoff; if that also fails,
+	 * sends a throttled email alert via the shared Email_Template chrome.
 	 *
 	 * @param array<string,mixed> $payload
+	 * @param string              $event_type Optional log label override (denial|test|…).
 	 */
-	public static function safe_wp_remote_post( string $url, array $payload ): bool {
-		$url = self::sanitize_webhook_url( $url );
+	public static function safe_wp_remote_post( string $url, array $payload, string $event_type = '' ): bool {
+		$result = self::deliver_webhook( $url, $payload, $event_type );
+		return ! empty( $result['ok'] );
+	}
+
+	/**
+	 * Full webhook delivery with retry + log + optional failure email.
+	 *
+	 * @param array<string,mixed> $payload
+	 * @return array{ok:bool,http_status:?int,retries:int,error:string}
+	 */
+	public static function deliver_webhook( string $url, array $payload, string $event_type = '' ): array {
+		$event = self::resolve_webhook_event_type( $payload, $event_type );
+		$url   = self::sanitize_webhook_url( $url );
 		if ( '' === $url ) {
 			Alert_Health::record_result( Alert_Health::CHANNEL_WEBHOOK, false, 'Webhook URL missing or invalid' );
-			return false;
+			return array(
+				'ok'          => false,
+				'http_status' => null,
+				'retries'     => 0,
+				'error'       => 'Webhook URL missing or invalid',
+			);
 		}
 
 		$body = wp_json_encode( $payload );
 		if ( ! is_string( $body ) || '' === $body ) {
 			Alert_Health::record_result( Alert_Health::CHANNEL_WEBHOOK, false, 'Webhook payload encode failed' );
-			return false;
+			return array(
+				'ok'          => false,
+				'http_status' => null,
+				'retries'     => 0,
+				'error'       => 'Webhook payload encode failed',
+			);
 		}
 
+		$attempt = self::perform_webhook_http_post( $url, $body );
+		$retries = 0;
+
+		if ( ! $attempt['ok'] && self::webhook_failure_is_retryable( $attempt ) ) {
+			self::webhook_retry_backoff();
+			$attempt = self::perform_webhook_http_post( $url, $body );
+			$retries = 1;
+		}
+
+		$ok    = ! empty( $attempt['ok'] );
+		$error = $ok ? '' : (string) $attempt['error'];
+		$http  = $attempt['http_status'];
+
+		Alert_Health::record_result(
+			Alert_Health::CHANNEL_WEBHOOK,
+			$ok,
+			$ok ? '' : ( '' !== $error ? $error : 'Webhook request failed' )
+		);
+
+		Webhook_Delivery_Log::push(
+			array(
+				'ts'          => time(),
+				'event'       => $event,
+				'http_status' => $http,
+				'retries'     => $retries,
+				'ok'          => $ok,
+				'error'       => $error,
+			)
+		);
+
+		if ( ! $ok && 1 === $retries ) {
+			self::maybe_notify_webhook_delivery_failure( $event, $http, $error );
+		}
+
+		return array(
+			'ok'          => $ok,
+			'http_status' => $http,
+			'retries'     => $retries,
+			'error'       => $error,
+		);
+	}
+
+	/**
+	 * @param array<string,mixed> $payload
+	 */
+	public static function resolve_webhook_event_type( array $payload, string $override = '' ): string {
+		$override = sanitize_key( $override );
+		if ( '' !== $override ) {
+			return $override;
+		}
+
+		if ( isset( $payload['event'] ) && is_string( $payload['event'] ) && '' !== $payload['event'] ) {
+			return sanitize_key( $payload['event'] );
+		}
+
+		$type = isset( $payload['type'] ) ? sanitize_key( (string) $payload['type'] ) : '';
+		if ( 'handl_aicac_drift_alert' === $type ) {
+			return 'drift';
+		}
+		if ( 'handl_aicac_anomaly_alert' === $type ) {
+			return 'anomaly';
+		}
+
+		return '' !== $type ? $type : 'webhook';
+	}
+
+	/**
+	 * Milliseconds to wait before the single automatic retry (filterable for tests).
+	 */
+	public static function webhook_retry_backoff_ms(): int {
+		$ms = 1000;
+		if ( function_exists( 'apply_filters' ) ) {
+			$ms = (int) apply_filters( 'handl_aicac_webhook_retry_backoff_ms', $ms );
+		}
+		if ( $ms < 0 ) {
+			$ms = 0;
+		}
+		if ( $ms > 10000 ) {
+			$ms = 10000;
+		}
+
+		return $ms;
+	}
+
+	private static function webhook_retry_backoff(): void {
+		$ms = self::webhook_retry_backoff_ms();
+		if ( $ms <= 0 ) {
+			return;
+		}
+		usleep( $ms * 1000 );
+	}
+
+	/**
+	 * @param array{ok:bool,http_status:?int,error:string} $attempt
+	 */
+	public static function webhook_failure_is_retryable( array $attempt ): bool {
+		if ( ! empty( $attempt['ok'] ) ) {
+			return false;
+		}
+		$http = $attempt['http_status'];
+		if ( null === $http ) {
+			// WP_Error / timeout / transport failure.
+			return true;
+		}
+		$code = (int) $http;
+
+		return $code >= 500 && $code <= 599;
+	}
+
+	/**
+	 * @return array{ok:bool,http_status:?int,error:string}
+	 */
+	private static function perform_webhook_http_post( string $url, string $body ): array {
 		try {
 			$response = wp_remote_post(
 				$url,
@@ -923,28 +1077,95 @@ final class Alerts {
 				)
 			);
 		} catch ( \Throwable $e ) {
-			Alert_Health::record_result( Alert_Health::CHANNEL_WEBHOOK, false, 'Webhook request error' );
-			return false;
+			return array(
+				'ok'          => false,
+				'http_status' => null,
+				'error'       => 'Webhook request error',
+			);
 		}
 
 		if ( is_wp_error( $response ) ) {
 			$msg = $response->get_error_message();
-			Alert_Health::record_result(
-				Alert_Health::CHANNEL_WEBHOOK,
-				false,
-				'' !== $msg ? $msg : 'Webhook request failed'
+			return array(
+				'ok'          => false,
+				'http_status' => null,
+				'error'       => '' !== $msg ? $msg : 'Webhook request failed',
 			);
-			return false;
 		}
 
 		$code = (int) wp_remote_retrieve_response_code( $response );
 		$ok   = $code >= 200 && $code < 300;
-		Alert_Health::record_result(
-			Alert_Health::CHANNEL_WEBHOOK,
-			$ok,
-			$ok ? '' : sprintf( 'HTTP %d', $code )
+
+		return array(
+			'ok'          => $ok,
+			'http_status' => $code,
+			'error'       => $ok ? '' : sprintf( 'HTTP %d', $code ),
 		);
-		return $ok;
+	}
+
+	/**
+	 * Email after a retried webhook still fails. Throttled so a broken endpoint
+	 * cannot flood the alert inbox during an outage.
+	 */
+	private static function maybe_notify_webhook_delivery_failure( string $event, ?int $http_status, string $error ): void {
+		$throttle_key = 'handl_aicac_webhook_fail_mail_at';
+		$now          = time();
+		$last         = (int) get_option( $throttle_key, 0 );
+		$cooldown     = 900;
+		if ( function_exists( 'apply_filters' ) ) {
+			$cooldown = (int) apply_filters( 'handl_aicac_webhook_failure_email_cooldown', $cooldown );
+		}
+		if ( $cooldown < 0 ) {
+			$cooldown = 0;
+		}
+		if ( $last > 0 && ( $now - $last ) < $cooldown ) {
+			return;
+		}
+
+		$policy = Policy::get_policy();
+		$to     = self::resolve_email( is_array( $policy ) ? $policy : array() );
+		if ( '' === $to ) {
+			return;
+		}
+
+		$site = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
+		$subject = sprintf(
+			/* translators: %s: site name */
+			__( '[%s] HandL webhook delivery failed', 'handl-ai-connector-access-control' ),
+			$site
+		);
+
+		$event_label = Webhook_Delivery_Log::event_label( $event );
+		$lines       = array();
+		$lines[]     = __( 'HandL could not deliver a webhook alert after one automatic retry.', 'handl-ai-connector-access-control' );
+		$lines[]     = '';
+		$lines[]     = sprintf(
+			/* translators: %s: event type label */
+			__( 'Event: %s', 'handl-ai-connector-access-control' ),
+			$event_label
+		);
+		if ( null !== $http_status ) {
+			$lines[] = sprintf(
+				/* translators: %d: HTTP status code */
+				__( 'HTTP status: %d', 'handl-ai-connector-access-control' ),
+				(int) $http_status
+			);
+		} elseif ( '' !== $error ) {
+			$lines[] = sprintf(
+				/* translators: %s: short error message */
+				__( 'Error: %s', 'handl-ai-connector-access-control' ),
+				$error
+			);
+		}
+		$lines[] = '';
+		$lines[] = __( 'Check the Webhook URL under Settings → HandL AI Connector Access Control → Activity. The delivery log there lists recent attempts.', 'handl-ai-connector-access-control' );
+		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' );
+
+		$body = implode( "\n", $lines );
+		$ok   = self::safe_wp_mail( $to, $subject, $body );
+		if ( $ok ) {
+			update_option( $throttle_key, $now, false );
+		}
 	}
 
 	/**
