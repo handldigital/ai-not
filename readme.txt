@@ -4,7 +4,7 @@ Tags: ai, governance, security, handl, ai client
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -192,16 +192,17 @@ Yes. With WP-CLI available and this plugin active:
 
 == Changelog ==
 
-= Unreleased =
+= 1.4.0 =
 * Policy checks on the Rules tab: save sample AI calls with expected Allow or Deny results. The plugin re-checks them before rules, presets, restores, or imports are applied and warns if a result would change.
-* Activity settings now shows how much space the activity log uses and estimates what shorter time limits would remove. The suggested limit only fills the field. Select Save Activity settings to apply it.
+* Added optional Quiet hours on the Activity tab. Set weekly schedules to block AI Client calls or use Observe-only mode, which logs activity without blocking. The Dashboard shows when a schedule is active, and Emergency stop always takes priority.
+* The Activity settings screen now shows how much space the activity log uses and estimates what shorter time limits would remove. The suggested limit only fills the field. Select Save Activity settings to apply it.
 * Mute alert emails and webhooks for one plugin for 1 hour, 8 hours, 24 hours, or 7 days. Rules still apply and activity still logs. The plugin records how many alerts would have been sent during the mute.
-* Added optional Quiet hours on the Activity tab. Set weekly schedules to block AI Client calls or log activity without adding a block. The Dashboard shows when a schedule is active, and Emergency stop always takes priority.
+* Compare a previous JSON rules export with your current policy on the Rules tab. See every setting that differs before you import. Unknown fields from a newer export are listed as not comparable. Nothing is changed until you use Import.
+* Temporary Allow rules can send one warning email when about 24 hours remain before expiry. Renewing a rule clears the warning for that rule.
 * Optional: flag newly activated plugins for review and either block or log their AI calls until you choose Allow or Deny. Existing plugins are left alone when you turn this on.
 * Create a rule from an Activity call: open the Rules form pre-filled with that plugin, AI type, and provider/model. Already-covered plugins show a status instead of adding a second rule.
 * Added a read-only **Plugin AI profile**. Click a plugin in Activity or Dashboard estimated spend to see usage by day, operation, and model; blocked calls; direct connections outside the AI Client; estimated spend alerts; and the rules that currently apply. Rule results use the same decision process as enforcement. Links open the existing Rules and CSV export screens.
 * Added an optional, unchecked onboarding choice to receive product news and related offers from HandL Digital. If selected, the plugin sends the alert email address, site URL, plugin version, and consent time to HandL Digital. Privacy / Data documents the transmission and opt-out method.
-* Compare a previous JSON rules export with your current policy on the Rules tab. See every setting that differs before you import. Unknown fields from a newer export are listed as not comparable. Nothing is changed until you use Import.
 
 = 1.3.0 =
 * Insights: weekly call and estimated-spend trends (last 8 weeks) with per-plugin sparklines and week-over-week change. Weeks with no retained log data show as “no data kept,” not zero.
