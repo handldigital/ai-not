@@ -70,14 +70,14 @@ final class BeyondConnectorApprovalsMessagingTest extends TestCase {
 		$this->assertStringContainsString( 'shadow-AI detection', $readme );
 		$this->assertStringContainsString( 'spend / denial alerting', $readme );
 		$this->assertStringContainsString( 'differs from Connector Approvals', $readme );
-		$this->assertStringContainsString( '= 1.2.2 =', $readme );
+		$this->assertStringContainsString( '= 1.3.0 =', $readme );
 	}
 
 	public function test_plugin_version_stays_current_release(): void {
 		$main = file_get_contents( HANDL_AICAC_DIR . '/handl-ai-connector-access-control.php' );
 		$this->assertNotFalse( $main );
 		// Release stamp must stay aligned across header + constant.
-		$this->assertMatchesRegularExpression( "/define\(\s*'HANDL_AICAC_VERSION',\s*'1\.2\.2'\s*\)/", $main );
-		$this->assertStringContainsString( 'Version: 1.2.2', $main );
+		$this->assertMatchesRegularExpression( "/define\(\s*'HANDL_AICAC_VERSION',\s*'1\.3\.0'\s*\)/", $main );
+		$this->assertStringContainsString( 'Version: 1.3.0', $main );
 	}
 }
