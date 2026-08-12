@@ -1,0 +1,99 @@
+HEAD=b704bbb
+START 2026-08-12T04:23:21.432Z
+POLICY_BEFORE sha256=3b060411db2af45713a5cec95a6802607a562225485a58f55ccb8056cd3a310d bytes=1833
+STAGE_FIXTURE {
+    "rows": 100,
+    "footprint": {
+        "row_count": 100,
+        "approx_bytes": 20298,
+        "oldest_ts": 1781033005,
+        "oldest_age_days": 63.375,
+        "rows_per_week": 10,
+        "weeks_spanned": 8,
+        "weekly_rows": [
+            {
+                "key": "2026-W26",
+                "rows": 10,
+                "start_ts": 1782086400,
+                "end_ts": 1782691200
+            },
+            {
+                "key": "2026-W27",
+                "rows": 10,
+                "start_ts": 1782691200,
+                "end_ts": 1783296000
+            },
+            {
+                "key": "2026-W28",
+                "rows": 10,
+                "start_ts": 1783296000,
+                "end_ts": 1783900800
+            },
+            {
+                "key": "2026-W29",
+                "rows": 10,
+                "start_ts": 1783900800,
+                "end_ts": 1784505600
+            },
+            {
+                "key": "2026-W30",
+                "rows": 10,
+                "start_ts": 1784505600,
+                "end_ts": 1785110400
+            },
+            {
+                "key": "2026-W31",
+                "rows": 10,
+                "start_ts": 1785110400,
+                "end_ts": 1785715200
+            },
+            {
+                "key": "2026-W32",
+                "rows": 10,
+                "start_ts": 1785715200,
+                "end_ts": 1786320000
+            },
+            {
+                "key": "2026-W33",
+                "rows": 10,
+                "start_ts": 1786320000,
+                "end_ts": 1786924800
+            }
+        ]
+    },
+    "suggested": 56,
+    "est7": {
+        "days": 7,
+        "rows_kept": 11,
+        "rows_purged": 89,
+        "approx_bytes_kept": 2230,
+        "approx_bytes_saved": 18068
+    },
+    "warn7": {
+        "would_purge": true,
+        "rows_purged_in_window": 69,
+        "weeks_with_data_before": 8,
+        "weeks_with_data_after": 2
+    },
+    "weeks_with_data": 8
+}
+POLICY_AFTER_STAGE sha256=3b060411db2af45713a5cec95a6802607a562225485a58f55ccb8056cd3a310d bytes=1833
+after_login https://handl-sandbox/wp-admin/admin.php?page=magnus-org-chart
+FOOTPRINT=true OLDEST=true EST_HEADING=true EST_LINE=true SUGGESTED_BTN=1
+saved 01-activity-footprint-oldest-estimates.png size=1313599
+saved 01a-storage-hints-block.png size=56845
+TTL_FIELD_BEFORE=""
+TTL_FIELD_AFTER_PREFILL="56"
+PREFILL_56=true
+saved 02-suggested-56-prefill-no-save.png size=1314419
+saved 02a-suggested-prefill-block.png
+POLICY_AFTER_PREFILL sha256=3b060411db2af45713a5cec95a6802607a562225485a58f55ccb8056cd3a310d match_baseline=true
+WARN_VISIBLE=true
+WARN_TEXT=Before you save: This time limit would remove entries used for weekly trends in Insights. Some weeks would show “No data kept.” Save only if that is acceptable.
+WARN_OK=true
+saved 03-insights-retention-gap-warning.png size=1327869
+saved 03a-warning-block.png
+POLICY_AFTER_UI sha256=3b060411db2af45713a5cec95a6802607a562225485a58f55ccb8056cd3a310d match_baseline=true
+NO_POLICY_CHANGE=true
+RESTORE log_restored rows=100
+POLICY_FINAL sha256=3b060411db2af45713a5cec95a6802607a562225485a58f55ccb8056cd3a310d match_baseline=true

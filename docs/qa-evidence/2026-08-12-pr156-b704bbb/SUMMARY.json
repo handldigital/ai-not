@@ -1,0 +1,20 @@
+{
+  "head": "b704bbb",
+  "hasFootprint": true,
+  "hasOldest": true,
+  "hasEstimateHeading": true,
+  "hasEstimateLine": true,
+  "hasSuggestedBtn": 1,
+  "prefillOk": true,
+  "afterPrefill": "56",
+  "warnOk": true,
+  "warnText": "Before you save: This time limit would remove entries used for weekly trends in Insights. Some weeks would show “No data kept.” Save only if that is acceptable.",
+  "policy": {
+    "before": "3b060411db2af45713a5cec95a6802607a562225485a58f55ccb8056cd3a310d",
+    "baseline": "3b060411db2af45713a5cec95a6802607a562225485a58f55ccb8056cd3a310d",
+    "afterPrefill": "3b060411db2af45713a5cec95a6802607a562225485a58f55ccb8056cd3a310d",
+    "afterUi": "3b060411db2af45713a5cec95a6802607a562225485a58f55ccb8056cd3a310d",
+    "final": "3b060411db2af45713a5cec95a6802607a562225485a58f55ccb8056cd3a310d",
+    "noPolicyChangeDuringUi": true
+  }
+}
