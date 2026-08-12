@@ -3482,10 +3482,10 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$rows = Webhook_Delivery_Log::get_rows();
 
 		echo '<h2>' . esc_html__( 'Webhook delivery log', 'handl-ai-connector-access-control' ) . '</h2>';
-		echo '<p class="description" style="max-width:52em;">' . esc_html__( 'Shows the last 20 webhook sends from this site. HandL retries once on a server error or timeout. If that retry also fails, HandL emails the alert recipient (at most once every 15 minutes).', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description" style="max-width:52em;">' . esc_html__( 'Shows the last 20 webhook delivery attempts from this site. HandL retries once after a server error or timeout. If the retry also fails, HandL emails the blocked-call alert recipient, or the site admin if none is saved. Failure emails are limited to one every 15 minutes.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( array() === $rows ) {
-			echo '<p class="description">' . esc_html__( 'No webhook sends recorded yet.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'No webhook delivery attempts recorded yet.', 'handl-ai-connector-access-control' ) . '</p>';
 			return;
 		}
 
@@ -3512,7 +3512,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			$http_label = null === $http ? '—' : (string) (int) $http;
 
 			$result = ! empty( $row['ok'] )
-				? __( 'OK', 'handl-ai-connector-access-control' )
+				? __( 'Delivered', 'handl-ai-connector-access-control' )
 				: (
 					'' !== (string) $row['error']
 						? (string) $row['error']

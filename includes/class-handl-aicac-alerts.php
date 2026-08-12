@@ -1137,7 +1137,7 @@ final class Alerts {
 
 		$event_label = Webhook_Delivery_Log::event_label( $event );
 		$lines       = array();
-		$lines[]     = __( 'HandL could not deliver a webhook alert after one automatic retry.', 'handl-ai-connector-access-control' );
+		$lines[]     = __( 'HandL could not deliver a webhook after one automatic retry.', 'handl-ai-connector-access-control' );
 		$lines[]     = '';
 		$lines[]     = sprintf(
 			/* translators: %s: event type label */
