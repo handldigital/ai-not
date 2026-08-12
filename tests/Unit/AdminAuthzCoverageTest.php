@@ -29,6 +29,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 	private const APPROVED_DISPATCH_ACTIONS = array(
 		'bulk_plugin_rules',
 		'cancel_alert_snooze',
+		'compare_rules_preview',
 		'export_audit_report',
 		'export_log',
 		'export_rules',
@@ -188,6 +189,10 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array(
 				'action'       => 'import_rules_confirm',
 				'nonce_action' => 'handl_aicac_import_rules_confirm',
+			),
+			array(
+				'action'       => 'compare_rules_preview',
+				'nonce_action' => 'handl_aicac_compare_rules',
 			),
 			array(
 				'action'       => 'keyscan_run',
@@ -371,12 +376,14 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array( 'handle_quick_rule_redirect', 'handl_aicac_quick_rule' ),
 			array( 'handle_undo_quick_rule', 'handl_aicac_undo_quick_rule' ),
 			array( 'apply_kill_switch_settings_from_post', 'handl_aicac_save_policy' ),
+			array( 'apply_quiet_hours_settings_from_post', 'handl_aicac_save_policy' ),
 			array( 'apply_model_force_settings_from_post', 'handl_aicac_save_policy' ),
 			array( 'apply_role_gate_settings_from_post', 'handl_aicac_save_policy' ),
 			array( 'apply_log_settings_from_post', 'handl_aicac_save_policy' ),
 			array( 'handle_export_rules', 'handl_aicac_export_rules' ),
 			array( 'handle_import_rules_preview', 'handl_aicac_import_rules' ),
 			array( 'handle_import_rules_confirm', 'handl_aicac_import_rules_confirm' ),
+			array( 'handle_compare_rules_preview', 'handl_aicac_compare_rules' ),
 			array( 'handle_keyscan_run', 'handl_aicac_keyscan_run' ),
 			array( 'handle_onboard_dismiss', 'handl_aicac_onboard' ),
 			array( 'handle_onboard_step', 'handl_aicac_onboard' ),
@@ -401,6 +408,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'handle_quick_rule_redirect',
 				'handle_undo_quick_rule',
 				'apply_kill_switch_settings_from_post',
+				'apply_quiet_hours_settings_from_post',
 				'apply_model_force_settings_from_post',
 				'apply_role_gate_settings_from_post',
 				'apply_log_settings_from_post',
@@ -408,6 +416,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'handle_export_log',
 				'handle_import_rules_preview',
 				'handle_import_rules_confirm',
+				'handle_compare_rules_preview',
 				'handle_keyscan_run',
 				'handle_onboard_dismiss',
 				'handle_onboard_step',
@@ -537,6 +546,23 @@ final class AdminAuthzCoverageTest extends TestCase {
 			$confirm_body,
 			'Confirmed import must write through Policy::save_policy'
 		);
+	}
+
+	/**
+	 * Compare path is read-only: never calls Policy::save_policy.
+	 */
+	public function test_compare_preview_never_writes_policy(): void {
+		$pos = strpos( $this->source, 'function handle_compare_rules_preview' );
+		$this->assertNotFalse( $pos );
+		$body = substr( $this->source, $pos, 2200 );
+		$this->assertStringNotContainsString(
+			'Policy::save_policy(',
+			$body,
+			'Compare must never write policy'
+		);
+		$this->assertStringContainsString( 'name="handl_aicac_compare_file"', $this->source );
+		$this->assertStringContainsString( 'Compare with current', $this->source );
+		$this->assertStringContainsString( 'render_confirm_diff_table', $this->source );
 	}
 
 	/**
