@@ -1,0 +1,16 @@
+Subject: [HandL UTM Grabber - Sandbox] Temporary Allow rule expires within 24 hours: Akismet Anti-spam: Spam Protection
+ID: z3oyZbFPutazH9b2i-UtPgKx6DNmrkfEuBnVYPRQ_q8=@mailhog.mamppro
+To: haktan+expiry-warn@handldigital.com
+Created: 2026-08-11T19:11:46.620299-05:00
+API: http://127.0.0.1:8026/mailhog/api/v1/messages/z3oyZbFPutazH9b2i-UtPgKx6DNmrkfEuBnVYPRQ_q8%3D%40mailhog.mamppro
+UI: http://127.0.0.1:8026/mailhog/
+
+HandL AI Connector Access Control temporary Allow rule expires within 24 hours
+
+Plugin: Akismet Anti-spam: Spam Protection
+Expires: August 12, 2026 6:11 am
+
+This plugin’s temporary Allow rule expires within 24 hours. After it expires, the plugin will follow the site default policy.
+
+Open the Rules tab to select Renew 7 days or choose a new expiry:
+https://handl-sandbox/wp-admin/options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules
