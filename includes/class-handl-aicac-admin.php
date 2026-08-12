@@ -387,7 +387,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Policy check list updated.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $checks_need_override ) {
-			echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__( 'This change would break one or more policy checks. Review the list below and check “Save anyway” if you still want to apply it.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__( 'This change would make one or more policy checks fail. Review the list below and select “Save anyway” if you still want to apply it.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $saved ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Saved.', 'handl-ai-connector-access-control' ) . '</p></div>';
@@ -5379,7 +5379,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
 		if ( ! empty( $check_report['failures'] ) ) {
 			echo '<p><label><input type="checkbox" name="handl_aicac_checks_override" value="1" /> ';
-			echo esc_html__( 'Save anyway (breaks policy checks)', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'Save anyway, even though policy checks will fail', 'handl-ai-connector-access-control' );
 			echo '</label></p>';
 		}
 		submit_button( __( 'Apply preset', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
@@ -5472,7 +5472,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
 		if ( ! empty( $check_report['failures'] ) ) {
 			echo '<p><label><input type="checkbox" name="handl_aicac_checks_override" value="1" /> ';
-			echo esc_html__( 'Save anyway (breaks policy checks)', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'Save anyway, even though policy checks will fail', 'handl-ai-connector-access-control' );
 			echo '</label></p>';
 		}
 		submit_button( __( 'Confirm and replace rules', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
@@ -5668,7 +5668,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
 		if ( ! empty( $check_report['failures'] ) ) {
 			echo '<p><label><input type="checkbox" name="handl_aicac_checks_override" value="1" /> ';
-			echo esc_html__( 'Save anyway (breaks policy checks)', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'Save anyway, even though policy checks will fail', 'handl-ai-connector-access-control' );
 			echo '</label></p>';
 		}
 		submit_button( __( 'Restore previous policy', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
@@ -6239,7 +6239,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	private function render_policy_checks_section( array $plugins, bool $show_confirm ): void {
 		echo '<div id="handl-aicac-policy-checks" class="handl-aicac-policy-checks" style="margin:0 0 1.5em;">';
 		echo '<h2>' . esc_html__( 'Policy checks', 'handl-ai-connector-access-control' ) . '</h2>';
-		echo '<p class="description">' . esc_html__( 'Pin a few sample AI calls that must stay allowed or blocked. Every save re-checks them. If a change would break a check, you will see a warning and can still save.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Save sample AI calls with the Allow or Deny result you expect. Before rules, presets, restores, or imports are applied, the plugin runs the checks again and warns if a result would change.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( $show_confirm ) {
 			$this->render_policy_checks_save_confirm( $plugins );
@@ -6252,8 +6252,8 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			echo '<table class="widefat striped" style="max-width:52em;margin:0.5em 0 1em;">';
 			echo '<thead><tr>';
 			echo '<th>' . esc_html__( 'Check', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'Expected', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'Now', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'Should be', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'Status', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '<th></th>';
 			echo '</tr></thead><tbody>';
 			$live = Policy::get_policy();
@@ -6265,7 +6265,8 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 				if ( ! empty( $row['pass'] ) ) {
 					echo '<td><span style="color:#008a20;">' . esc_html__( 'Passing', 'handl-ai-connector-access-control' ) . '</span></td>';
 				} else {
-					echo '<td><span style="color:#d63638;">' . esc_html__( 'Failing', 'handl-ai-connector-access-control' ) . '</span> — ';
+					echo '<td><span style="color:#d63638;">' . esc_html__( 'Failing', 'handl-ai-connector-access-control' ) . '</span>. ';
+					echo esc_html__( 'Current result:', 'handl-ai-connector-access-control' ) . ' ';
 					echo esc_html( 'allow' === $row['actual'] ? __( 'Allow', 'handl-ai-connector-access-control' ) : __( 'Deny', 'handl-ai-connector-access-control' ) );
 					echo '</td>';
 				}
@@ -6293,12 +6294,12 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo '<input type="text" class="regular-text" id="handl-aicac-check-plugin" name="handl_aicac_check_plugin" placeholder="my-plugin/my-plugin.php" required /></p>';
 		echo '<p><label for="handl-aicac-check-family"><strong>' . esc_html__( 'AI type', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
 		echo '<select id="handl-aicac-check-family" name="handl_aicac_check_family">';
-		echo '<option value="">' . esc_html__( 'Any (uses Text as the sample call)', 'handl-ai-connector-access-control' ) . '</option>';
+		echo '<option value="">' . esc_html__( 'Any AI type (tests a Text call)', 'handl-ai-connector-access-control' ) . '</option>';
 		foreach ( Operations::family_labels() as $fid => $flabel ) {
 			echo '<option value="' . esc_attr( (string) $fid ) . '">' . esc_html( (string) $flabel ) . '</option>';
 		}
 		echo '</select></p>';
-		echo '<p><label for="handl-aicac-check-tool"><strong>' . esc_html__( 'Blocked tool name (optional)', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
+		echo '<p><label for="handl-aicac-check-tool"><strong>' . esc_html__( 'Tool name to include (optional)', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
 		echo '<input type="text" class="regular-text" id="handl-aicac-check-tool" name="handl_aicac_check_tool" /></p>';
 		echo '<p><label for="handl-aicac-check-expected"><strong>' . esc_html__( 'Must be', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
 		echo '<select id="handl-aicac-check-expected" name="handl_aicac_check_expected">';
@@ -6346,7 +6347,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo '<input type="hidden" name="handl_aicac_action" value="policy_checks_save_confirm" />';
 		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
 		echo '<p><label><input type="checkbox" name="handl_aicac_checks_override" value="1" required /> ';
-		echo esc_html__( 'Save anyway (breaks policy checks)', 'handl-ai-connector-access-control' );
+		echo esc_html__( 'Save anyway, even though policy checks will fail', 'handl-ai-connector-access-control' );
 		echo '</label></p>';
 		submit_button( __( 'Save rules anyway', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
 		echo ' ';
@@ -6428,7 +6429,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 
 		echo '<div class="notice notice-warning inline handl-aicac-policy-checks-failing" style="margin:12px 0;padding:8px 12px;">';
 		echo '<p style="margin:0 0 6px;"><strong>' . esc_html__( 'Policy checks need attention', 'handl-ai-connector-access-control' ) . '</strong></p>';
-		echo '<p class="description" style="margin:0 0 6px;">' . esc_html__( 'A recent save broke one or more checks. Fix the rules or update the checks on the Rules tab.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description" style="margin:0 0 6px;">' . esc_html__( 'A saved change left one or more policy checks failing. Fix the rules or update the checks on the Rules tab.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<ul style="margin:0;padding-left:1.2em;">';
 		foreach ( $still as $row ) {
 			$check = isset( $row['check'] ) && is_array( $row['check'] ) ? $row['check'] : array();

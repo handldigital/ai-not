@@ -193,7 +193,7 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = Unreleased =
-* Policy checks on the Rules tab: pin sample AI calls that must stay allowed or blocked. Every save re-checks them and warns before a change can break one.
+* Policy checks on the Rules tab: save sample AI calls with expected Allow or Deny results. The plugin re-checks them before rules, presets, restores, or imports are applied and warns if a result would change.
 * Optional: flag newly activated plugins for review and either block or log their AI calls until you choose Allow or Deny. Existing plugins are left alone when you turn this on.
 * Create a rule from an Activity call: open the Rules form pre-filled with that plugin, AI type, and provider/model. Already-covered plugins show a status instead of adding a second rule.
 * Added a read-only **Plugin AI profile**. Click a plugin in Activity or Dashboard estimated spend to see usage by day, operation, and model; blocked calls; direct connections outside the AI Client; estimated spend alerts; and the rules that currently apply. Rule results use the same decision process as enforcement. Links open the existing Rules and CSV export screens.
