@@ -65,6 +65,7 @@ final class Policy_Transfer {
 			'anomaly_multiplier',
 			'anomaly_floor_calls',
 			'anomaly_floor_spend',
+			'drift_alert_mode',
 			'weekly_report_enabled',
 			'monthly_report_enabled',
 			'model_force_plugins',

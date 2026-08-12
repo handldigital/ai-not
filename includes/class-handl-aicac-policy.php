@@ -911,6 +911,7 @@ final class Policy {
 		$policy['anomaly_multiplier']    = Anomaly::sanitize_multiplier( $policy['anomaly_multiplier'] ?? Anomaly::DEFAULT_MULTIPLIER );
 		$policy['anomaly_floor_calls']   = Anomaly::sanitize_floor_calls( $policy['anomaly_floor_calls'] ?? Anomaly::DEFAULT_FLOOR_CALLS );
 		$policy['anomaly_floor_spend']   = Anomaly::sanitize_floor_spend( $policy['anomaly_floor_spend'] ?? Anomaly::DEFAULT_FLOOR_SPEND );
+		$policy['drift_alert_mode']      = Drift::sanitize_mode( $policy['drift_alert_mode'] ?? Drift::MODE_PROVIDER );
 		$policy['monthly_report_enabled'] = (bool) ( $policy['monthly_report_enabled'] ?? false );
 
 		// F7: weekly report preference — staged selected-by-default until first explicit choice.
@@ -1142,6 +1143,7 @@ final class Policy {
 		$policy['anomaly_multiplier']    = Anomaly::sanitize_multiplier( $policy['anomaly_multiplier'] ?? Anomaly::DEFAULT_MULTIPLIER );
 		$policy['anomaly_floor_calls']   = Anomaly::sanitize_floor_calls( $policy['anomaly_floor_calls'] ?? Anomaly::DEFAULT_FLOOR_CALLS );
 		$policy['anomaly_floor_spend']   = Anomaly::sanitize_floor_spend( $policy['anomaly_floor_spend'] ?? Anomaly::DEFAULT_FLOOR_SPEND );
+		$policy['drift_alert_mode']      = Drift::sanitize_mode( $policy['drift_alert_mode'] ?? Drift::MODE_PROVIDER );
 		$policy['monthly_report_enabled'] = ! empty( $policy['monthly_report_enabled'] );
 
 		$max_age = self::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
@@ -1505,10 +1507,19 @@ final class Policy {
 			$event['count'] = 1;
 		}
 
+		// AICAC-DRIFT: tag first-seen provider/model pairs; alerts flush after persist.
+		if ( ! $is_direct_http ) {
+			Drift::observe( $event, $policy, true );
+		}
+
 		$log[] = $event;
 		$log   = self::apply_log_retention( $log, $policy, $event_ts );
 
 		update_option( Plugin::LOG_OPTION_KEY, $log, false );
+
+		if ( ! $is_direct_http ) {
+			Drift::flush_deferred_alerts();
+		}
 
 		if ( $shadow_alert_eligible ) {
 			Alerts::maybe_notify_shadow( $event, $policy );
@@ -1516,7 +1527,7 @@ final class Policy {
 
 		// AICAC-ANOMALY: re-check after new retained rows (skip our own audit rows).
 		$channel = isset( $event['channel'] ) ? (string) $event['channel'] : '';
-		if ( 'anomaly' !== $channel && 'spend_threshold' !== $channel ) {
+		if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift' ), true ) ) {
 			Anomaly::maybe_evaluate( $policy );
 		}
 	}

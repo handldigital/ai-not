@@ -1940,6 +1940,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$this->render_policy_checks_dashboard_line( $plugins );
 		// AICAC-SNOOZE: active per-plugin alert mutes.
 		$this->render_alert_snooze_dashboard_line( $plugins );
+		// AICAC-DRIFT: recent provider/model change alerts.
+		$this->render_drift_dashboard_line( $plugins );
 
 		// AICAC-11: name differentiators vs WordPress AI Connector Approvals (Dashboard-primary).
 		$this->render_beyond_connector_approvals_callout();
@@ -3720,6 +3722,20 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo '</td>';
 		echo '</tr>';
 
+		// AICAC-DRIFT: provider/model change alerts (default: new provider only).
+		$drift_mode = Drift::sanitize_mode( $policy['drift_alert_mode'] ?? Drift::MODE_PROVIDER );
+		echo '<tr>';
+		echo '<th scope="row"><label for="handl-aicac-drift-alert-mode">' . esc_html__( 'Provider / model change alerts', 'handl-ai-connector-access-control' ) . '</label></th>';
+		echo '<td>';
+		echo '<select id="handl-aicac-drift-alert-mode" name="handl_aicac_drift_alert_mode">';
+		echo '<option value="provider" ' . selected( $drift_mode, Drift::MODE_PROVIDER, false ) . '>' . esc_html__( 'Alert on a new provider (default)', 'handl-ai-connector-access-control' ) . '</option>';
+		echo '<option value="model" ' . selected( $drift_mode, Drift::MODE_MODEL, false ) . '>' . esc_html__( 'Alert on any new provider or model', 'handl-ai-connector-access-control' ) . '</option>';
+		echo '<option value="off" ' . selected( $drift_mode, Drift::MODE_OFF, false ) . '>' . esc_html__( 'Off', 'handl-ai-connector-access-control' ) . '</option>';
+		echo '</select>';
+		echo '<p class="description">' . esc_html__( 'Emails once the first time a plugin uses a new AI provider (or model, if you choose). The first call for a plugin is a baseline and does not alert. Uses the blocked-call alert email address and optional webhook. Does not change allow or deny rules.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '</td>';
+		echo '</tr>';
+
 		echo '</table>';
 	}
 
@@ -4742,6 +4758,9 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		$policy['anomaly_floor_spend'] = Anomaly::sanitize_floor_spend(
 			filter_input( INPUT_POST, 'handl_aicac_anomaly_floor_spend', FILTER_UNSAFE_RAW )
 		);
+		$policy['drift_alert_mode'] = Drift::sanitize_mode(
+			filter_input( INPUT_POST, 'handl_aicac_drift_alert_mode', FILTER_UNSAFE_RAW )
+		);
 	}
 
 	/**
@@ -5035,6 +5054,62 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 				echo '</button>';
 			}
 		}
+		echo '</div>';
+	}
+
+	/**
+	 * Dashboard: recent provider/model change alerts (AICAC-DRIFT).
+	 *
+	 * @param array<string,array<string,mixed>> $plugins
+	 */
+	private function render_drift_dashboard_line( array $plugins ): void {
+		$recent = Drift::get_recent();
+		if ( empty( $recent ) ) {
+			return;
+		}
+
+		echo '<div class="notice notice-info inline handl-aicac-drift-recent" style="margin:12px 0;padding:8px 12px;">';
+		echo '<p style="margin:0 0 6px;"><strong>' . esc_html__( 'Provider / model changes', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		echo '<ul style="margin:0;padding-left:1.2em;">';
+		$shown = 0;
+		foreach ( $recent as $row ) {
+			if ( $shown >= 5 ) {
+				break;
+			}
+			++$shown;
+			$basename = isset( $row['plugin'] ) ? (string) $row['plugin'] : '';
+			$label    = ( '' !== $basename && isset( $plugins[ $basename ]['Name'] ) )
+				? (string) $plugins[ $basename ]['Name']
+				: ( '' !== $basename ? $basename : __( 'Unknown plugin', 'handl-ai-connector-access-control' ) );
+			$pair = Drift::format_pair_label(
+				isset( $row['provider'] ) ? (string) $row['provider'] : '',
+				isset( $row['model'] ) ? (string) $row['model'] : ''
+			);
+			$ts = isset( $row['ts'] ) ? (int) $row['ts'] : 0;
+			$when = $ts > 0 ? wp_date( 'Y-m-d H:i', $ts ) : '';
+			$line = sprintf(
+				/* translators: 1: plugin name, 2: provider/model label */
+				__( '%1$s started using %2$s', 'handl-ai-connector-access-control' ),
+				$label,
+				$pair
+			);
+			if ( '' !== $when ) {
+				$line .= ' — ' . $when;
+			}
+			$mult = isset( $row['cost_multiple'] ) && is_numeric( $row['cost_multiple'] )
+				? (float) $row['cost_multiple']
+				: null;
+			if ( null !== $mult && $mult > 1.0 ) {
+				$line .= ' · ' . sprintf(
+					/* translators: %s: estimated cost multiple */
+					__( 'about %sx estimated cost vs previous provider', 'handl-ai-connector-access-control' ),
+					Drift::format_multiple( $mult )
+				);
+			}
+			echo '<li style="margin:0 0 4px;">' . esc_html( $line ) . '</li>';
+		}
+		echo '</ul>';
+		echo '<p class="description" style="margin:6px 0 0;">' . esc_html__( 'One alert per new pair. These rows do not change allow or deny rules.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</div>';
 	}
 
@@ -5371,6 +5446,9 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 				$qh_line .= ' (' . __( 'logging only', 'handl-ai-connector-access-control' ) . ')';
 			}
 			echo '<br /><span class="description handl-aicac-quiet-hours" style="font-size:11px;">' . esc_html( $qh_line ) . '</span>';
+		}
+		if ( ! empty( $row['drift_first_seen'] ) ) {
+			echo '<br /><span class="description handl-aicac-drift-first-seen" style="font-size:11px;">' . esc_html__( 'first seen', 'handl-ai-connector-access-control' ) . '</span>';
 		}
 		$user_role = isset( $row['user_role'] ) ? (string) $row['user_role'] : '';
 		if ( '' !== $user_role ) {
@@ -5776,6 +5854,9 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		}
 		if ( 'observe' === $decision ) {
 			return '<span class="handl-aicac-badge handl-aicac-badge--observe">' . esc_html__( 'observe', 'handl-ai-connector-access-control' ) . '</span>';
+		}
+		if ( 'drift_alert' === $decision ) {
+			return '<span class="handl-aicac-badge handl-aicac-badge--observe">' . esc_html__( 'provider/model change', 'handl-ai-connector-access-control' ) . '</span>';
 		}
 		return '<span class="handl-aicac-muted">' . esc_html( $decision ?: '—' ) . '</span>';
 	}
