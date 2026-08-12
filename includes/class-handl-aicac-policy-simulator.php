@@ -56,7 +56,7 @@ final class Policy_Simulator {
 				return array(
 					'allowed'    => true,
 					'reason'     => 'budget',
-					'chip'       => __( 'Allowed — over estimated budget (observe mode)', 'handl-ai-connector-access-control' ),
+					'chip'       => __( 'Allowed — estimated budget reached (Observe-only mode)', 'handl-ai-connector-access-control' ),
 					'rule_label' => __( 'Estimated budget', 'handl-ai-connector-access-control' ),
 				);
 			}
@@ -73,7 +73,7 @@ final class Policy_Simulator {
 		} elseif ( 'quiet_hours' === $reason ) {
 			$chip = __( 'Blocked by quiet hours', 'handl-ai-connector-access-control' );
 		} elseif ( 'budget' === $reason ) {
-			$chip = __( 'Blocked by estimated budget', 'handl-ai-connector-access-control' );
+			$chip = __( 'Blocked — estimated budget reached', 'handl-ai-connector-access-control' );
 		} else {
 			$chip = sprintf(
 				/* translators: %s: short rule name that decided the block */
