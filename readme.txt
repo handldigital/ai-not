@@ -198,6 +198,7 @@ Yes. With WP-CLI available and this plugin active:
 * Create a rule from an Activity call: open the Rules form pre-filled with that plugin, AI type, and provider/model. Already-covered plugins show a status instead of adding a second rule.
 * Added a read-only **Plugin AI profile**. Click a plugin in Activity or Dashboard estimated spend to see usage by day, operation, and model; blocked calls; direct connections outside the AI Client; estimated spend alerts; and the rules that currently apply. Rule results use the same decision process as enforcement. Links open the existing Rules and CSV export screens.
 * Added an optional, unchecked onboarding choice to receive product news and related offers from HandL Digital. If selected, the plugin sends the alert email address, site URL, plugin version, and consent time to HandL Digital. Privacy / Data documents the transmission and opt-out method.
+* Compare a previous JSON rules export with your current policy on the Rules tab. See every setting that differs before you import. Unknown fields from a newer export are listed as not comparable. Nothing is changed until you use Import.
 
 = 1.3.0 =
 * Insights: weekly call and estimated-spend trends (last 8 weeks) with per-plugin sparklines and week-over-week change. Weeks with no retained log data show as “no data kept,” not zero.

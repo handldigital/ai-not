@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace HandL\AICAC\Tests\Unit;
 
+use HandL\AICAC\Policy_Snapshots;
 use HandL\AICAC\Policy_Transfer;
 use PHPUnit\Framework\TestCase;
 
@@ -167,6 +168,65 @@ final class PolicyTransferTest extends TestCase {
 				"Policy key '{$key}' looks like a secret and must not be exported"
 			);
 		}
+	}
+
+	public function test_compare_diff_matches_import_policy_shape_and_lists_unknown_keys(): void {
+		$current = array(
+			'default'     => 'allow',
+			'audit_only'  => false,
+			'log_enabled' => true,
+			'kill_switch' => false,
+			'plugins'     => array( 'acme/plugin.php' => 'allow' ),
+		);
+
+		$json = wp_json_encode_compat(
+			array(
+				'plugin_version'   => '1.3.0',
+				'exported_at'      => '2026-08-12T00:00:00Z',
+				'default'          => 'deny',
+				'audit_only'       => true,
+				'log_enabled'      => true,
+				'kill_switch'      => true,
+				'plugins'          => array( 'acme/plugin.php' => 'deny' ),
+				'future_feature_x' => array( 'a' => 1 ),
+				'another_new_key'  => true,
+			)
+		);
+
+		$parsed = Policy_Transfer::parse_import( $json );
+		$this->assertTrue( $parsed['ok'] );
+
+		// Same policy blob import confirm would hand to Policy::save_policy (minus write intent).
+		$incoming = $parsed['policy'];
+		$compare  = Policy_Transfer::compare_diff( $current, $incoming, $parsed['ignored'] );
+
+		$this->assertSame( array( 'another_new_key', 'future_feature_x' ), $compare['not_comparable'] );
+		$this->assertSame(
+			Policy_Snapshots::diff_rows( $current, $incoming ),
+			$compare['rows'],
+			'Compare rows must match restore/import parity via Policy_Snapshots::diff_rows on the same parsed policy'
+		);
+
+		$keys = array_column( $compare['rows'], 'key' );
+		$this->assertContains( 'default', $keys );
+		$this->assertContains( 'audit_only', $keys );
+		$this->assertContains( 'kill_switch', $keys );
+		$this->assertContains( 'plugins', $keys );
+		$this->assertNotContains( 'future_feature_x', $keys );
+	}
+
+	public function test_compare_rejects_malformed_json_without_policy_shape(): void {
+		$bad = Policy_Transfer::parse_import( '{not-json' );
+		$this->assertFalse( $bad['ok'] );
+		$this->assertSame( 'invalid_json', $bad['error'] );
+
+		$empty = Policy_Transfer::parse_import( '' );
+		$this->assertFalse( $empty['ok'] );
+		$this->assertSame( 'empty', $empty['error'] );
+	}
+
+	public function test_max_upload_bytes_is_one_megabyte(): void {
+		$this->assertSame( 1048576, Policy_Transfer::MAX_UPLOAD_BYTES );
 	}
 }
 
