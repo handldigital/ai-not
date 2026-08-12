@@ -193,6 +193,7 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = Unreleased =
+* Policy checks on the Rules tab: save sample AI calls with expected Allow or Deny results. The plugin re-checks them before rules, presets, restores, or imports are applied and warns if a result would change.
 * Activity settings now shows how much space the activity log uses and estimates what shorter time limits would remove. The suggested limit only fills the field. Select Save Activity settings to apply it.
 * Mute alert emails and webhooks for one plugin for 1 hour, 8 hours, 24 hours, or 7 days. Rules still apply and activity still logs. The plugin records how many alerts would have been sent during the mute.
 * Added optional Quiet hours on the Activity tab. Set weekly schedules to block AI Client calls or log activity without adding a block. The Dashboard shows when a schedule is active, and Emergency stop always takes priority.

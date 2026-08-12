@@ -308,6 +308,18 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
 				$this->handle_simulate_policy();
 			}
+			if ( 'policy_check_add' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_policy_check_add', 'handl_aicac_nonce' );
+				$this->handle_policy_check_add();
+			}
+			if ( 'policy_check_delete' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_policy_check_delete', 'handl_aicac_nonce' );
+				$this->handle_policy_check_delete();
+			}
+			if ( 'policy_checks_save_confirm' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_policy_checks_save_confirm', 'handl_aicac_nonce' );
+				$this->handle_policy_checks_save_confirm();
+			}
 			if ( 'onboard_dismiss' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_onboard', 'handl_aicac_nonce' );
 				$this->handle_onboard_dismiss();
@@ -351,6 +363,9 @@ final class Admin {
 		$preset_id_q         = isset( $_GET['handl_aicac_preset_id'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_preset_id'] ) ) : '';
 		$show_restore_preview = isset( $_GET['handl_aicac_restore_preview'] ) && '1' === (string) $_GET['handl_aicac_restore_preview'];
 		$restore_status       = isset( $_GET['handl_aicac_restore'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_restore'] ) ) : '';
+		$show_checks_confirm  = isset( $_GET['handl_aicac_checks_confirm'] ) && '1' === (string) $_GET['handl_aicac_checks_confirm'];
+		$checks_need_override = isset( $_GET['handl_aicac_checks_need_override'] ) && '1' === (string) $_GET['handl_aicac_checks_need_override'];
+		$checks_saved_ok      = isset( $_GET['handl_aicac_checks_saved'] ) && '1' === (string) $_GET['handl_aicac_checks_saved'];
 
 
 		if ( isset( $_POST['handl_aicac_action'] ) && 'save' === $_POST['handl_aicac_action'] ) {
@@ -384,6 +399,12 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 
 		$this->render_tabs( $tab, $plugin_status_filter, $plugin_access_filter, $this->log_filters );
 
+		if ( $checks_saved_ok ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Policy check list updated.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		if ( $checks_need_override ) {
+			echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__( 'This change would make one or more policy checks fail. Review the list below and select “Save anyway” if you still want to apply it.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
 		if ( $saved ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Saved.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
@@ -678,6 +699,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 
 		$this->render_presets_section( $policy, $show_preset_preview );
 		$this->render_policy_restore_section( $policy, $show_restore_preview, $restore_status );
+		$this->render_policy_checks_section( $plugins, $show_checks_confirm );
 
 		// Settings demoted: collapsible panel, not the first thing you see (F5 IA).
 		echo '<details class="handl-aicac-settings-panel">';
@@ -1914,6 +1936,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$this->render_onboarding_dashboard_section( $policy );
 		// AICAC-NEWPLUGIN: plugins awaiting first AI access decision.
 		$this->render_new_plugin_dashboard_line( $policy, $plugins );
+		// AICAC-RULE-TEST: open failures after an override.
+		$this->render_policy_checks_dashboard_line( $plugins );
 		// AICAC-SNOOZE: active per-plugin alert mutes.
 		$this->render_alert_snooze_dashboard_line( $plugins );
 
@@ -3703,7 +3727,33 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		$this->require_admin_mutation( 'handl_aicac_save_policy' );
 
 		$policy = $this->build_rules_policy_from_post( Policy::get_policy() );
+		$report = Policy_Checks::evaluate_all( $policy );
+		$fails  = $report['failures'];
+		if ( ! empty( $fails ) ) {
+			set_transient(
+				Policy_Checks::preview_transient_key( get_current_user_id() ),
+				array(
+					'policy'   => $policy,
+					'failures' => $fails,
+					'source'   => 'manual',
+				),
+				Policy_Checks::PREVIEW_TTL
+			);
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'page'                       => 'handl-ai-connector-access-control',
+						'handl_aicac_tab'            => 'rules',
+						'handl_aicac_checks_confirm' => '1',
+					),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
 		Policy::save_policy( $policy );
+		Policy_Checks::after_policy_saved( $policy, null );
 	}
 
 	/**
@@ -5873,10 +5923,19 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			echo '</tbody></table>';
 		}
 
+		$preset_target = Presets::build_target( $preset_id, $policy );
+		$check_report  = is_array( $preset_target ) ? Policy_Checks::evaluate_all( $preset_target ) : array( 'failures' => array() );
+		$this->render_policy_checks_failure_block( $check_report['failures'], $plugins );
+
 		echo '<form method="post">';
 		wp_nonce_field( 'handl_aicac_preset_apply_confirm', 'handl_aicac_nonce' );
 		echo '<input type="hidden" name="handl_aicac_action" value="preset_apply_confirm" />';
 		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		if ( ! empty( $check_report['failures'] ) ) {
+			echo '<p><label><input type="checkbox" name="handl_aicac_checks_override" value="1" /> ';
+			echo esc_html__( 'Save anyway, even though policy checks will fail', 'handl-ai-connector-access-control' );
+			echo '</label></p>';
+		}
 		submit_button( __( 'Apply preset', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
 		echo '</form>';
 		echo '</div>';
@@ -5973,10 +6032,19 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'This file contains no saved plugin rules, AI type settings, blocked tools, model routes, or Emergency stop settings. Importing it is a valid way to reset these settings.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 
+		$import_target = Policy_Transfer::policy_for_save( $incoming );
+		$check_report  = Policy_Checks::evaluate_all( $import_target );
+		$this->render_policy_checks_failure_block( $check_report['failures'], function_exists( 'get_plugins' ) ? get_plugins() : array() );
+
 		echo '<form method="post">';
 		wp_nonce_field( 'handl_aicac_import_rules_confirm', 'handl_aicac_nonce' );
 		echo '<input type="hidden" name="handl_aicac_action" value="import_rules_confirm" />';
 		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		if ( ! empty( $check_report['failures'] ) ) {
+			echo '<p><label><input type="checkbox" name="handl_aicac_checks_override" value="1" /> ';
+			echo esc_html__( 'Save anyway, even though policy checks will fail', 'handl-ai-connector-access-control' );
+			echo '</label></p>';
+		}
 		submit_button( __( 'Confirm and replace rules', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
 		echo '</form>';
 		echo '</div>';
@@ -6212,10 +6280,19 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			__( 'The current policy already matches this restore point. Restoring it will not change your rules or settings.', 'handl-ai-connector-access-control' )
 		);
 
+		$restore_target = is_array( $latest['policy'] ?? null ) ? $latest['policy'] : array();
+		$check_report   = Policy_Checks::evaluate_all( $restore_target );
+		$this->render_policy_checks_failure_block( $check_report['failures'], function_exists( 'get_plugins' ) ? get_plugins() : array() );
+
 		echo '<form method="post">';
 		wp_nonce_field( 'handl_aicac_policy_restore_confirm', 'handl_aicac_nonce' );
 		echo '<input type="hidden" name="handl_aicac_action" value="policy_restore_confirm" />';
 		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		if ( ! empty( $check_report['failures'] ) ) {
+			echo '<p><label><input type="checkbox" name="handl_aicac_checks_override" value="1" /> ';
+			echo esc_html__( 'Save anyway, even though policy checks will fail', 'handl-ai-connector-access-control' );
+			echo '</label></p>';
+		}
 		submit_button( __( 'Restore previous policy', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
 		echo '</form>';
 		echo '</div>';
@@ -6285,8 +6362,41 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			exit;
 		}
 
+		$latest_policy = is_array( $latest['policy'] ?? null ) ? $latest['policy'] : array();
+		$report        = Policy_Checks::evaluate_all( $latest_policy );
+		if ( ! empty( $report['failures'] ) && empty( $_POST['handl_aicac_checks_override'] ) ) {
+			set_transient(
+				Policy_Snapshots::preview_transient_key( get_current_user_id() ),
+				array( 'ts' => (int) $latest['ts'] ),
+				Policy_Snapshots::PREVIEW_TTL
+			);
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge(
+						$redirect_base,
+						array(
+							'handl_aicac_restore_preview'       => '1',
+							'handl_aicac_checks_need_override' => '1',
+						)
+					),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
 		$result = Policy_Snapshots::restore_latest();
 		$status = ! empty( $result['ok'] ) ? 'restored' : 'error';
+		if ( 'restored' === $status ) {
+			$live = Policy::get_policy();
+			$rep  = Policy_Checks::evaluate_all( $live );
+			if ( ! empty( $rep['failures'] ) ) {
+				Policy_Checks::record_override_audit( $rep['failures'], 'restore' );
+				Policy_Checks::after_policy_saved( $live, $rep['failures'] );
+			} else {
+				Policy_Checks::after_policy_saved( $live, null );
+			}
+		}
 
 		wp_safe_redirect(
 			add_query_arg(
@@ -6485,8 +6595,45 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		}
 
 		$preset_id = sanitize_key( (string) $pending['preset_id'] );
-		$result    = Presets::apply( $preset_id, Policy::get_policy() );
-		$status    = ! empty( $result['ok'] ) ? (string) ( $result['status'] ?? 'applied' ) : 'error';
+		$current   = Policy::get_policy();
+		$target    = Presets::build_target( $preset_id, $current );
+		if ( null !== $target && ! Presets::is_active( $preset_id, $current ) ) {
+			$report = Policy_Checks::evaluate_all( $target );
+			$fails  = $report['failures'];
+			if ( ! empty( $fails ) && empty( $_POST['handl_aicac_checks_override'] ) ) {
+				set_transient(
+					Presets::preview_transient_key( get_current_user_id() ),
+					array( 'preset_id' => $preset_id ),
+					Presets::PREVIEW_TTL
+				);
+				wp_safe_redirect(
+					add_query_arg(
+						array_merge(
+							$redirect_base,
+							array(
+								'handl_aicac_preset_preview'       => '1',
+								'handl_aicac_checks_need_override' => '1',
+							)
+						),
+						admin_url( 'options-general.php' )
+					)
+				);
+				exit;
+			}
+		}
+
+		$result = Presets::apply( $preset_id, $current );
+		$status = ! empty( $result['ok'] ) ? (string) ( $result['status'] ?? 'applied' ) : 'error';
+		if ( 'applied' === $status ) {
+			$live = Policy::get_policy();
+			$rep  = Policy_Checks::evaluate_all( $live );
+			if ( ! empty( $rep['failures'] ) ) {
+				Policy_Checks::record_override_audit( $rep['failures'], 'preset' );
+				Policy_Checks::after_policy_saved( $live, $rep['failures'] );
+			} else {
+				Policy_Checks::after_policy_saved( $live, null );
+			}
+		}
 
 		wp_safe_redirect(
 			add_query_arg(
@@ -6584,8 +6731,33 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		}
 
 		$for_save = Policy_Transfer::policy_for_save( $pending['policy'] );
+		$report   = Policy_Checks::evaluate_all( $for_save );
+		if ( ! empty( $report['failures'] ) && empty( $_POST['handl_aicac_checks_override'] ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge(
+						$redirect_base,
+						array(
+							'handl_aicac_import_preview'        => '1',
+							'handl_aicac_checks_need_override' => '1',
+						)
+					),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
 		Policy::save_policy( $for_save );
 		delete_transient( $key );
+		$live = Policy::get_policy();
+		$rep  = Policy_Checks::evaluate_all( $live );
+		if ( ! empty( $rep['failures'] ) ) {
+			Policy_Checks::record_override_audit( $rep['failures'], 'import' );
+			Policy_Checks::after_policy_saved( $live, $rep['failures'] );
+		} else {
+			Policy_Checks::after_policy_saved( $live, null );
+		}
 
 		$args = array( 'handl_aicac_imported' => '1' );
 		$ignored = isset( $pending['ignored'] ) && is_array( $pending['ignored'] ) ? $pending['ignored'] : array();
@@ -6755,5 +6927,317 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 
 		return $messages[ $code ] ?? __( 'Compare failed. Your current rules were not changed.', 'handl-ai-connector-access-control' );
 	}
-}
 
+	/**
+	 * AICAC-RULE-TEST: Rules-tab list + add form + pending save confirm.
+	 *
+	 * @param array<string,array<string,mixed>> $plugins
+	 */
+	private function render_policy_checks_section( array $plugins, bool $show_confirm ): void {
+		echo '<div id="handl-aicac-policy-checks" class="handl-aicac-policy-checks" style="margin:0 0 1.5em;">';
+		echo '<h2>' . esc_html__( 'Policy checks', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<p class="description">' . esc_html__( 'Save sample AI calls with the Allow or Deny result you expect. Before rules, presets, restores, or imports are applied, the plugin runs the checks again and warns if a result would change.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		if ( $show_confirm ) {
+			$this->render_policy_checks_save_confirm( $plugins );
+		}
+
+		$checks = Policy_Checks::get_all();
+		if ( empty( $checks ) ) {
+			echo '<p class="description">' . esc_html__( 'No policy checks yet. Add one below.', 'handl-ai-connector-access-control' ) . '</p>';
+		} else {
+			echo '<table class="widefat striped" style="max-width:52em;margin:0.5em 0 1em;">';
+			echo '<thead><tr>';
+			echo '<th>' . esc_html__( 'Check', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'Should be', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th>' . esc_html__( 'Status', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th></th>';
+			echo '</tr></thead><tbody>';
+			$live = Policy::get_policy();
+			foreach ( $checks as $check ) {
+				$row = Policy_Checks::evaluate_one( $check, $live );
+				echo '<tr>';
+				echo '<td>' . esc_html( Policy_Checks::check_label( $check, $plugins ) ) . '</td>';
+				echo '<td>' . esc_html( 'allow' === $check['expected'] ? __( 'Allow', 'handl-ai-connector-access-control' ) : __( 'Deny', 'handl-ai-connector-access-control' ) ) . '</td>';
+				if ( ! empty( $row['pass'] ) ) {
+					echo '<td><span style="color:#008a20;">' . esc_html__( 'Passing', 'handl-ai-connector-access-control' ) . '</span></td>';
+				} else {
+					echo '<td><span style="color:#d63638;">' . esc_html__( 'Failing', 'handl-ai-connector-access-control' ) . '</span>. ';
+					echo esc_html__( 'Current result:', 'handl-ai-connector-access-control' ) . ' ';
+					echo esc_html( 'allow' === $row['actual'] ? __( 'Allow', 'handl-ai-connector-access-control' ) : __( 'Deny', 'handl-ai-connector-access-control' ) );
+					echo '</td>';
+				}
+				echo '<td>';
+				echo '<form method="post" style="display:inline;margin:0;">';
+				wp_nonce_field( 'handl_aicac_policy_check_delete', 'handl_aicac_nonce' );
+				echo '<input type="hidden" name="handl_aicac_action" value="policy_check_delete" />';
+				echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+				echo '<input type="hidden" name="handl_aicac_check_id" value="' . esc_attr( (string) $check['id'] ) . '" />';
+				submit_button( __( 'Remove', 'handl-ai-connector-access-control' ), 'small', 'submit', false );
+				echo '</form>';
+				echo '</td>';
+				echo '</tr>';
+			}
+			echo '</tbody></table>';
+		}
+
+		// Add form.
+		echo '<form method="post" style="max-width:52em;border:1px solid #c3c4c7;padding:12px 16px;background:#fff;">';
+		wp_nonce_field( 'handl_aicac_policy_check_add', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="policy_check_add" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		echo '<h3 style="margin-top:0;">' . esc_html__( 'Add a policy check', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<p><label for="handl-aicac-check-plugin"><strong>' . esc_html__( 'Plugin file', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
+		echo '<input type="text" class="regular-text" id="handl-aicac-check-plugin" name="handl_aicac_check_plugin" placeholder="my-plugin/my-plugin.php" required /></p>';
+		echo '<p><label for="handl-aicac-check-family"><strong>' . esc_html__( 'AI type', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
+		echo '<select id="handl-aicac-check-family" name="handl_aicac_check_family">';
+		echo '<option value="">' . esc_html__( 'Any AI type (tests a Text call)', 'handl-ai-connector-access-control' ) . '</option>';
+		foreach ( Operations::family_labels() as $fid => $flabel ) {
+			echo '<option value="' . esc_attr( (string) $fid ) . '">' . esc_html( (string) $flabel ) . '</option>';
+		}
+		echo '</select></p>';
+		echo '<p><label for="handl-aicac-check-tool"><strong>' . esc_html__( 'Tool name to include (optional)', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
+		echo '<input type="text" class="regular-text" id="handl-aicac-check-tool" name="handl_aicac_check_tool" /></p>';
+		echo '<p><label for="handl-aicac-check-expected"><strong>' . esc_html__( 'Must be', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
+		echo '<select id="handl-aicac-check-expected" name="handl_aicac_check_expected">';
+		echo '<option value="deny">' . esc_html__( 'Deny', 'handl-ai-connector-access-control' ) . '</option>';
+		echo '<option value="allow">' . esc_html__( 'Allow', 'handl-ai-connector-access-control' ) . '</option>';
+		echo '</select></p>';
+		echo '<p><label for="handl-aicac-check-label"><strong>' . esc_html__( 'Short label (optional)', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
+		echo '<input type="text" class="regular-text" id="handl-aicac-check-label" name="handl_aicac_check_label" /></p>';
+		submit_button( __( 'Add check', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+		echo '</form>';
+		echo '</div>';
+	}
+
+	/**
+	 * Pending manual-save confirm when checks would fail.
+	 *
+	 * @param array<string,array<string,mixed>> $plugins
+	 */
+	private function render_policy_checks_save_confirm( array $plugins ): void {
+		$pending = get_transient( Policy_Checks::preview_transient_key( get_current_user_id() ) );
+		if ( ! is_array( $pending ) || empty( $pending['policy'] ) || ! is_array( $pending['policy'] ) ) {
+			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'That save preview expired. Save your rules again.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			return;
+		}
+		$fails = isset( $pending['failures'] ) && is_array( $pending['failures'] ) ? $pending['failures'] : array();
+		$count = count( $fails );
+		echo '<div class="handl-aicac-checks-confirm notice notice-warning" style="padding:12px 16px;max-width:52em;">';
+		echo '<p><strong>';
+		echo esc_html(
+			sprintf(
+				/* translators: %d: number of failing checks */
+				_n(
+					'This change breaks %d policy check',
+					'This change breaks %d policy checks',
+					$count,
+					'handl-ai-connector-access-control'
+				),
+				$count
+			)
+		);
+		echo '</strong></p>';
+		$this->render_policy_checks_failure_block( $fails, $plugins );
+		echo '<form method="post">';
+		wp_nonce_field( 'handl_aicac_policy_checks_save_confirm', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="policy_checks_save_confirm" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		echo '<p><label><input type="checkbox" name="handl_aicac_checks_override" value="1" required /> ';
+		echo esc_html__( 'Save anyway, even though policy checks will fail', 'handl-ai-connector-access-control' );
+		echo '</label></p>';
+		submit_button( __( 'Save rules anyway', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
+		echo ' ';
+		echo '<a class="button" href="' . esc_url( admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules' ) ) . '">' . esc_html__( 'Cancel', 'handl-ai-connector-access-control' ) . '</a>';
+		echo '</form>';
+		echo '</div>';
+	}
+
+	/**
+	 * @param list<array<string,mixed>>         $failures
+	 * @param array<string,array<string,mixed>> $plugins
+	 */
+	private function render_policy_checks_failure_block( array $failures, array $plugins ): void {
+		if ( empty( $failures ) ) {
+			return;
+		}
+		$count = count( $failures );
+		echo '<div class="notice notice-warning inline" style="margin:0.5em 0 1em;">';
+		echo '<p><strong>';
+		echo esc_html(
+			sprintf(
+				/* translators: %d: number of failing checks */
+				_n(
+					'This change breaks %d policy check',
+					'This change breaks %d policy checks',
+					$count,
+					'handl-ai-connector-access-control'
+				),
+				$count
+			)
+		);
+		echo '</strong></p><ul style="margin-left:1.2em;list-style:disc;">';
+		foreach ( $failures as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$check = isset( $row['check'] ) && is_array( $row['check'] ) ? $row['check'] : array();
+			$exp   = ( 'allow' === ( $row['expected'] ?? '' ) ) ? __( 'Allow', 'handl-ai-connector-access-control' ) : __( 'Deny', 'handl-ai-connector-access-control' );
+			$act   = ( 'allow' === ( $row['actual'] ?? '' ) ) ? __( 'Allow', 'handl-ai-connector-access-control' ) : __( 'Deny', 'handl-ai-connector-access-control' );
+			echo '<li>';
+			echo esc_html( Policy_Checks::check_label( $check, $plugins ) );
+			echo ' — ';
+			echo esc_html(
+				sprintf(
+					/* translators: 1: expected Allow/Deny, 2: actual Allow/Deny */
+					__( 'expected %1$s, would be %2$s', 'handl-ai-connector-access-control' ),
+					$exp,
+					$act
+				)
+			);
+			echo '</li>';
+		}
+		echo '</ul></div>';
+	}
+
+	/**
+	 * @param array<string,array<string,mixed>> $plugins
+	 */
+	private function render_policy_checks_dashboard_line( array $plugins ): void {
+		$failing = Policy_Checks::get_failing_dashboard();
+		if ( empty( $failing ) ) {
+			return;
+		}
+		// Drop rows that now pass under the live policy.
+		$live    = Policy::get_policy();
+		$still   = array();
+		foreach ( $failing as $row ) {
+			$check = isset( $row['check'] ) && is_array( $row['check'] ) ? $row['check'] : array();
+			$eval  = Policy_Checks::evaluate_one( $check, $live );
+			if ( empty( $eval['pass'] ) ) {
+				$still[] = $eval;
+			}
+		}
+		if ( empty( $still ) ) {
+			Policy_Checks::clear_failing_dashboard();
+			return;
+		}
+		Policy_Checks::set_failing_dashboard( $still );
+
+		echo '<div class="notice notice-warning inline handl-aicac-policy-checks-failing" style="margin:12px 0;padding:8px 12px;">';
+		echo '<p style="margin:0 0 6px;"><strong>' . esc_html__( 'Policy checks need attention', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		echo '<p class="description" style="margin:0 0 6px;">' . esc_html__( 'A saved change left one or more policy checks failing. Fix the rules or update the checks on the Rules tab.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<ul style="margin:0;padding-left:1.2em;">';
+		foreach ( $still as $row ) {
+			$check = isset( $row['check'] ) && is_array( $row['check'] ) ? $row['check'] : array();
+			echo '<li>' . esc_html( Policy_Checks::check_label( $check, $plugins ) ) . '</li>';
+		}
+		echo '</ul>';
+		$rules = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules#handl-aicac-policy-checks' );
+		echo '<p style="margin:8px 0 0;"><a class="button button-small" href="' . esc_url( $rules ) . '">' . esc_html__( 'Open policy checks', 'handl-ai-connector-access-control' ) . '</a></p>';
+		echo '</div>';
+	}
+
+	private function handle_policy_check_add(): void {
+		$this->require_admin_mutation( 'handl_aicac_policy_check_add' );
+
+		$check = Policy_Checks::sanitize_check(
+			array(
+				'plugin'   => isset( $_POST['handl_aicac_check_plugin'] ) ? wp_unslash( (string) $_POST['handl_aicac_check_plugin'] ) : '',
+				'family'   => isset( $_POST['handl_aicac_check_family'] ) ? wp_unslash( (string) $_POST['handl_aicac_check_family'] ) : '',
+				'tool'     => isset( $_POST['handl_aicac_check_tool'] ) ? wp_unslash( (string) $_POST['handl_aicac_check_tool'] ) : '',
+				'expected' => isset( $_POST['handl_aicac_check_expected'] ) ? wp_unslash( (string) $_POST['handl_aicac_check_expected'] ) : 'deny',
+				'label'    => isset( $_POST['handl_aicac_check_label'] ) ? wp_unslash( (string) $_POST['handl_aicac_check_label'] ) : '',
+			)
+		);
+
+		$redirect = array(
+			'page'            => 'handl-ai-connector-access-control',
+			'handl_aicac_tab' => 'rules',
+		);
+		if ( null === $check ) {
+			wp_safe_redirect( add_query_arg( $redirect, admin_url( 'options-general.php' ) ) );
+			exit;
+		}
+
+		$all   = Policy_Checks::get_all();
+		$all[] = $check;
+		Policy_Checks::save_all( $all );
+
+		$redirect['handl_aicac_checks_saved'] = '1';
+		wp_safe_redirect( add_query_arg( $redirect, admin_url( 'options-general.php' ) ) );
+		exit;
+	}
+
+	private function handle_policy_check_delete(): void {
+		$this->require_admin_mutation( 'handl_aicac_policy_check_delete' );
+
+		$id = isset( $_POST['handl_aicac_check_id'] ) ? sanitize_key( wp_unslash( (string) $_POST['handl_aicac_check_id'] ) ) : '';
+		$all = array();
+		foreach ( Policy_Checks::get_all() as $check ) {
+			if ( (string) $check['id'] !== $id ) {
+				$all[] = $check;
+			}
+		}
+		Policy_Checks::save_all( $all );
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'                     => 'handl-ai-connector-access-control',
+					'handl_aicac_tab'          => 'rules',
+					'handl_aicac_checks_saved' => '1',
+				),
+				admin_url( 'options-general.php' )
+			)
+		);
+		exit;
+	}
+
+	private function handle_policy_checks_save_confirm(): void {
+		$this->require_admin_mutation( 'handl_aicac_policy_checks_save_confirm' );
+
+		$key     = Policy_Checks::preview_transient_key( get_current_user_id() );
+		$pending = get_transient( $key );
+		delete_transient( $key );
+
+		$redirect = array(
+			'page'            => 'handl-ai-connector-access-control',
+			'handl_aicac_tab' => 'rules',
+		);
+
+		if ( ! is_array( $pending ) || empty( $pending['policy'] ) || ! is_array( $pending['policy'] ) ) {
+			wp_safe_redirect( add_query_arg( $redirect, admin_url( 'options-general.php' ) ) );
+			exit;
+		}
+		if ( empty( $_POST['handl_aicac_checks_override'] ) ) {
+			// Re-show confirm.
+			set_transient( $key, $pending, Policy_Checks::PREVIEW_TTL );
+			$redirect['handl_aicac_checks_confirm'] = '1';
+			wp_safe_redirect( add_query_arg( $redirect, admin_url( 'options-general.php' ) ) );
+			exit;
+		}
+
+		$policy = $pending['policy'];
+		Policy::save_policy( $policy );
+		$fails = isset( $pending['failures'] ) && is_array( $pending['failures'] ) ? $pending['failures'] : array();
+		// Recompute against saved (sanitized) policy.
+		$rep = Policy_Checks::evaluate_all( Policy::get_policy() );
+		$fails = $rep['failures'];
+		if ( ! empty( $fails ) ) {
+			Policy_Checks::record_override_audit( $fails, 'manual' );
+			Policy_Checks::after_policy_saved( Policy::get_policy(), $fails );
+		} else {
+			Policy_Checks::after_policy_saved( Policy::get_policy(), null );
+		}
+
+		wp_safe_redirect(
+			add_query_arg(
+				array_merge( $redirect, array( 'settings-updated' => 'true' ) ),
+				admin_url( 'options-general.php' )
+			)
+		);
+		exit;
+	}
+
+}

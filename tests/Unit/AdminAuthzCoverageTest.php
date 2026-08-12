@@ -40,6 +40,9 @@ final class AdminAuthzCoverageTest extends TestCase {
 		'onboard_reopen',
 		'onboard_step',
 		'onboard_test_email',
+		'policy_check_add',
+		'policy_check_delete',
+		'policy_checks_save_confirm',
 		'policy_restore_confirm',
 		'policy_restore_preview',
 		'preset_apply_confirm',
@@ -234,6 +237,18 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'action'       => 'policy_restore_confirm',
 				'nonce_action' => 'handl_aicac_policy_restore_confirm',
 			),
+			array(
+				'action'       => 'policy_check_add',
+				'nonce_action' => 'handl_aicac_policy_check_add',
+			),
+			array(
+				'action'       => 'policy_check_delete',
+				'nonce_action' => 'handl_aicac_policy_check_delete',
+			),
+			array(
+				'action'       => 'policy_checks_save_confirm',
+				'nonce_action' => 'handl_aicac_policy_checks_save_confirm',
+			),
 		);
 	}
 
@@ -391,6 +406,9 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array( 'handle_onboard_reopen', 'handl_aicac_onboard' ),
 			array( 'handle_policy_restore_preview', 'handl_aicac_policy_restore_preview' ),
 			array( 'handle_policy_restore_confirm', 'handl_aicac_policy_restore_confirm' ),
+			array( 'handle_policy_check_add', 'handl_aicac_policy_check_add' ),
+			array( 'handle_policy_check_delete', 'handl_aicac_policy_check_delete' ),
+			array( 'handle_policy_checks_save_confirm', 'handl_aicac_policy_checks_save_confirm' ),
 		);
 	}
 
@@ -424,6 +442,9 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'handle_onboard_reopen',
 				'handle_policy_restore_preview',
 				'handle_policy_restore_confirm',
+				'handle_policy_check_add',
+				'handle_policy_check_delete',
+				'handle_policy_checks_save_confirm',
 			) as $method
 		) {
 			$this->assertMatchesRegularExpression(
