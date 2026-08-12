@@ -1,0 +1,27 @@
+{
+  "head": "d64ee1a",
+  "plugin": "handl-utm-grabber-v3/handl-utm-grabber-v3.php",
+  "muteNotice": true,
+  "mailhog": {
+    "before": {
+      "total": 20,
+      "denyCount": 0,
+      "latestDeny": null
+    },
+    "during": {
+      "total": 20,
+      "denyCount": 0,
+      "latestDeny": null
+    },
+    "after": {
+      "total": 20,
+      "denyCount": 0,
+      "latestDeny": null
+    }
+  },
+  "noMailDuringMute": true,
+  "wouldHave": 1,
+  "mailAfterUnmute": false,
+  "fire": "{\"prevent\":true,\"reason\":\"plugin\",\"snoozed\":true,\"suppressed_before\":0,\"suppressed_after\":1,\"logged\":true}",
+  "postUnmute": "{\"snoozed\":false}"
+}

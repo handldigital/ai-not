@@ -1,0 +1,18 @@
+{
+  "mute_set": true,
+  "until_label": "2026-08-12 05:38",
+  "remaining_label": "Alerts muted for 1 hour",
+  "prevent": true,
+  "suppressed_after_deny": 1,
+  "mailhog_total_before": 22,
+  "mailhog_total_during": 22,
+  "mailhog_deny_during": 0,
+  "would_have_on_cancel": 1,
+  "mailhog_total_after": 23,
+  "mailhog_deny_after": 1,
+  "latest_deny": {
+    "subject": "[HandL UTM Grabber - Sandbox] HandL blocked an AI Client call",
+    "to": "haktan+aicac-149-mute@handldigital.com"
+  },
+  "active_for_ui": true
+}

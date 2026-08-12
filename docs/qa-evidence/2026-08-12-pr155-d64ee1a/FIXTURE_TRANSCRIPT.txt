@@ -1,0 +1,32 @@
+PR #155 / #149 AICAC-SNOOZE QA fixture transcript
+HEAD: d64ee1a (feature/aicac-149-snooze)
+Captured: 2026-08-12 (qa-admin Playwright + WP-CLI)
+Site: https://handl-sandbox/
+Plugin under test: handl-utm-grabber-v3/handl-utm-grabber-v3.php
+Alert recipient: haktan+aicac-149-mute@handldigital.com
+
+Sequence
+1. Deployed PR HEAD d64ee1a to sandbox plugin path (temporary overlay; Database #150 tree restored after).
+2. Rules (active filter): Mute controls visible — "Mute alert emails and webhooks. Rules still apply:" + 1h/8h/24h/7d.
+3. Clicked 1 hour mute → admin notice: "Alert emails and webhooks are muted for this plugin. Rules still apply, and activity is still logged."
+4. Dashboard: "Alerts muted" banner with plugin until-time + Cancel mute + helper that emails/webhooks are not sent while rules/log continue.
+5. Denied AI Client call while muted (Policy::evaluate prevent=true, reason=plugin; append_log_event + Alerts::maybe_notify_denial + flush):
+   - suppressed_before=0 → suppressed_after=1
+   - activity logged (fixture model gpt-qa-fixture-149)
+   - MailHog: no "blocked an AI Client call" message during mute (total unchanged 22→22; deny_during=0)
+6. Cancel mute (Dashboard UI): "Alert mute canceled. 1 alert(s) would have been sent while alerts were muted."
+7. Control after unmute (CLI with SMTP forced to 127.0.0.1:1025 because sandbox PHPMailer was using /usr/sbin/sendmail):
+   - MailHog received "[HandL UTM Grabber - Sandbox] HandL blocked an AI Client call"
+   - To: haktan+aicac-149-mute@handldigital.com
+   - total 22→23, deny_after=1
+
+PASS criteria covered
+- Rules/Activity mute control
+- Dashboard active mute
+- No email/webhook during mute while deny still enforced + logged
+- Cancel shows would-have-alerted count
+- Control mail after unmute proves delivery path when not muted
+
+Notes
+- Sandbox PHPMailer default Mailer=mail with Sendmail path /usr/sbin/sendmail (not MAMP mhsendmail). Mute suppression is independent of transport; post-unmute control used phpmailer_init SMTP → 127.0.0.1:1025 for MailHog visibility.
+- Live path restored to feature/aicac-150-storage @ b704bbb after capture so Database storage lane is not left overlaid.
