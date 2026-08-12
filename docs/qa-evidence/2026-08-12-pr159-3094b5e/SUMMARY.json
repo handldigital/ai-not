@@ -1,0 +1,10 @@
+{
+  "head": "3094b5e",
+  "pluginRev": "3094b5ef2b99e60c28cdf93a5c39f108aa2eba27",
+  "denyBannerOk": true,
+  "obsBannerOk": true,
+  "policyBefore": "054795ccb1f8ed5b6bfb6b7652297acdaa45c679477505f431612a50ae8119b7",
+  "policyAfter": "1df7f90b1934794adcca626ff173ef58c02a6ac555e8c5f5cdc108b38ada101d",
+  "liveFixture": "QA Deny window active now; Observe + all-day staged on other weekdays",
+  "evidenceDir": "/Users/handl/.buzz/REPOS/ai-not-qa-evidence/docs/qa-evidence/2026-08-12-pr159-3094b5e"
+}

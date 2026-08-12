@@ -1,0 +1,192 @@
+HEAD=3094b5e
+PLUGIN_REV=3094b5ef2b99e60c28cdf93a5c39f108aa2eba27
+START 2026-08-12T06:18:14.777Z
+POLICY_BEFORE sha256=054795ccb1f8ed5b6bfb6b7652297acdaa45c679477505f431612a50ae8119b7 bytes=1824
+BACKUP backup_ok policy_keys=39 log_rows=21
+after_login https://handl-sandbox/wp-admin/admin.php?page=magnus-org-chart
+DENY_STAGE {
+    "now_local": "2026-08-12 06:18:28 GMT+0000 3",
+    "window": {
+        "start": "05:48",
+        "end": "07:48",
+        "dow": 3
+    },
+    "active": {
+        "id": "qa132deny01",
+        "name": "QA Deny window",
+        "days": [
+            3
+        ],
+        "start": "05:48",
+        "end": "07:48",
+        "mode": "deny",
+        "ends_at": 1786520880,
+        "ends_label": "07:48"
+    },
+    "gate": {
+        "prevent": true,
+        "reason": "quiet_hours",
+        "window": {
+            "id": "qa132deny01",
+            "name": "QA Deny window",
+            "days": [
+                3
+            ],
+            "start": "05:48",
+            "end": "07:48",
+            "mode": "deny",
+            "ends_at": 1786520880,
+            "ends_label": "07:48"
+        }
+    },
+    "eval": {
+        "prevent": true,
+        "reason": "quiet_hours",
+        "matched_tools": []
+    },
+    "banner": "Quiet hours (\u201cQA Deny window\u201d) are active. AI Client calls are blocked until 07:48."
+}
+DASH_DENY_BANNER_OK=true
+saved 01-dashboard-deny-active.png size=323839
+ACTIVITY_DENY_SETTINGS_OK=true ACTIVITY_DENY_ROW_OK=true
+saved 02-activity-deny-settings-and-row.png size=1206609
+saved 02a-activity-quiet-hours-settings.png size=233686
+OBSERVE_STAGE {
+    "now_local": "2026-08-12 06:18:40 GMT+0000 3",
+    "active": {
+        "id": "qa132obs01",
+        "name": "QA Logging window",
+        "days": [
+            3
+        ],
+        "start": "05:48",
+        "end": "07:48",
+        "mode": "observe",
+        "ends_at": 1786520880,
+        "ends_label": "07:48"
+    },
+    "gate": null,
+    "eval_allow": {
+        "prevent": false,
+        "reason": "",
+        "matched_tools": []
+    },
+    "eval_deny_plugin": {
+        "prevent": true,
+        "reason": "plugin",
+        "matched_tools": []
+    },
+    "banner": "Quiet hours (\u201cQA Logging window\u201d) are active until 07:48. Normal access rules are still in effect.",
+    "normal_rules_still_decide": true
+}
+DASH_OBSERVE_BANNER_OK=true
+saved 03-dashboard-observe-active.png size=347307
+saved 04-activity-observe-settings-and-rows.png size=1242598
+ALLDAY_STAGE {
+    "now_local": "2026-08-12 06:18:50 GMT+0000 3",
+    "active": {
+        "id": "qa132allday",
+        "name": "QA All-day equal times",
+        "days": [
+            3
+        ],
+        "start": "09:00",
+        "end": "09:00",
+        "mode": "deny",
+        "ends_at": 1786579200,
+        "ends_label": "00:00"
+    },
+    "eval": {
+        "prevent": true,
+        "reason": "quiet_hours",
+        "matched_tools": []
+    },
+    "banner": "Quiet hours (\u201cQA All-day equal times\u201d) are active. AI Client calls are blocked until 00:00.",
+    "all_day_match": true
+}
+saved 05-dashboard-allday-active.png size=346084
+saved 06-activity-allday-settings.png size=1259788
+OVERNIGHT_TRANSCRIPT {
+    "overnight_start_day_tue_22_06": {
+        "tue_late": {
+            "active": true,
+            "name": "QA Overnight start-day",
+            "ends_label": "06:00"
+        },
+        "wed_early": {
+            "active": true,
+            "name": "QA Overnight start-day",
+            "ends_label": "06:00"
+        },
+        "wed_at_end": {
+            "active": false,
+            "name": null,
+            "ends_label": null
+        },
+        "mon_late": {
+            "active": false,
+            "name": null,
+            "ends_label": null
+        }
+    }
+}
+LIVE_FIXTURE {
+    "live_now": "2026-08-12 06:19:03 GMT+0000 3",
+    "windows": [
+        {
+            "id": "qa132deny01",
+            "name": "QA Deny window",
+            "days": [
+                3
+            ],
+            "start": "05:19",
+            "end": "09:19",
+            "mode": "deny"
+        },
+        {
+            "id": "qa132obs01",
+            "name": "QA Logging window",
+            "days": [
+                4
+            ],
+            "start": "10:00",
+            "end": "12:00",
+            "mode": "observe"
+        },
+        {
+            "id": "qa132allday",
+            "name": "QA All-day equal times",
+            "days": [
+                5
+            ],
+            "start": "09:00",
+            "end": "09:00",
+            "mode": "deny"
+        }
+    ],
+    "active": {
+        "id": "qa132deny01",
+        "name": "QA Deny window",
+        "days": [
+            3
+        ],
+        "start": "05:19",
+        "end": "09:19",
+        "mode": "deny",
+        "ends_at": 1786526340,
+        "ends_label": "09:19"
+    },
+    "banner": "Quiet hours (\u201cQA Deny window\u201d) are active. AI Client calls are blocked until 09:19."
+}
+saved 07-dashboard-live-deny-fixture.png size=345618
+saved 08-activity-live-three-windows.png size=1264878
+PHPUNIT_QUIET_HOURS
+PHPUnit 9.6.35 by Sebastian Bergmann and contributors.
+
+........                                                            8 / 8 (100%)
+
+Time: 00:00.009, Memory: 10.00 MB
+
+OK (8 tests, 30 assertions)
+POLICY_AFTER sha256=1df7f90b1934794adcca626ff173ef58c02a6ac555e8c5f5cdc108b38ada101d bytes=2153
+END 2026-08-12T06:19:14.526Z
