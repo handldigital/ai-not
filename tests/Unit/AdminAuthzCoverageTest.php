@@ -28,6 +28,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 	 */
 	private const APPROVED_DISPATCH_ACTIONS = array(
 		'bulk_plugin_rules',
+		'cancel_alert_snooze',
 		'export_audit_report',
 		'export_log',
 		'export_rules',
@@ -49,6 +50,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 		'send_test_email',
 		'send_test_webhook',
 		'simulate_policy',
+		'snooze_alerts',
 		'undo_quick_rule',
 	);
 
@@ -134,6 +136,14 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array(
 				'action'       => 'renew_temp_allow',
 				'nonce_action' => 'handl_aicac_renew_temp_allow',
+			),
+			array(
+				'action'       => 'snooze_alerts',
+				'nonce_action' => 'handl_aicac_snooze_alerts',
+			),
+			array(
+				'action'       => 'cancel_alert_snooze',
+				'nonce_action' => 'handl_aicac_cancel_alert_snooze',
 			),
 			array(
 				'action'       => 'quick_rule',
@@ -355,6 +365,8 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array( 'handle_save_log', 'handl_aicac_save_policy' ),
 			array( 'handle_bulk_plugin_rules', 'handl_aicac_save_policy' ),
 			array( 'handle_renew_temp_allow', 'handl_aicac_renew_temp_allow' ),
+			array( 'handle_snooze_alerts', 'handl_aicac_snooze_alerts' ),
+			array( 'handle_cancel_alert_snooze', 'handl_aicac_cancel_alert_snooze' ),
 			array( 'handle_simulate_policy', 'handl_aicac_save_policy' ),
 			array( 'handle_quick_rule_redirect', 'handl_aicac_quick_rule' ),
 			array( 'handle_undo_quick_rule', 'handl_aicac_undo_quick_rule' ),
