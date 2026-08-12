@@ -208,7 +208,7 @@ final class TempAllowTest extends TestCase {
 		$this->assertSame( array( $plugin ), $first['warned'] );
 		$this->assertSame( array(), $first['removed'] );
 		$this->assertCount( 1, self::$mails );
-		$this->assertStringContainsString( 'expires soon', self::$mails[0]['subject'] );
+		$this->assertStringContainsString( 'expires within 24 hours', self::$mails[0]['subject'] );
 		$this->assertStringContainsString( 'Expires:', self::$mails[0]['message'] );
 		$this->assertStringContainsString( 'handl_aicac_tab=rules', self::$mails[0]['message'] );
 

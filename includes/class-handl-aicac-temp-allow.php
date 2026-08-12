@@ -529,12 +529,12 @@ final class Temp_Allow {
 
 		$subject = sprintf(
 			/* translators: 1: site name, 2: plugin label */
-			__( '[%1$s] Temporary AI allow expires soon: %2$s', 'handl-ai-connector-access-control' ),
+			__( '[%1$s] Temporary Allow rule expires within 24 hours: %2$s', 'handl-ai-connector-access-control' ),
 			$site,
 			$label
 		);
 
-		$body  = __( 'HandL AI Connector Access Control temporary allow expires soon', 'handl-ai-connector-access-control' ) . "\n\n";
+		$body  = __( 'HandL AI Connector Access Control temporary Allow rule expires within 24 hours', 'handl-ai-connector-access-control' ) . "\n\n";
 		$body .= sprintf(
 			/* translators: %s: plugin display name or basename */
 			__( 'Plugin: %s', 'handl-ai-connector-access-control' ),
@@ -545,8 +545,8 @@ final class Temp_Allow {
 			__( 'Expires: %s', 'handl-ai-connector-access-control' ),
 			$when
 		) . "\n\n";
-		$body .= __( 'This temporary Allow will end soon. After it ends, the plugin follows the site default.', 'handl-ai-connector-access-control' ) . "\n\n";
-		$body .= __( 'To renew or change the rule, open Rules and use Renew (7 days) or set a new expiry:', 'handl-ai-connector-access-control' ) . "\n";
+		$body .= __( 'This plugin’s temporary Allow rule expires within 24 hours. After it expires, the plugin will follow the site default policy.', 'handl-ai-connector-access-control' ) . "\n\n";
+		$body .= __( 'Open the Rules tab to select Renew 7 days or choose a new expiry:', 'handl-ai-connector-access-control' ) . "\n";
 		$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules' ) . "\n";
 
 		// Delivery failures record into alert-health (#123) via safe_wp_mail.
