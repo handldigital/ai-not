@@ -474,7 +474,7 @@ final class Drift {
 		?float $cost_multiple
 	): string {
 		$lines   = array();
-		$lines[] = __( 'HandL AI Connector Access Control — provider/model change', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'HandL AI Connector Access Control — provider or model change', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = sprintf(
 			/* translators: %s: plugin display name or basename */
@@ -509,7 +509,7 @@ final class Drift {
 		$lines[] = __( 'View this plugin’s activity:', 'handl-ai-connector-access-control' );
 		$lines[] = self::activity_url_for_plugin( $plugin );
 		$lines[] = '';
-		$lines[] = __( 'Manage provider/model change alerts:', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'Manage provider or model change alerts:', 'handl-ai-connector-access-control' );
 		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' );
 
 		return implode( "\n", $lines ) . "\n";

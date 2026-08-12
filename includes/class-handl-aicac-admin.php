@@ -3725,14 +3725,14 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		// AICAC-DRIFT: provider/model change alerts (default: new provider only).
 		$drift_mode = Drift::sanitize_mode( $policy['drift_alert_mode'] ?? Drift::MODE_PROVIDER );
 		echo '<tr>';
-		echo '<th scope="row"><label for="handl-aicac-drift-alert-mode">' . esc_html__( 'Provider / model change alerts', 'handl-ai-connector-access-control' ) . '</label></th>';
+		echo '<th scope="row"><label for="handl-aicac-drift-alert-mode">' . esc_html__( 'Provider or model change alerts', 'handl-ai-connector-access-control' ) . '</label></th>';
 		echo '<td>';
 		echo '<select id="handl-aicac-drift-alert-mode" name="handl_aicac_drift_alert_mode">';
-		echo '<option value="provider" ' . selected( $drift_mode, Drift::MODE_PROVIDER, false ) . '>' . esc_html__( 'Alert on a new provider (default)', 'handl-ai-connector-access-control' ) . '</option>';
-		echo '<option value="model" ' . selected( $drift_mode, Drift::MODE_MODEL, false ) . '>' . esc_html__( 'Alert on any new provider or model', 'handl-ai-connector-access-control' ) . '</option>';
+		echo '<option value="provider" ' . selected( $drift_mode, Drift::MODE_PROVIDER, false ) . '>' . esc_html__( 'New providers only (default)', 'handl-ai-connector-access-control' ) . '</option>';
+		echo '<option value="model" ' . selected( $drift_mode, Drift::MODE_MODEL, false ) . '>' . esc_html__( 'New providers or models', 'handl-ai-connector-access-control' ) . '</option>';
 		echo '<option value="off" ' . selected( $drift_mode, Drift::MODE_OFF, false ) . '>' . esc_html__( 'Off', 'handl-ai-connector-access-control' ) . '</option>';
 		echo '</select>';
-		echo '<p class="description">' . esc_html__( 'Emails once the first time a plugin uses a new AI provider (or model, if you choose). The first call for a plugin is a baseline and does not alert. Uses the blocked-call alert email address and optional webhook. Does not change allow or deny rules.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Sends one alert the first time a plugin uses a new provider. Choose “New providers or models” to alert on either change. The plugin’s first recorded call creates a baseline and does not send an alert. Alerts use the blocked-call email address and optional webhook. This does not change Allow or Deny rules.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td>';
 		echo '</tr>';
 
@@ -5069,7 +5069,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		}
 
 		echo '<div class="notice notice-info inline handl-aicac-drift-recent" style="margin:12px 0;padding:8px 12px;">';
-		echo '<p style="margin:0 0 6px;"><strong>' . esc_html__( 'Provider / model changes', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		echo '<p style="margin:0 0 6px;"><strong>' . esc_html__( 'Recent provider or model changes', 'handl-ai-connector-access-control' ) . '</strong></p>';
 		echo '<ul style="margin:0;padding-left:1.2em;">';
 		$shown = 0;
 		foreach ( $recent as $row ) {
@@ -5856,7 +5856,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			return '<span class="handl-aicac-badge handl-aicac-badge--observe">' . esc_html__( 'observe', 'handl-ai-connector-access-control' ) . '</span>';
 		}
 		if ( 'drift_alert' === $decision ) {
-			return '<span class="handl-aicac-badge handl-aicac-badge--observe">' . esc_html__( 'provider/model change', 'handl-ai-connector-access-control' ) . '</span>';
+			return '<span class="handl-aicac-badge handl-aicac-badge--observe">' . esc_html__( 'provider or model change', 'handl-ai-connector-access-control' ) . '</span>';
 		}
 		return '<span class="handl-aicac-muted">' . esc_html( $decision ?: '—' ) . '</span>';
 	}
