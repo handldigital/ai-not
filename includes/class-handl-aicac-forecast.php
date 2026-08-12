@@ -437,11 +437,6 @@ final class Spend_Forecast {
 	}
 
 	private static function safe_wp_mail( string $to, string $subject, string $body ): bool {
-		try {
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.wp_mail -- intentional notification path.
-			return (bool) wp_mail( $to, $subject, $body );
-		} catch ( \Throwable $e ) {
-			return false;
-		}
+		return Alerts::safe_wp_mail( $to, $subject, $body );
 	}
 }
