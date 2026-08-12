@@ -2778,7 +2778,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<input type="hidden" name="handl_aicac_action" value="save" />';
 		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
 		$this->render_log_filter_hiddens( $log_filters );
-		$this->render_logging_settings( $policy );
+		$this->render_logging_settings( $policy, $log );
 		submit_button( __( 'Save Activity settings', 'handl-ai-connector-access-control' ) );
 		echo '</form>';
 
@@ -3246,6 +3246,157 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	}
 
 	/**
+	 * AICAC-STORAGE: read-only footprint + retention estimator under the TTL field.
+	 *
+	 * @param array<int,mixed>    $log
+	 * @param array<string,mixed> $policy
+	 * @param int|null            $current_max_age
+	 */
+	private function render_log_storage_hints( array $log, array $policy, ?int $current_max_age ): void {
+		$footprint = Log_Storage::footprint( $log );
+		$row_count = (int) $footprint['row_count'];
+		$bytes     = (int) $footprint['approx_bytes'];
+
+		echo '<div class="handl-aicac-log-storage" style="margin-top:12px;max-width:40em;">';
+		echo '<p class="description" style="margin:0 0 6px;">';
+		echo esc_html(
+			sprintf(
+				/* translators: 1: entry count, 2: approximate size (e.g. 48 KB) */
+				__( 'Current activity log: %1$s entries using about %2$s on this site.', 'handl-ai-connector-access-control' ),
+				number_format_i18n( $row_count ),
+				Log_Storage::format_bytes( $bytes )
+			)
+		);
+		echo '</p>';
+
+		if ( null !== $footprint['oldest_age_days'] ) {
+			$age_days = (float) $footprint['oldest_age_days'];
+			$age_label = $age_days < 1
+				? __( 'less than a day', 'handl-ai-connector-access-control' )
+				: sprintf(
+					/* translators: %s: number of days (may include one decimal) */
+					_n( '%s day', '%s days', (int) max( 1, round( $age_days ) ), 'handl-ai-connector-access-control' ),
+					number_format_i18n( $age_days >= 10 ? (int) round( $age_days ) : round( $age_days, 1 ) )
+				);
+			echo '<p class="description" style="margin:0 0 6px;">';
+			echo esc_html(
+				sprintf(
+					/* translators: %s: human age of oldest retained entry */
+					__( 'Oldest saved entry: %s ago.', 'handl-ai-connector-access-control' ),
+					$age_label
+				)
+			);
+			echo '</p>';
+		}
+
+		if ( null !== $footprint['rows_per_week'] && (int) $footprint['weeks_spanned'] > 0 ) {
+			$weeks_spanned = (int) $footprint['weeks_spanned'];
+			echo '<p class="description" style="margin:0 0 6px;">';
+			echo esc_html(
+				sprintf(
+					/* translators: 1: average rows per week, 2: weeks counted */
+					_n(
+						'About %1$s entries per week, based on %2$d week with activity in the saved log.',
+						'About %1$s entries per week, based on %2$d weeks with activity in the saved log.',
+						$weeks_spanned,
+						'handl-ai-connector-access-control'
+					),
+					number_format_i18n( (int) round( (float) $footprint['rows_per_week'] ) ),
+					$weeks_spanned
+				)
+			);
+			echo '</p>';
+		}
+
+		if ( $row_count > 0 ) {
+			echo '<p class="description" style="margin:8px 0 4px;"><strong>' . esc_html__( 'What shorter time limits would remove', 'handl-ai-connector-access-control' ) . '</strong></p>';
+			echo '<ul class="description" style="margin:0 0 8px 1.25em;list-style:disc;">';
+			foreach ( Log_Storage::ESTIMATE_DAY_OPTIONS as $days ) {
+				$est = Log_Storage::estimate_if_retention_days( $log, (int) $days );
+				if ( $est['rows_purged'] < 1 ) {
+					echo '<li>' . esc_html(
+						sprintf(
+							/* translators: %d: retention days */
+							__( 'A %d-day limit would not remove any entries right now.', 'handl-ai-connector-access-control' ),
+							(int) $days
+						)
+					) . '</li>';
+					continue;
+				}
+				echo '<li>' . esc_html(
+					sprintf(
+						/* translators: 1: retention days, 2: rows that would be removed, 3: approximate bytes saved */
+						__( 'A %1$d-day limit would remove about %2$s older entries and reduce storage by about %3$s.', 'handl-ai-connector-access-control' ),
+						(int) $days,
+						number_format_i18n( (int) $est['rows_purged'] ),
+						Log_Storage::format_bytes( (int) $est['approx_bytes_saved'] )
+					)
+				) . '</li>';
+			}
+			echo '</ul>';
+		}
+
+		$suggested = Log_Storage::suggested_retention_days( $log, $policy );
+		$warning   = null;
+		if ( null !== $suggested ) {
+			$warning = Log_Storage::insights_purge_warning( $log, $policy, (int) $suggested );
+		} elseif ( null !== $current_max_age ) {
+			$warning = Log_Storage::insights_purge_warning( $log, $policy, (int) $current_max_age );
+		}
+
+		// Live warning when the typed TTL would create Insights gaps.
+		echo '<p class="description handl-aicac-log-storage-warn" id="handl-aicac-log-storage-warn" style="margin:8px 0 0;' . ( null === $warning ? 'display:none;' : '' ) . '">';
+		echo '<strong>' . esc_html__( 'Before you save:', 'handl-ai-connector-access-control' ) . '</strong> ';
+		echo esc_html__( 'This time limit would remove entries used for weekly trends in Insights. Some weeks would show “No data kept.” Save only if that is acceptable.', 'handl-ai-connector-access-control' );
+		echo '</p>';
+
+		if ( null !== $suggested ) {
+			echo '<p style="margin:10px 0 0;">';
+			echo '<button type="button" class="button button-secondary" id="handl-aicac-apply-suggested-retention" data-days="' . esc_attr( (string) $suggested ) . '">';
+			echo esc_html(
+				sprintf(
+					/* translators: %d: suggested retention days */
+					__( 'Use suggested %d-day limit', 'handl-ai-connector-access-control' ),
+					$suggested
+				)
+			);
+			echo '</button>';
+			echo ' <span class="description">' . esc_html__( 'Keeps the full eight-week Insights window. Fills the field only; select Save Activity settings to apply it.', 'handl-ai-connector-access-control' ) . '</span>';
+			echo '</p>';
+		}
+
+		// Largest day-value that still triggers an Insights purge warning (0 = never).
+		// Binary search: at most ~6 compute pairs instead of scanning 1..56.
+		$warn_max_days = 0;
+		$lo            = 1;
+		$hi            = Log_Storage::SUGGESTED_RETENTION_DAYS;
+		while ( $lo <= $hi ) {
+			$mid = (int) ( ( $lo + $hi ) / 2 );
+			if ( null !== Log_Storage::insights_purge_warning( $log, $policy, $mid ) ) {
+				$warn_max_days = $mid;
+				$lo            = $mid + 1;
+			} else {
+				$hi = $mid - 1;
+			}
+		}
+
+		echo '<script>';
+		echo '(function(){';
+		echo 'var input=document.getElementById("handl-aicac-log-max-age-days");';
+		echo 'var warn=document.getElementById("handl-aicac-log-storage-warn");';
+		echo 'var btn=document.getElementById("handl-aicac-apply-suggested-retention");';
+		echo 'var warnMax=' . (int) $warn_max_days . ';';
+		echo 'function syncWarn(){if(!input||!warn)return;var v=parseInt(input.value,10);warn.style.display=(!isNaN(v)&&warnMax>0&&v>0&&v<=warnMax)?"block":"none";}';
+		echo 'if(input){input.addEventListener("input",syncWarn);input.addEventListener("change",syncWarn);}';
+		echo 'if(btn&&input){btn.addEventListener("click",function(e){e.preventDefault();input.value=btn.getAttribute("data-days")||"";input.dispatchEvent(new Event("input",{bubbles:true}));input.focus();});}';
+		echo 'syncWarn();';
+		echo '})();';
+		echo '</script>';
+
+		echo '</div>';
+	}
+
+	/**
 	 * @param array<string,mixed> $row
 	 */
 	private function get_log_row_field( array $row, string $field ): string {
@@ -3261,8 +3412,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 	/**
 	 * @param array<string,mixed> $policy
+	 * @param array<int,mixed>    $log    Retained activity log for footprint hints.
 	 */
-	private function render_logging_settings( array $policy ): void {
+	private function render_logging_settings( array $policy, array $log = array() ): void {
 		$audit_only  = ! empty( $policy['audit_only'] );
 		$log_enabled = ! empty( $policy['log_enabled'] );
 		$log_limit   = (int) ( $policy['log_limit'] ?? 200 );
@@ -3312,6 +3464,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<td>';
 		echo '<input type="number" id="handl-aicac-log-max-age-days" name="handl_aicac_log_max_age_days" value="' . esc_attr( $max_age_val ) . '" min="1" max="3650" step="1" class="small-text" placeholder="" />';
 		echo ' <span class="description">' . esc_html__( 'Optional. Leave blank for no time limit. When set, older entries are removed the next time the log is read or updated. The entry limit still applies, and the stricter limit wins.', 'handl-ai-connector-access-control' ) . '</span>';
+		$this->render_log_storage_hints( $log, $policy, $max_age );
 		echo '</td>';
 		echo '</tr>';
 
