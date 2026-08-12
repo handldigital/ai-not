@@ -79,6 +79,12 @@ final class Whats_New {
 	 */
 	public static function highlights_catalog(): array {
 		return array(
+			'1.3.0' => array(
+				__( 'See 8 weeks of call and estimated-spend trends in Insights, including per-plugin sparklines and changes from the previous week.', 'handl-ai-connector-access-control' ),
+				__( 'Restore a previous policy from the Rules tab. Review every rule and setting that will change before you confirm.', 'handl-ai-connector-access-control' ),
+				__( 'Scan active plugins for possible embedded AI API keys. Only the last 4 characters appear on the Dashboard, and full keys are never stored.', 'handl-ai-connector-access-control' ),
+				__( 'Turn on a monthly email with a short summary and printable HTML audit report. If no activity was retained, you still receive a no-activity note.', 'handl-ai-connector-access-control' ),
+			),
 			'1.2.2' => array(
 				__( 'Start with a policy preset and preview every setting that will change before you apply it.', 'handl-ai-connector-access-control' ),
 				__( 'Set temporary Allow rules that expire automatically, then renew an expired rule for 7 days when needed.', 'handl-ai-connector-access-control' ),
