@@ -2798,6 +2798,12 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
 		echo '<input type="hidden" name="handl_aicac_test_email_channel" value="monthly_report" />';
 		echo '</form>';
+		echo '<form method="post" id="handl-aicac-test-email-digest" style="display:none;" hidden>';
+		wp_nonce_field( 'handl_aicac_send_test_email', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="send_test_email" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
+		echo '<input type="hidden" name="handl_aicac_test_email_channel" value="governance_digest" />';
+		echo '</form>';
 
 		echo '<form method="post" style="margin-bottom:1.5em;">';
 		wp_nonce_field( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
@@ -3579,6 +3585,33 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			)
 		);
 		echo ' <span class="description">' . esc_html__( 'Sends a labeled test weekly report to the saved recipient, or the site admin email. Limited to one test email per minute.', 'handl-ai-connector-access-control' ) . '</span>';
+		echo '</p>';
+		echo '</td>';
+		echo '</tr>';
+
+		// AICAC-DIGEST (#120): weekly governance digest (off by default; 7-day Activity window).
+		$digest_on     = ! empty( $policy['governance_digest_enabled'] );
+		$digest_always = ! empty( $policy['governance_digest_always_send'] );
+		echo '<tr>';
+		echo '<th scope="row">' . esc_html__( 'Weekly governance digest', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<td>';
+		echo '<label><input type="checkbox" name="handl_aicac_governance_digest_enabled" value="1" ' . checked( $digest_on, true, false ) . ' /> ';
+		echo esc_html__( 'Email a weekly governance digest (calls, estimated spend vs the previous 7 days, blocks, direct connections, usage spikes)', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Off by default. Uses the last 7 days of saved Activity — the same window as the Activity summary. Sends at most once per week to the blocked-call alert email. Clear the checkbox and save to turn it off.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p style="margin-top:8px;"><label><input type="checkbox" name="handl_aicac_governance_digest_always_send" value="1" ' . checked( $digest_always, true, false ) . ' /> ';
+		echo esc_html__( 'Also send when no AI activity was recorded in the last 7 days', 'handl-ai-connector-access-control' ) . '</label></p>';
+		echo '<p style="margin-top:8px;">';
+		submit_button(
+			__( 'Send test email', 'handl-ai-connector-access-control' ),
+			'secondary',
+			'submit',
+			false,
+			array(
+				'form' => 'handl-aicac-test-email-digest',
+				'id'   => 'handl-aicac-send-test-digest-email',
+			)
+		);
+		echo ' <span class="description">' . esc_html__( 'Sends a labeled test digest to the blocked-call alert email, or the site admin email if none is saved. Limited to one test email per minute.', 'handl-ai-connector-access-control' ) . '</span>';
 		echo '</p>';
 		echo '</td>';
 		echo '</tr>';
@@ -4726,6 +4759,10 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 
 		// AICAC-REPORT-SCHED: monthly audit email (off by default; anomaly-style checkbox).
 		$policy['monthly_report_enabled'] = ! empty( filter_input( INPUT_POST, 'handl_aicac_monthly_report_enabled', FILTER_UNSAFE_RAW ) );
+
+		// AICAC-DIGEST: weekly governance digest (off by default).
+		$policy['governance_digest_enabled']     = ! empty( filter_input( INPUT_POST, 'handl_aicac_governance_digest_enabled', FILTER_UNSAFE_RAW ) );
+		$policy['governance_digest_always_send'] = ! empty( filter_input( INPUT_POST, 'handl_aicac_governance_digest_always_send', FILTER_UNSAFE_RAW ) );
 
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate(
 			filter_input( INPUT_POST, 'handl_aicac_est_usd_input_per_m', FILTER_UNSAFE_RAW ),

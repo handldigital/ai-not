@@ -46,7 +46,7 @@ final class Alerts {
 	private const DIGEST_QUEUE_MAX = 200;
 
 	/** Allowed admin test-email channels (denial alerts vs weekly report). */
-	public const TEST_EMAIL_CHANNELS = array( 'denial_alert', 'weekly_report', 'monthly_report' );
+	public const TEST_EMAIL_CHANNELS = array( 'denial_alert', 'weekly_report', 'monthly_report', 'governance_digest' );
 
 	private static ?Alerts $instance = null;
 
@@ -784,6 +784,14 @@ final class Alerts {
 			);
 		}
 
+		if ( 'governance_digest' === $channel ) {
+			return sprintf(
+				/* translators: %s: site name */
+				__( '[%s] Test: HandL weekly AI governance digest', 'handl-ai-connector-access-control' ),
+				$site
+			);
+		}
+
 		if ( 'monthly_report' === $channel ) {
 			return sprintf(
 				/* translators: %s: site name */
@@ -812,6 +820,10 @@ final class Alerts {
 			$lines[] = __( 'This is a test. This is not a real weekly report.', 'handl-ai-connector-access-control' );
 			$lines[] = '';
 			$lines[] = __( 'You requested a test of weekly report email delivery from Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' );
+		} elseif ( 'governance_digest' === $channel ) {
+			$lines[] = __( 'This is a test. This is not a weekly governance digest.', 'handl-ai-connector-access-control' );
+			$lines[] = '';
+			$lines[] = __( 'You requested a test of weekly governance digest email delivery from Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' );
 		} elseif ( 'monthly_report' === $channel ) {
 			$lines[] = __( 'This is a test. This is not a monthly audit report.', 'handl-ai-connector-access-control' );
 			$lines[] = '';

@@ -44,6 +44,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alert-snooze.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-weekly-report.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-monthly-report.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-governance-digest.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-model-force.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-shadow-ai.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-keyscan.php';
@@ -77,6 +78,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 		Alerts::instance()->init();
 		Weekly_Report::instance()->init();
 		Monthly_Report::instance()->init();
+		Governance_Digest::instance()->init();
 		Model_Force::instance()->init();
 		Shadow_AI::instance()->init();
 		Keyscan::instance()->init();
