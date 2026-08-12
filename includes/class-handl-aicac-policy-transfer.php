@@ -70,6 +70,8 @@ final class Policy_Transfer {
 			'drift_alert_mode',
 			'weekly_report_enabled',
 			'monthly_report_enabled',
+			'governance_digest_enabled',
+			'governance_digest_always_send',
 			'model_force_plugins',
 			'model_force_unattributed',
 			'model_force_unattributed_provider',

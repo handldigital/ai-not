@@ -618,6 +618,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alert-health.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alert-snooze.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-weekly-report.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-monthly-report.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-governance-digest.php';
 
 if ( ! defined( 'HANDL_AICAC_FILE' ) ) {
 	define( 'HANDL_AICAC_FILE', HANDL_AICAC_DIR . '/handl-ai-connector-access-control.php' );

@@ -291,6 +291,10 @@ final class Site_Health {
 			return true;
 		}
 
+		if ( ! empty( $policy['governance_digest_enabled'] ) ) {
+			return true;
+		}
+
 		if ( ! empty( $policy['alert_on_shadow'] ) ) {
 			return true;
 		}

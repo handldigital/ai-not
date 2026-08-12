@@ -194,6 +194,7 @@ Yes. With WP-CLI available and this plugin active:
 
 = Unreleased =
 * Shared email layout for HandL alerts and reports: same header, intro, and footer on every message, with a plain-text and HTML part. Per-message wording inside the content block is unchanged.
+* Optional weekly governance digest email: last 7 days of AI Client calls, estimated spend vs the prior week, blocked calls, direct connections, usage spike alerts, and top plugins. Off by default.
 
 = 1.4.0 =
 * Policy checks on the Rules tab: save sample AI calls with expected Allow or Deny results. The plugin re-checks them before rules, presets, restores, or imports are applied and warns if a result would change.

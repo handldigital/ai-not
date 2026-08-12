@@ -944,6 +944,8 @@ final class Policy {
 		$policy['anomaly_floor_spend']   = Anomaly::sanitize_floor_spend( $policy['anomaly_floor_spend'] ?? Anomaly::DEFAULT_FLOOR_SPEND );
 		$policy['drift_alert_mode']      = Drift::sanitize_mode( $policy['drift_alert_mode'] ?? Drift::MODE_PROVIDER );
 		$policy['monthly_report_enabled'] = (bool) ( $policy['monthly_report_enabled'] ?? false );
+		$policy['governance_digest_enabled']     = (bool) ( $policy['governance_digest_enabled'] ?? false );
+		$policy['governance_digest_always_send'] = (bool) ( $policy['governance_digest_always_send'] ?? false );
 
 		// F7: weekly report preference — staged selected-by-default until first explicit choice.
 		// Delivery still requires logging/learn (Weekly_Report::is_active). Key absence ≠ off.
@@ -1178,6 +1180,8 @@ final class Policy {
 		$policy['anomaly_floor_spend']   = Anomaly::sanitize_floor_spend( $policy['anomaly_floor_spend'] ?? Anomaly::DEFAULT_FLOOR_SPEND );
 		$policy['drift_alert_mode']      = Drift::sanitize_mode( $policy['drift_alert_mode'] ?? Drift::MODE_PROVIDER );
 		$policy['monthly_report_enabled'] = ! empty( $policy['monthly_report_enabled'] );
+		$policy['governance_digest_enabled']     = ! empty( $policy['governance_digest_enabled'] );
+		$policy['governance_digest_always_send'] = ! empty( $policy['governance_digest_always_send'] );
 
 		$max_age = self::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
 		if ( null === $max_age ) {
@@ -1238,6 +1242,7 @@ final class Policy {
 		$schedule_policy['weekly_report_enabled'] = $weekly_for_schedule;
 		Weekly_Report::maybe_schedule( $schedule_policy );
 		Monthly_Report::maybe_schedule( $policy );
+		Governance_Digest::maybe_schedule( $policy );
 
 		// Issue 7 / AICAC-SHADOW-ALERT: disabling alert types must not leave
 		// their metadata queued; keep the other type's rows when still enabled.
