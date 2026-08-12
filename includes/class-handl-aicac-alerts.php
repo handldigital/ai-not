@@ -169,6 +169,11 @@ final class Alerts {
 		if ( ( $event['decision'] ?? '' ) !== 'deny' ) {
 			return;
 		}
+		// AICAC-SNOOZE: mute delivery for this plugin; enforcement/logging unchanged.
+		$plugin = isset( $event['plugin'] ) ? (string) $event['plugin'] : '';
+		if ( Alert_Snooze::should_suppress( $plugin, 'denial' ) ) {
+			return;
+		}
 
 		$mode = self::sanitize_mode( $policy['alert_mode'] ?? 'immediate' );
 		if ( 'digest' === $mode ) {
@@ -207,6 +212,11 @@ final class Alerts {
 			return;
 		}
 		if ( ( $event['channel'] ?? '' ) !== 'direct_http' ) {
+			return;
+		}
+		// AICAC-SNOOZE: mute delivery for this plugin; observe logging continues.
+		$plugin = isset( $event['plugin'] ) ? (string) $event['plugin'] : '';
+		if ( Alert_Snooze::should_suppress( $plugin, 'shadow' ) ) {
 			return;
 		}
 
@@ -535,7 +545,12 @@ final class Alerts {
 			if ( ! is_array( $row ) ) {
 				continue;
 			}
-			$kind = isset( $row['alert_kind'] ) ? (string) $row['alert_kind'] : 'denial';
+			// Drop snoozed plugins from digest delivery; count as would-have-alerted.
+			$plugin = isset( $row['plugin'] ) ? (string) $row['plugin'] : '';
+			$kind   = isset( $row['alert_kind'] ) ? (string) $row['alert_kind'] : 'denial';
+			if ( '' !== $plugin && Alert_Snooze::should_suppress( $plugin, $kind ) ) {
+				continue;
+			}
 			if ( 'shadow' === $kind ) {
 				if ( $shadow_on ) {
 					$shadows[] = $row;
@@ -548,6 +563,8 @@ final class Alerts {
 		}
 
 		if ( empty( $denials ) && empty( $shadows ) ) {
+			// All rows were snoozed or disabled — drop them so the queue does not stick.
+			update_option( self::DIGEST_OPTION_KEY, array(), false );
 			return;
 		}
 

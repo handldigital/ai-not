@@ -37,6 +37,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-anomaly.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alerts.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alert-health.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alert-snooze.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-weekly-report.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-monthly-report.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-model-force.php';
@@ -44,6 +45,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-keyscan.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-temp-allow.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-new-plugin.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quiet-hours.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-simulator.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-checks.php';

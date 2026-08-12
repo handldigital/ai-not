@@ -264,6 +264,10 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_import_rules_confirm', 'handl_aicac_nonce' );
 				$this->handle_import_rules_confirm();
 			}
+			if ( 'compare_rules_preview' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_compare_rules', 'handl_aicac_nonce' );
+				$this->handle_compare_rules_preview();
+			}
 			if ( 'keyscan_run' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_keyscan_run', 'handl_aicac_nonce' );
 				$this->handle_keyscan_run();
@@ -291,6 +295,14 @@ final class Admin {
 			if ( 'renew_temp_allow' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_renew_temp_allow', 'handl_aicac_nonce' );
 				$this->handle_renew_temp_allow();
+			}
+			if ( 'snooze_alerts' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_snooze_alerts', 'handl_aicac_nonce' );
+				$this->handle_snooze_alerts();
+			}
+			if ( 'cancel_alert_snooze' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_cancel_alert_snooze', 'handl_aicac_nonce' );
+				$this->handle_cancel_alert_snooze();
 			}
 			if ( 'simulate_policy' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
@@ -341,7 +353,11 @@ final class Admin {
 		$import_err  = isset( $_GET['handl_aicac_import_error'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_import_error'] ) ) : '';
 		$import_ignored_q = isset( $_GET['handl_aicac_import_ignored'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['handl_aicac_import_ignored'] ) ) : '';
 		$show_import_preview = isset( $_GET['handl_aicac_import_preview'] ) && '1' === (string) $_GET['handl_aicac_import_preview'];
+		$show_compare_preview = isset( $_GET['handl_aicac_compare_preview'] ) && '1' === (string) $_GET['handl_aicac_compare_preview'];
+		$compare_err = isset( $_GET['handl_aicac_compare_error'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_compare_error'] ) ) : '';
 		$renewed_ok = isset( $_GET['handl_aicac_renewed'] ) && '1' === (string) $_GET['handl_aicac_renewed'];
+		$snoozed_ok = isset( $_GET['handl_aicac_snoozed'] ) && '1' === (string) $_GET['handl_aicac_snoozed'];
+		$snooze_cancelled_ok = isset( $_GET['handl_aicac_snooze_cancelled'] ) && '1' === (string) $_GET['handl_aicac_snooze_cancelled'];
 		$show_preset_preview = isset( $_GET['handl_aicac_preset_preview'] ) && '1' === (string) $_GET['handl_aicac_preset_preview'];
 		$preset_status       = isset( $_GET['handl_aicac_preset'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_preset'] ) ) : '';
 		$preset_id_q         = isset( $_GET['handl_aicac_preset_id'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_preset_id'] ) ) : '';
@@ -394,6 +410,30 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		}
 		if ( $renewed_ok ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Temporary allow renewed for 7 more days.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		if ( $snoozed_ok ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Alert emails and webhooks are muted for this plugin. Rules still apply, and activity is still logged.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		if ( $snooze_cancelled_ok ) {
+			$suppressed_n = isset( $_GET['handl_aicac_snooze_suppressed'] ) ? max( 0, (int) $_GET['handl_aicac_snooze_suppressed'] ) : 0;
+			echo '<div class="notice notice-success is-dismissible"><p>';
+			if ( $suppressed_n > 0 ) {
+				echo esc_html(
+					sprintf(
+						/* translators: %d: number of alerts that would have been sent while muted */
+						_n(
+							'Alert mute canceled. %d alert would have been sent while alerts were muted.',
+							'Alert mute canceled. %d alerts would have been sent while alerts were muted.',
+							$suppressed_n,
+							'handl-ai-connector-access-control'
+						),
+						$suppressed_n
+					)
+				);
+			} else {
+				echo esc_html__( 'Alert mute canceled. Alert emails and webhooks for this plugin can be sent again.', 'handl-ai-connector-access-control' );
+			}
+			echo '</p></div>';
 		}
 		if ( $this->webhook_url_rejected ) {
 			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Webhook URL not saved. Enter a valid http:// or https:// URL, or leave it blank to disable webhooks.', 'handl-ai-connector-access-control' ) . '</p></div>';
@@ -483,6 +523,9 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		if ( '' !== $import_err ) {
 			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $this->import_error_message( $import_err ) ) . '</p></div>';
 		}
+		if ( '' !== $compare_err ) {
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $this->compare_error_message( $compare_err ) ) . '</p></div>';
+		}
 		if ( 'applied' === $preset_status ) {
 			$preset_label = $preset_id_q;
 			$preset_def   = '' !== $preset_id_q ? Presets::get( $preset_id_q ) : null;
@@ -556,8 +599,12 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 				$audit_notice .= ' <a href="' . esc_url( admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' ) ) . '">' . esc_html__( 'Open Activity', 'handl-ai-connector-access-control' ) . '</a>';
 			}
 			echo '<div class="notice notice-info"><p>' . wp_kses_post( $audit_notice ) . '</p></div>';
-		} elseif ( ! empty( $policy['kill_switch'] ) ) {
+		} else		if ( ! empty( $policy['kill_switch'] ) ) {
 			echo '<div class="notice notice-warning"><p>' . esc_html__( 'Emergency stop is on. All AI Client calls are blocked except listed plugins.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		$qh_banner = Quiet_Hours::active_banner_text( $policy );
+		if ( null !== $qh_banner ) {
+			echo '<div class="notice notice-info"><p>' . esc_html( $qh_banner ) . '</p></div>';
 		}
 
 		// AICAC-FORECAST: mid-month projection vs configured spend thresholds.
@@ -617,6 +664,18 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		echo '<form method="post" id="handl-aicac-renew-form" class="handl-aicac-rules-save-form">';
 		wp_nonce_field( 'handl_aicac_renew_temp_allow', 'handl_aicac_nonce' );
 		echo '<input type="hidden" name="handl_aicac_action" value="renew_temp_allow" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		echo '</form>';
+
+		// AICAC-SNOOZE shells — form= on row buttons (no nested forms).
+		echo '<form method="post" id="handl-aicac-snooze-form" class="handl-aicac-rules-save-form">';
+		wp_nonce_field( 'handl_aicac_snooze_alerts', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="snooze_alerts" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		echo '</form>';
+		echo '<form method="post" id="handl-aicac-cancel-snooze-form" class="handl-aicac-rules-save-form">';
+		wp_nonce_field( 'handl_aicac_cancel_alert_snooze', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="cancel_alert_snooze" />';
 		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
 		echo '</form>';
 
@@ -914,6 +973,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				echo '</p>';
 			}
 			echo '</div>';
+			// AICAC-SNOOZE: mute alerts for this plugin without changing rules.
+			$this->render_plugin_snooze_controls( (string) $basename, $name, 'rules' );
 			echo '</td>';
 			foreach ( $family_labels as $family_id => $family_label ) {
 				$family_rule = isset( $plugin_ops[ $family_id ] ) ? (string) $plugin_ops[ $family_id ] : '';
@@ -982,7 +1043,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		echo '</form>';
 
-		$this->render_rules_transfer_section( $policy, $show_import_preview );
+		$this->render_rules_transfer_section( $policy, $show_import_preview, $show_compare_preview );
 
 		echo '</div>'; // .handl-aicac-tab-panel
 		echo '</div>'; // .wrap
@@ -1877,6 +1938,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$this->render_new_plugin_dashboard_line( $policy, $plugins );
 		// AICAC-RULE-TEST: open failures after an override.
 		$this->render_policy_checks_dashboard_line( $plugins );
+		// AICAC-SNOOZE: active per-plugin alert mutes.
+		$this->render_alert_snooze_dashboard_line( $plugins );
 
 		// AICAC-11: name differentiators vs WordPress AI Connector Approvals (Dashboard-primary).
 		$this->render_beyond_connector_approvals_callout();
@@ -1977,6 +2040,15 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo ' · <strong>' . esc_html( $learn ) . '</strong></p>';
 		if ( ! empty( $policy['kill_switch'] ) ) {
 			echo '<p class="handl-aicac-danger"><strong>' . esc_html__( 'Emergency stop is on.', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		}
+		$qh_line = Quiet_Hours::active_banner_text( $policy );
+		if ( null !== $qh_line ) {
+			echo '<p><strong>' . esc_html( $qh_line ) . '</strong></p>';
+		} else {
+			$qh_windows = Quiet_Hours::sanitize_windows( $policy['quiet_hours'] ?? array() );
+			if ( ! empty( $qh_windows ) ) {
+				echo '<p class="description">' . esc_html__( 'Quiet hours are set, but none are active now.', 'handl-ai-connector-access-control' ) . '</p>';
+			}
 		}
 		echo '<p>' . esc_html(
 			sprintf(
@@ -2675,6 +2747,36 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		echo '<div id="handl-aicac-log-wrap" class="handl-aicac-tab-panel handl-aicac-log-wrap">';
 
+		// AICAC-SNOOZE shells for Activity (same pattern as Rules — no nested forms).
+		echo '<form method="post" id="handl-aicac-snooze-form" class="handl-aicac-rules-save-form">';
+		wp_nonce_field( 'handl_aicac_snooze_alerts', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="snooze_alerts" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
+		echo '</form>';
+		echo '<form method="post" id="handl-aicac-cancel-snooze-form" class="handl-aicac-rules-save-form">';
+		wp_nonce_field( 'handl_aicac_cancel_alert_snooze', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="cancel_alert_snooze" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
+		echo '</form>';
+
+		// When Activity is filtered to one plugin, surface snooze actions for that plugin.
+		$filter_plugin = Plugin_Profile::sanitize_plugin( (string) ( $log_filters['plugin'] ?? '' ) );
+		if ( '' !== $filter_plugin ) {
+			$filter_label = isset( $plugins[ $filter_plugin ]['Name'] )
+				? (string) $plugins[ $filter_plugin ]['Name']
+				: $filter_plugin;
+			echo '<div class="notice notice-info inline" style="margin:0 0 1em;padding:8px 12px;">';
+			echo '<p style="margin:0 0 6px;"><strong>' . esc_html(
+				sprintf(
+					/* translators: %s: plugin name */
+					__( 'Alert mute for %s', 'handl-ai-connector-access-control' ),
+					$filter_label
+				)
+			) . '</strong></p>';
+			$this->render_plugin_snooze_controls( $filter_plugin, $filter_label, 'activity' );
+			echo '</div>';
+		}
+
 		// Detached POST forms so "Send test email" can sit next to fields without nesting forms.
 		echo '<form method="post" id="handl-aicac-test-email-denial" style="display:none;" hidden>';
 		wp_nonce_field( 'handl_aicac_send_test_email', 'handl_aicac_nonce' );
@@ -3237,6 +3339,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '</td>';
 		echo '</tr>';
 
+		$this->render_quiet_hours_settings_rows( $policy );
+
 		// F3: denial alerts + AICAC-SHADOW-ALERT shadow-AI observe emails.
 		$alert_on      = ! empty( $policy['alert_on_deny'] );
 		$alert_shadow  = ! empty( $policy['alert_on_shadow'] );
@@ -3527,6 +3631,83 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			admin_url( 'options-general.php' )
 		);
 		wp_safe_redirect( $redirect );
+		exit;
+	}
+
+	/**
+	 * AICAC-SNOOZE: start a per-plugin alert mute.
+	 */
+	private function handle_snooze_alerts(): void {
+		$this->require_admin_mutation( 'handl_aicac_snooze_alerts' );
+
+		$plugin = '';
+		$preset = '';
+		// Preferred: one button value "basename|preset" (no nested forms).
+		if ( isset( $_POST['handl_aicac_snooze_spec'] ) ) {
+			$spec = sanitize_text_field( wp_unslash( (string) $_POST['handl_aicac_snooze_spec'] ) );
+			$parts = explode( '|', $spec, 2 );
+			if ( 2 === count( $parts ) ) {
+				$plugin = Plugin_Profile::sanitize_plugin( $parts[0] );
+				$preset = Alert_Snooze::sanitize_preset( $parts[1] );
+			}
+		}
+		if ( '' === $plugin && isset( $_POST['handl_aicac_snooze_plugin'] ) ) {
+			$plugin = Plugin_Profile::sanitize_plugin( wp_unslash( (string) $_POST['handl_aicac_snooze_plugin'] ) );
+		}
+		if ( '' === $preset && isset( $_POST['handl_aicac_snooze_preset'] ) ) {
+			$preset = Alert_Snooze::sanitize_preset( wp_unslash( (string) $_POST['handl_aicac_snooze_preset'] ) );
+		}
+		$tab = isset( $_POST['handl_aicac_tab'] ) ? sanitize_key( wp_unslash( (string) $_POST['handl_aicac_tab'] ) ) : 'rules';
+		if ( ! in_array( $tab, array( 'dashboard', 'rules', 'activity' ), true ) ) {
+			$tab = 'rules';
+		}
+		if ( '' === $plugin || '' === $preset ) {
+			return;
+		}
+		if ( ! Alert_Snooze::set( $plugin, $preset ) ) {
+			return;
+		}
+
+		$args = array(
+			'page'               => 'handl-ai-connector-access-control',
+			'handl_aicac_tab'    => $tab,
+			'handl_aicac_snoozed' => '1',
+		);
+		if ( 'activity' === $tab && '' !== $plugin ) {
+			$args['handl_aicac_plugin'] = $plugin;
+		}
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'options-general.php' ) ) );
+		exit;
+	}
+
+	/**
+	 * AICAC-SNOOZE: cancel a per-plugin alert mute.
+	 */
+	private function handle_cancel_alert_snooze(): void {
+		$this->require_admin_mutation( 'handl_aicac_cancel_alert_snooze' );
+
+		$plugin = isset( $_POST['handl_aicac_snooze_plugin'] )
+			? Plugin_Profile::sanitize_plugin( wp_unslash( (string) $_POST['handl_aicac_snooze_plugin'] ) )
+			: '';
+		$tab = isset( $_POST['handl_aicac_tab'] ) ? sanitize_key( wp_unslash( (string) $_POST['handl_aicac_tab'] ) ) : 'rules';
+		if ( ! in_array( $tab, array( 'dashboard', 'rules', 'activity' ), true ) ) {
+			$tab = 'rules';
+		}
+		if ( '' === $plugin ) {
+			return;
+		}
+		$result = Alert_Snooze::cancel( $plugin );
+
+		$args = array(
+			'page'                         => 'handl-ai-connector-access-control',
+			'handl_aicac_tab'              => $tab,
+			'handl_aicac_snooze_cancelled' => '1',
+			'handl_aicac_snooze_suppressed'=> (string) (int) ( $result['suppressed'] ?? 0 ),
+		);
+		if ( 'activity' === $tab && '' !== $plugin ) {
+			$args['handl_aicac_plugin'] = $plugin;
+		}
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'options-general.php' ) ) );
 		exit;
 	}
 
@@ -4332,6 +4513,8 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			$policy['log_max_age_days'] = Policy::sanitize_log_max_age_days( $posted_max_age );
 		}
 
+		$this->apply_quiet_hours_settings_from_post( $policy );
+
 		$posted_alert = filter_input( INPUT_POST, 'handl_aicac_alert_on_deny', FILTER_UNSAFE_RAW );
 		$policy['alert_on_deny'] = ! empty( $posted_alert );
 		$posted_shadow = filter_input( INPUT_POST, 'handl_aicac_alert_on_shadow', FILTER_UNSAFE_RAW );
@@ -4647,6 +4830,104 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	}
 
 	/**
+	 * AICAC-SNOOZE: row controls for Rules / Activity.
+	 *
+	 * @param 'rules'|'activity'|'dashboard' $context
+	 */
+	private function render_plugin_snooze_controls( string $basename, string $name, string $context = 'rules' ): void {
+		$basename = Plugin_Profile::sanitize_plugin( $basename );
+		if ( '' === $basename ) {
+			return;
+		}
+		$until = Alert_Snooze::until( $basename );
+		echo '<div class="handl-aicac-alert-snooze" style="margin-top:8px;">';
+		if ( null !== $until ) {
+			$label = Alert_Snooze::remaining_label( $basename );
+			if ( '' === $label ) {
+				$label = sprintf(
+					/* translators: %s: local end time */
+					__( 'Alerts muted until %s', 'handl-ai-connector-access-control' ),
+					Alert_Snooze::until_time_label( $until )
+				);
+			}
+			echo '<p class="description" style="margin:0 0 4px;">' . esc_html( $label ) . '</p>';
+			// form= shell — no nested form inside the Rules matrix form.
+			echo '<button type="submit" class="button button-small" form="handl-aicac-cancel-snooze-form" name="handl_aicac_snooze_plugin" value="' . esc_attr( $basename ) . '">';
+			echo esc_html__( 'Cancel mute', 'handl-ai-connector-access-control' );
+			echo '</button>';
+			if ( 'rules' !== $context ) {
+				// Activity / other: shell tab is rules; include tab in a parallel shell update is N/A —
+				// cancel always returns to rules unless we add a second cancel shell. Accept rules return.
+			}
+		} else {
+			echo '<p class="description" style="margin:0 0 4px;">' . esc_html__( 'Mute alert emails and webhooks. Rules still apply:', 'handl-ai-connector-access-control' ) . '</p>';
+			// One button per duration so plugin+preset stay paired without nested forms.
+			$presets = array(
+				'1h'  => __( '1 hour', 'handl-ai-connector-access-control' ),
+				'8h'  => __( '8 hours', 'handl-ai-connector-access-control' ),
+				'24h' => __( '24 hours', 'handl-ai-connector-access-control' ),
+				'7d'  => __( '7 days', 'handl-ai-connector-access-control' ),
+			);
+			foreach ( $presets as $key => $label ) {
+				$spec = $basename . '|' . $key;
+				echo '<button type="submit" class="button button-small" style="margin:0 4px 4px 0;" form="handl-aicac-snooze-form" name="handl_aicac_snooze_spec" value="' . esc_attr( $spec ) . '" title="' . esc_attr(
+					sprintf(
+						/* translators: 1: plugin name, 2: duration label */
+						__( 'Mute alerts for %1$s for %2$s', 'handl-ai-connector-access-control' ),
+						$name,
+						$label
+					)
+				) . '">';
+				echo esc_html( $label );
+				echo '</button>';
+			}
+		}
+		echo '</div>';
+	}
+
+	/**
+	 * Dashboard: active alert mutes with cancel.
+	 *
+	 * @param array<string,array<string,mixed>> $plugins
+	 */
+	private function render_alert_snooze_dashboard_line( array $plugins ): void {
+		$active = Alert_Snooze::active_list();
+		if ( empty( $active ) ) {
+			return;
+		}
+
+		echo '<div class="notice notice-info inline handl-aicac-alert-snoozes" style="margin:12px 0;padding:8px 12px;">';
+		echo '<p style="margin:0 0 6px;"><strong>' . esc_html__( 'Alerts muted', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		echo '<ul style="margin:0;padding-left:1.2em;">';
+		foreach ( $active as $row ) {
+			$basename = (string) $row['plugin'];
+			$label    = isset( $plugins[ $basename ]['Name'] ) ? (string) $plugins[ $basename ]['Name'] : $basename;
+			$until    = Alert_Snooze::until_time_label( (int) $row['until'] );
+			echo '<li style="margin:0 0 6px;">';
+			echo esc_html(
+				sprintf(
+					/* translators: 1: plugin name, 2: local end time */
+					__( '%1$s until %2$s', 'handl-ai-connector-access-control' ),
+					$label,
+					$until
+				)
+			);
+			echo ' ';
+			echo '<form method="post" style="display:inline;">';
+			wp_nonce_field( 'handl_aicac_cancel_alert_snooze', 'handl_aicac_nonce' );
+			echo '<input type="hidden" name="handl_aicac_action" value="cancel_alert_snooze" />';
+			echo '<input type="hidden" name="handl_aicac_tab" value="dashboard" />';
+			echo '<input type="hidden" name="handl_aicac_snooze_plugin" value="' . esc_attr( $basename ) . '" />';
+			submit_button( __( 'Cancel mute', 'handl-ai-connector-access-control' ), 'secondary small', 'submit', false );
+			echo '</form>';
+			echo '</li>';
+		}
+		echo '</ul>';
+		echo '<p class="description" style="margin:6px 0 0;">' . esc_html__( 'Muted plugins still follow your rules and still write to the activity log. Alert emails and webhooks are not sent during the mute.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '</div>';
+	}
+
+	/**
 	 * Dashboard line: plugins awaiting review with Rules prefill links.
 	 *
 	 * @param array<string,mixed>               $policy
@@ -4925,6 +5206,19 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		if ( '' !== $reason && ( 'deny' === $decision || ( ! empty( $policy['audit_only'] ) && 'deny' === ( $row['would_decision'] ?? '' ) ) ) ) {
 			echo '<br /><span class="description handl-aicac-denial-reason">' . esc_html( $this->format_denial_reason_label( $reason ) ) . '</span>';
 		}
+		$qh_name = isset( $row['quiet_hours_window'] ) ? (string) $row['quiet_hours_window'] : '';
+		if ( '' !== $qh_name ) {
+			$qh_mode = isset( $row['quiet_hours_mode'] ) ? (string) $row['quiet_hours_mode'] : '';
+			$qh_line = sprintf(
+				/* translators: %s: quiet hours window name */
+				__( 'Quiet hours: %s', 'handl-ai-connector-access-control' ),
+				$qh_name
+			);
+			if ( Quiet_Hours::MODE_OBSERVE === $qh_mode ) {
+				$qh_line .= ' (' . __( 'logging only', 'handl-ai-connector-access-control' ) . ')';
+			}
+			echo '<br /><span class="description handl-aicac-quiet-hours" style="font-size:11px;">' . esc_html( $qh_line ) . '</span>';
+		}
 		$user_role = isset( $row['user_role'] ) ? (string) $row['user_role'] : '';
 		if ( '' !== $user_role ) {
 			echo '<br /><span class="description handl-aicac-user-role" style="font-size:11px;">' . esc_html__( 'Role:', 'handl-ai-connector-access-control' ) . ' <code>' . esc_html( $user_role ) . '</code></span>';
@@ -5193,11 +5487,118 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	}
 
 	/**
+	 * AICAC-HOURS: quiet hours / maintenance windows on Activity settings (not Rules).
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function render_quiet_hours_settings_rows( array $policy ): void {
+		$windows = Quiet_Hours::sanitize_windows( $policy['quiet_hours'] ?? array() );
+		$labels  = Quiet_Hours::day_labels();
+		$tz      = Quiet_Hours::timezone();
+		$tz_name = $tz->getName();
+
+		echo '<tr>';
+		echo '<th scope="row">' . esc_html__( 'Quiet hours', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<td>';
+		echo '<p class="description" style="max-width:46em;margin-top:0;">' . esc_html__( 'Set up to three weekly schedules. Each schedule can block AI Client calls or record them in Activity without adding a block. Times use this site’s timezone. Emergency stop takes priority, and your normal access rules still apply.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html(
+			sprintf(
+				/* translators: %s: timezone name, e.g. America/Chicago */
+				__( 'Site timezone: %s', 'handl-ai-connector-access-control' ),
+				$tz_name
+			)
+		) . '</p>';
+
+		for ( $i = 0; $i < Quiet_Hours::MAX_WINDOWS; $i++ ) {
+			$win   = $windows[ $i ] ?? array(
+				'id'    => '',
+				'name'  => '',
+				'days'  => array(),
+				'start' => '',
+				'end'   => '',
+				'mode'  => Quiet_Hours::MODE_DENY,
+			);
+			$name  = (string) ( $win['name'] ?? '' );
+			$start = (string) ( $win['start'] ?? '' );
+			$end   = (string) ( $win['end'] ?? '' );
+			$mode  = Quiet_Hours::sanitize_mode( $win['mode'] ?? Quiet_Hours::MODE_DENY );
+			$days  = Quiet_Hours::sanitize_days( $win['days'] ?? array() );
+			$id    = (string) ( $win['id'] ?? '' );
+
+			echo '<fieldset style="margin:0 0 1em;padding:10px 12px;border:1px solid #c3c4c7;max-width:46em;">';
+			echo '<legend>' . esc_html(
+				sprintf(
+					/* translators: %d: window slot number starting at 1 */
+					__( 'Window %d', 'handl-ai-connector-access-control' ),
+					$i + 1
+				)
+			) . '</legend>';
+			if ( '' !== $id ) {
+				echo '<input type="hidden" name="handl_aicac_qh[' . (int) $i . '][id]" value="' . esc_attr( $id ) . '" />';
+			}
+			echo '<p style="margin:0 0 8px;"><label for="handl-aicac-qh-name-' . (int) $i . '">' . esc_html__( 'Name', 'handl-ai-connector-access-control' ) . '</label><br />';
+			echo '<input type="text" class="regular-text" id="handl-aicac-qh-name-' . (int) $i . '" name="handl_aicac_qh[' . (int) $i . '][name]" value="' . esc_attr( $name ) . '" placeholder="' . esc_attr__( 'e.g. Overnight', 'handl-ai-connector-access-control' ) . '" /></p>';
+
+			echo '<p style="margin:0 0 8px;"><span class="description">' . esc_html__( 'Days', 'handl-ai-connector-access-control' ) . '</span><br />';
+			foreach ( $labels as $dow => $lab ) {
+				$checked = in_array( (int) $dow, $days, true );
+				echo '<label style="margin-right:10px;"><input type="checkbox" name="handl_aicac_qh[' . (int) $i . '][days][]" value="' . (int) $dow . '" ' . checked( $checked, true, false ) . ' /> ' . esc_html( $lab ) . '</label>';
+			}
+			echo '</p>';
+
+			echo '<p style="margin:0 0 8px;">';
+			echo '<label for="handl-aicac-qh-start-' . (int) $i . '">' . esc_html__( 'Start', 'handl-ai-connector-access-control' ) . '</label> ';
+			echo '<input type="time" id="handl-aicac-qh-start-' . (int) $i . '" name="handl_aicac_qh[' . (int) $i . '][start]" value="' . esc_attr( $start ) . '" /> ';
+			echo '<label for="handl-aicac-qh-end-' . (int) $i . '" style="margin-left:12px;">' . esc_html__( 'End', 'handl-ai-connector-access-control' ) . '</label> ';
+			echo '<input type="time" id="handl-aicac-qh-end-' . (int) $i . '" name="handl_aicac_qh[' . (int) $i . '][end]" value="' . esc_attr( $end ) . '" />';
+			echo ' <span class="description">' . esc_html__( 'Choose the day when the window starts. If the end time is earlier than the start time, the window continues into the next morning. Matching start and end times makes it active all day.', 'handl-ai-connector-access-control' ) . '</span>';
+			echo '</p>';
+
+			echo '<p style="margin:0;">';
+			echo '<label for="handl-aicac-qh-mode-' . (int) $i . '">' . esc_html__( 'During this window', 'handl-ai-connector-access-control' ) . '</label><br />';
+			echo '<select id="handl-aicac-qh-mode-' . (int) $i . '" name="handl_aicac_qh[' . (int) $i . '][mode]">';
+			printf(
+				'<option value="deny"%s>%s</option>',
+				selected( $mode, Quiet_Hours::MODE_DENY, false ),
+				esc_html__( 'Block all AI Client calls', 'handl-ai-connector-access-control' )
+			);
+			printf(
+				'<option value="observe"%s>%s</option>',
+				selected( $mode, Quiet_Hours::MODE_OBSERVE, false ),
+				esc_html__( 'Log activity without adding a block', 'handl-ai-connector-access-control' )
+			);
+			echo '</select>';
+			echo '</p>';
+			echo '<p class="description" style="margin:8px 0 0;">' . esc_html__( 'Enter a name, at least one day, a start time, and an end time to save this window. Clear the name to remove it.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '</fieldset>';
+		}
+
+		echo '</td>';
+		echo '</tr>';
+	}
+
+	/**
+	 * @param array<string,mixed> $policy
+	 */
+	private function apply_quiet_hours_settings_from_post( array &$policy ): void {
+		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
+		$posted = filter_input( INPUT_POST, 'handl_aicac_qh', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		if ( ! is_array( $posted ) ) {
+			// Activity save always posts the quiet-hours fields; missing array = clear.
+			$policy['quiet_hours'] = array();
+			return;
+		}
+		$policy['quiet_hours'] = Quiet_Hours::sanitize_windows( $posted );
+	}
+
+	/**
 	 * Human label for denial_reason codes (loud denials — admin blames this plugin).
 	 */
 	private function format_denial_reason_label( string $reason ): string {
 		$map = array(
 			'kill_switch'         => __( 'Blocked by HandL: emergency stop', 'handl-ai-connector-access-control' ),
+			'quiet_hours'         => __( 'Blocked by HandL: scheduled quiet hours', 'handl-ai-connector-access-control' ),
 			'role'                => __( 'Blocked by HandL: role not allowed', 'handl-ai-connector-access-control' ),
 			'plugin'              => __( 'Blocked by HandL: plugin rule', 'handl-ai-connector-access-control' ),
 			'capability_family'   => __( 'Blocked by HandL: AI type rule', 'handl-ai-connector-access-control' ),
@@ -5389,11 +5790,11 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	}
 
 	/**
-	 * Rules-tab export / import (AICAC-102).
+	 * Rules-tab export / import / compare (AICAC-102 + AICAC-DIFF / #146).
 	 *
 	 * @param array<string,mixed> $policy
 	 */
-	private function render_rules_transfer_section( array $policy, bool $show_preview ): void {
+	private function render_rules_transfer_section( array $policy, bool $show_preview, bool $show_compare = false ): void {
 		echo '<hr />';
 		echo '<h2>' . esc_html__( 'Export or import rules', 'handl-ai-connector-access-control' ) . '</h2>';
 		echo '<p class="description">' . esc_html__( 'Download your current rules as a JSON file, or upload a previous export. Importing replaces all current access-control settings. The activity log is not included.', 'handl-ai-connector-access-control' ) . '</p>';
@@ -5416,6 +5817,22 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo '<p class="description">' . esc_html__( 'Choose a JSON file up to 1 MB. You can preview added, changed, and removed rules before anything changes.', 'handl-ai-connector-access-control' ) . '</p>';
 		submit_button( __( 'Upload and preview', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
 		echo '</form>';
+
+		echo '<form method="post" enctype="multipart/form-data" style="margin-bottom:1em;">';
+		wp_nonce_field( 'handl_aicac_compare_rules', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="compare_rules_preview" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		echo '<p>';
+		echo '<label for="handl-aicac-compare-file"><strong>' . esc_html__( 'Compare with current', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
+		echo '<input type="file" id="handl-aicac-compare-file" name="handl_aicac_compare_file" accept="application/json,.json" required />';
+		echo '</p>';
+		echo '<p class="description">' . esc_html__( 'Upload a previous export to see what differs from your current rules. Nothing is changed. Use Import if you want to replace them.', 'handl-ai-connector-access-control' ) . '</p>';
+		submit_button( __( 'Compare', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+		echo '</form>';
+
+		if ( $show_compare ) {
+			$this->render_compare_preview( $policy );
+		}
 
 		if ( ! $show_preview ) {
 			return;
@@ -5478,6 +5895,74 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		submit_button( __( 'Confirm and replace rules', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
 		echo '</form>';
 		echo '</div>';
+	}
+
+	/**
+	 * Read-only compare preview (AICAC-DIFF). Reuses restore confirm-diff table.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function render_compare_preview( array $policy ): void {
+		$user_id = get_current_user_id();
+		$pending = get_transient( Policy_Transfer::compare_transient_key( $user_id ) );
+		if ( ! is_array( $pending ) || ! isset( $pending['policy'] ) || ! is_array( $pending['policy'] ) ) {
+			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Compare preview expired or was not found. Upload the file again.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			return;
+		}
+
+		$incoming = $pending['policy'];
+		$ignored  = isset( $pending['ignored'] ) && is_array( $pending['ignored'] ) ? $pending['ignored'] : array();
+		$compare  = Policy_Transfer::compare_diff( $policy, $incoming, $ignored );
+		$rows     = $compare['rows'];
+		$not_comp = $compare['not_comparable'];
+
+		echo '<div class="handl-aicac-compare-preview" style="border:1px solid #c3c4c7;padding:12px 16px;background:#fff;max-width:52em;margin-bottom:1em;">';
+		echo '<h3>' . esc_html__( 'Compare with uploaded backup', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<p>' . esc_html__( 'This comparison does not change your rules. Use Import if you want to replace them with the uploaded file.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		if ( ! empty( $not_comp ) ) {
+			echo '<div class="notice notice-info inline"><p>';
+			echo esc_html__( 'These settings could not be compared because this version of HandL does not recognize them:', 'handl-ai-connector-access-control' );
+			echo ' <code>' . esc_html( implode( ', ', array_map( 'strval', $not_comp ) ) ) . '</code>';
+			echo '</p></div>';
+		}
+
+		$this->render_confirm_diff_table(
+			$rows,
+			__( 'In backup', 'handl-ai-connector-access-control' ),
+			__( 'Current rules match this backup for the settings this plugin can compare.', 'handl-ai-connector-access-control' )
+		);
+		echo '</div>';
+	}
+
+	/**
+	 * Shared Setting / Current / New confirm-diff table (presets + restore + compare).
+	 *
+	 * @param list<array{key?:string,label?:string,current?:string,new?:string}> $rows
+	 */
+	private function render_confirm_diff_table( array $rows, string $new_column_label, string $empty_message ): void {
+		if ( empty( $rows ) ) {
+			echo '<p class="description">' . esc_html( $empty_message ) . '</p>';
+			return;
+		}
+
+		echo '<table class="widefat striped" style="margin:0.5em 0 1em;">';
+		echo '<thead><tr>';
+		echo '<th>' . esc_html__( 'Setting', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Current', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html( $new_column_label ) . '</th>';
+		echo '</tr></thead><tbody>';
+		foreach ( $rows as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			echo '<tr>';
+			echo '<td>' . esc_html( (string) ( $row['label'] ?? '' ) ) . '</td>';
+			echo '<td>' . esc_html( (string) ( $row['current'] ?? '' ) ) . '</td>';
+			echo '<td>' . esc_html( (string) ( $row['new'] ?? '' ) ) . '</td>';
+			echo '</tr>';
+		}
+		echo '</tbody></table>';
 	}
 
 	/**
@@ -5636,27 +6121,11 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		echo '<h3>' . esc_html__( 'Restore preview', 'handl-ai-connector-access-control' ) . '</h3>';
 		echo '<p>' . esc_html__( 'The rules and settings below will change. Restoring also saves the current policy, so you can reverse this restore.', 'handl-ai-connector-access-control' ) . '</p>';
 
-		if ( empty( $rows ) ) {
-			echo '<p class="description">' . esc_html__( 'The current policy already matches this restore point. Restoring it will not change your rules or settings.', 'handl-ai-connector-access-control' ) . '</p>';
-		} else {
-			echo '<table class="widefat striped" style="margin:0.5em 0 1em;">';
-			echo '<thead><tr>';
-			echo '<th>' . esc_html__( 'Setting', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'Current', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'After restore', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '</tr></thead><tbody>';
-			foreach ( $rows as $row ) {
-				if ( ! is_array( $row ) ) {
-					continue;
-				}
-				echo '<tr>';
-				echo '<td>' . esc_html( (string) ( $row['label'] ?? '' ) ) . '</td>';
-				echo '<td>' . esc_html( (string) ( $row['current'] ?? '' ) ) . '</td>';
-				echo '<td>' . esc_html( (string) ( $row['new'] ?? '' ) ) . '</td>';
-				echo '</tr>';
-			}
-			echo '</tbody></table>';
-		}
+		$this->render_confirm_diff_table(
+			$rows,
+			__( 'After restore', 'handl-ai-connector-access-control' ),
+			__( 'The current policy already matches this restore point. Restoring it will not change your rules or settings.', 'handl-ai-connector-access-control' )
+		);
 
 		$restore_target = is_array( $latest['policy'] ?? null ) ? $latest['policy'] : array();
 		$check_report   = Policy_Checks::evaluate_all( $restore_target );
@@ -6039,81 +6508,19 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 			'handl_aicac_tab' => 'rules',
 		);
 
-		if ( empty( $_FILES['handl_aicac_import_file'] ) || ! is_array( $_FILES['handl_aicac_import_file'] ) ) {
+		$read = $this->read_uploaded_rules_json( 'handl_aicac_import_file' );
+		if ( empty( $read['ok'] ) ) {
+			$code = isset( $read['error'] ) ? (string) $read['error'] : 'upload_failed';
 			wp_safe_redirect(
 				add_query_arg(
-					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'no_file' ) ),
+					array_merge( $redirect_base, array( 'handl_aicac_import_error' => $code ) ),
 					admin_url( 'options-general.php' )
 				)
 			);
 			exit;
 		}
 
-		$file = $_FILES['handl_aicac_import_file'];
-		$err  = isset( $file['error'] ) ? (int) $file['error'] : UPLOAD_ERR_NO_FILE;
-		if ( UPLOAD_ERR_NO_FILE === $err ) {
-			wp_safe_redirect(
-				add_query_arg(
-					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'empty' ) ),
-					admin_url( 'options-general.php' )
-				)
-			);
-			exit;
-		}
-		if ( UPLOAD_ERR_OK !== $err ) {
-			wp_safe_redirect(
-				add_query_arg(
-					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'upload_failed' ) ),
-					admin_url( 'options-general.php' )
-				)
-			);
-			exit;
-		}
-
-		$size = isset( $file['size'] ) ? (int) $file['size'] : 0;
-		if ( $size <= 0 ) {
-			wp_safe_redirect(
-				add_query_arg(
-					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'empty' ) ),
-					admin_url( 'options-general.php' )
-				)
-			);
-			exit;
-		}
-		if ( $size > Policy_Transfer::MAX_UPLOAD_BYTES ) {
-			wp_safe_redirect(
-				add_query_arg(
-					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'too_large' ) ),
-					admin_url( 'options-general.php' )
-				)
-			);
-			exit;
-		}
-
-		$tmp = isset( $file['tmp_name'] ) ? (string) $file['tmp_name'] : '';
-		if ( '' === $tmp || ! is_uploaded_file( $tmp ) ) {
-			wp_safe_redirect(
-				add_query_arg(
-					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'upload_failed' ) ),
-					admin_url( 'options-general.php' )
-				)
-			);
-			exit;
-		}
-
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local upload tmp only.
-		$raw = file_get_contents( $tmp );
-		if ( ! is_string( $raw ) ) {
-			wp_safe_redirect(
-				add_query_arg(
-					array_merge( $redirect_base, array( 'handl_aicac_import_error' => 'upload_failed' ) ),
-					admin_url( 'options-general.php' )
-				)
-			);
-			exit;
-		}
-
-		$parsed = Policy_Transfer::parse_import( $raw );
+		$parsed = Policy_Transfer::parse_import( (string) $read['raw'] );
 		if ( empty( $parsed['ok'] ) ) {
 			$code = isset( $parsed['error'] ) ? (string) $parsed['error'] : 'invalid_json';
 			wp_safe_redirect(
@@ -6215,6 +6622,127 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 	}
 
 	/**
+	 * Read-only compare against uploaded JSON backup (AICAC-DIFF / #146). Never writes policy.
+	 */
+	private function handle_compare_rules_preview(): void {
+		$this->require_admin_mutation( 'handl_aicac_compare_rules' );
+
+		$redirect_base = array(
+			'page'            => 'handl-ai-connector-access-control',
+			'handl_aicac_tab' => 'rules',
+		);
+
+		$read = $this->read_uploaded_rules_json( 'handl_aicac_compare_file' );
+		if ( empty( $read['ok'] ) ) {
+			$code = isset( $read['error'] ) ? (string) $read['error'] : 'upload_failed';
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge( $redirect_base, array( 'handl_aicac_compare_error' => $code ) ),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		$parsed = Policy_Transfer::parse_import( (string) $read['raw'] );
+		if ( empty( $parsed['ok'] ) ) {
+			$code = isset( $parsed['error'] ) ? (string) $parsed['error'] : 'invalid_json';
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge( $redirect_base, array( 'handl_aicac_compare_error' => $code ) ),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		$user_id = get_current_user_id();
+		set_transient(
+			Policy_Transfer::compare_transient_key( $user_id ),
+			array(
+				'policy'         => $parsed['policy'],
+				'ignored'        => $parsed['ignored'],
+				'plugin_version' => $parsed['plugin_version'],
+				'exported_at'    => $parsed['exported_at'],
+			),
+			Policy_Transfer::PREVIEW_TTL
+		);
+
+		wp_safe_redirect(
+			add_query_arg(
+				array_merge( $redirect_base, array( 'handl_aicac_compare_preview' => '1' ) ),
+				admin_url( 'options-general.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * Shared upload reader for import + compare (same size / empty / JSON path).
+	 *
+	 * @return array{ok:true,raw:string}|array{ok:false,error:string}
+	 */
+	private function read_uploaded_rules_json( string $file_field ): array {
+		if ( empty( $_FILES[ $file_field ] ) || ! is_array( $_FILES[ $file_field ] ) ) {
+			return array(
+				'ok'    => false,
+				'error' => 'no_file',
+			);
+		}
+
+		$file = $_FILES[ $file_field ];
+		$err  = isset( $file['error'] ) ? (int) $file['error'] : UPLOAD_ERR_NO_FILE;
+		if ( UPLOAD_ERR_NO_FILE === $err ) {
+			return array(
+				'ok'    => false,
+				'error' => 'empty',
+			);
+		}
+		if ( UPLOAD_ERR_OK !== $err ) {
+			return array(
+				'ok'    => false,
+				'error' => 'upload_failed',
+			);
+		}
+
+		$size = isset( $file['size'] ) ? (int) $file['size'] : 0;
+		if ( $size <= 0 ) {
+			return array(
+				'ok'    => false,
+				'error' => 'empty',
+			);
+		}
+		if ( $size > Policy_Transfer::MAX_UPLOAD_BYTES ) {
+			return array(
+				'ok'    => false,
+				'error' => 'too_large',
+			);
+		}
+
+		$tmp = isset( $file['tmp_name'] ) ? (string) $file['tmp_name'] : '';
+		if ( '' === $tmp || ! is_uploaded_file( $tmp ) ) {
+			return array(
+				'ok'    => false,
+				'error' => 'upload_failed',
+			);
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local upload tmp only.
+		$raw = file_get_contents( $tmp );
+		if ( ! is_string( $raw ) ) {
+			return array(
+				'ok'    => false,
+				'error' => 'upload_failed',
+			);
+		}
+
+		return array(
+			'ok'  => true,
+			'raw' => $raw,
+		);
+	}
+
+	/**
 	 * Map import error codes to admin-facing messages (AC4).
 	 */
 	private function import_error_message( string $code ): string {
@@ -6229,6 +6757,22 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		);
 
 		return $messages[ $code ] ?? __( 'Import failed. Your current rules were not changed.', 'handl-ai-connector-access-control' );
+	}
+
+	/**
+	 * Map compare error codes to admin-facing messages (AICAC-DIFF).
+	 */
+	private function compare_error_message( string $code ): string {
+		$messages = array(
+			'empty'                 => __( 'Compare failed: the file was empty. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
+			'no_file'               => __( 'Compare failed: no file was selected. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
+			'upload_failed'         => __( 'Compare failed: the file could not be uploaded. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
+			'too_large'             => __( 'Compare failed: the file is larger than 1 MB. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
+			'invalid_json'          => __( 'Compare failed: the file is not valid JSON. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
+			'missing_required_keys' => __( 'Compare failed: this does not appear to be a valid HandL rules export. Your current rules were not changed.', 'handl-ai-connector-access-control' ),
+		);
+
+		return $messages[ $code ] ?? __( 'Compare failed. Your current rules were not changed.', 'handl-ai-connector-access-control' );
 	}
 
 	/**
