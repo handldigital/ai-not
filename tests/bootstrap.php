@@ -695,6 +695,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-attribution.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-shadow-ai.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-keyscan.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-temp-allow.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-new-plugin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-simulator.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-onboarding.php';

@@ -193,6 +193,7 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = Unreleased =
+* Optional: newly activated plugins start restricted until you choose Allow or Deny. Existing plugins are left alone when you turn this on.
 * Create a rule from an Activity call: open the Rules form pre-filled with that plugin, AI type, and provider/model. Already-covered plugins show a status instead of adding a second rule.
 * Added a read-only **Plugin AI profile**. Click a plugin in Activity or Dashboard estimated spend to see usage by day, operation, and model; blocked calls; direct connections outside the AI Client; estimated spend alerts; and the rules that currently apply. Rule results use the same decision process as enforcement. Links open the existing Rules and CSV export screens.
 * Added an optional, unchecked onboarding choice to receive product news and related offers from HandL Digital. If selected, the plugin sends the alert email address, site URL, plugin version, and consent time to HandL Digital. Privacy / Data documents the transmission and opt-out method.
