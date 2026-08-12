@@ -233,6 +233,11 @@ final class Spend_Threshold {
 		float $current_total,
 		string $window_label
 	): void {
+		// AICAC-SNOOZE: per-plugin spend alerts only (site-level not snoozable).
+		if ( 'plugin' === $scope && Alert_Snooze::should_suppress( (string) $plugin_basename, 'spend' ) ) {
+			return;
+		}
+
 		$key = 'site' === $scope ? 'site' : ( 'plugin:' . (string) $plugin_basename );
 		if ( self::is_deduped( $key, $threshold ) ) {
 			return;

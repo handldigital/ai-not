@@ -508,4 +508,41 @@ final class Policy_Transfer {
 	public static function preview_transient_key( int $user_id ): string {
 		return 'handl_aicac_import_' . $user_id;
 	}
+
+	/**
+	 * Transient key for read-only compare-vs-backup preview (AICAC-DIFF / #146).
+	 */
+	public static function compare_transient_key( int $user_id ): string {
+		return 'handl_aicac_compare_' . $user_id;
+	}
+
+	/**
+	 * Build the confirm-diff table for a parsed backup vs current policy.
+	 *
+	 * Uses the same Setting / Current / New rows as restore (#130). Unknown
+	 * export keys are listed as not comparable (never applied by import).
+	 *
+	 * @param array<string,mixed> $current  Live policy.
+	 * @param array<string,mixed> $incoming Parsed import policy (same shape import confirm would save).
+	 * @param list<string>        $ignored  Unknown keys from parse_import().
+	 * @return array{
+	 *   rows:list<array{key:string,label:string,current:string,new:string}>,
+	 *   not_comparable:list<string>
+	 * }
+	 */
+	public static function compare_diff( array $current, array $incoming, array $ignored = array() ): array {
+		$not_comparable = array();
+		foreach ( $ignored as $key ) {
+			$key = trim( (string) $key );
+			if ( '' !== $key ) {
+				$not_comparable[] = $key;
+			}
+		}
+		sort( $not_comparable, SORT_STRING );
+
+		return array(
+			'rows'            => Policy_Snapshots::diff_rows( $current, $incoming ),
+			'not_comparable'  => $not_comparable,
+		);
+	}
 }
