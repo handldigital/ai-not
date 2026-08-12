@@ -202,7 +202,8 @@ final class Admin {
 			}
 			if ( 'send_test_webhook' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_send_test_webhook', 'handl_aicac_nonce' );
-				$ok = Alerts::send_test_webhook( Policy::get_policy() );
+				$result     = Alerts::send_test_webhook_detailed( Policy::get_policy() );
+				$ok         = ! empty( $result['ok'] );
 				$return_tab = 'activity';
 				if ( isset( $_POST['handl_aicac_tab'] ) ) {
 					$candidate = sanitize_key( wp_unslash( (string) $_POST['handl_aicac_tab'] ) );
@@ -210,14 +211,18 @@ final class Admin {
 						$return_tab = $candidate;
 					}
 				}
-				$redirect = add_query_arg(
-					array(
-						'page'                       => 'handl-ai-connector-access-control',
-						'handl_aicac_tab'            => $return_tab,
-						'handl_aicac_webhook_tested' => $ok ? '1' : '0',
-					),
-					admin_url( 'options-general.php' )
+				$args = array(
+					'page'                       => 'handl-ai-connector-access-control',
+					'handl_aicac_tab'            => $return_tab,
+					'handl_aicac_webhook_tested' => $ok ? '1' : '0',
 				);
+				if ( null !== $result['http_status'] ) {
+					$args['handl_aicac_webhook_http'] = (string) (int) $result['http_status'];
+				}
+				if ( ! empty( $result['retries'] ) ) {
+					$args['handl_aicac_webhook_retries'] = (string) (int) $result['retries'];
+				}
+				$redirect = add_query_arg( $args, admin_url( 'options-general.php' ) );
 				wp_safe_redirect( $redirect );
 				exit;
 			}
@@ -342,6 +347,8 @@ final class Admin {
 		$quick_saved = isset( $_GET['handl_aicac_quick_saved'] ) && '1' === (string) $_GET['handl_aicac_quick_saved'];
 		$digest_sent = isset( $_GET['handl_aicac_digest_sent'] ) && '1' === (string) $_GET['handl_aicac_digest_sent'];
 		$webhook_tested = isset( $_GET['handl_aicac_webhook_tested'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['handl_aicac_webhook_tested'] ) ) : '';
+		$webhook_http   = isset( $_GET['handl_aicac_webhook_http'] ) ? absint( wp_unslash( (string) $_GET['handl_aicac_webhook_http'] ) ) : 0;
+		$webhook_retries = isset( $_GET['handl_aicac_webhook_retries'] ) ? absint( wp_unslash( (string) $_GET['handl_aicac_webhook_retries'] ) ) : 0;
 		$test_email_status = isset( $_GET['handl_aicac_test_email'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_test_email'] ) ) : '';
 		$test_email_to     = isset( $_GET['handl_aicac_test_email_to'] )
 			? Alerts::sanitize_email( wp_unslash( (string) $_GET['handl_aicac_test_email_to'] ) )
@@ -469,9 +476,36 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Tried to send the blocked-call summary. Queued alerts are cleared only after a successful send.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( '1' === $webhook_tested ) {
-			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Test webhook sent successfully (HTTP 2xx).', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<div class="notice notice-success is-dismissible"><p>';
+			if ( $webhook_http > 0 ) {
+				echo esc_html(
+					sprintf(
+						/* translators: %d: HTTP status code */
+						__( 'Test webhook sent successfully (HTTP %d).', 'handl-ai-connector-access-control' ),
+						$webhook_http
+					)
+				);
+			} else {
+				echo esc_html__( 'Test webhook sent successfully (HTTP 2xx).', 'handl-ai-connector-access-control' );
+			}
+			echo '</p></div>';
 		} elseif ( '0' === $webhook_tested ) {
-			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Test webhook failed. Check the URL and try again. The test does not count toward rate limits.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<div class="notice notice-error is-dismissible"><p>';
+			if ( $webhook_http > 0 ) {
+				$msg = sprintf(
+					/* translators: %d: HTTP status code */
+					__( 'Test webhook failed (HTTP %d). Check the URL and try again.', 'handl-ai-connector-access-control' ),
+					$webhook_http
+				);
+			} else {
+				$msg = __( 'Test webhook failed. Check the URL and try again.', 'handl-ai-connector-access-control' );
+			}
+			if ( $webhook_retries > 0 ) {
+				$msg .= ' ' . __( 'HandL retried once automatically.', 'handl-ai-connector-access-control' );
+			}
+			$msg .= ' ' . __( 'The test does not count toward rate limits.', 'handl-ai-connector-access-control' );
+			echo esc_html( $msg );
+			echo '</p></div>';
 		}
 		if ( 'sent' === $test_email_status ) {
 			echo '<div class="notice notice-success is-dismissible"><p>';
@@ -2812,6 +2846,11 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
 		echo '<input type="hidden" name="handl_aicac_test_email_channel" value="governance_digest" />';
 		echo '</form>';
+		echo '<form method="post" id="handl-aicac-test-webhook" style="display:none;" hidden>';
+		wp_nonce_field( 'handl_aicac_send_test_webhook', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="send_test_webhook" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
+		echo '</form>';
 
 		echo '<form method="post" style="margin-bottom:1.5em;">';
 		wp_nonce_field( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
@@ -2822,21 +2861,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		submit_button( __( 'Save Activity settings', 'handl-ai-connector-access-control' ) );
 		echo '</form>';
 
-		$webhook_saved = Alerts::resolve_webhook( $policy );
-		if ( '' !== $webhook_saved ) {
-			echo '<form method="post" style="margin-bottom:1.5em;">';
-			wp_nonce_field( 'handl_aicac_send_test_webhook', 'handl_aicac_nonce' );
-			echo '<input type="hidden" name="handl_aicac_action" value="send_test_webhook" />';
-			echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
-			submit_button(
-				__( 'Send test webhook', 'handl-ai-connector-access-control' ),
-				'secondary',
-				'submit',
-				false
-			);
-			echo '<p class="description" style="display:inline;margin-left:8px;">' . esc_html__( 'Immediately sends a sample JSON payload to the saved Webhook URL. The payload is marked as a test, does not represent a real blocked call, and does not count toward rate limits.', 'handl-ai-connector-access-control' ) . '</p>';
-			echo '</form>';
-		}
+		$this->render_webhook_delivery_log();
 
 		$pending_digest = count( Alerts::pending_digest_rows() );
 		$alerts_on      = ! empty( $policy['alert_on_deny'] ) || ! empty( $policy['alert_on_shadow'] );
@@ -3451,6 +3476,62 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	}
 
 	/**
+	 * AICAC-WEBHOOK-TEST (#175): last 20 webhook attempts on Activity.
+	 */
+	private function render_webhook_delivery_log(): void {
+		$rows = Webhook_Delivery_Log::get_rows();
+
+		echo '<h2>' . esc_html__( 'Webhook delivery log', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<p class="description" style="max-width:52em;">' . esc_html__( 'Shows the last 20 webhook delivery attempts from this site. HandL retries once after a server error or timeout. If the retry also fails, HandL emails the blocked-call alert recipient, or the site admin if none is saved. Failure emails are limited to one every 15 minutes.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		if ( array() === $rows ) {
+			echo '<p class="description">' . esc_html__( 'No webhook delivery attempts recorded yet.', 'handl-ai-connector-access-control' ) . '</p>';
+			return;
+		}
+
+		echo '<table class="widefat striped" style="max-width:52em;margin:0.5em 0 1.5em;">';
+		echo '<thead><tr>';
+		echo '<th scope="col">' . esc_html__( 'When', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Event', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'HTTP', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Retries', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Result', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '</tr></thead><tbody>';
+
+		foreach ( $rows as $row ) {
+			$ts = (int) $row['ts'];
+			if ( $ts > 0 && function_exists( 'wp_date' ) ) {
+				$when = (string) wp_date( 'Y-m-d H:i', $ts );
+			} elseif ( $ts > 0 ) {
+				$when = gmdate( 'Y-m-d H:i', $ts ) . ' UTC';
+			} else {
+				$when = '—';
+			}
+
+			$http = $row['http_status'];
+			$http_label = null === $http ? '—' : (string) (int) $http;
+
+			$result = ! empty( $row['ok'] )
+				? __( 'Delivered', 'handl-ai-connector-access-control' )
+				: (
+					'' !== (string) $row['error']
+						? (string) $row['error']
+						: __( 'Failed', 'handl-ai-connector-access-control' )
+				);
+
+			echo '<tr>';
+			echo '<td>' . esc_html( $when ) . '</td>';
+			echo '<td>' . esc_html( Webhook_Delivery_Log::event_label( (string) $row['event'] ) ) . '</td>';
+			echo '<td>' . esc_html( $http_label ) . '</td>';
+			echo '<td>' . esc_html( (string) (int) $row['retries'] ) . '</td>';
+			echo '<td>' . esc_html( $result ) . '</td>';
+			echo '</tr>';
+		}
+
+		echo '</tbody></table>';
+	}
+
+	/**
 	 * @param array<string,mixed> $policy
 	 * @param array<int,mixed>    $log    Retained activity log for footprint hints.
 	 */
@@ -3540,7 +3621,18 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<br /><span class="description">' . esc_html__( 'Leave empty to use the site admin email. Test emails use the saved address, so save changes before testing.', 'handl-ai-connector-access-control' ) . '</span></p>';
 		echo '<p style="margin-top:8px;"><label for="handl-aicac-alert-webhook">' . esc_html__( 'Webhook URL', 'handl-ai-connector-access-control' ) . '</label><br />';
 		echo '<input type="url" class="regular-text" id="handl-aicac-alert-webhook" name="handl_aicac_alert_webhook_url" value="' . esc_attr( $alert_hook ) . '" placeholder="https://" pattern="https?://.*" inputmode="url" autocomplete="off" />';
-echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same blocked-call alert as JSON to an http:// or https:// webhook, such as Slack or Teams. It follows the email schedule and rate limit. It includes request paths, but not prompt text or user identity. Direct AI connection alerts are email-only and are not sent to this webhook. Leave blank to disable the webhook.', 'handl-ai-connector-access-control' ) . '</span></p>';
+		echo ' ';
+		submit_button(
+			__( 'Send test webhook', 'handl-ai-connector-access-control' ),
+			'secondary',
+			'submit',
+			false,
+			array(
+				'form' => 'handl-aicac-test-webhook',
+				'id'   => 'handl-aicac-send-test-webhook',
+			)
+		);
+		echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same blocked-call alert as JSON to an http:// or https:// webhook, such as Slack or Teams. It follows the email schedule and rate limit. It includes request paths, but not prompt text or user identity. Direct AI connection alerts are email-only and are not sent to this webhook. Leave blank to disable the webhook. Save changes before testing. The test posts a sample payload marked as a test and does not count toward rate limits.', 'handl-ai-connector-access-control' ) . '</span></p>';
 		echo '<p style="margin-top:8px;">';
 		echo '<label><input type="radio" name="handl_aicac_alert_mode" value="immediate" ' . checked( $alert_mode, 'immediate', false ) . ' /> ';
 		echo esc_html__( 'Send immediately (maximum 20 per hour; extra alerts retry later)', 'handl-ai-connector-access-control' ) . '</label><br />';
