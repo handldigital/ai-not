@@ -1,0 +1,31 @@
+PR #160 / #153 AICAC-RULE-TEST QA fixture transcript
+HEAD: 93f2f14 (feature/aicac-153-rule-test)
+Captured: 2026-08-12 (qa-admin Playwright + WP-CLI)
+Site: https://handl-sandbox/
+
+Sequence
+1. Deployed PR HEAD 93f2f14 to sandbox (temporary overlay; prior quiet-hours HEAD 3094b5e restored after).
+2. Staged two policy checks against live policy:
+   - PASS: handl-utm-grabber-v3 text → expected Deny (plugin rule deny) — Passing
+   - FAIL: akismet text → expected Deny but plugin allow — Failing. Current result: Allow
+3. Rules table shows Check / Should be / Status with both rows (01-rules-policy-checks.png).
+4. Guarded manual-save confirm staged for would-be flip of UTM Grabber v3 to Allow:
+   - “This change breaks N policy check(s)”
+   - “Save anyway, even though policy checks will fail”
+   (03-save-confirm-override.png)
+5. Dashboard “Policy checks need attention” after override surface (04 / 04b).
+6. Guard coverage without applying preset/restore/import targets (05 + SUMMARY):
+   - preset observe would_gate=true (1 failure)
+   - restore snapshot would_gate=true (1 failure)
+   - hypothetical import would_gate=true (2 failures)
+   - manual would-be save would_gate=true (2 failures)
+   Policy sha256 unchanged across dashboard audit-only surface (c4293ccb… → c4293ccb…).
+7. Explicit override apply exercised via WP-CLI (policy did change for that step only), then full option restore to pre-fixture backup.
+
+PASS criteria covered
+- Rules checks table with passing + failing rows
+- Failure notice / Save anyway override copy
+- Dashboard attention state
+- Transcript: preset/restore/import guards evaluate without unintended policy write during guard-only steps
+
+Sandbox restored to 3094b5e after capture.

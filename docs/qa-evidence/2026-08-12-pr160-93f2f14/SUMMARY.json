@@ -1,0 +1,53 @@
+{
+  "head": "93f2f14",
+  "stage": {
+    "live_pass": 1,
+    "live_fail": 1,
+    "total_checks": 2,
+    "guard": {
+      "preset": {
+        "id": "observe",
+        "failures": 1,
+        "total": 2,
+        "would_gate": true
+      },
+      "restore": {
+        "ts": 1786515748,
+        "failures": 1,
+        "would_gate": true
+      },
+      "import": {
+        "failures": 2,
+        "would_gate": true,
+        "note": "hypothetical import policy (not applied)"
+      },
+      "manual_save": {
+        "failures": 2,
+        "would_gate": true
+      }
+    },
+    "policy_plugins": {
+      "pass": "deny",
+      "fail": "allow"
+    }
+  },
+  "sha": {
+    "afterStage": {
+      "sha256": "c4293ccb479fc4800c67079a15fcf2c5968d84b56f468bef577a4632468747ac",
+      "bytes": 1855
+    },
+    "afterDashSurface": {
+      "sha256": "c4293ccb479fc4800c67079a15fcf2c5968d84b56f468bef577a4632468747ac",
+      "bytes": 1855
+    },
+    "afterOverride": {
+      "sha256": "198db9d27bf460d4e1ff6546abc7176f0aae79873e4f6189ea2ace3df251ffa5",
+      "bytes": 1856
+    },
+    "restored": {
+      "sha256": "054795ccb1f8ed5b6bfb6b7652297acdaa45c679477505f431612a50ae8119b7",
+      "bytes": 1824
+    }
+  },
+  "override": "{\"failures_after\":2,\"dashboard\":2}"
+}

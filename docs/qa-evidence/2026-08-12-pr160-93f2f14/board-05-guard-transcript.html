@@ -1,0 +1,42 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+  body{font:13px/1.45 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;margin:20px;background:#f0f0f1;color:#1d2327}
+  h1{font-size:17px;margin:0 0 8px}
+  .meta{color:#646970;font-size:12px;margin:0 0 14px}
+  .box{background:#fff;border:1px solid #c3c4c7;padding:12px 14px;margin:0 0 12px}
+  table{border-collapse:collapse;width:100%;background:#fff}
+  th,td{border:1px solid #c3c4c7;padding:6px 8px;text-align:left;vertical-align:top;font-size:12px}
+  th{background:#f6f7f7}
+  .pass{color:#008a20;font-weight:600}
+  .fail{color:#d63638;font-weight:600}
+  .notice{background:#fff;border-left:4px solid #dba617;padding:10px 12px;margin:0 0 12px}
+  pre{white-space:pre-wrap;font-size:11px;background:#fff;border:1px solid #c3c4c7;padding:10px}
+  </style></head><body>
+  <h1>Preset / restore / import guard coverage (no policy write)</h1>
+  <p class="meta">PR #160 / #153 · HEAD 93f2f14 · qa-admin sandbox · 2026-08-12T06:22:50.878Z</p>
+  <div class="notice"><p>All guard evaluations below used Policy_Checks::evaluate_all on a would-be policy. No Policy::save_policy was called for these targets after stage.</p></div>
+   <pre>{
+  "preset": {
+    "id": "observe",
+    "failures": 1,
+    "total": 2,
+    "would_gate": true
+  },
+  "restore": {
+    "ts": 1786515748,
+    "failures": 1,
+    "would_gate": true
+  },
+  "import": {
+    "failures": 2,
+    "would_gate": true,
+    "note": "hypothetical import policy (not applied)"
+  },
+  "manual_save": {
+    "failures": 2,
+    "would_gate": true
+  }
+}</pre>
+   <p>Policy sha256 after stage: <code>c4293ccb479fc4800c67079a15fcf2c5968d84b56f468bef577a4632468747ac</code></p>
+   <p>Policy sha256 after dashboard override surface (audit only): <code>c4293ccb479fc4800c67079a15fcf2c5968d84b56f468bef577a4632468747ac</code> unchanged=true</p>
+   <p>Live checks: pass=1 fail=1 total=2</p>
+  </body></html>

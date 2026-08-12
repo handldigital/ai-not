@@ -1,0 +1,8 @@
+Policy checks need attention
+
+A saved change left one or more policy checks failing. Fix the rules or update the checks on the Rules tab.
+
+QA pass: UTM Grabber v3 text deny
+QA fail: Akismet must stay denied
+
+Open policy checks

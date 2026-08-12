@@ -1,0 +1,30 @@
+Policy checks
+
+Save sample AI calls with the Allow or Deny result you expect. Before rules, presets, restores, or imports are applied, the plugin runs the checks again and warns if a result would change.
+
+Check	Should be	Status	
+QA pass: UTM Grabber v3 text deny	Deny	Passing	
+QA fail: Akismet must stay denied	Deny	Failing. Current result: Allow	
+Add a policy check
+
+Plugin file
+
+
+AI type
+
+Any AI type (tests a Text call)
+Text
+Image
+Speech
+Text to speech
+Video
+
+Tool name to include (optional)
+
+
+Must be
+
+Deny
+Allow
+
+Short label (optional)
