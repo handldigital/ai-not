@@ -698,6 +698,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-temp-allow.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-new-plugin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-simulator.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-checks.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-onboarding.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-whats-new.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-leads.php';
