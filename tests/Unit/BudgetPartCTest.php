@@ -60,6 +60,7 @@ final class BudgetPartCTest extends TestCase {
 		$this->assertStringContainsString( 'Current estimated spend:', $body );
 		$this->assertStringContainsString( 'estimates', strtolower( $body ) );
 		$this->assertStringContainsString( 'Observe-only', $body );
+		$this->assertStringContainsString( 'estimated-budget warning', $body );
 	}
 
 	public function test_site_health_flags_over_budget(): void {

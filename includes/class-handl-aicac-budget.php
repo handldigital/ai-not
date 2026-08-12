@@ -552,7 +552,7 @@ final class Budget {
 			$period
 		);
 		if ( self::MODE_OBSERVE === $mode ) {
-			$lines[] = __( 'Mode: Observe-only. New AI Client calls still run, and each is logged as estimated budget reached.', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'Mode: Observe-only. New AI Client calls still run, and each is logged with an estimated-budget warning.', 'handl-ai-connector-access-control' );
 		} else {
 			$lines[] = __( 'Mode: Block. New AI Client calls from this plugin are blocked for the rest of the period.', 'handl-ai-connector-access-control' );
 		}

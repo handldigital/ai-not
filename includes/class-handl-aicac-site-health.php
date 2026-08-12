@@ -277,8 +277,8 @@ final class Site_Health {
 			$lines[] = sprintf(
 				/* translators: %d: number of plugins over estimated budget */
 				_n(
-					'%d plugin reached its estimated budget for this calendar month. Open Rules to review the budget and whether new calls are blocked or observed.',
-					'%d plugins reached their estimated budget for this calendar month. Open Rules to review budgets and whether new calls are blocked or observed.',
+					'%d plugin reached its estimated budget for this calendar month. Open the Rules tab to review the budget and whether new calls are blocked or allowed in Observe-only mode.',
+					'%d plugins reached their estimated budget for this calendar month. Open the Rules tab to review budgets and whether new calls are blocked or allowed in Observe-only mode.',
 					$count,
 					'handl-ai-connector-access-control'
 				),

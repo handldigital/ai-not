@@ -796,7 +796,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		}
 
 		echo '<h2>' . esc_html__( 'Plugin rules', 'handl-ai-connector-access-control' ) . '</h2>';
-echo '<p class="description">' . esc_html__( 'Plugin rules set the main access level. AI type columns can refine an allowed plugin, such as allowing text but blocking images. A plugin-level Deny blocks every AI type. Estimated budget is a monthly ceiling from your rate table (estimate only, not a bill). Leave the amount blank for no ceiling. Model routing is experimental, uses best-effort plugin detection, and does not guarantee spend. Leave both route fields blank to disable it.', 'handl-ai-connector-access-control' ) . '</p>';
+echo '<p class="description">' . esc_html__( 'Plugin rules set the main access level. AI type columns can refine an allowed plugin, such as allowing text but blocking images. A plugin-level Deny blocks every AI type. An estimated budget is a monthly ceiling based on your saved rate table. It is an estimate, not a bill. Leave the amount blank for no ceiling. Model routing is experimental, uses best-effort plugin detection, and does not guarantee spend. Leave both route fields blank to disable it.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<p class="description handl-aicac-beyond-ca-rules">' . esc_html( Differentiator_Messaging::rules_note() ) . '</p>';
 		if ( $unforced_n > 0 && ! empty( $force_map ) ) {
 			echo '<div class="notice notice-warning inline"><p>';
@@ -5200,7 +5200,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 				: ( '' !== $basename ? $basename : __( 'Unknown plugin', 'handl-ai-connector-access-control' ) );
 			$mode = (string) ( $row['mode'] ?? Budget::MODE_DENY );
 			$mode_label = Budget::MODE_OBSERVE === $mode
-				? __( 'Observe-only', 'handl-ai-connector-access-control' )
+				? __( 'Observe-only mode', 'handl-ai-connector-access-control' )
 				: __( 'Blocking new calls', 'handl-ai-connector-access-control' );
 			$line = sprintf(
 				/* translators: 1: plugin name, 2: estimated spend, 3: estimated budget, 4: mode label */
@@ -5223,7 +5223,7 @@ echo '<br /><span class="description">' . esc_html__( 'Optional. Send the same b
 		}
 		echo '</ul>';
 		$rules_url = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules' );
-		echo '<p style="margin:8px 0 0;"><a href="' . esc_url( $rules_url ) . '">' . esc_html__( 'Review estimated budgets on Rules', 'handl-ai-connector-access-control' ) . '</a></p>';
+		echo '<p style="margin:8px 0 0;"><a href="' . esc_url( $rules_url ) . '">' . esc_html__( 'Review estimated budgets on the Rules tab', 'handl-ai-connector-access-control' ) . '</a></p>';
 		echo '</div>';
 	}
 
