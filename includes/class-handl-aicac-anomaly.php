@@ -410,6 +410,11 @@ final class Anomaly {
 		float $threshold,
 		int $now
 	): void {
+		// AICAC-SNOOZE: mute anomaly emails/webhooks for this plugin.
+		if ( Alert_Snooze::should_suppress( $plugin, 'anomaly', $now ) ) {
+			return;
+		}
+
 		$key = self::fire_key( $plugin, $metric );
 		if ( self::is_deduped( $key, $threshold, $now ) ) {
 			return;
