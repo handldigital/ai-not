@@ -6294,7 +6294,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	private function render_policy_packs_section( array $policy, bool $show_preview, bool $need_backup = false ): void {
 		echo '<div id="handl-aicac-packs" class="handl-aicac-packs" style="margin:0 0 1.5em;">';
 		echo '<h2>' . esc_html__( 'Starter policy packs', 'handl-ai-connector-access-control' ) . '</h2>';
-		echo '<p class="description">' . esc_html__( 'Start from Strict, Balanced, or Observe-first. Preview every change first. Download a JSON backup before apply. Existing per-plugin rules are kept when they conflict with a pack.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Choose Strict, Balanced, or Observe-first. Preview every change, then download a JSON backup before applying the pack. Existing per-plugin rules stay in place when they conflict with a pack.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		$defs = Policy_Packs::definitions();
 		echo '<div class="handl-aicac-pack-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(14em,1fr));gap:12px;max-width:56em;">';
@@ -6369,7 +6369,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$rows = isset( $preview['rows'] ) && is_array( $preview['rows'] ) ? $preview['rows'] : array();
 		$this->render_confirm_diff_table(
 			$rows,
-			__( 'After apply', 'handl-ai-connector-access-control' ),
+			__( 'After applying', 'handl-ai-connector-access-control' ),
 			__( 'No settings would change.', 'handl-ai-connector-access-control' )
 		);
 
@@ -6383,7 +6383,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				echo '<li>' . esc_html(
 					sprintf(
 						/* translators: 1: rule key, 2: current value, 3: pack value */
-						__( '%1$s: keeping %2$s (pack wanted %3$s).', 'handl-ai-connector-access-control' ),
+						__( '%1$s: keeping %2$s. This pack would use %3$s.', 'handl-ai-connector-access-control' ),
 						(string) ( $conflict['key'] ?? '' ),
 						(string) ( $conflict['current'] ?? '' ),
 						(string) ( $conflict['pack'] ?? '' )

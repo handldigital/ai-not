@@ -16,7 +16,7 @@ return array(
 	'strict'        => array(
 		'id'          => 'strict',
 		'label'       => __( 'Strict', 'handl-ai-connector-access-control' ),
-		'description' => __( 'Deny by default. Review new plugins before they can use AI. Active plugins you already trust get an Allow rule so the site keeps working.', 'handl-ai-connector-access-control' ),
+		'description' => __( 'Deny by default. Review new plugins before they can use AI. Currently active plugins get an Allow rule so the site keeps working.', 'handl-ai-connector-access-control' ),
 		'patch'       => array(
 			'default'                   => 'deny',
 			'audit_only'                => false,
