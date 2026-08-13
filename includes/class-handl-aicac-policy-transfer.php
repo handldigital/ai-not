@@ -57,6 +57,7 @@ final class Policy_Transfer {
 			'shadow_block_exceptions',
 			'alert_mode',
 			'alert_email',
+			'alert_webhook_url',
 			'est_usd_input_per_m',
 			'est_usd_output_per_m',
 			'est_usd_provider_rates',

@@ -200,8 +200,122 @@ final class CliPolicyApplyTest extends TestCase {
 		$this->assertFalse( $result['wrote'] );
 		$this->assertFalse( $result['has_changes'] );
 		$this->assertSame( 'Dry run complete: the current policy matches this export.', $result['success'] ?? null );
+		$this->assertContains( 'No policy differences found.', $result['logs'] );
 		$this->assertSame( $before['default'], Policy::get_policy()['default'] );
 		$this->assertSame( $snaps, count( Policy_Snapshots::all() ) );
+	}
+
+	public function test_secret_email_configured_to_configured_is_not_identical(): void {
+		$live = $this->seed_live( array( 'alert_email' => 'ops@example.test' ) );
+		$incoming = $live;
+		$incoming['alert_email'] = 'security@example.test';
+		$json = $this->export_json( $incoming );
+
+		$prepared = CLI_Policy_Apply::prepare_apply( $json, 'https://example.test/', false );
+		$this->assertTrue( $prepared['ok'] );
+		$this->assertTrue( $prepared['has_changes'] );
+		$joined = implode( "\n", $prepared['diff_lines'] );
+		$this->assertStringContainsString( 'Configured → Updated', $joined );
+		$this->assertStringNotContainsString( 'ops@example.test', $joined );
+		$this->assertStringNotContainsString( 'security@example.test', $joined );
+
+		$dry = CLI_Policy_Apply::execute( $json, 'https://example.test/', true, false, false );
+		$this->assertSame( 1, $dry['exit_code'] );
+		$this->assertFalse( $dry['wrote'] );
+		$this->assertSame( 'ops@example.test', Policy::get_policy()['alert_email'] );
+
+		$apply = CLI_Policy_Apply::execute( $json, 'https://example.test/', false, true, false );
+		$this->assertSame( 0, $apply['exit_code'] );
+		$this->assertTrue( $apply['wrote'] );
+		$this->assertSame( 'security@example.test', Policy::get_policy()['alert_email'] );
+	}
+
+	public function test_secret_webhook_configured_to_configured_is_not_identical(): void {
+		$live = $this->seed_live(
+			array(
+				'alert_webhook_url' => 'https://hooks.example.test/old',
+			)
+		);
+		$incoming = $live;
+		$incoming['alert_webhook_url'] = 'https://hooks.example.test/new';
+		$json = $this->export_json( $incoming );
+
+		$prepared = CLI_Policy_Apply::prepare_apply( $json, 'https://example.test/', false );
+		$this->assertTrue( $prepared['ok'] );
+		$this->assertTrue( $prepared['has_changes'] );
+		$joined = implode( "\n", $prepared['diff_lines'] );
+		$this->assertStringContainsString( 'Configured → Updated', $joined );
+		$this->assertStringNotContainsString( 'hooks.example.test', $joined );
+
+		$dry = CLI_Policy_Apply::execute( $json, 'https://example.test/', true, false, false );
+		$this->assertSame( 1, $dry['exit_code'] );
+		$this->assertFalse( $dry['wrote'] );
+
+		$apply = CLI_Policy_Apply::execute( $json, 'https://example.test/', false, true, false );
+		$this->assertSame( 0, $apply['exit_code'] );
+		$this->assertTrue( $apply['wrote'] );
+		$this->assertSame( 'https://hooks.example.test/new', Policy::get_policy()['alert_webhook_url'] );
+	}
+
+	public function test_same_count_known_plugins_uses_item_deltas(): void {
+		$live = $this->seed_live(
+			array(
+				'new_plugin_review_enabled' => true,
+				'new_plugin_known'          => array( 'acme/a.php', 'old/gone.php' ),
+			)
+		);
+		$incoming = $live;
+		$incoming['new_plugin_known'] = array( 'acme/a.php', 'new/here.php' );
+		$json = $this->export_json( $incoming );
+
+		$prepared = CLI_Policy_Apply::prepare_apply( $json, 'https://example.test/', false );
+		$this->assertTrue( $prepared['ok'] );
+		$this->assertTrue( $prepared['has_changes'] );
+		$joined = implode( "\n", $prepared['diff_lines'] );
+		$this->assertStringContainsString( 'removed: old/gone.php', $joined );
+		$this->assertStringContainsString( 'added: new/here.php', $joined );
+		$this->assertStringNotContainsString( '2 known plugins → 2 known plugins', $joined );
+	}
+
+	public function test_same_count_plugin_notes_uses_updated_when_supported(): void {
+		if ( ! class_exists( \HandL\AICAC\Rule_Notes::class ) ) {
+			$this->markTestSkipped( 'Rule notes land after AICAC-NOTE (#125) merge.' );
+		}
+		if ( ! in_array( 'plugin_notes', Policy_Transfer::known_policy_keys(), true ) ) {
+			$this->markTestSkipped( 'plugin_notes not yet a known transfer key.' );
+		}
+
+		$live = $this->seed_live();
+		$incoming = $live;
+		$incoming['plugin_notes'] = array(
+			'acme/a.php' => 'Allow for checkout AI.',
+		);
+		update_option(
+			Plugin::OPTION_KEY,
+			array_merge(
+				$live,
+				array(
+					'plugin_notes' => array(
+						'acme/a.php' => 'Old note text.',
+					),
+				)
+			),
+			false
+		);
+		$live = Policy::get_policy();
+		$incoming = $live;
+		$incoming['plugin_notes'] = array(
+			'acme/a.php' => 'Allow for checkout AI.',
+		);
+		$json = $this->export_json( $incoming );
+
+		$prepared = CLI_Policy_Apply::prepare_apply( $json, 'https://example.test/', false );
+		$this->assertTrue( $prepared['ok'] );
+		$this->assertTrue( $prepared['has_changes'] );
+		$joined = implode( "\n", $prepared['diff_lines'] );
+		$this->assertStringContainsString( 'Updated', $joined );
+		$this->assertStringNotContainsString( 'Old note text', $joined );
+		$this->assertStringNotContainsString( 'Allow for checkout AI', $joined );
 	}
 
 	public function test_execute_different_dry_run_exits_1_without_write(): void {

@@ -171,7 +171,7 @@ final class CLI_Policy_Apply {
 		}
 
 		if ( empty( $lines ) ) {
-			$logs[] = 'No differences in comparable policy settings.';
+			$logs[] = 'No policy differences found.';
 		} else {
 			$logs[] = 'Policy changes:';
 			foreach ( $lines as $line ) {
@@ -289,8 +289,11 @@ final class CLI_Policy_Apply {
 	}
 
 	/**
-	 * Extend snapshot/import rows so every applied key difference is either
-	 * secret-safe-comparable or listed for refusal.
+	 * Build a secret-safe diff for every applied key that would change.
+	 *
+	 * Snapshot/import rows are used only for preferred labels. Display and
+	 * equality are owned here so configured A→B secrets and same-count maps
+	 * cannot look identical.
 	 *
 	 * @param array<string,mixed>                                                      $current
 	 * @param array<string,mixed>                                                      $incoming
@@ -298,30 +301,21 @@ final class CLI_Policy_Apply {
 	 * @return array{rows:list<array{key:string,label:string,current:string,new:string}>,refused_keys:list<string>}
 	 */
 	public static function ensure_applied_parity( array $current, array $incoming, array $rows ): array {
-		$covered = array();
-		$clean   = array();
+		$label_hints = array();
 		foreach ( $rows as $row ) {
 			if ( ! is_array( $row ) ) {
 				continue;
 			}
 			$key = isset( $row['key'] ) ? (string) $row['key'] : '';
-			if ( '' === $key ) {
+			if ( '' === $key || empty( $row['label'] ) ) {
 				continue;
 			}
-			$covered[ $key ] = true;
-			$clean[]         = array(
-				'key'     => $key,
-				'label'   => isset( $row['label'] ) ? (string) $row['label'] : $key,
-				'current' => isset( $row['current'] ) ? (string) $row['current'] : '',
-				'new'     => isset( $row['new'] ) ? (string) $row['new'] : '',
-			);
+			$label_hints[ $key ] = (string) $row['label'];
 		}
 
+		$clean   = array();
 		$refused = array();
 		foreach ( self::applied_policy_keys() as $key ) {
-			if ( isset( $covered[ $key ] ) ) {
-				continue;
-			}
 			$cur_val = array_key_exists( $key, $current ) ? $current[ $key ] : null;
 			$new_val = array_key_exists( $key, $incoming ) ? $incoming[ $key ] : null;
 			if ( self::applied_values_equal( $key, $cur_val, $new_val ) ) {
@@ -333,8 +327,10 @@ final class CLI_Policy_Apply {
 				$refused[] = $key;
 				continue;
 			}
-			$clean[]         = $safe;
-			$covered[ $key ] = true;
+			if ( isset( $label_hints[ $key ] ) ) {
+				$safe['label'] = $label_hints[ $key ];
+			}
+			$clean[] = $safe;
 		}
 
 		sort( $refused, SORT_STRING );
@@ -376,10 +372,6 @@ final class CLI_Policy_Apply {
 	 * @return mixed
 	 */
 	public static function canonicalize_applied( string $key, $raw ) {
-		if ( in_array( $key, self::SECRET_PRESENCE_KEYS, true ) ) {
-			return self::secret_is_configured( $raw ) ? '1' : '0';
-		}
-
 		switch ( $key ) {
 			case 'default':
 				return ( 'deny' === $raw ) ? 'deny' : 'allow';
@@ -407,6 +399,10 @@ final class CLI_Policy_Apply {
 				return in_array( $v, array( 'inherit', 'allow', 'deny' ), true ) ? $v : 'inherit';
 			case 'alert_mode':
 				return Alerts::sanitize_mode( $raw ?? 'immediate' );
+			case 'alert_email':
+				return Alerts::sanitize_email( $raw ?? '' );
+			case 'alert_webhook_url':
+				return Alerts::sanitize_webhook_url( $raw ?? '' );
 			case 'log_limit':
 				$n = (int) $raw;
 				if ( $n < 20 ) {
@@ -506,12 +502,25 @@ final class CLI_Policy_Apply {
 		$label = self::applied_field_label( $key );
 
 		if ( in_array( $key, self::SECRET_PRESENCE_KEYS, true ) ) {
+			$change = self::format_secret_presence_change( $key, $a, $b );
 			return array(
 				'key'     => $key,
 				'label'   => $label,
-				'current' => self::format_secret_presence( $a ),
-				'new'     => self::format_secret_presence( $b ),
+				'current' => $change['current'],
+				'new'     => $change['new'],
 			);
+		}
+
+		if ( in_array( $key, array( 'new_plugin_known', 'kill_switch_exceptions', 'shadow_block_exceptions', 'allowed_roles' ), true ) ) {
+			return self::id_list_diff_row( $key, $label, $a, $b );
+		}
+
+		if ( 'new_plugin_pending' === $key ) {
+			return self::pending_map_diff_row( $label, $a, $b );
+		}
+
+		if ( 'plugin_notes' === $key ) {
+			return self::hidden_content_map_diff_row( $key, $label, $a, $b );
 		}
 
 		$from = self::format_applied_value( $key, $a );
@@ -519,12 +528,146 @@ final class CLI_Policy_Apply {
 		if ( null === $from || null === $to ) {
 			return null;
 		}
+		if ( $from === $to ) {
+			$to = __( 'Updated', 'handl-ai-connector-access-control' );
+		}
 
 		return array(
 			'key'     => $key,
 			'label'   => $label,
 			'current' => $from,
 			'new'     => $to,
+		);
+	}
+
+	/**
+	 * @param mixed $before
+	 * @param mixed $after
+	 * @return array{current:string,new:string}
+	 */
+	public static function format_secret_presence_change( string $key, $before, $after ): array {
+		$had = '' !== (string) self::canonicalize_applied( $key, $before );
+		$has = '' !== (string) self::canonicalize_applied( $key, $after );
+		$from = $had
+			? __( 'Configured', 'handl-ai-connector-access-control' )
+			: __( 'Not configured', 'handl-ai-connector-access-control' );
+		if ( ! $had && $has ) {
+			$to = __( 'Configured', 'handl-ai-connector-access-control' );
+		} elseif ( $had && ! $has ) {
+			$to = __( 'Not configured', 'handl-ai-connector-access-control' );
+		} else {
+			$to = __( 'Updated', 'handl-ai-connector-access-control' );
+		}
+		return array(
+			'current' => $from,
+			'new'     => $to,
+		);
+	}
+
+	/**
+	 * @param mixed $a
+	 * @param mixed $b
+	 * @return array{key:string,label:string,current:string,new:string}
+	 */
+	private static function id_list_diff_row( string $key, string $label, $a, $b ): array {
+		$from = self::canonicalize_applied( $key, $a );
+		$to   = self::canonicalize_applied( $key, $b );
+		$from = is_array( $from ) ? $from : array();
+		$to   = is_array( $to ) ? $to : array();
+		$added   = array_values( array_diff( $to, $from ) );
+		$removed = array_values( array_diff( $from, $to ) );
+		$none    = __( '(none)', 'handl-ai-connector-access-control' );
+
+		return array(
+			'key'     => $key,
+			'label'   => $label,
+			'current' => empty( $removed )
+				? $none
+				: ( 'removed: ' . implode( ', ', $removed ) ),
+			'new'     => empty( $added )
+				? ( empty( $removed ) ? __( 'Updated', 'handl-ai-connector-access-control' ) : $none )
+				: ( 'added: ' . implode( ', ', $added ) ),
+		);
+	}
+
+	/**
+	 * @param mixed $a
+	 * @param mixed $b
+	 * @return array{key:string,label:string,current:string,new:string}
+	 */
+	private static function pending_map_diff_row( string $label, $a, $b ): array {
+		$from = New_Plugin::sanitize_pending( $a );
+		$to   = New_Plugin::sanitize_pending( $b );
+		$added   = array_values( array_diff( array_keys( $to ), array_keys( $from ) ) );
+		$removed = array_values( array_diff( array_keys( $from ), array_keys( $to ) ) );
+		sort( $added, SORT_STRING );
+		sort( $removed, SORT_STRING );
+		$none = __( '(none)', 'handl-ai-connector-access-control' );
+
+		if ( empty( $added ) && empty( $removed ) ) {
+			$count = count( $from );
+			return array(
+				'key'     => 'new_plugin_pending',
+				'label'   => $label,
+				'current' => sprintf(
+					/* translators: %d: count of pending plugins */
+					_n( '%d pending plugin', '%d pending plugins', $count, 'handl-ai-connector-access-control' ),
+					$count
+				),
+				'new'     => __( 'Updated', 'handl-ai-connector-access-control' ),
+			);
+		}
+
+		return array(
+			'key'     => 'new_plugin_pending',
+			'label'   => $label,
+			'current' => empty( $removed )
+				? $none
+				: ( 'removed: ' . implode( ', ', $removed ) ),
+			'new'     => empty( $added )
+				? $none
+				: ( 'added: ' . implode( ', ', $added ) ),
+		);
+	}
+
+	/**
+	 * Content-bearing maps (rule notes): never print values; use counts or Updated.
+	 *
+	 * @param mixed $a
+	 * @param mixed $b
+	 * @return array{key:string,label:string,current:string,new:string}
+	 */
+	private static function hidden_content_map_diff_row( string $key, string $label, $a, $b ): array {
+		$from = self::canonicalize_applied( $key, $a );
+		$to   = self::canonicalize_applied( $key, $b );
+		$from = is_array( $from ) ? $from : array();
+		$to   = is_array( $to ) ? $to : array();
+		$from_count = count( $from );
+		$to_count   = count( $to );
+		$from_label = ( 0 === $from_count )
+			? __( '(none)', 'handl-ai-connector-access-control' )
+			: sprintf(
+				/* translators: %d: count of rule notes */
+				_n( '%d rule note', '%d rule notes', $from_count, 'handl-ai-connector-access-control' ),
+				$from_count
+			);
+		$to_label = ( $from_count === $to_count )
+			? __( 'Updated', 'handl-ai-connector-access-control' )
+			: (
+				( 0 === $to_count )
+					? __( '(none)', 'handl-ai-connector-access-control' )
+					: sprintf(
+						/* translators: %d: count of rule notes */
+						_n( '%d rule note', '%d rule notes', $to_count, 'handl-ai-connector-access-control' ),
+						$to_count
+					)
+			);
+
+		return array(
+			'key'     => $key,
+			'label'   => $label,
+			'current' => $from_label,
+			'new'     => $to_label,
 		);
 	}
 
@@ -692,7 +835,7 @@ final class CLI_Policy_Apply {
 	private static function format_secret_presence( $raw ): string {
 		return self::secret_is_configured( $raw )
 			? __( 'Configured', 'handl-ai-connector-access-control' )
-			: __( 'Not set', 'handl-ai-connector-access-control' );
+			: __( 'Not configured', 'handl-ai-connector-access-control' );
 	}
 
 	/**
