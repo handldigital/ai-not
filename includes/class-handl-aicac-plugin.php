@@ -34,6 +34,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-spend-threshold.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-budget.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-forecast.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-governance-coverage.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-usage-trends.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-log-storage.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-log-retention.php';
