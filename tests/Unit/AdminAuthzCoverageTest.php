@@ -41,6 +41,9 @@ final class AdminAuthzCoverageTest extends TestCase {
 		'onboard_reopen',
 		'onboard_step',
 		'onboard_test_email',
+		'pack_apply_confirm',
+		'pack_export_backup',
+		'pack_preview',
 		'policy_check_add',
 		'policy_check_delete',
 		'policy_checks_save_confirm',
@@ -240,6 +243,18 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'nonce_action' => 'handl_aicac_preset_apply_confirm',
 			),
 			array(
+				'action'       => 'pack_preview',
+				'nonce_action' => 'handl_aicac_pack_preview',
+			),
+			array(
+				'action'       => 'pack_apply_confirm',
+				'nonce_action' => 'handl_aicac_pack_apply_confirm',
+			),
+			array(
+				'action'       => 'pack_export_backup',
+				'nonce_action' => 'handl_aicac_pack_export_backup',
+			),
+			array(
 				'action'       => 'policy_restore_preview',
 				'nonce_action' => 'handl_aicac_policy_restore_preview',
 			),
@@ -408,6 +423,9 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array( 'handle_export_rules', 'handl_aicac_export_rules' ),
 			array( 'handle_export_prune_candidates', 'handl_aicac_export_prune_candidates' ),
 			array( 'handle_skip_prune_export', 'handl_aicac_skip_prune_export' ),
+			array( 'handle_pack_export_backup', 'handl_aicac_pack_export_backup' ),
+			array( 'handle_pack_preview', 'handl_aicac_pack_preview' ),
+			array( 'handle_pack_apply_confirm', 'handl_aicac_pack_apply_confirm' ),
 			array( 'handle_import_rules_preview', 'handl_aicac_import_rules' ),
 			array( 'handle_import_rules_confirm', 'handl_aicac_import_rules_confirm' ),
 			array( 'handle_compare_rules_preview', 'handl_aicac_compare_rules' ),
@@ -445,6 +463,9 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'handle_export_rules',
 				'handle_export_prune_candidates',
 				'handle_skip_prune_export',
+				'handle_pack_export_backup',
+				'handle_pack_preview',
+				'handle_pack_apply_confirm',
 				'handle_export_log',
 				'handle_import_rules_preview',
 				'handle_import_rules_confirm',
@@ -539,6 +560,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 		$this->assertStringContainsString( 'handle_export_log', $maybe_body );
 		$this->assertStringContainsString( 'handle_export_rules', $maybe_body );
 		$this->assertStringContainsString( 'handle_export_prune_candidates', $maybe_body );
+		$this->assertStringContainsString( 'handle_pack_export_backup', $maybe_body );
 
 		// Late dispatch in render_page must not call the stream handlers again.
 		$render_end  = strpos( $this->source, 'function render_plugin_rules_filters', $render_pos );
