@@ -177,10 +177,10 @@ final class Policy_Backup {
 
 		$subject = sprintf(
 			/* translators: %s: site name */
-			__( '[%s] HandL AI rules backup', 'handl-ai-connector-access-control' ),
+			__( '[%s] HandL AI weekly rules backup', 'handl-ai-connector-access-control' ),
 			$site
 		);
-		$body = __( 'Attached is this week’s HandL AI Connector Access Control rules backup (JSON). Keep the file somewhere safe. You can compare or import it later from the Rules tab.', 'handl-ai-connector-access-control' );
+		$body = __( 'Attached is this week’s HandL AI Connector Access Control rules backup (JSON). Store this file in a secure location. You can compare or import it later from the Rules tab.', 'handl-ai-connector-access-control' );
 
 		$attachment = self::write_temp_json_attachment( $json, $filename );
 		$attachments = '' !== $attachment ? array( $attachment ) : array();
@@ -234,10 +234,10 @@ final class Policy_Backup {
 		}
 		$subject = sprintf(
 			/* translators: %s: site name */
-			__( '[%s] HandL AI rules backup', 'handl-ai-connector-access-control' ),
+			__( '[%s] HandL AI weekly rules backup', 'handl-ai-connector-access-control' ),
 			$site
 		);
-		$body = __( 'Attached is your HandL AI Connector Access Control rules backup (JSON).', 'handl-ai-connector-access-control' );
+		$body = __( 'Attached is a HandL AI Connector Access Control rules backup (JSON). Store this file in a secure location. You can compare or import it later from the Rules tab.', 'handl-ai-connector-access-control' );
 		$attachment = self::write_temp_json_attachment( $json, $filename );
 		$attachments = '' !== $attachment ? array( $attachment ) : array();
 		$ok = Alerts::safe_wp_mail( $to, $subject, $body, $attachments );

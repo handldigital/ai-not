@@ -6445,7 +6445,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			wp_nonce_field( 'handl_aicac_compare_latest_backup', 'handl_aicac_nonce' );
 			echo '<input type="hidden" name="handl_aicac_action" value="compare_latest_backup" />';
 			echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
-			submit_button( __( 'Compare with latest email backup', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+			submit_button( __( 'Compare with latest weekly backup', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
 			echo '</form>';
 		}
 
@@ -6565,14 +6565,14 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		echo '<div class="handl-aicac-policy-backup" style="margin:0 0 1.5em;max-width:52em;">';
 		echo '<h3>' . esc_html__( 'Weekly rules backup email', 'handl-ai-connector-access-control' ) . '</h3>';
-		echo '<p class="description">' . esc_html__( 'Off by default. When on, HandL emails a JSON rules backup once a week to the blocked-call alert address (or the site admin email). Only the latest backup is kept on this site for download and compare.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Off by default. When enabled, HandL emails a JSON rules backup once a week to the blocked-call alert address. If none is set, it uses the site admin email. Only the latest backup is stored on this site for downloading or comparing.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		echo '<form method="post" style="margin-bottom:0.75em;">';
 		wp_nonce_field( 'handl_aicac_policy_backup_save', 'handl_aicac_nonce' );
 		echo '<input type="hidden" name="handl_aicac_action" value="policy_backup_save" />';
 		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
 		echo '<label><input type="checkbox" name="handl_aicac_policy_backup_email_enabled" value="1" ' . checked( $enabled, true, false ) . ' /> ';
-		echo esc_html__( 'Email me a weekly rules backup (JSON)', 'handl-ai-connector-access-control' ) . '</label>';
+		echo esc_html__( 'Email a weekly rules backup (JSON)', 'handl-ai-connector-access-control' ) . '</label>';
 		echo ' ';
 		submit_button( __( 'Save backup setting', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
 		echo '</form>';
