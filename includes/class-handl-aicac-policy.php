@@ -1146,9 +1146,8 @@ final class Policy {
 	 * @param array<string,mixed> $policy
 	 */
 	public static function save_policy( array $policy ): void {
-		// AICAC-UNDO: snapshot current policy before overwrite (restore also hits this path).
-		Policy_Snapshots::capture_before_save();
-
+		// Snapshot + history run immediately before write (after sanitize) so
+		// change lines compare the live policy to the sanitized incoming shape.
 		if ( ! empty( $policy['audit_only'] ) ) {
 			$policy['log_enabled'] = true;
 		}
@@ -1240,6 +1239,9 @@ final class Policy {
 		}
 		// Site-wide pin removed: per-plugin replaces it. Never re-store legacy keys.
 		unset( $policy['model_force_enabled'], $policy['model_force_provider'], $policy['model_force_model'] );
+
+		// AICAC-UNDO / AICAC-HISTORY: snapshot + who/when/what trail before overwrite.
+		Policy_Snapshots::capture_before_save( $policy );
 
 		update_option( Plugin::OPTION_KEY, $policy, false );
 		Alerts::maybe_schedule( $policy );

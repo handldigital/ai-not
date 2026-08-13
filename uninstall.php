@@ -12,6 +12,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 delete_option( 'handl_aicac_policy' );
 delete_option( 'handl_aicac_recent_calls' );
 delete_option( 'handl_aicac_policy_snapshots' );
+delete_option( 'handl_aicac_policy_history' );
 delete_option( 'handl_aicac_policy_checks' );
 delete_option( 'handl_aicac_policy_checks_failing' );
 delete_option( 'handl_aicac_onboard' );

@@ -18,16 +18,19 @@ final class PolicySnapshotsTest extends TestCase {
 
 	protected function setUp(): void {
 		$GLOBALS['handl_aicac_test_options'] = array();
-		unset( $GLOBALS['handl_aicac_test_filters'] );
+		unset( $GLOBALS['handl_aicac_test_filters'], $GLOBALS['handl_aicac_test_user_id'], $GLOBALS['handl_aicac_test_users'] );
 		delete_option( Plugin::OPTION_KEY );
 		delete_option( Policy_Snapshots::OPTION_KEY );
+		delete_option( Policy_Snapshots::HISTORY_OPTION_KEY );
 		delete_option( Plugin::LOG_OPTION_KEY );
 	}
 
 	protected function tearDown(): void {
 		delete_option( Plugin::OPTION_KEY );
 		delete_option( Policy_Snapshots::OPTION_KEY );
+		delete_option( Policy_Snapshots::HISTORY_OPTION_KEY );
 		delete_option( Plugin::LOG_OPTION_KEY );
+		unset( $GLOBALS['handl_aicac_test_user_id'], $GLOBALS['handl_aicac_test_users'] );
 	}
 
 	/**
@@ -180,5 +183,245 @@ final class PolicySnapshotsTest extends TestCase {
 		// No option stored yet.
 		Policy::save_policy( $this->complex_policy( 'allow', 1 ) );
 		$this->assertSame( array(), Policy_Snapshots::all() );
+		$this->assertSame( array(), Policy_Snapshots::history() );
+	}
+
+	public function test_history_records_actor_and_change_lines(): void {
+		$GLOBALS['handl_aicac_test_user_id'] = 42;
+		$GLOBALS['handl_aicac_test_users']   = array(
+			42 => array(
+				'ID'           => 42,
+				'user_login'   => 'admin42',
+				'display_name' => 'Ada Admin',
+			),
+		);
+
+		update_option( Plugin::OPTION_KEY, $this->complex_policy( 'allow', 1 ), false );
+
+		$next = $this->complex_policy( 'deny', 1 );
+		$next['kill_switch'] = true;
+		$next['log_enabled'] = false;
+		Policy::save_policy( $next );
+
+		$snaps = Policy_Snapshots::all();
+		$this->assertCount( 1, $snaps );
+		$this->assertSame( 'user', $snaps[0]['actor']['type'] ?? null );
+		$this->assertSame( 42, (int) ( $snaps[0]['actor']['user_id'] ?? 0 ) );
+		$this->assertNotEmpty( $snaps[0]['changes'] );
+
+		$history = Policy_Snapshots::history();
+		$this->assertCount( 1, $history );
+		$this->assertSame( 42, (int) ( $history[0]['actor']['user_id'] ?? 0 ) );
+		$joined = implode( ' ', $history[0]['changes'] );
+		$this->assertStringContainsString( 'Emergency stop', $joined );
+		$this->assertStringContainsString( 'Off', $joined );
+		$this->assertStringContainsString( 'On', $joined );
+		$this->assertSame( 'Ada Admin', Policy_Snapshots::actor_display( $history[0]['actor'] ) );
+	}
+
+	public function test_history_survives_full_snapshot_rotation(): void {
+		update_option( Plugin::OPTION_KEY, $this->complex_policy( 'allow', 1 ), false );
+
+		for ( $i = 0; $i < 8; $i++ ) {
+			$p = $this->complex_policy( 0 === $i % 2 ? 'allow' : 'deny', 1 + ( $i % 3 ) );
+			$p['kill_switch'] = ( 0 === $i % 2 );
+			Policy::save_policy( $p );
+		}
+
+		$this->assertCount( Policy_Snapshots::MAX, Policy_Snapshots::all() );
+		$this->assertGreaterThan( Policy_Snapshots::MAX, count( Policy_Snapshots::history() ) );
+		$this->assertSame( 8, count( Policy_Snapshots::history() ) );
+	}
+
+	public function test_kill_switch_history_records_when_activity_logging_off(): void {
+		$base = $this->complex_policy( 'allow', 1 );
+		$base['log_enabled'] = false;
+		$base['audit_only']  = false;
+		$base['kill_switch'] = false;
+		update_option( Plugin::OPTION_KEY, $base, false );
+
+		$next = $base;
+		$next['kill_switch'] = true;
+		Policy::save_policy( $next );
+
+		$history = Policy_Snapshots::history();
+		$this->assertNotEmpty( $history );
+		$joined = implode( ' ', $history[0]['changes'] );
+		$this->assertStringContainsString( 'Emergency stop', $joined );
+	}
+
+	public function test_history_cap_retains_newest_only(): void {
+		update_option( Plugin::OPTION_KEY, $this->complex_policy( 'allow', 1 ), false );
+
+		$GLOBALS['handl_aicac_test_filters']['handl_aicac_policy_history_max'] = static function () {
+			return 25;
+		};
+
+		for ( $i = 0; $i < 30; $i++ ) {
+			Policy_Snapshots::append_history(
+				array(
+					'ts'      => 1700000000 + $i,
+					'actor'   => array(
+						'type'    => 'system',
+						'user_id' => 0,
+						'login'   => '',
+					),
+					'changes' => array( 'Emergency stop: Off → On' ),
+					'summary' => 'Emergency stop: Off → On',
+				)
+			);
+		}
+
+		$list = Policy_Snapshots::history();
+		$this->assertSame( 25, Policy_Snapshots::history_max() );
+		$this->assertCount( 25, $list );
+		$this->assertSame( 1700000029, (int) $list[0]['ts'] );
+
+		unset( $GLOBALS['handl_aicac_test_filters']['handl_aicac_policy_history_max'] );
+	}
+
+	public function test_same_count_plugin_rule_edit_is_meaningful(): void {
+		$base = $this->complex_policy( 'allow', 2 );
+		update_option( Plugin::OPTION_KEY, $base, false );
+
+		$next = $base;
+		$next['plugins']['acme-plugin-1/plugin.php'] = 'deny';
+		Policy::save_policy( $next );
+
+		$history = Policy_Snapshots::history();
+		$this->assertCount( 1, $history );
+		$joined = implode( "\n", $history[0]['changes'] );
+		$this->assertStringContainsString( 'acme-plugin-1/plugin.php', $joined );
+		$this->assertStringContainsString( 'Allow', $joined );
+		$this->assertStringContainsString( 'Deny', $joined );
+		$this->assertStringNotContainsString( '2 plugin rules → 2 plugin rules', $joined );
+		$this->assertStringNotContainsString( '2 items → 2 items', $joined );
+	}
+
+	public function test_mode_change_creates_history_row(): void {
+		$base = $this->complex_policy( 'allow', 1 );
+		$base['audit_only'] = false;
+		update_option( Plugin::OPTION_KEY, $base, false );
+
+		$next = $base;
+		$next['audit_only'] = true;
+		Policy::save_policy( $next );
+
+		$history = Policy_Snapshots::history();
+		$this->assertCount( 1, $history );
+		$joined = implode( ' ', $history[0]['changes'] );
+		$this->assertStringContainsString( 'Learn mode', $joined );
+	}
+
+	public function test_spend_threshold_and_keep_period_history(): void {
+		$base = $this->complex_policy( 'allow', 1 );
+		$base['spend_threshold_site'] = null;
+		$base['log_max_age_days']     = null;
+		update_option( Plugin::OPTION_KEY, $base, false );
+
+		$next = $base;
+		$next['spend_threshold_site'] = 25.0;
+		$next['log_max_age_days']     = 90;
+		Policy::save_policy( $next );
+
+		$history = Policy_Snapshots::history();
+		$this->assertCount( 1, $history );
+		$joined = implode( ' ', $history[0]['changes'] );
+		$this->assertStringContainsString( 'Site estimated-spend alert', $joined );
+		$this->assertStringContainsString( 'Activity keep period', $joined );
+		$this->assertStringContainsString( '$25', $joined );
+	}
+
+	public function test_alert_recipient_history_masks_secrets(): void {
+		$base = $this->complex_policy( 'allow', 1 );
+		$base['alert_email']       = '';
+		$base['alert_webhook_url'] = '';
+		update_option( Plugin::OPTION_KEY, $base, false );
+
+		$next = $base;
+		$next['alert_email']       = 'secret-admin@example.com';
+		$next['alert_webhook_url'] = 'https://hooks.example.com/very-secret-token';
+		Policy::save_policy( $next );
+
+		$history = Policy_Snapshots::history();
+		$this->assertCount( 1, $history );
+		$joined = implode( ' ', $history[0]['changes'] );
+		$this->assertStringContainsString( 'Not configured → Configured', $joined );
+		$this->assertStringNotContainsString( 'secret-admin@example.com', $joined );
+		$this->assertStringNotContainsString( 'very-secret-token', $joined );
+		$this->assertStringNotContainsString( 'hooks.example.com', $joined );
+
+		$again = $next;
+		$again['alert_email'] = 'other@example.com';
+		Policy::save_policy( $again );
+		$history2 = Policy_Snapshots::history();
+		$this->assertNotEmpty( $history2 );
+		$joined2 = implode( ' ', $history2[0]['changes'] );
+		$this->assertStringContainsString( 'Configured → Updated', $joined2 );
+		$this->assertStringNotContainsString( 'other@example.com', $joined2 );
+	}
+
+	public function test_allowed_roles_and_import_style_save_history(): void {
+		$base = $this->complex_policy( 'allow', 1 );
+		$base['role_gate_enabled'] = true;
+		$base['allowed_roles']     = array( 'administrator' );
+		update_option( Plugin::OPTION_KEY, $base, false );
+
+		$next = $base;
+		$next['allowed_roles'] = array( 'administrator', 'editor' );
+		// Import/bulk also write through save_policy — same funnel.
+		Policy::save_policy( $next );
+
+		$history = Policy_Snapshots::history();
+		$this->assertCount( 1, $history );
+		$joined = implode( ' ', $history[0]['changes'] );
+		$this->assertStringContainsString( 'editor', $joined );
+		$this->assertStringContainsString( 'Allowed roles', $joined );
+	}
+
+	public function test_history_uses_canonical_subcent_usd_and_product_labels(): void {
+		$base = $this->complex_policy( 'allow', 1 );
+		$base['est_usd_input_per_m']      = 1.0;
+		$base['plugin_budgets']           = array( 'acme-plugin-1/plugin.php' => 10.0 );
+		$base['plugin_budget_modes']      = array( 'acme-plugin-1/plugin.php' => 'deny' );
+		$base['model_force_unattributed'] = 'none';
+		$base['est_usd_provider_rates']   = array();
+		update_option( Plugin::OPTION_KEY, $base, false );
+
+		$next = $base;
+		$next['est_usd_input_per_m']      = 0.004;
+		$next['plugin_budgets']['acme-plugin-1/plugin.php'] = 0.005;
+		$next['plugin_budget_modes']['acme-plugin-1/plugin.php'] = 'observe';
+		$next['model_force_unattributed'] = 'force';
+		$next['model_force_unattributed_provider'] = 'openai';
+		$next['model_force_unattributed_model']    = 'gpt-test';
+		$next['est_usd_provider_rates'] = array(
+			'openai' => array(
+				'input_per_m'  => 0.003,
+				'output_per_m' => 0.006,
+			),
+		);
+		Policy::save_policy( $next );
+
+		$history = Policy_Snapshots::history();
+		$this->assertNotEmpty( $history );
+		$joined = implode( "\n", $history[0]['changes'] );
+
+		$this->assertStringContainsString( '<$0.01', $joined );
+		$this->assertStringContainsString( 'Default input rate ($ per 1M tokens)', $joined );
+		$this->assertStringContainsString( 'Plugin estimated budgets', $joined );
+		$this->assertStringContainsString( 'Provider rates ($ per 1M tokens)', $joined );
+		$this->assertStringContainsString( 'Input <$0.01; output <$0.01', $joined );
+		$this->assertStringContainsString( 'Block when reached', $joined );
+		$this->assertStringContainsString( 'Observe-only when reached', $joined );
+		$this->assertStringContainsString( 'Calls with no detected plugin', $joined );
+		$this->assertStringContainsString( 'Do not route', $joined );
+		$this->assertStringContainsString( 'Route to provider and model', $joined );
+
+		// Raw storage tokens must not appear as rendered before/after values.
+		$this->assertDoesNotMatchRegularExpression( '/: (deny|observe) → (deny|observe)/', $joined );
+		$this->assertDoesNotMatchRegularExpression( '/: (none|force) → (none|force)/', $joined );
+		$this->assertStringNotContainsString( 'in $', $joined );
+		$this->assertStringNotContainsString( ' / out ', $joined );
 	}
 }

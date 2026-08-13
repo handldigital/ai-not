@@ -801,6 +801,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		$this->render_policy_packs_section( $policy, $show_pack_preview, $pack_backup_needed );
 		$this->render_presets_section( $policy, $show_preset_preview );
 		$this->render_policy_restore_section( $policy, $show_restore_preview, $restore_status );
+		$this->render_policy_change_history_section();
 		$this->render_policy_checks_section( $plugins, $show_checks_confirm );
 
 		// Settings demoted: collapsible panel, not the first thing you see (F5 IA).
@@ -7228,6 +7229,76 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		submit_button( __( 'Restore previous policy', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
 		echo '</form>';
 		echo '</div>';
+		echo '</div>';
+	}
+
+	/**
+	 * AICAC-HISTORY (#107): read-only who/when/what policy change trail.
+	 */
+	private function render_policy_change_history_section(): void {
+		$entries   = Policy_Snapshots::history();
+		$latest    = Policy_Snapshots::latest();
+		$latest_ts = is_array( $latest ) ? (int) ( $latest['ts'] ?? 0 ) : 0;
+
+		echo '<div id="handl-aicac-change-history" class="handl-aicac-change-history" style="margin:0 0 1.5em;">';
+		echo '<h2>' . esc_html__( 'Change history', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<p class="description">' . esc_html__( 'A local record of who changed rules or settings, when they changed them, and a summary of each change. Recent changes are kept even when Activity logging is off and are not cleared by the Activity keep period. Emergency stop changes are always recorded.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		if ( empty( $entries ) ) {
+			echo '<p class="description">' . esc_html__( 'No policy changes recorded yet. Future changes will appear after the current policy has been saved once.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '</div>';
+			return;
+		}
+
+		echo '<table class="widefat striped" style="max-width:56em;">';
+		echo '<thead><tr>';
+		echo '<th scope="col">' . esc_html__( 'When', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Who', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'What changed', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Restore', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '</tr></thead><tbody>';
+
+		foreach ( $entries as $entry ) {
+			if ( ! is_array( $entry ) ) {
+				continue;
+			}
+			$ts   = (int) ( $entry['ts'] ?? 0 );
+			$when = $ts > 0
+				? ( function_exists( 'wp_date' )
+					? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $ts )
+					: gmdate( 'Y-m-d H:i', $ts ) )
+				: '';
+			$who     = Policy_Snapshots::actor_display( is_array( $entry['actor'] ?? null ) ? $entry['actor'] : array() );
+			$changes = isset( $entry['changes'] ) && is_array( $entry['changes'] ) ? $entry['changes'] : array();
+
+			echo '<tr>';
+			echo '<td>' . esc_html( (string) $when ) . '</td>';
+			echo '<td>' . esc_html( $who ) . '</td>';
+			echo '<td>';
+			if ( empty( $changes ) ) {
+				echo esc_html( (string) ( $entry['summary'] ?? '' ) );
+			} else {
+				echo '<ul style="margin:0;padding-left:1.2em;">';
+				foreach ( $changes as $line ) {
+					echo '<li>' . esc_html( (string) $line ) . '</li>';
+				}
+				echo '</ul>';
+			}
+			echo '</td>';
+			echo '<td>';
+			// Existing restore path only reverts the latest full snapshot.
+			if ( $ts > 0 && $ts === $latest_ts && Policy_Snapshots::has_full_snapshot_for_ts( $ts ) ) {
+				echo '<a href="#handl-aicac-policy-restore">' . esc_html__( 'Review restore', 'handl-ai-connector-access-control' ) . '</a>';
+			} elseif ( $ts > 0 && Policy_Snapshots::has_full_snapshot_for_ts( $ts ) ) {
+				echo '<span class="description">' . esc_html__( 'Full snapshot kept', 'handl-ai-connector-access-control' ) . '</span>';
+			} else {
+				echo '<span class="description">' . esc_html__( 'Change summary only', 'handl-ai-connector-access-control' ) . '</span>';
+			}
+			echo '</td>';
+			echo '</tr>';
+		}
+
+		echo '</tbody></table>';
 		echo '</div>';
 	}
 

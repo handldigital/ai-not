@@ -643,6 +643,20 @@ if ( ! function_exists( 'get_current_user_id' ) ) {
 		return isset( $GLOBALS['handl_aicac_test_user_id'] ) ? (int) $GLOBALS['handl_aicac_test_user_id'] : 0;
 	}
 }
+if ( ! function_exists( 'get_userdata' ) ) {
+	/**
+	 * @param int $user_id User id.
+	 * @return object|false
+	 */
+	function get_userdata( $user_id ) {
+		$uid = (int) $user_id;
+		$store = $GLOBALS['handl_aicac_test_users'] ?? array();
+		if ( $uid <= 0 || ! isset( $store[ $uid ] ) || ! is_array( $store[ $uid ] ) ) {
+			return false;
+		}
+		return (object) $store[ $uid ];
+	}
+}
 if ( ! function_exists( 'get_user_meta' ) ) {
 	/**
 	 * @param int    $user_id User id.
