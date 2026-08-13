@@ -877,7 +877,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 					)
 				);
 				echo ' ';
-				echo esc_html__( 'Optional: add a short note about why in the Why field on that row.', 'handl-ai-connector-access-control' );
+				echo esc_html__( 'Optional: add a Rule note explaining why this rule exists.', 'handl-ai-connector-access-control' );
 				$bits = array();
 				if ( '' !== $graduate['family'] ) {
 					$bits[] = sprintf(
@@ -1085,11 +1085,12 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			$rule_note = Rule_Notes::get( $policy, (string) $basename );
 			echo '<div class="handl-aicac-rule-note" style="margin-top:8px;max-width:18em;">';
 			echo '<label for="handl-aicac-rule-note-' . esc_attr( md5( $basename ) ) . '" class="description" style="display:block;margin-bottom:2px;">';
-			echo esc_html__( 'Why (optional)', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'Rule note (optional)', 'handl-ai-connector-access-control' );
 			echo '</label>';
-			echo '<textarea class="large-text" rows="2" style="width:100%;max-width:18em;" id="handl-aicac-rule-note-' . esc_attr( md5( $basename ) ) . '" name="handl_aicac_rule_note[' . esc_attr( $basename ) . ']" form="' . esc_attr( $rules_form_id ) . '" maxlength="' . esc_attr( (string) Rule_Notes::MAX_LENGTH ) . '" placeholder="' . esc_attr__( 'Why this rule exists', 'handl-ai-connector-access-control' ) . '">';
+			echo '<textarea class="large-text" rows="2" style="width:100%;max-width:18em;" id="handl-aicac-rule-note-' . esc_attr( md5( $basename ) ) . '" name="handl_aicac_rule_note[' . esc_attr( $basename ) . ']" form="' . esc_attr( $rules_form_id ) . '" maxlength="' . esc_attr( (string) Rule_Notes::MAX_LENGTH ) . '" placeholder="' . esc_attr__( 'Why does this rule exist?', 'handl-ai-connector-access-control' ) . '">';
 			echo esc_textarea( $rule_note );
 			echo '</textarea>';
+			echo '<p class="description" style="margin:4px 0 0;">' . esc_html__( 'Stored locally and included in rules exports, Activity CSV exports, and printable evidence. Do not enter secrets.', 'handl-ai-connector-access-control' ) . '</p>';
 			if ( '' !== $rule_note ) {
 				$trunc = Rule_Notes::truncate_for_display( $rule_note );
 				echo '<p class="description handl-aicac-rule-note-preview" style="margin:4px 0 0;" title="' . esc_attr( $rule_note ) . '">';
@@ -1755,7 +1756,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		$profile_note = Rule_Notes::get( $policy, $plugin );
 		if ( '' !== $profile_note ) {
-			echo '<p><strong>' . esc_html__( 'Why:', 'handl-ai-connector-access-control' ) . '</strong> ';
+			echo '<p><strong>' . esc_html__( 'Rule note:', 'handl-ai-connector-access-control' ) . '</strong> ';
 			echo esc_html( $profile_note );
 			echo '</p>';
 		}
@@ -6302,11 +6303,16 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			if ( $file ) {
 				echo '<br /><span class="description" style="font-size:11px;">' . esc_html( wp_basename( $file ) ) . '</span>';
 			}
-			$why = Rule_Notes::get( $policy, $plugin );
+			$why = Rule_Notes::from_activity_row( $row );
 			if ( '' !== $why ) {
 				$trunc = Rule_Notes::truncate_for_display( $why );
-				echo '<br /><span class="description handl-aicac-rule-why" style="font-size:11px;" title="' . esc_attr( $why ) . '">';
-				echo esc_html__( 'Why:', 'handl-ai-connector-access-control' ) . ' ' . esc_html( $trunc );
+				$aria  = sprintf(
+					/* translators: %s: full Rule note text */
+					__( 'Rule note: %s', 'handl-ai-connector-access-control' ),
+					$why
+				);
+				echo '<br /><span class="description handl-aicac-rule-why" style="font-size:11px;" title="' . esc_attr( $why ) . '" aria-label="' . esc_attr( $aria ) . '">';
+				echo esc_html__( 'Rule note:', 'handl-ai-connector-access-control' ) . ' ' . esc_html( $trunc );
 				echo '</span>';
 			}
 		} else {
@@ -6934,9 +6940,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '</label></p>';
 		}
 		echo '<p style="margin-top:12px;max-width:36em;">';
-		echo '<label for="handl-aicac-preset-note"><strong>' . esc_html__( 'Add a note about why (optional)', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
-		echo '<textarea class="large-text" rows="2" id="handl-aicac-preset-note" name="handl_aicac_preset_note" maxlength="' . esc_attr( (string) Rule_Notes::MAX_LENGTH ) . '" placeholder="' . esc_attr__( 'Why you are applying this preset', 'handl-ai-connector-access-control' ) . '"></textarea>';
-		echo '<span class="description">' . esc_html__( 'Saved on any plugin rules this preset changes.', 'handl-ai-connector-access-control' ) . '</span>';
+		echo '<label for="handl-aicac-preset-note"><strong>' . esc_html__( 'Rule note (optional)', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
+		echo '<textarea class="large-text" rows="2" id="handl-aicac-preset-note" name="handl_aicac_preset_note" maxlength="' . esc_attr( (string) Rule_Notes::MAX_LENGTH ) . '" placeholder="' . esc_attr__( 'Why are you applying this preset?', 'handl-ai-connector-access-control' ) . '"></textarea>';
+		echo '<span class="description">' . esc_html__( 'Saved as the Rule note for each plugin rule changed by this preset.', 'handl-ai-connector-access-control' ) . '</span>';
 		echo '</p>';
 		submit_button( __( 'Apply preset', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
 		echo '</form>';

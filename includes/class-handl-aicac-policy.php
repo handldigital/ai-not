@@ -98,6 +98,17 @@ final class Policy {
 			$event['denial_reason']  = 'budget';
 		}
 
+		// AICAC-NOTE (#125): freeze the applicable Rule note on the Activity row.
+		// Snapshot after budget overrides so higher-priority reasons do not inherit it.
+		$frozen_note = Rule_Notes::snapshot_for_event(
+			$policy,
+			is_string( $plugin ) ? $plugin : null,
+			isset( $event['denial_reason'] ) ? (string) $event['denial_reason'] : ''
+		);
+		if ( '' !== $frozen_note ) {
+			$event['rule_note'] = $frozen_note;
+		}
+
 		// AICAC-HOURS: tag rows while a window is live (Deny or Observe).
 		$qh_active = Quiet_Hours::active_window( $policy, $now_ts );
 		if ( null !== $qh_active ) {

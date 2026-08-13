@@ -102,13 +102,14 @@ final class RuleNotesTest extends TestCase {
 		$this->assertSame( '', Rule_Notes::get( $result['policy'], $plugin ) );
 	}
 
-	public function test_csv_includes_reason_only_when_any_note(): void {
+	public function test_csv_includes_rule_note_from_row_not_live_policy(): void {
 		$log = array(
 			array(
-				'ts'       => 100,
-				'decision' => 'deny',
-				'plugin'   => 'a/a.php',
-				'operation'=> 'text-generation',
+				'ts'        => 100,
+				'decision'  => 'deny',
+				'plugin'    => 'a/a.php',
+				'operation' => 'text-generation',
+				'rule_note' => 'blocked for compliance',
 			),
 		);
 		$filters = array(
@@ -119,19 +120,109 @@ final class RuleNotesTest extends TestCase {
 			'plugin'    => '',
 		);
 		$empty = Audit_Export::build_csv( $log, $filters, array(), array( 'plugins' => array() ), array() );
-		$this->assertStringNotContainsString( 'Reason', explode( "\n", $empty )[0] );
+		// Column appears because the row stores a note — even with empty live policy notes.
+		$header = explode( "\n", $empty )[0];
+		$this->assertStringContainsString( 'Rule note', $header );
+		$this->assertStringContainsString( 'blocked for compliance', $empty );
 
+		$no_stored = array(
+			array(
+				'ts'       => 100,
+				'decision' => 'deny',
+				'plugin'   => 'a/a.php',
+			),
+		);
 		$policy = array(
 			'plugins'      => array( 'a/a.php' => 'deny' ),
-			'plugin_notes' => array( 'a/a.php' => 'blocked for compliance' ),
+			'plugin_notes' => array( 'a/a.php' => 'live policy only' ),
 		);
-		$with = Audit_Export::build_csv( $log, $filters, array(), $policy, array() );
-		$header = explode( "\n", $with )[0];
-		$this->assertStringContainsString( 'Reason', $header );
-		$this->assertStringContainsString( 'blocked for compliance', $with );
+		$without = Audit_Export::build_csv( $no_stored, $filters, array(), $policy, array() );
+		$this->assertStringNotContainsString( 'Rule note', explode( "\n", $without )[0] );
+		$this->assertStringNotContainsString( 'live policy only', $without );
 	}
 
-	public function test_evidence_snapshot_includes_note_and_conditional_reason_column(): void {
+	public function test_activity_note_survives_rule_edit_and_delete(): void {
+		$policy = array(
+			'plugins'      => array( 'a/a.php' => 'deny' ),
+			'plugin_notes' => array( 'a/a.php' => 'note A' ),
+			'default'      => 'allow',
+			'log_enabled'  => true,
+			'kill_switch'  => false,
+		);
+		$note_a = Rule_Notes::snapshot_for_event( $policy, 'a/a.php', 'plugin' );
+		$this->assertSame( 'note A', $note_a );
+
+		$row = array(
+			'ts'           => 100,
+			'decision'     => 'deny',
+			'plugin'       => 'a/a.php',
+			'denial_reason'=> 'plugin',
+			'rule_note'    => $note_a,
+		);
+
+		// Edit live note to B — historical row stays A.
+		$policy['plugin_notes']['a/a.php'] = 'note B';
+		$this->assertSame( 'note A', Rule_Notes::from_activity_row( $row ) );
+		$csv = Audit_Export::build_csv(
+			array( $row ),
+			array(
+				'decision'  => '',
+				'operation' => '',
+				'provider'  => '',
+				'model'     => '',
+				'plugin'    => '',
+			),
+			array(),
+			$policy,
+			array()
+		);
+		$this->assertStringContainsString( 'note A', $csv );
+		$this->assertStringNotContainsString( 'note B', $csv );
+
+		// Remove rule — historical row stays A.
+		unset( $policy['plugins']['a/a.php'], $policy['plugin_notes']['a/a.php'] );
+		$this->assertSame( 'note A', Rule_Notes::from_activity_row( $row ) );
+		$csv2 = Audit_Export::build_csv(
+			array( $row ),
+			array(
+				'decision'  => '',
+				'operation' => '',
+				'provider'  => '',
+				'model'     => '',
+				'plugin'    => '',
+			),
+			array(),
+			$policy,
+			array()
+		);
+		$this->assertStringContainsString( 'note A', $csv2 );
+	}
+
+	public function test_higher_priority_decision_does_not_inherit_plugin_note(): void {
+		$policy = array(
+			'plugins'      => array( 'a/a.php' => 'allow' ),
+			'plugin_notes' => array( 'a/a.php' => 'finance approved' ),
+			'default'      => 'deny',
+		);
+		$this->assertSame( '', Rule_Notes::snapshot_for_event( $policy, 'a/a.php', 'kill_switch' ) );
+		$this->assertSame( '', Rule_Notes::snapshot_for_event( $policy, 'a/a.php', 'budget' ) );
+		$this->assertSame( '', Rule_Notes::snapshot_for_event( $policy, 'a/a.php', 'role' ) );
+		$this->assertSame( '', Rule_Notes::snapshot_for_event( $policy, 'a/a.php', 'capability_family' ) );
+		$this->assertSame( '', Rule_Notes::snapshot_for_event( $policy, 'a/a.php', 'tool_armed' ) );
+		$this->assertSame( '', Rule_Notes::snapshot_for_event( $policy, 'a/a.php', 'quiet_hours' ) );
+
+		// Explicit allow with empty reason snapshots the note.
+		$this->assertSame( 'finance approved', Rule_Notes::snapshot_for_event( $policy, 'a/a.php', '' ) );
+
+		$deny_policy = array(
+			'plugins'      => array( 'a/a.php' => 'deny' ),
+			'plugin_notes' => array( 'a/a.php' => 'blocked' ),
+		);
+		$this->assertSame( 'blocked', Rule_Notes::snapshot_for_event( $deny_policy, 'a/a.php', 'plugin' ) );
+		$this->assertSame( '', Rule_Notes::snapshot_for_event( $deny_policy, 'a/a.php', 'budget' ) );
+	}
+
+	public function test_evidence_snapshot_includes_note_and_conditional_rule_note_column(): void {
 		$policy = array(
 			'plugins'        => array( 'a/a.php' => 'deny' ),
 			'plugin_notes'   => array( 'a/a.php' => 'legal hold' ),
@@ -144,7 +235,7 @@ final class RuleNotesTest extends TestCase {
 		$html = Audit_Evidence::build_html(
 			Audit_Evidence::build_report_data( $policy, array(), '7d', time(), array( 'a/a.php' => array( 'Name' => 'A' ) ) )
 		);
-		$this->assertStringContainsString( 'Reason', $html );
+		$this->assertStringContainsString( 'Rule note', $html );
 		$this->assertStringContainsString( 'legal hold', $html );
 
 		$empty_policy = array(
@@ -155,7 +246,7 @@ final class RuleNotesTest extends TestCase {
 		$html2 = Audit_Evidence::build_html(
 			Audit_Evidence::build_report_data( $empty_policy, array(), '7d', time(), array( 'a/a.php' => array( 'Name' => 'A' ) ) )
 		);
-		$this->assertStringNotContainsString( '>Reason<', $html2 );
+		$this->assertStringNotContainsString( '>Rule note<', $html2 );
 	}
 
 	public function test_export_import_round_trips_plugin_notes(): void {

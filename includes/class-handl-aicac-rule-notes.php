@@ -107,6 +107,77 @@ final class Rule_Notes {
 	}
 
 	/**
+	 * Snapshot a Rule note onto an Activity event only when an explicit plugin
+	 * Allow/Deny rule produced the decision. Higher-priority reasons (kill switch,
+	 * budget, role, quiet hours, family, tools) must not inherit the note.
+	 *
+	 * @param array<string,mixed> $policy
+	 * @param string|null         $plugin_basename
+	 * @param string              $denial_reason Final event denial_reason (after budget overrides).
+	 */
+	public static function snapshot_for_event( array $policy, ?string $plugin_basename, string $denial_reason ): string {
+		if ( ! is_string( $plugin_basename ) || '' === $plugin_basename ) {
+			return '';
+		}
+		$plugin_basename = Plugin_Profile::sanitize_plugin( $plugin_basename );
+		if ( '' === $plugin_basename ) {
+			return '';
+		}
+
+		$plugins = isset( $policy['plugins'] ) && is_array( $policy['plugins'] )
+			? $policy['plugins']
+			: array();
+		$rule = isset( $plugins[ $plugin_basename ] ) ? (string) $plugins[ $plugin_basename ] : '';
+		if ( 'allow' !== $rule && 'deny' !== $rule ) {
+			return '';
+		}
+
+		// Explicit plugin Deny produced the decision.
+		if ( 'plugin' === $denial_reason && 'deny' === $rule ) {
+			return self::get( $policy, $plugin_basename );
+		}
+
+		// Explicit plugin Allow produced an allow (empty reason). Other controls
+		// that still allow (or tag budget observe) leave a non-empty reason.
+		if ( '' === $denial_reason && 'allow' === $rule ) {
+			return self::get( $policy, $plugin_basename );
+		}
+
+		return '';
+	}
+
+	/**
+	 * Prefer the Activity row's frozen rule_note; empty when absent.
+	 *
+	 * @param array<string,mixed> $row
+	 */
+	public static function from_activity_row( array $row ): string {
+		if ( ! isset( $row['rule_note'] ) ) {
+			return '';
+		}
+
+		return self::sanitize_note( $row['rule_note'] );
+	}
+
+	/**
+	 * Whether any retained Activity row already stores a Rule note.
+	 *
+	 * @param array<int,mixed> $log
+	 */
+	public static function any_in_log( array $log ): bool {
+		foreach ( $log as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			if ( '' !== self::from_activity_row( $row ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * @param array<string,mixed> $policy
 	 */
 	public static function any( array $policy ): bool {

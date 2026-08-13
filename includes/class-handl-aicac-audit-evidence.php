@@ -204,7 +204,7 @@ foreach ( $rules as $rcheck ) {
 <th><?php echo esc_html__( 'AI type rules', 'handl-ai-connector-access-control' ); ?></th>
 <th><?php echo esc_html__( 'Allow expiry', 'handl-ai-connector-access-control' ); ?></th>
 <?php if ( $show_reason ) : ?>
-<th><?php echo esc_html__( 'Reason', 'handl-ai-connector-access-control' ); ?></th>
+<th><?php echo esc_html__( 'Rule note', 'handl-ai-connector-access-control' ); ?></th>
 <?php endif; ?>
 </tr></thead>
 <tbody>

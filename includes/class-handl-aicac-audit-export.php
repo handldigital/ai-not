@@ -24,7 +24,7 @@ final class Audit_Export {
 	 *
 	 * @return list<string>
 	 */
-	public static function column_headers( bool $include_reason = false ): array {
+	public static function column_headers( bool $include_rule_note = false ): array {
 		$headers = array(
 			'Time',
 			'Decision',
@@ -39,8 +39,8 @@ final class Audit_Export {
 			'User',
 			'URI',
 		);
-		if ( $include_reason ) {
-			$headers[] = 'Reason';
+		if ( $include_rule_note ) {
+			$headers[] = 'Rule note';
 		}
 
 		return $headers;
@@ -232,14 +232,20 @@ final class Audit_Export {
 			return '';
 		}
 
-		$include_reason = Rule_Notes::any( $policy );
-		fputcsv( $fh, self::column_headers( $include_reason ) );
+		$filtered         = self::filtered_rows( $log, $filters );
+		$include_rule_note = false;
+		foreach ( $filtered as $probe ) {
+			if ( '' !== Rule_Notes::from_activity_row( $probe ) ) {
+				$include_rule_note = true;
+				break;
+			}
+		}
+		fputcsv( $fh, self::column_headers( $include_rule_note ) );
 
-		foreach ( self::filtered_rows( $log, $filters ) as $row ) {
+		foreach ( $filtered as $row ) {
 			$cells = self::format_row( $row, $plugins, $policy, $user_labels );
-			if ( $include_reason ) {
-				$plugin = isset( $row['plugin'] ) ? (string) $row['plugin'] : '';
-				$cells[] = Rule_Notes::get( $policy, $plugin );
+			if ( $include_rule_note ) {
+				$cells[] = Rule_Notes::from_activity_row( $row );
 			}
 			fputcsv( $fh, $cells );
 		}
