@@ -192,6 +192,9 @@ Yes. With WP-CLI available and this plugin active:
 
 == Changelog ==
 
+= Unreleased =
+* Activity keep period on the Activity tab (30 / 90 / 180 / 365 days or forever): automatic daily prune in batches, optional CSV download of rows about to be removed before the first prune, and a Site Health line for the period and last prune time.
+
 = 1.5.0 =
 * Shared email layout for HandL alerts and reports: same header, intro, and footer on every message, with a plain-text and HTML part. Per-message wording inside the content block is unchanged.
 * Optional weekly governance digest email: last 7 days of AI Client calls, estimated spend vs the previous 7 days, blocked calls, direct connections, usage spike alerts, and top plugins. Off by default.

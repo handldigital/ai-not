@@ -32,6 +32,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 		'compare_rules_preview',
 		'export_audit_report',
 		'export_log',
+		'export_prune_candidates',
 		'export_rules',
 		'import_rules_confirm',
 		'import_rules_preview',
@@ -54,6 +55,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 		'send_test_email',
 		'send_test_webhook',
 		'simulate_policy',
+		'skip_prune_export',
 		'snooze_alerts',
 		'undo_quick_rule',
 	);
@@ -176,6 +178,14 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array(
 				'action'       => 'export_rules',
 				'nonce_action' => 'handl_aicac_export_rules',
+			),
+			array(
+				'action'       => 'export_prune_candidates',
+				'nonce_action' => 'handl_aicac_export_prune_candidates',
+			),
+			array(
+				'action'       => 'skip_prune_export',
+				'nonce_action' => 'handl_aicac_skip_prune_export',
 			),
 			array(
 				'action'       => 'export_log',
@@ -396,6 +406,8 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array( 'apply_role_gate_settings_from_post', 'handl_aicac_save_policy' ),
 			array( 'apply_log_settings_from_post', 'handl_aicac_save_policy' ),
 			array( 'handle_export_rules', 'handl_aicac_export_rules' ),
+			array( 'handle_export_prune_candidates', 'handl_aicac_export_prune_candidates' ),
+			array( 'handle_skip_prune_export', 'handl_aicac_skip_prune_export' ),
 			array( 'handle_import_rules_preview', 'handl_aicac_import_rules' ),
 			array( 'handle_import_rules_confirm', 'handl_aicac_import_rules_confirm' ),
 			array( 'handle_compare_rules_preview', 'handl_aicac_compare_rules' ),
@@ -431,6 +443,8 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'apply_role_gate_settings_from_post',
 				'apply_log_settings_from_post',
 				'handle_export_rules',
+				'handle_export_prune_candidates',
+				'handle_skip_prune_export',
 				'handle_export_log',
 				'handle_import_rules_preview',
 				'handle_import_rules_confirm',
@@ -524,6 +538,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 		$maybe_body = substr( $this->source, $maybe_pos, $render_pos > $maybe_pos ? $render_pos - $maybe_pos : 2500 );
 		$this->assertStringContainsString( 'handle_export_log', $maybe_body );
 		$this->assertStringContainsString( 'handle_export_rules', $maybe_body );
+		$this->assertStringContainsString( 'handle_export_prune_candidates', $maybe_body );
 
 		// Late dispatch in render_page must not call the stream handlers again.
 		$render_end  = strpos( $this->source, 'function render_plugin_rules_filters', $render_pos );

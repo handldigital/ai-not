@@ -36,6 +36,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-forecast.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-usage-trends.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-log-storage.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-log-retention.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-anomaly.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-drift.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-email-template.php';
@@ -80,6 +81,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 		Weekly_Report::instance()->init();
 		Monthly_Report::instance()->init();
 		Governance_Digest::instance()->init();
+		Log_Retention::instance()->init();
 		Model_Force::instance()->init();
 		Shadow_AI::instance()->init();
 		Keyscan::instance()->init();

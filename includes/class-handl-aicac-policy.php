@@ -1117,6 +1117,11 @@ final class Policy {
 		}
 
 		$policy = self::get_policy();
+		// AICAC-RETENTION: defer time-based prune until export-before-prune completes.
+		if ( class_exists( Log_Retention::class ) && Log_Retention::should_defer_ttl_prune() ) {
+			$policy = $policy;
+			$policy['log_max_age_days'] = null;
+		}
 		$pruned = self::apply_log_retention( $log, $policy, $now );
 		// Persist only when retention actually dropped rows (cheap length/content check).
 		if ( count( $pruned ) !== count( $log ) || $pruned != $log ) { // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison -- content compare

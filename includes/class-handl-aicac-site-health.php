@@ -238,6 +238,8 @@ final class Site_Health {
 			$lines[] = __( 'Activity logging: off.', 'handl-ai-connector-access-control' );
 		}
 
+		$lines[] = self::retention_description_line();
+
 		$lines[] = sprintf(
 			/* translators: %d: count of explicit deny rules */
 			_n(
@@ -292,6 +294,33 @@ final class Site_Health {
 		}
 
 		return $html;
+	}
+
+	/**
+	 * Retention period + last automatic prune for Site Health.
+	 */
+	private static function retention_description_line(): string {
+		$policy = Policy::get_policy();
+		$days   = Policy::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
+		$period = Log_Retention::period_label( $days );
+		$meta   = Log_Retention::meta();
+		if ( $meta['last_prune_ts'] > 0 ) {
+			$when = function_exists( 'wp_date' )
+				? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (int) $meta['last_prune_ts'] )
+				: gmdate( 'Y-m-d H:i', (int) $meta['last_prune_ts'] );
+			return sprintf(
+				/* translators: 1: retention period label, 2: last prune datetime */
+				__( 'Activity keep period: %1$s. Last automatic prune: %2$s.', 'handl-ai-connector-access-control' ),
+				$period,
+				$when
+			);
+		}
+
+		return sprintf(
+			/* translators: %s: retention period label */
+			__( 'Activity keep period: %s. No automatic prune has run yet.', 'handl-ai-connector-access-control' ),
+			$period
+		);
 	}
 
 	public static function logging_active( array $policy ): bool {
