@@ -5302,36 +5302,47 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$max    = (int) $report['max'];
 
 		echo '<div class="postbox handl-aicac-tile handl-aicac-tile--governance-coverage">';
-		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Governance coverage', 'handl-ai-connector-access-control' ) . '</h2></div>';
+		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Governance setup', 'handl-ai-connector-access-control' ) . '</h2></div>';
 		echo '<div class="inside">';
 		echo '<p class="handl-aicac-governance-coverage-score"><strong>';
 		echo esc_html(
 			sprintf(
 				/* translators: 1: score 0-100, 2: max (100) */
-				__( 'Coverage score: %1$d / %2$d', 'handl-ai-connector-access-control' ),
+				__( 'Setup score: %1$d / %2$d', 'handl-ai-connector-access-control' ),
 				$score,
 				$max
 			)
 		);
 		echo '</strong></p>';
-		echo '<p class="description">' . esc_html__( 'How completely this site’s AI settings are filled in from saved Activity and configuration. Advisory coverage only — not a security or safety rating.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'A weighted checklist based on five settings and saved Activity. It measures setup completeness only, not security, safety, or how much AI activity is covered.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<ul class="handl-aicac-governance-coverage-list">';
 		foreach ( $report['checks'] as $check ) {
 			if ( ! is_array( $check ) ) {
 				continue;
 			}
-			$done = ! empty( $check['done'] );
-			$label = isset( $check['label'] ) ? (string) $check['label'] : '';
-			$detail = isset( $check['detail'] ) ? (string) $check['detail'] : '';
-			$url = Governance_Coverage::fix_url( $check );
-			echo '<li class="' . esc_attr( $done ? 'is-done' : 'is-todo' ) . '">';
-			echo '<strong>' . esc_html( $done ? __( 'Done', 'handl-ai-connector-access-control' ) : __( 'Not done', 'handl-ai-connector-access-control' ) ) . ':</strong> ';
+			$applicable = ! empty( $check['applicable'] );
+			$done       = ! empty( $check['done'] );
+			$label      = isset( $check['label'] ) ? (string) $check['label'] : '';
+			$detail     = isset( $check['detail'] ) ? (string) $check['detail'] : '';
+			$url        = Governance_Coverage::fix_url( $check );
+			if ( ! $applicable ) {
+				$status = __( 'Not applicable', 'handl-ai-connector-access-control' );
+				$class  = 'is-na';
+			} elseif ( $done ) {
+				$status = __( 'Complete', 'handl-ai-connector-access-control' );
+				$class  = 'is-done';
+			} else {
+				$status = __( 'Needs setup', 'handl-ai-connector-access-control' );
+				$class  = 'is-todo';
+			}
+			echo '<li class="' . esc_attr( $class ) . '">';
+			echo '<strong>' . esc_html( $status ) . ':</strong> ';
 			echo esc_html( $label );
 			if ( '' !== $detail ) {
 				echo ' — <span class="description" style="display:inline;">' . esc_html( $detail ) . '</span>';
 			}
-			if ( ! $done && '' !== $url ) {
-				echo ' <a href="' . esc_url( $url ) . '">' . esc_html__( 'Open settings', 'handl-ai-connector-access-control' ) . '</a>';
+			if ( $applicable && ! $done && '' !== $url ) {
+				echo ' <a href="' . esc_url( $url ) . '">' . esc_html__( 'Review setting', 'handl-ai-connector-access-control' ) . '</a>';
 			}
 			echo '</li>';
 		}

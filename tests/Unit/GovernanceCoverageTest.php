@@ -1,6 +1,6 @@
 <?php
 /**
- * AICAC-SCORE (#189): governance coverage scoring.
+ * AICAC-SCORE (#189): governance setup scoring.
  *
  * @package HandL_AICAC
  */
@@ -37,28 +37,60 @@ final class GovernanceCoverageTest extends TestCase {
 		$this->assertSame( 100, $sum );
 	}
 
-	public function test_empty_site_scores_partial_without_email_retention_when_drift_default_on(): void {
-		// No AI activity / spend → rules + budgets N/A full points.
+	public function test_empty_site_excludes_na_weights_and_does_not_score_seventy_five(): void {
+		// No AI activity / spend → rules + budgets Not applicable (excluded).
 		// Drift defaults to provider (on). Alert email + retention off.
+		// Applicable max = 15+15+10 = 40; earned = 15 → score 38.
 		$out = Governance_Coverage::compute(
 			array(
-				'plugins'         => array(),
-				'plugin_budgets'  => array(),
-				'alert_email'     => '',
-				'drift_alert_mode'=> Drift::MODE_PROVIDER,
-				'log_max_age_days'=> null,
+				'plugins'          => array(),
+				'plugin_budgets'   => array(),
+				'alert_email'      => '',
+				'drift_alert_mode' => Drift::MODE_PROVIDER,
+				'log_max_age_days' => null,
 			),
 			array()
 		);
-		$this->assertSame( 75, $out['score'] ); // 40 + 0 + 20 + 15 + 0
+		$this->assertNotSame( 75, $out['score'] );
+		$this->assertSame( 38, $out['score'] );
+		$this->assertEqualsWithDelta( 40.0, $out['max_applicable'], 0.0001 );
+		$this->assertEqualsWithDelta( 15.0, $out['earned_applicable'], 0.0001 );
+
 		$by_id = $this->by_id( $out['checks'] );
-		$this->assertTrue( $by_id['explicit_rules']['done'] );
+		$this->assertFalse( $by_id['explicit_rules']['applicable'] );
+		$this->assertFalse( $by_id['explicit_rules']['done'] );
+		$this->assertStringContainsString( 'Not applicable until saved Activity', $by_id['explicit_rules']['detail'] );
+		$this->assertFalse( $by_id['budgets']['applicable'] );
+		$this->assertFalse( $by_id['budgets']['done'] );
+		$this->assertStringContainsString( 'Not applicable until a plugin has recorded estimated spend', $by_id['budgets']['detail'] );
+		$this->assertTrue( $by_id['alert_email']['applicable'] );
 		$this->assertFalse( $by_id['alert_email']['done'] );
-		$this->assertTrue( $by_id['budgets']['done'] );
 		$this->assertTrue( $by_id['drift']['done'] );
 		$this->assertFalse( $by_id['retention']['done'] );
-		$this->assertSame( 'activity', $by_id['alert_email']['tab'] );
-		$this->assertSame( 'handl-aicac-alert-email', $by_id['alert_email']['anchor'] );
+		$this->assertSame( 'Alert email saved', $by_id['alert_email']['label'] );
+		$this->assertSame( 'Finite Activity keep period selected', $by_id['retention']['label'] );
+		$this->assertStringContainsString( 'instead of keeping it forever', $by_id['retention']['detail'] );
+	}
+
+	public function test_empty_site_with_applicable_checks_complete_normalizes_to_one_hundred(): void {
+		$out = Governance_Coverage::compute(
+			array(
+				'plugins'          => array(),
+				'plugin_budgets'   => array(),
+				'alert_email'      => 'ops@example.com',
+				'drift_alert_mode' => Drift::MODE_PROVIDER,
+				'log_max_age_days' => 90,
+			),
+			array()
+		);
+		$this->assertSame( 100, $out['score'] );
+		$this->assertEqualsWithDelta( 40.0, $out['max_applicable'], 0.0001 );
+		$by_id = $this->by_id( $out['checks'] );
+		$this->assertFalse( $by_id['explicit_rules']['applicable'] );
+		$this->assertFalse( $by_id['budgets']['applicable'] );
+		$this->assertTrue( $by_id['alert_email']['done'] );
+		$this->assertTrue( $by_id['drift']['done'] );
+		$this->assertTrue( $by_id['retention']['done'] );
 	}
 
 	public function test_full_configuration_scores_one_hundred(): void {
@@ -77,7 +109,9 @@ final class GovernanceCoverageTest extends TestCase {
 		);
 		$out = Governance_Coverage::compute( $policy, $log );
 		$this->assertSame( 100, $out['score'] );
+		$this->assertEqualsWithDelta( 100.0, $out['max_applicable'], 0.0001 );
 		foreach ( $out['checks'] as $check ) {
+			$this->assertTrue( $check['applicable'], $check['id'] );
 			$this->assertTrue( $check['done'], $check['id'] );
 		}
 	}
@@ -97,14 +131,16 @@ final class GovernanceCoverageTest extends TestCase {
 			$this->row( 'b/b.php', 'allow', 0.0, time() - 30 ),
 		);
 		$out = Governance_Coverage::compute( $policy, $log );
-		// rules: 1/2 * 40 = 20; email 15; budgets 0/1 * 20 = 0; drift 0; retention 10 → 45
+		// All applicable: rules 20 + email 15 + budgets 0 + drift 0 + retention 10 = 45 / 100.
 		$this->assertSame( 45, $out['score'] );
 		$by_id = $this->by_id( $out['checks'] );
+		$this->assertTrue( $by_id['explicit_rules']['applicable'] );
 		$this->assertFalse( $by_id['explicit_rules']['done'] );
 		$this->assertEqualsWithDelta( 20.0, $by_id['explicit_rules']['points'], 0.0001 );
+		$this->assertTrue( $by_id['budgets']['applicable'] );
 		$this->assertFalse( $by_id['budgets']['done'] );
 		$this->assertFalse( $by_id['drift']['done'] );
-		$this->assertSame( 'rules', $by_id['explicit_rules']['tab'] );
+		$this->assertSame( 'Provider or model change alerts enabled', $by_id['drift']['label'] );
 	}
 
 	public function test_ignores_direct_http_for_ai_active_and_spend(): void {

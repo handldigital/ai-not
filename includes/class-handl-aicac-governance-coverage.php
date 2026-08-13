@@ -1,9 +1,10 @@
 <?php
 /**
- * AICAC-SCORE (#189): advisory governance coverage score for the Dashboard.
+ * AICAC-SCORE (#189): advisory governance setup score for the Dashboard.
  *
  * Pure local configuration completeness (0–100). Never claims security or
- * safety — wording is always "coverage". Weights are documented below.
+ * safety. Non-applicable checks (no Activity evidence yet) are excluded from
+ * the denominator. Weights are documented below.
  *
  * @package HandL_AICAC
  */
@@ -17,7 +18,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class Governance_Coverage {
 
 	/**
-	 * Point weights (sum = 100). Documented for maintainers and tests.
+	 * Point weights (sum = 100 when every check is applicable). Documented for
+	 * maintainers and tests.
 	 *
 	 * - explicit_rules: share of AI-active plugins with an Allow/Deny rule (40)
 	 * - alert_email: saved alert email address (15)
@@ -32,7 +34,10 @@ final class Governance_Coverage {
 	public const WEIGHT_RETENTION      = 10;
 
 	/**
-	 * Compute the advisory coverage score from policy + retained Activity.
+	 * Compute the advisory setup score from policy + retained Activity.
+	 *
+	 * Score = round( earned_applicable / max_applicable * 100 ). Non-applicable
+	 * weights are excluded. If no checks are applicable, score is 0.
 	 *
 	 * @param array<string,mixed>               $policy
 	 * @param array<int,mixed>                  $log
@@ -40,9 +45,12 @@ final class Governance_Coverage {
 	 * @return array{
 	 *   score: int,
 	 *   max: int,
+	 *   max_applicable: float,
+	 *   earned_applicable: float,
 	 *   checks: list<array{
 	 *     id: string,
 	 *     label: string,
+	 *     applicable: bool,
 	 *     done: bool,
 	 *     points: float,
 	 *     weight: int,
@@ -55,10 +63,10 @@ final class Governance_Coverage {
 	public static function compute( array $policy, array $log, array $plugins = array() ): array {
 		unset( $plugins );
 
-		$ai_active = self::ai_active_plugins( $log );
+		$ai_active  = self::ai_active_plugins( $log );
 		$with_spend = self::plugins_with_recorded_spend( $log, $policy );
-		$rules     = is_array( $policy['plugins'] ?? null ) ? (array) $policy['plugins'] : array();
-		$budgets   = Budget::sanitize_plugin_budgets( $policy['plugin_budgets'] ?? array() );
+		$rules      = is_array( $policy['plugins'] ?? null ) ? (array) $policy['plugins'] : array();
+		$budgets    = Budget::sanitize_plugin_budgets( $policy['plugin_budgets'] ?? array() );
 
 		$ruled = 0;
 		foreach ( $ai_active as $basename ) {
@@ -67,11 +75,12 @@ final class Governance_Coverage {
 				++$ruled;
 			}
 		}
-		$active_n = count( $ai_active );
-		if ( 0 === $active_n ) {
-			$rules_ratio  = 1.0;
-			$rules_done   = true;
-			$rules_detail = __( 'No AI-active plugins in saved Activity yet. Set Allow or Deny when Activity appears.', 'handl-ai-connector-access-control' );
+		$active_n         = count( $ai_active );
+		$rules_applicable = $active_n > 0;
+		if ( ! $rules_applicable ) {
+			$rules_ratio  = 0.0;
+			$rules_done   = false;
+			$rules_detail = __( 'Not applicable until saved Activity includes an AI-active plugin.', 'handl-ai-connector-access-control' );
 		} else {
 			$rules_ratio  = $ruled / $active_n;
 			$rules_done   = $ruled === $active_n;
@@ -83,8 +92,8 @@ final class Governance_Coverage {
 			);
 		}
 
-		$email      = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
-		$email_done = '' !== $email;
+		$email        = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
+		$email_done   = '' !== $email;
 		$email_detail = $email_done
 			? __( 'Alert email is saved.', 'handl-ai-connector-access-control' )
 			: __( 'Save an alert email on the Activity tab.', 'handl-ai-connector-access-control' );
@@ -95,11 +104,12 @@ final class Governance_Coverage {
 				++$budgeted;
 			}
 		}
-		$spend_n = count( $with_spend );
-		if ( 0 === $spend_n ) {
-			$budget_ratio  = 1.0;
-			$budget_done   = true;
-			$budget_detail = __( 'No estimated spend recorded yet. Set monthly budgets on the Rules tab when spend appears.', 'handl-ai-connector-access-control' );
+		$spend_n           = count( $with_spend );
+		$budget_applicable = $spend_n > 0;
+		if ( ! $budget_applicable ) {
+			$budget_ratio  = 0.0;
+			$budget_done   = false;
+			$budget_detail = __( 'Not applicable until a plugin has recorded estimated spend.', 'handl-ai-connector-access-control' );
 		} else {
 			$budget_ratio  = $budgeted / $spend_n;
 			$budget_done   = $budgeted === $spend_n;
@@ -121,78 +131,96 @@ final class Governance_Coverage {
 			$drift_detail = __( 'Turn on provider or model change alerts on the Activity tab.', 'handl-ai-connector-access-control' );
 		}
 
-		$retention_days = Policy::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
-		$retention_done = null !== $retention_days;
+		$retention_days   = Policy::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
+		$retention_done   = null !== $retention_days;
 		$retention_detail = $retention_done
 			? sprintf(
 				/* translators: %d: keep period in days */
 				__( 'Activity keep period is set to %d days.', 'handl-ai-connector-access-control' ),
 				$retention_days
 			)
-			: __( 'Choose an Activity keep period on the Activity tab (not forever).', 'handl-ai-connector-access-control' );
+			: __( 'Choose how long to keep Activity instead of keeping it forever.', 'handl-ai-connector-access-control' );
 
 		$checks = array(
 			array(
-				'id'     => 'explicit_rules',
-				'label'  => __( 'Explicit rules for AI-active plugins', 'handl-ai-connector-access-control' ),
-				'done'   => $rules_done,
-				'points' => round( self::WEIGHT_EXPLICIT_RULES * $rules_ratio, 4 ),
-				'weight' => self::WEIGHT_EXPLICIT_RULES,
-				'detail' => $rules_detail,
-				'tab'    => 'rules',
-				'anchor' => '',
+				'id'         => 'explicit_rules',
+				'label'      => __( 'Explicit rules for AI-active plugins', 'handl-ai-connector-access-control' ),
+				'applicable' => $rules_applicable,
+				'done'       => $rules_done,
+				'points'     => $rules_applicable ? round( self::WEIGHT_EXPLICIT_RULES * $rules_ratio, 4 ) : 0.0,
+				'weight'     => self::WEIGHT_EXPLICIT_RULES,
+				'detail'     => $rules_detail,
+				'tab'        => 'rules',
+				'anchor'     => '',
 			),
 			array(
-				'id'     => 'alert_email',
-				'label'  => __( 'Alert email configured', 'handl-ai-connector-access-control' ),
-				'done'   => $email_done,
-				'points' => $email_done ? (float) self::WEIGHT_ALERT_EMAIL : 0.0,
-				'weight' => self::WEIGHT_ALERT_EMAIL,
-				'detail' => $email_detail,
-				'tab'    => 'activity',
-				'anchor' => 'handl-aicac-alert-email',
+				'id'         => 'alert_email',
+				'label'      => __( 'Alert email saved', 'handl-ai-connector-access-control' ),
+				'applicable' => true,
+				'done'       => $email_done,
+				'points'     => $email_done ? (float) self::WEIGHT_ALERT_EMAIL : 0.0,
+				'weight'     => self::WEIGHT_ALERT_EMAIL,
+				'detail'     => $email_detail,
+				'tab'        => 'activity',
+				'anchor'     => 'handl-aicac-alert-email',
 			),
 			array(
-				'id'     => 'budgets',
-				'label'  => __( 'Estimated budgets where spend is recorded', 'handl-ai-connector-access-control' ),
-				'done'   => $budget_done,
-				'points' => round( self::WEIGHT_BUDGETS * $budget_ratio, 4 ),
-				'weight' => self::WEIGHT_BUDGETS,
-				'detail' => $budget_detail,
-				'tab'    => 'rules',
-				'anchor' => '',
+				'id'         => 'budgets',
+				'label'      => __( 'Estimated budgets where spend is recorded', 'handl-ai-connector-access-control' ),
+				'applicable' => $budget_applicable,
+				'done'       => $budget_done,
+				'points'     => $budget_applicable ? round( self::WEIGHT_BUDGETS * $budget_ratio, 4 ) : 0.0,
+				'weight'     => self::WEIGHT_BUDGETS,
+				'detail'     => $budget_detail,
+				'tab'        => 'rules',
+				'anchor'     => '',
 			),
 			array(
-				'id'     => 'drift',
-				'label'  => __( 'Provider or model change alerts on', 'handl-ai-connector-access-control' ),
-				'done'   => $drift_done,
-				'points' => $drift_done ? (float) self::WEIGHT_DRIFT : 0.0,
-				'weight' => self::WEIGHT_DRIFT,
-				'detail' => $drift_detail,
-				'tab'    => 'activity',
-				'anchor' => 'handl-aicac-drift-alert-mode',
+				'id'         => 'drift',
+				'label'      => __( 'Provider or model change alerts enabled', 'handl-ai-connector-access-control' ),
+				'applicable' => true,
+				'done'       => $drift_done,
+				'points'     => $drift_done ? (float) self::WEIGHT_DRIFT : 0.0,
+				'weight'     => self::WEIGHT_DRIFT,
+				'detail'     => $drift_detail,
+				'tab'        => 'activity',
+				'anchor'     => 'handl-aicac-drift-alert-mode',
 			),
 			array(
-				'id'     => 'retention',
-				'label'  => __( 'Activity keep period configured', 'handl-ai-connector-access-control' ),
-				'done'   => $retention_done,
-				'points' => $retention_done ? (float) self::WEIGHT_RETENTION : 0.0,
-				'weight' => self::WEIGHT_RETENTION,
-				'detail' => $retention_detail,
-				'tab'    => 'activity',
-				'anchor' => 'handl-aicac-log-max-age-days',
+				'id'         => 'retention',
+				'label'      => __( 'Finite Activity keep period selected', 'handl-ai-connector-access-control' ),
+				'applicable' => true,
+				'done'       => $retention_done,
+				'points'     => $retention_done ? (float) self::WEIGHT_RETENTION : 0.0,
+				'weight'     => self::WEIGHT_RETENTION,
+				'detail'     => $retention_detail,
+				'tab'        => 'activity',
+				'anchor'     => 'handl-aicac-log-max-age-days',
 			),
 		);
 
-		$earned = 0.0;
+		$earned_applicable = 0.0;
+		$max_applicable    = 0.0;
 		foreach ( $checks as $check ) {
-			$earned += (float) $check['points'];
+			if ( empty( $check['applicable'] ) ) {
+				continue;
+			}
+			$max_applicable    += (float) $check['weight'];
+			$earned_applicable += (float) $check['points'];
+		}
+
+		if ( $max_applicable <= 0 ) {
+			$score = 0;
+		} else {
+			$score = (int) round( ( $earned_applicable / $max_applicable ) * 100 );
 		}
 
 		return array(
-			'score'  => (int) round( $earned ),
-			'max'    => 100,
-			'checks' => $checks,
+			'score'             => $score,
+			'max'               => 100,
+			'max_applicable'    => $max_applicable,
+			'earned_applicable' => $earned_applicable,
+			'checks'            => $checks,
 		);
 	}
 
