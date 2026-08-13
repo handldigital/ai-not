@@ -46,8 +46,11 @@ if ( function_exists( 'wp_clear_scheduled_hook' ) ) {
 	wp_clear_scheduled_hook( 'handl_aicac_send_monthly_report' );
 	wp_clear_scheduled_hook( 'handl_aicac_prune_activity_log' );
 	wp_clear_scheduled_hook( 'handl_aicac_send_governance_digest' );
+	wp_clear_scheduled_hook( 'handl_aicac_send_policy_backup' );
 }
 delete_option( 'handl_aicac_log_retention_meta' );
+delete_option( 'handl_aicac_policy_backup_latest' );
+delete_option( 'handl_aicac_policy_backup_sent' );
 
 // F4: experimental model-force health state.
 delete_option( 'handl_aicac_model_force_health' );

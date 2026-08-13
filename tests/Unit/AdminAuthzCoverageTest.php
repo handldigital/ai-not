@@ -29,7 +29,9 @@ final class AdminAuthzCoverageTest extends TestCase {
 	private const APPROVED_DISPATCH_ACTIONS = array(
 		'bulk_plugin_rules',
 		'cancel_alert_snooze',
+		'compare_latest_backup',
 		'compare_rules_preview',
+		'download_latest_backup',
 		'export_audit_report',
 		'export_log',
 		'export_prune_candidates',
@@ -44,6 +46,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 		'pack_apply_confirm',
 		'pack_export_backup',
 		'pack_preview',
+		'policy_backup_save',
 		'policy_check_add',
 		'policy_check_delete',
 		'policy_checks_save_confirm',
@@ -209,6 +212,18 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array(
 				'action'       => 'compare_rules_preview',
 				'nonce_action' => 'handl_aicac_compare_rules',
+			),
+			array(
+				'action'       => 'compare_latest_backup',
+				'nonce_action' => 'handl_aicac_compare_latest_backup',
+			),
+			array(
+				'action'       => 'download_latest_backup',
+				'nonce_action' => 'handl_aicac_download_latest_backup',
+			),
+			array(
+				'action'       => 'policy_backup_save',
+				'nonce_action' => 'handl_aicac_policy_backup_save',
 			),
 			array(
 				'action'       => 'keyscan_run',
@@ -421,6 +436,8 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array( 'apply_role_gate_settings_from_post', 'handl_aicac_save_policy' ),
 			array( 'apply_log_settings_from_post', 'handl_aicac_save_policy' ),
 			array( 'handle_export_rules', 'handl_aicac_export_rules' ),
+			array( 'handle_download_latest_backup', 'handl_aicac_download_latest_backup' ),
+			array( 'handle_policy_backup_save', 'handl_aicac_policy_backup_save' ),
 			array( 'handle_export_prune_candidates', 'handl_aicac_export_prune_candidates' ),
 			array( 'handle_skip_prune_export', 'handl_aicac_skip_prune_export' ),
 			array( 'handle_pack_export_backup', 'handl_aicac_pack_export_backup' ),
@@ -429,6 +446,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array( 'handle_import_rules_preview', 'handl_aicac_import_rules' ),
 			array( 'handle_import_rules_confirm', 'handl_aicac_import_rules_confirm' ),
 			array( 'handle_compare_rules_preview', 'handl_aicac_compare_rules' ),
+			array( 'handle_compare_latest_backup', 'handl_aicac_compare_latest_backup' ),
 			array( 'handle_keyscan_run', 'handl_aicac_keyscan_run' ),
 			array( 'handle_onboard_dismiss', 'handl_aicac_onboard' ),
 			array( 'handle_onboard_step', 'handl_aicac_onboard' ),
@@ -461,6 +479,8 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'apply_role_gate_settings_from_post',
 				'apply_log_settings_from_post',
 				'handle_export_rules',
+				'handle_download_latest_backup',
+				'handle_policy_backup_save',
 				'handle_export_prune_candidates',
 				'handle_skip_prune_export',
 				'handle_pack_export_backup',
@@ -470,6 +490,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'handle_import_rules_preview',
 				'handle_import_rules_confirm',
 				'handle_compare_rules_preview',
+				'handle_compare_latest_backup',
 				'handle_keyscan_run',
 				'handle_onboard_dismiss',
 				'handle_onboard_step',
@@ -559,6 +580,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 		$maybe_body = substr( $this->source, $maybe_pos, $render_pos > $maybe_pos ? $render_pos - $maybe_pos : 2500 );
 		$this->assertStringContainsString( 'handle_export_log', $maybe_body );
 		$this->assertStringContainsString( 'handle_export_rules', $maybe_body );
+		$this->assertStringContainsString( 'handle_download_latest_backup', $maybe_body );
 		$this->assertStringContainsString( 'handle_export_prune_candidates', $maybe_body );
 		$this->assertStringContainsString( 'handle_pack_export_backup', $maybe_body );
 
@@ -621,6 +643,15 @@ final class AdminAuthzCoverageTest extends TestCase {
 		$this->assertStringContainsString( 'name="handl_aicac_compare_file"', $this->source );
 		$this->assertStringContainsString( 'Compare with current', $this->source );
 		$this->assertStringContainsString( 'render_confirm_diff_table', $this->source );
+
+		$latest_pos = strpos( $this->source, 'function handle_compare_latest_backup' );
+		$this->assertNotFalse( $latest_pos );
+		$latest_body = substr( $this->source, $latest_pos, 1200 );
+		$this->assertStringNotContainsString(
+			'Policy::save_policy(',
+			$latest_body,
+			'Compare with latest backup must never write policy'
+		);
 	}
 
 	/**

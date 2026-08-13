@@ -104,7 +104,7 @@ final class Admin {
 		}
 
 		$posted_action = sanitize_key( wp_unslash( (string) $_POST['handl_aicac_action'] ) );
-		if ( 'export_log' !== $posted_action && 'export_rules' !== $posted_action && 'export_audit_report' !== $posted_action && 'export_prune_candidates' !== $posted_action && 'pack_export_backup' !== $posted_action ) {
+		if ( 'export_log' !== $posted_action && 'export_rules' !== $posted_action && 'export_audit_report' !== $posted_action && 'export_prune_candidates' !== $posted_action && 'pack_export_backup' !== $posted_action && 'download_latest_backup' !== $posted_action ) {
 			return;
 		}
 
@@ -136,6 +136,11 @@ final class Admin {
 		if ( 'export_audit_report' === $posted_action ) {
 			check_admin_referer( 'handl_aicac_export_audit_report', 'handl_aicac_nonce' );
 			$this->handle_export_audit_report();
+		}
+
+		if ( 'download_latest_backup' === $posted_action ) {
+			check_admin_referer( 'handl_aicac_download_latest_backup', 'handl_aicac_nonce' );
+			$this->handle_download_latest_backup();
 		}
 	}
 
@@ -287,6 +292,14 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_compare_rules', 'handl_aicac_nonce' );
 				$this->handle_compare_rules_preview();
 			}
+			if ( 'compare_latest_backup' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_compare_latest_backup', 'handl_aicac_nonce' );
+				$this->handle_compare_latest_backup();
+			}
+			if ( 'policy_backup_save' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_policy_backup_save', 'handl_aicac_nonce' );
+				$this->handle_policy_backup_save();
+			}
 			if ( 'keyscan_run' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_keyscan_run', 'handl_aicac_nonce' );
 				$this->handle_keyscan_run();
@@ -399,6 +412,7 @@ final class Admin {
 		$show_checks_confirm  = isset( $_GET['handl_aicac_checks_confirm'] ) && '1' === (string) $_GET['handl_aicac_checks_confirm'];
 		$checks_need_override = isset( $_GET['handl_aicac_checks_need_override'] ) && '1' === (string) $_GET['handl_aicac_checks_need_override'];
 		$checks_saved_ok      = isset( $_GET['handl_aicac_checks_saved'] ) && '1' === (string) $_GET['handl_aicac_checks_saved'];
+		$policy_backup_saved  = isset( $_GET['handl_aicac_policy_backup_saved'] ) && '1' === (string) $_GET['handl_aicac_policy_backup_saved'];
 		$prune_export_skipped = isset( $_GET['handl_aicac_prune_export_skipped'] ) && '1' === (string) $_GET['handl_aicac_prune_export_skipped'];
 
 
@@ -441,6 +455,9 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		}
 		if ( $saved ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Saved.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		if ( $policy_backup_saved ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Weekly rules backup setting saved.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $prune_export_skipped ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Old activity entries were removed. Daily cleanup will continue automatically.', 'handl-ai-connector-access-control' ) . '</p></div>';
@@ -6681,6 +6698,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		submit_button( __( 'Download rules (JSON)', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
 		echo '</form>';
 
+		$this->render_policy_backup_section( $policy );
+
 		echo '<form method="post" enctype="multipart/form-data" style="margin-bottom:1em;">';
 		wp_nonce_field( 'handl_aicac_import_rules', 'handl_aicac_nonce' );
 		echo '<input type="hidden" name="handl_aicac_action" value="import_rules_preview" />';
@@ -6704,6 +6723,16 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<p class="description">' . esc_html__( 'Upload a previous export to see what differs from your current rules. Nothing is changed. Use Import if you want to replace them.', 'handl-ai-connector-access-control' ) . '</p>';
 		submit_button( __( 'Compare', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
 		echo '</form>';
+
+		$latest = Policy_Backup::get_latest();
+		if ( null !== $latest ) {
+			echo '<form method="post" style="margin-bottom:1em;">';
+			wp_nonce_field( 'handl_aicac_compare_latest_backup', 'handl_aicac_nonce' );
+			echo '<input type="hidden" name="handl_aicac_action" value="compare_latest_backup" />';
+			echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+			submit_button( __( 'Compare with latest weekly backup', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+			echo '</form>';
+		}
 
 		if ( $show_compare ) {
 			$this->render_compare_preview( $policy );
@@ -6811,6 +6840,48 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	}
 
 	/**
+	 * AICAC-SCHED-EXPORT (#179): weekly email backup of rules JSON.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function render_policy_backup_section( array $policy ): void {
+		$enabled = ! empty( $policy['policy_backup_email_enabled'] );
+		$latest  = Policy_Backup::get_latest();
+
+		echo '<div class="handl-aicac-policy-backup" style="margin:0 0 1.5em;max-width:52em;">';
+		echo '<h3>' . esc_html__( 'Weekly rules backup email', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<p class="description">' . esc_html__( 'Off by default. When enabled, HandL emails a JSON rules backup once a week to the blocked-call alert address. If none is set, it uses the site admin email. Only the latest backup is stored on this site for downloading or comparing.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		echo '<form method="post" style="margin-bottom:0.75em;">';
+		wp_nonce_field( 'handl_aicac_policy_backup_save', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="policy_backup_save" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		echo '<label><input type="checkbox" name="handl_aicac_policy_backup_email_enabled" value="1" ' . checked( $enabled, true, false ) . ' /> ';
+		echo esc_html__( 'Email a weekly rules backup (JSON)', 'handl-ai-connector-access-control' ) . '</label>';
+		echo ' ';
+		submit_button( __( 'Save backup setting', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+		echo '</form>';
+
+		if ( null !== $latest ) {
+			$when = function_exists( 'wp_date' )
+				? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (int) $latest['ts'] )
+				: gmdate( 'Y-m-d H:i', (int) $latest['ts'] );
+			echo '<p><strong>' . esc_html__( 'Latest backup on this site:', 'handl-ai-connector-access-control' ) . '</strong> ';
+			echo esc_html( $when );
+			echo '</p>';
+			echo '<form method="post" style="display:inline-block;margin:0 8px 0 0;">';
+			wp_nonce_field( 'handl_aicac_download_latest_backup', 'handl_aicac_nonce' );
+			echo '<input type="hidden" name="handl_aicac_action" value="download_latest_backup" />';
+			echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+			submit_button( __( 'Download latest backup', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+			echo '</form>';
+		} else {
+			echo '<p class="description">' . esc_html__( 'No weekly backup has been stored on this site yet.', 'handl-ai-connector-access-control' ) . '</p>';
+		}
+		echo '</div>';
+	}
+
+	/**
 	 * Shared Setting / Current / New confirm-diff table (presets + restore + compare).
 	 *
 	 * @param list<array{key?:string,label?:string,current?:string,new?:string}> $rows
@@ -6867,6 +6938,66 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		header( 'Content-Length: ' . (string) strlen( $payload ) );
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- raw JSON download body.
 		echo $payload;
+		exit;
+	}
+
+	/**
+	 * AICAC-SCHED-EXPORT (#179): stream the latest stored weekly backup JSON.
+	 */
+	private function handle_download_latest_backup(): void {
+		$this->require_admin_mutation( 'handl_aicac_download_latest_backup' );
+
+		$latest = Policy_Backup::get_latest();
+		if ( null === $latest ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'page'            => 'handl-ai-connector-access-control',
+						'handl_aicac_tab' => 'rules',
+					),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		$payload  = (string) $latest['json'];
+		$filename = (string) $latest['filename'];
+		if ( '' === $filename ) {
+			$filename = 'handl-aicac-rules-' . gmdate( 'Ymd-His', (int) $latest['ts'] ) . '.json';
+		}
+
+		nocache_headers();
+		header( 'Content-Type: application/json; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+		header( 'Content-Length: ' . (string) strlen( $payload ) );
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- raw JSON download body.
+		echo $payload;
+		exit;
+	}
+
+	/**
+	 * AICAC-SCHED-EXPORT (#179): save weekly backup email toggle (Rules tab).
+	 */
+	private function handle_policy_backup_save(): void {
+		$this->require_admin_mutation( 'handl_aicac_policy_backup_save' );
+
+		$policy = Policy::get_policy();
+		$policy['policy_backup_email_enabled'] = ! empty(
+			filter_input( INPUT_POST, 'handl_aicac_policy_backup_email_enabled', FILTER_UNSAFE_RAW )
+		);
+		Policy::save_policy( $policy );
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'                              => 'handl-ai-connector-access-control',
+					'handl_aicac_tab'                   => 'rules',
+					'handl_aicac_policy_backup_saved'   => '1',
+				),
+				admin_url( 'options-general.php' )
+			)
+		);
 		exit;
 	}
 
@@ -7770,7 +7901,41 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			exit;
 		}
 
-		$parsed = Policy_Transfer::parse_import( (string) $read['raw'] );
+		$this->store_compare_preview_from_raw( (string) $read['raw'], $redirect_base );
+	}
+
+	/**
+	 * AICAC-SCHED-EXPORT (#179): one-click compare using the latest stored email backup.
+	 */
+	private function handle_compare_latest_backup(): void {
+		$this->require_admin_mutation( 'handl_aicac_compare_latest_backup' );
+
+		$redirect_base = array(
+			'page'            => 'handl-ai-connector-access-control',
+			'handl_aicac_tab' => 'rules',
+		);
+
+		$latest = Policy_Backup::get_latest();
+		if ( null === $latest ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge( $redirect_base, array( 'handl_aicac_compare_error' => 'no_file' ) ),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		$this->store_compare_preview_from_raw( (string) $latest['json'], $redirect_base );
+	}
+
+	/**
+	 * Parse export JSON and park a compare preview transient (read-only).
+	 *
+	 * @param array<string,string> $redirect_base
+	 */
+	private function store_compare_preview_from_raw( string $raw, array $redirect_base ): void {
+		$parsed = Policy_Transfer::parse_import( $raw );
 		if ( empty( $parsed['ok'] ) ) {
 			$code = isset( $parsed['error'] ) ? (string) $parsed['error'] : 'invalid_json';
 			wp_safe_redirect(

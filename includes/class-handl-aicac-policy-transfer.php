@@ -72,6 +72,7 @@ final class Policy_Transfer {
 			'monthly_report_enabled',
 			'governance_digest_enabled',
 			'governance_digest_always_send',
+			'policy_backup_email_enabled',
 			'new_plugin_review_enabled',
 			'new_plugin_interim',
 			'new_plugin_known',
