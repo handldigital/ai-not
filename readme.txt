@@ -193,7 +193,7 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = Unreleased =
-* Activity keep period on the Activity tab (30 / 90 / 180 / 365 days or forever): automatic daily prune in batches, optional CSV download of rows about to be removed before the first prune, and a Site Health line for the period and last prune time.
+* Activity keep period on the Activity tab (30, 90, 180, or 365 days, or forever): daily cleanup in batches, an optional CSV download before the first cleanup, and a Site Health line showing the period and last cleanup time.
 
 = 1.5.0 =
 * Shared email layout for HandL alerts and reports: same header, intro, and footer on every message, with a plain-text and HTML part. Per-message wording inside the content block is unchanged.

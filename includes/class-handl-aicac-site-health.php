@@ -310,7 +310,7 @@ final class Site_Health {
 				: gmdate( 'Y-m-d H:i', (int) $meta['last_prune_ts'] );
 			return sprintf(
 				/* translators: 1: retention period label, 2: last prune datetime */
-				__( 'Activity keep period: %1$s. Last automatic prune: %2$s.', 'handl-ai-connector-access-control' ),
+				__( 'Activity keep period: %1$s. Last automatic cleanup: %2$s.', 'handl-ai-connector-access-control' ),
 				$period,
 				$when
 			);
@@ -318,7 +318,7 @@ final class Site_Health {
 
 		return sprintf(
 			/* translators: %s: retention period label */
-			__( 'Activity keep period: %s. No automatic prune has run yet.', 'handl-ai-connector-access-control' ),
+			__( 'Activity keep period: %s. Automatic cleanup has not run yet.', 'handl-ai-connector-access-control' ),
 			$period
 		);
 	}

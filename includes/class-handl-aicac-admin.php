@@ -382,6 +382,7 @@ final class Admin {
 		$show_checks_confirm  = isset( $_GET['handl_aicac_checks_confirm'] ) && '1' === (string) $_GET['handl_aicac_checks_confirm'];
 		$checks_need_override = isset( $_GET['handl_aicac_checks_need_override'] ) && '1' === (string) $_GET['handl_aicac_checks_need_override'];
 		$checks_saved_ok      = isset( $_GET['handl_aicac_checks_saved'] ) && '1' === (string) $_GET['handl_aicac_checks_saved'];
+		$prune_export_skipped = isset( $_GET['handl_aicac_prune_export_skipped'] ) && '1' === (string) $_GET['handl_aicac_prune_export_skipped'];
 
 
 		if ( isset( $_POST['handl_aicac_action'] ) && 'save' === $_POST['handl_aicac_action'] ) {
@@ -423,6 +424,9 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		}
 		if ( $saved ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Saved.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		if ( $prune_export_skipped ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Old activity entries were removed. Daily cleanup will continue automatically.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $renewed_ok ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Temporary allow renewed for 7 more days.', 'handl-ai-connector-access-control' ) . '</p></div>';
@@ -3606,7 +3610,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '<option value="' . esc_attr( (string) $value ) . '" ' . selected( $selected, (string) $value, false ) . '>' . esc_html( $label ) . '</option>';
 		}
 		echo '</select>';
-		echo '<p class="description">' . esc_html__( 'Choose forever (default) or a fixed period. Older entries are removed automatically once a day. The entry limit still applies, and the stricter limit wins.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Keep activity forever (default), or choose when older entries should be removed. The plugin checks once a day and removes entries past that period in batches. The entry limit also applies; whichever limit is reached first takes effect.', 'handl-ai-connector-access-control' ) . '</p>';
 		$this->render_log_storage_hints( $log, $policy, $max_age );
 		$this->render_log_retention_export_gate( $policy );
 		echo '</td>';
@@ -5732,7 +5736,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				echo esc_html(
 					sprintf(
 						/* translators: %s: localized date/time of last prune */
-						__( 'Last automatic prune: %s.', 'handl-ai-connector-access-control' ),
+						__( 'Last automatic cleanup: %s.', 'handl-ai-connector-access-control' ),
 						$when
 					)
 				);
@@ -5751,8 +5755,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			sprintf(
 				/* translators: %d: number of activity rows older than the retention period */
 				_n(
-					'%d activity entry is older than your keep period. Download a CSV of those rows before automatic prune continues, or continue without downloading.',
-					'%d activity entries are older than your keep period. Download a CSV of those rows before automatic prune continues, or continue without downloading.',
+					'%d activity entry is older than your selected keep period. Download it as a CSV before cleanup continues, or delete it without downloading.',
+					'%d activity entries are older than your selected keep period. Download them as a CSV before cleanup continues, or delete them without downloading.',
 					$n,
 					'handl-ai-connector-access-control'
 				),
@@ -5770,7 +5774,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		wp_nonce_field( 'handl_aicac_skip_prune_export', 'handl_aicac_nonce' );
 		echo '<input type="hidden" name="handl_aicac_action" value="skip_prune_export" />';
 		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
-		submit_button( __( 'Continue without downloading', 'handl-ai-connector-access-control' ), 'link', 'submit', false );
+		submit_button( __( 'Delete without downloading', 'handl-ai-connector-access-control' ), 'link', 'submit', false );
 		echo '</form>';
 		echo '</p></div>';
 	}
