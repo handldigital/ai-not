@@ -268,12 +268,7 @@ final class Daily_Trends {
 	 */
 	public static function format_metric_value( string $metric, float $value ): string {
 		if ( 'spend' === $metric ) {
-			$amount = ( $value > 0 && $value < 0.01 ) ? 0.01 : $value;
-			$num    = function_exists( 'number_format_i18n' )
-				? number_format_i18n( $amount, 2 )
-				: number_format( $amount, 2, '.', '' );
-
-			return '$' . $num;
+			return Cost::format_usd( $value );
 		}
 
 		$rounded = (int) round( $value );

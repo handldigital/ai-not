@@ -111,6 +111,19 @@ final class DailyTrendsTest extends TestCase {
 		$this->assertStringContainsString( 'Estimated spend over 3 saved days', $aria );
 		$this->assertStringContainsString( 'First: $', $aria );
 		$this->assertStringContainsString( 'High: $', $aria );
+
+		$this->assertSame( '<$0.01', Daily_Trends::format_metric_value( 'spend', 0.004 ) );
+		$subCentAria = Daily_Trends::sparkline_aria_label(
+			array(
+				array( 'calls' => 1, 'spend' => 0.004, 'blocks' => 0 ),
+				array( 'calls' => 1, 'spend' => 0.004, 'blocks' => 0 ),
+			),
+			'spend',
+			'Estimated spend'
+		);
+		$this->assertStringContainsString( '<$0.01', $subCentAria );
+		$this->assertStringNotContainsString( 'First: $0.01', $subCentAria );
+		$this->assertStringNotContainsString( 'Latest: $0.01', $subCentAria );
 	}
 
 	public function test_full_30_day_window_without_ttl(): void {
