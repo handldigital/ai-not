@@ -258,7 +258,7 @@ if ( empty( $lines ) ) {
 </tbody>
 </table>
 <?php else : ?>
-<p class="muted"><?php echo esc_html__( 'Policy change history is not available in this report.', 'handl-ai-connector-access-control' ); ?></p>
+<p class="muted"><?php echo esc_html__( 'No policy changes were recorded for this report.', 'handl-ai-connector-access-control' ); ?></p>
 <?php endif; ?>
 </div>
 

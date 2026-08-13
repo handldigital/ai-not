@@ -110,7 +110,7 @@ final class AuditEvidenceTest extends TestCase {
 		$this->assertStringContainsString( '@media print', $html );
 		$this->assertStringContainsString( 'page-break', $html );
 		$this->assertStringContainsString( 'Policy snapshot', $html );
-		$this->assertStringContainsString( 'Policy change history is not available in this report.', $html );
+		$this->assertStringContainsString( 'No policy changes were recorded for this report.', $html );
 		$this->assertStringContainsString( 'Download CSV', $html );
 		$this->assertDoesNotMatchRegularExpression( '/<link[^>]+stylesheet/i', $html );
 		$this->assertDoesNotMatchRegularExpression( '/<script[^>]+src=/i', $html );
@@ -196,7 +196,7 @@ final class AuditEvidenceTest extends TestCase {
 		$html = Audit_Evidence::build_html( $data );
 		$this->assertStringContainsString( 'Emergency stop: Off → On', $html );
 		$this->assertStringContainsString( 'Ed Editor', $html );
-		$this->assertStringNotContainsString( 'Policy change history is not available in this report.', $html );
+		$this->assertStringNotContainsString( 'No policy changes were recorded for this report.', $html );
 
 		unset( $GLOBALS['handl_aicac_test_users'] );
 	}

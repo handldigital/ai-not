@@ -193,7 +193,7 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = Unreleased =
-* Change history on the Rules tab: see who changed rules and settings, when, and what changed. The trail stays on this site even when Activity logging is off, and it is not cleared by the Activity keep period. Emergency stop changes are always listed. The printable audit report includes recent change history when available.
+* Change history on the Rules tab records who changed rules or settings, when, and a secret-safe before-and-after summary. The recent trail is kept separately from Activity, always records Emergency stop changes, and appears in printable audit reports.
 * Starter policy packs on the Rules tab: preview Strict, Balanced, or Observe-first, download a JSON backup, then apply without silently replacing your existing per-plugin rules.
 * Activity keep period on the Activity tab (30, 90, 180, or 365 days, or forever): daily cleanup in batches, an optional CSV download before the first cleanup, and a Site Health line showing the period and last cleanup time.
 

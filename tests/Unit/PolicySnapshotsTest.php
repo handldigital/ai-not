@@ -253,8 +253,11 @@ final class PolicySnapshotsTest extends TestCase {
 	public function test_history_cap_retains_newest_only(): void {
 		update_option( Plugin::OPTION_KEY, $this->complex_policy( 'allow', 1 ), false );
 
-		// Direct append beyond MAX to avoid hundreds of save_policy sanitization cycles.
-		for ( $i = 0; $i < Policy_Snapshots::HISTORY_MAX + 5; $i++ ) {
+		$GLOBALS['handl_aicac_test_filters']['handl_aicac_policy_history_max'] = static function () {
+			return 25;
+		};
+
+		for ( $i = 0; $i < 30; $i++ ) {
 			Policy_Snapshots::append_history(
 				array(
 					'ts'      => 1700000000 + $i,
@@ -270,7 +273,109 @@ final class PolicySnapshotsTest extends TestCase {
 		}
 
 		$list = Policy_Snapshots::history();
-		$this->assertCount( Policy_Snapshots::HISTORY_MAX, $list );
-		$this->assertSame( 1700000000 + Policy_Snapshots::HISTORY_MAX + 4, (int) $list[0]['ts'] );
+		$this->assertSame( 25, Policy_Snapshots::history_max() );
+		$this->assertCount( 25, $list );
+		$this->assertSame( 1700000029, (int) $list[0]['ts'] );
+
+		unset( $GLOBALS['handl_aicac_test_filters']['handl_aicac_policy_history_max'] );
+	}
+
+	public function test_same_count_plugin_rule_edit_is_meaningful(): void {
+		$base = $this->complex_policy( 'allow', 2 );
+		update_option( Plugin::OPTION_KEY, $base, false );
+
+		$next = $base;
+		$next['plugins']['acme-plugin-1/plugin.php'] = 'deny';
+		Policy::save_policy( $next );
+
+		$history = Policy_Snapshots::history();
+		$this->assertCount( 1, $history );
+		$joined = implode( "\n", $history[0]['changes'] );
+		$this->assertStringContainsString( 'acme-plugin-1/plugin.php', $joined );
+		$this->assertStringContainsString( 'Allow', $joined );
+		$this->assertStringContainsString( 'Deny', $joined );
+		$this->assertStringNotContainsString( '2 plugin rules → 2 plugin rules', $joined );
+		$this->assertStringNotContainsString( '2 items → 2 items', $joined );
+	}
+
+	public function test_mode_change_creates_history_row(): void {
+		$base = $this->complex_policy( 'allow', 1 );
+		$base['audit_only'] = false;
+		update_option( Plugin::OPTION_KEY, $base, false );
+
+		$next = $base;
+		$next['audit_only'] = true;
+		Policy::save_policy( $next );
+
+		$history = Policy_Snapshots::history();
+		$this->assertCount( 1, $history );
+		$joined = implode( ' ', $history[0]['changes'] );
+		$this->assertStringContainsString( 'Learn mode', $joined );
+	}
+
+	public function test_spend_threshold_and_keep_period_history(): void {
+		$base = $this->complex_policy( 'allow', 1 );
+		$base['spend_threshold_site'] = null;
+		$base['log_max_age_days']     = null;
+		update_option( Plugin::OPTION_KEY, $base, false );
+
+		$next = $base;
+		$next['spend_threshold_site'] = 25.0;
+		$next['log_max_age_days']     = 90;
+		Policy::save_policy( $next );
+
+		$history = Policy_Snapshots::history();
+		$this->assertCount( 1, $history );
+		$joined = implode( ' ', $history[0]['changes'] );
+		$this->assertStringContainsString( 'Site estimated-spend alert', $joined );
+		$this->assertStringContainsString( 'Activity keep period', $joined );
+		$this->assertStringContainsString( '$25', $joined );
+	}
+
+	public function test_alert_recipient_history_masks_secrets(): void {
+		$base = $this->complex_policy( 'allow', 1 );
+		$base['alert_email']       = '';
+		$base['alert_webhook_url'] = '';
+		update_option( Plugin::OPTION_KEY, $base, false );
+
+		$next = $base;
+		$next['alert_email']       = 'secret-admin@example.com';
+		$next['alert_webhook_url'] = 'https://hooks.example.com/very-secret-token';
+		Policy::save_policy( $next );
+
+		$history = Policy_Snapshots::history();
+		$this->assertCount( 1, $history );
+		$joined = implode( ' ', $history[0]['changes'] );
+		$this->assertStringContainsString( 'Not configured → Configured', $joined );
+		$this->assertStringNotContainsString( 'secret-admin@example.com', $joined );
+		$this->assertStringNotContainsString( 'very-secret-token', $joined );
+		$this->assertStringNotContainsString( 'hooks.example.com', $joined );
+
+		$again = $next;
+		$again['alert_email'] = 'other@example.com';
+		Policy::save_policy( $again );
+		$history2 = Policy_Snapshots::history();
+		$this->assertNotEmpty( $history2 );
+		$joined2 = implode( ' ', $history2[0]['changes'] );
+		$this->assertStringContainsString( 'Configured → Updated', $joined2 );
+		$this->assertStringNotContainsString( 'other@example.com', $joined2 );
+	}
+
+	public function test_allowed_roles_and_import_style_save_history(): void {
+		$base = $this->complex_policy( 'allow', 1 );
+		$base['role_gate_enabled'] = true;
+		$base['allowed_roles']     = array( 'administrator' );
+		update_option( Plugin::OPTION_KEY, $base, false );
+
+		$next = $base;
+		$next['allowed_roles'] = array( 'administrator', 'editor' );
+		// Import/bulk also write through save_policy — same funnel.
+		Policy::save_policy( $next );
+
+		$history = Policy_Snapshots::history();
+		$this->assertCount( 1, $history );
+		$joined = implode( ' ', $history[0]['changes'] );
+		$this->assertStringContainsString( 'editor', $joined );
+		$this->assertStringContainsString( 'Allowed roles', $joined );
 	}
 }

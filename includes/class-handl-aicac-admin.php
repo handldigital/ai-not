@@ -7111,10 +7111,10 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		echo '<div id="handl-aicac-change-history" class="handl-aicac-change-history" style="margin:0 0 1.5em;">';
 		echo '<h2>' . esc_html__( 'Change history', 'handl-ai-connector-access-control' ) . '</h2>';
-		echo '<p class="description">' . esc_html__( 'Who changed your rules and settings, and what they changed. This list is kept on this site even when Activity logging is off, and it is not cleared by the Activity keep period. Emergency stop changes always appear here.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'A local record of who changed rules or settings, when they changed them, and a summary of each change. Recent changes are kept even when Activity logging is off and are not cleared by the Activity keep period. Emergency stop changes are always recorded.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( empty( $entries ) ) {
-			echo '<p class="description">' . esc_html__( 'No policy changes recorded yet. Save your rules or settings once to start the trail.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'No policy changes recorded yet. Future changes will appear after the current policy has been saved once.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '</div>';
 			return;
 		}
@@ -7159,9 +7159,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			if ( $ts > 0 && $ts === $latest_ts && Policy_Snapshots::has_full_snapshot_for_ts( $ts ) ) {
 				echo '<a href="#handl-aicac-policy-restore">' . esc_html__( 'Review restore', 'handl-ai-connector-access-control' ) . '</a>';
 			} elseif ( $ts > 0 && Policy_Snapshots::has_full_snapshot_for_ts( $ts ) ) {
-				echo '<span class="description">' . esc_html__( 'Older restore point kept', 'handl-ai-connector-access-control' ) . '</span>';
+				echo '<span class="description">' . esc_html__( 'Full snapshot kept', 'handl-ai-connector-access-control' ) . '</span>';
 			} else {
-				echo '<span class="description">' . esc_html__( 'Summary only', 'handl-ai-connector-access-control' ) . '</span>';
+				echo '<span class="description">' . esc_html__( 'Change summary only', 'handl-ai-connector-access-control' ) . '</span>';
 			}
 			echo '</td>';
 			echo '</tr>';
