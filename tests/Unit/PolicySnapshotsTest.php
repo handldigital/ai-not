@@ -378,4 +378,50 @@ final class PolicySnapshotsTest extends TestCase {
 		$this->assertStringContainsString( 'editor', $joined );
 		$this->assertStringContainsString( 'Allowed roles', $joined );
 	}
+
+	public function test_history_uses_canonical_subcent_usd_and_product_labels(): void {
+		$base = $this->complex_policy( 'allow', 1 );
+		$base['est_usd_input_per_m']      = 1.0;
+		$base['plugin_budgets']           = array( 'acme-plugin-1/plugin.php' => 10.0 );
+		$base['plugin_budget_modes']      = array( 'acme-plugin-1/plugin.php' => 'deny' );
+		$base['model_force_unattributed'] = 'none';
+		$base['est_usd_provider_rates']   = array();
+		update_option( Plugin::OPTION_KEY, $base, false );
+
+		$next = $base;
+		$next['est_usd_input_per_m']      = 0.004;
+		$next['plugin_budgets']['acme-plugin-1/plugin.php'] = 0.005;
+		$next['plugin_budget_modes']['acme-plugin-1/plugin.php'] = 'observe';
+		$next['model_force_unattributed'] = 'force';
+		$next['model_force_unattributed_provider'] = 'openai';
+		$next['model_force_unattributed_model']    = 'gpt-test';
+		$next['est_usd_provider_rates'] = array(
+			'openai' => array(
+				'input_per_m'  => 0.003,
+				'output_per_m' => 0.006,
+			),
+		);
+		Policy::save_policy( $next );
+
+		$history = Policy_Snapshots::history();
+		$this->assertNotEmpty( $history );
+		$joined = implode( "\n", $history[0]['changes'] );
+
+		$this->assertStringContainsString( '<$0.01', $joined );
+		$this->assertStringContainsString( 'Default input rate ($ per 1M tokens)', $joined );
+		$this->assertStringContainsString( 'Plugin estimated budgets', $joined );
+		$this->assertStringContainsString( 'Provider rates ($ per 1M tokens)', $joined );
+		$this->assertStringContainsString( 'Input <$0.01; output <$0.01', $joined );
+		$this->assertStringContainsString( 'Block when reached', $joined );
+		$this->assertStringContainsString( 'Observe-only when reached', $joined );
+		$this->assertStringContainsString( 'Calls with no detected plugin', $joined );
+		$this->assertStringContainsString( 'Do not route', $joined );
+		$this->assertStringContainsString( 'Route to provider and model', $joined );
+
+		// Raw storage tokens must not appear as rendered before/after values.
+		$this->assertDoesNotMatchRegularExpression( '/: (deny|observe) → (deny|observe)/', $joined );
+		$this->assertDoesNotMatchRegularExpression( '/: (none|force) → (none|force)/', $joined );
+		$this->assertStringNotContainsString( 'in $', $joined );
+		$this->assertStringNotContainsString( ' / out ', $joined );
+	}
 }

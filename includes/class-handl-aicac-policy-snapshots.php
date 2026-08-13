@@ -876,8 +876,8 @@ final class Policy_Snapshots {
 				$ids = array_unique( array_merge( array_keys( $a ), array_keys( $b ) ) );
 				sort( $ids, SORT_STRING );
 				foreach ( $ids as $id ) {
-					$from = isset( $a[ $id ] ) ? (string) $a[ $id ] : $none;
-					$to   = isset( $b[ $id ] ) ? (string) $b[ $id ] : $none;
+					$from = isset( $a[ $id ] ) ? self::format_budget_mode( (string) $a[ $id ] ) : $none;
+					$to   = isset( $b[ $id ] ) ? self::format_budget_mode( (string) $b[ $id ] ) : $none;
 					if ( $from === $to ) {
 						continue;
 					}
@@ -975,7 +975,17 @@ final class Policy_Snapshots {
 			return __( '(none)', 'handl-ai-connector-access-control' );
 		}
 		$n = is_numeric( $amount ) ? (float) $amount : 0.0;
-		return '$' . rtrim( rtrim( number_format( $n, 2, '.', '' ), '0' ), '.' );
+		return Cost::format_usd( $n );
+	}
+
+	/**
+	 * @param string $mode Budget mode storage value.
+	 */
+	private static function format_budget_mode( string $mode ): string {
+		if ( Budget::MODE_OBSERVE === $mode ) {
+			return __( 'Observe-only when reached', 'handl-ai-connector-access-control' );
+		}
+		return __( 'Block when reached', 'handl-ai-connector-access-control' );
 	}
 
 	/**
@@ -1003,8 +1013,13 @@ final class Policy_Snapshots {
 		$in  = isset( $row['input_per_m'] ) && is_numeric( $row['input_per_m'] ) ? (float) $row['input_per_m'] : 0.0;
 		$out = isset( $row['output_per_m'] ) && is_numeric( $row['output_per_m'] ) ? (float) $row['output_per_m'] : 0.0;
 		return self::truncate_text(
-			sprintf( 'in %s / out %s', self::format_money( $in ), self::format_money( $out ) ),
-			80
+			sprintf(
+				/* translators: 1: input USD rate, 2: output USD rate */
+				__( 'Input %1$s; output %2$s', 'handl-ai-connector-access-control' ),
+				Cost::format_usd( $in ),
+				Cost::format_usd( $out )
+			),
+			120
 		);
 	}
 
@@ -1194,15 +1209,15 @@ final class Policy_Snapshots {
 			'operations'                        => __( 'Capability-family rules', 'handl-ai-connector-access-control' ),
 			'denied_tools'                      => __( 'Blocked AI tools', 'handl-ai-connector-access-control' ),
 			'model_force_plugins'               => __( 'Model routes', 'handl-ai-connector-access-control' ),
-			'model_force_unattributed'          => __( 'Unattributed model routing', 'handl-ai-connector-access-control' ),
+			'model_force_unattributed'          => __( 'Calls with no detected plugin', 'handl-ai-connector-access-control' ),
 			'model_force_unattributed_provider' => __( 'Unattributed model provider', 'handl-ai-connector-access-control' ),
 			'model_force_unattributed_model'    => __( 'Unattributed model', 'handl-ai-connector-access-control' ),
-			'est_usd_input_per_m'               => __( 'Default input rate', 'handl-ai-connector-access-control' ),
-			'est_usd_output_per_m'              => __( 'Default output rate', 'handl-ai-connector-access-control' ),
-			'est_usd_provider_rates'            => __( 'Provider rate table', 'handl-ai-connector-access-control' ),
+			'est_usd_input_per_m'               => __( 'Default input rate ($ per 1M tokens)', 'handl-ai-connector-access-control' ),
+			'est_usd_output_per_m'              => __( 'Default output rate ($ per 1M tokens)', 'handl-ai-connector-access-control' ),
+			'est_usd_provider_rates'            => __( 'Provider rates ($ per 1M tokens)', 'handl-ai-connector-access-control' ),
 			'spend_threshold_site'              => __( 'Site estimated-spend alert', 'handl-ai-connector-access-control' ),
 			'spend_threshold_plugins'           => __( 'Plugin estimated-spend alerts', 'handl-ai-connector-access-control' ),
-			'plugin_budgets'                    => __( 'Plugin budgets', 'handl-ai-connector-access-control' ),
+			'plugin_budgets'                    => __( 'Plugin estimated budgets', 'handl-ai-connector-access-control' ),
 			'plugin_budget_modes'               => __( 'Plugin budget modes', 'handl-ai-connector-access-control' ),
 			'anomaly_alert_enabled'             => __( 'Usage spike alerts', 'handl-ai-connector-access-control' ),
 			'anomaly_multiplier'                => __( 'Usage spike multiplier', 'handl-ai-connector-access-control' ),
@@ -1309,7 +1324,9 @@ final class Policy_Snapshots {
 				}
 				return __( 'Provider', 'handl-ai-connector-access-control' );
 			case 'model_force_unattributed':
-				return (string) $value;
+				return ( 'force' === $value )
+					? __( 'Route to provider and model', 'handl-ai-connector-access-control' )
+					: __( 'Do not route', 'handl-ai-connector-access-control' );
 			case 'model_force_unattributed_provider':
 			case 'model_force_unattributed_model':
 				return '' !== (string) $value ? (string) $value : __( '(none)', 'handl-ai-connector-access-control' );
