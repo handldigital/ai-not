@@ -194,6 +194,7 @@ Yes. With WP-CLI available and this plugin active:
 
 = Unreleased =
 * Change history on the Rules tab records who changed rules or settings, when, and a secret-safe before-and-after summary. The recent trail is kept separately from Activity, always records Emergency stop changes, and appears in printable audit reports.
+* Dashboard governance setup score (0–100): a weighted checklist of local settings and saved Activity, with Complete, Needs setup, and Not applicable states linked to the relevant screen. Setup guidance only, not a security or safety rating.
 * Starter policy packs on the Rules tab: preview Strict, Balanced, or Observe-first, download a JSON backup, then apply without silently replacing your existing per-plugin rules.
 * Activity keep period on the Activity tab (30, 90, 180, or 365 days, or forever): daily cleanup in batches, an optional CSV download before the first cleanup, and a Site Health line showing the period and last cleanup time.
 * Optional weekly rules backup email on the Rules tab, off by default: sends a JSON rules export once a week, stores only the latest backup on the site, and lets you download or compare it.

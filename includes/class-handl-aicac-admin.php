@@ -2060,6 +2060,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		// AICAC-KEYSCAN: embedded AI API keys in active plugins (masked only).
 		$this->render_keyscan_dashboard_tile();
 
+		// AICAC-SCORE (#189): advisory configuration completeness (not AI-channel coverage).
+		$this->render_governance_coverage_card( $log, $policy, $plugins );
+
 		// --- Coverage tile (Δ1 + Δ5) ---
 		echo '<div class="postbox handl-aicac-tile handl-aicac-tile--coverage">';
 		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'AI coverage', 'handl-ai-connector-access-control' ) . '</h2></div>';
@@ -5404,6 +5407,70 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	 *
 	 * @param array<string,array<string,mixed>> $plugins
 	 */
+	/**
+	 * AICAC-SCORE (#189): advisory governance coverage card (configuration completeness).
+	 *
+	 * Distinct from the AI coverage tile (AI Client vs outside). Never uses
+	 * "security" or "safety" claims.
+	 *
+	 * @param array<int,mixed>                  $log
+	 * @param array<string,mixed>               $policy
+	 * @param array<string,array<string,mixed>> $plugins
+	 */
+	private function render_governance_coverage_card( array $log, array $policy, array $plugins ): void {
+		$report = Governance_Coverage::compute( $policy, $log, $plugins );
+		$score  = (int) $report['score'];
+		$max    = (int) $report['max'];
+
+		echo '<div class="postbox handl-aicac-tile handl-aicac-tile--governance-coverage">';
+		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Governance setup', 'handl-ai-connector-access-control' ) . '</h2></div>';
+		echo '<div class="inside">';
+		echo '<p class="handl-aicac-governance-coverage-score"><strong>';
+		echo esc_html(
+			sprintf(
+				/* translators: 1: score 0-100, 2: max (100) */
+				__( 'Setup score: %1$d / %2$d', 'handl-ai-connector-access-control' ),
+				$score,
+				$max
+			)
+		);
+		echo '</strong></p>';
+		echo '<p class="description">' . esc_html__( 'A weighted checklist based on five settings and saved Activity. It measures setup completeness only, not security, safety, or how much AI activity is covered.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<ul class="handl-aicac-governance-coverage-list">';
+		foreach ( $report['checks'] as $check ) {
+			if ( ! is_array( $check ) ) {
+				continue;
+			}
+			$applicable = ! empty( $check['applicable'] );
+			$done       = ! empty( $check['done'] );
+			$label      = isset( $check['label'] ) ? (string) $check['label'] : '';
+			$detail     = isset( $check['detail'] ) ? (string) $check['detail'] : '';
+			$url        = Governance_Coverage::fix_url( $check );
+			if ( ! $applicable ) {
+				$status = __( 'Not applicable', 'handl-ai-connector-access-control' );
+				$class  = 'is-na';
+			} elseif ( $done ) {
+				$status = __( 'Complete', 'handl-ai-connector-access-control' );
+				$class  = 'is-done';
+			} else {
+				$status = __( 'Needs setup', 'handl-ai-connector-access-control' );
+				$class  = 'is-todo';
+			}
+			echo '<li class="' . esc_attr( $class ) . '">';
+			echo '<strong>' . esc_html( $status ) . ':</strong> ';
+			echo esc_html( $label );
+			if ( '' !== $detail ) {
+				echo ' — <span class="description" style="display:inline;">' . esc_html( $detail ) . '</span>';
+			}
+			if ( $applicable && ! $done && '' !== $url ) {
+				echo ' <a href="' . esc_url( $url ) . '">' . esc_html__( 'Review setting', 'handl-ai-connector-access-control' ) . '</a>';
+			}
+			echo '</li>';
+		}
+		echo '</ul>';
+		echo '</div></div>';
+	}
+
 	private function render_drift_dashboard_line( array $plugins ): void {
 		$recent = Drift::get_recent();
 		if ( empty( $recent ) ) {
