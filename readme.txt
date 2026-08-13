@@ -197,6 +197,7 @@ Yes. With WP-CLI available and this plugin active:
 * Starter policy packs on the Rules tab: preview Strict, Balanced, or Observe-first, download a JSON backup, then apply without silently replacing your existing per-plugin rules.
 * Activity keep period on the Activity tab (30, 90, 180, or 365 days, or forever): daily cleanup in batches, an optional CSV download before the first cleanup, and a Site Health line showing the period and last cleanup time.
 * Optional weekly rules backup email on the Rules tab, off by default: sends a JSON rules export once a week, stores only the latest backup on the site, and lets you download or compare it.
+* Insights daily trend lines for calls, estimated spend, and blocked calls over up to 30 days of saved Activity, with honest short-window labels and expandable per-plugin trends.
 
 = 1.5.0 =
 * Shared email layout for HandL alerts and reports: same header, intro, and footer on every message, with a plain-text and HTML part. Per-message wording inside the content block is unchanged.

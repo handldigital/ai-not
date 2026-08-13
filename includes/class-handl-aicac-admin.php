@@ -2575,6 +2575,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '</tbody></table></div>';
 		}
 
+		$daily_trends = Daily_Trends::compute( $log, $policy, $plugins );
+		$this->render_insights_daily_trends( $daily_trends );
 		$this->render_insights_trends( $log, $policy, $plugins );
 
 		$dimensions = array(
@@ -2653,7 +2655,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$rank = 0;
 		foreach ( $rows as $row ) {
 			++$rank;
-			$this->render_insights_table_row( $row, $rank, $dimension, $metric, $chart_max );
+			$this->render_insights_table_row( $row, $rank, $dimension, $metric, $chart_max, $daily_trends );
 		}
 
 		echo '</tbody></table>';
@@ -2678,6 +2680,73 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 
 		return number_format_i18n( $input + $output );
+	}
+
+	/**
+	 * AICAC-TREND (#184): 30-day daily sparklines (calls, estimated spend, blocked calls).
+	 *
+	 * @param array{
+	 *   days: list<array{key:string,label:string,start_ts:int,end_ts:int}>,
+	 *   window_days: int,
+	 *   full_window: bool,
+	 *   window_label: string,
+	 *   site: array{days: list<array{key:string,calls:int,spend:float,blocks:int}>},
+	 *   plugins: array<string,array{label:string,days: list<array{key:string,calls:int,spend:float,blocks:int}>}>,
+	 *   has_activity: bool
+	 * }|null $daily
+	 */
+	private function render_insights_daily_trends( ?array $daily ): void {
+		echo '<div class="handl-aicac-insights-daily" style="margin:1.5em 0;">';
+		echo '<h3>' . esc_html__( 'Daily trends', 'handl-ai-connector-access-control' ) . '</h3>';
+
+		if ( null === $daily ) {
+			echo '<p class="description">' . esc_html__( 'Daily trends need at least two days of saved Activity. Keep Activity logging on and retain at least two days.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '</div>';
+			return;
+		}
+
+		echo '<p class="description">' . esc_html( (string) $daily['window_label'] ) . ' ';
+		echo esc_html__( 'Estimated spend is not a bill. Charts use only the Activity log already saved on this site.', 'handl-ai-connector-access-control' );
+		echo '</p>';
+
+		if ( empty( $daily['has_activity'] ) ) {
+			echo '<p class="description">' . esc_html__( 'No recorded calls in this window, so the trend lines stay at zero.', 'handl-ai-connector-access-control' ) . '</p>';
+		}
+
+		$days = $daily['site']['days'];
+		$charts = array(
+			array(
+				'label'  => __( 'Calls per day', 'handl-ai-connector-access-control' ),
+				'metric' => 'calls',
+			),
+			array(
+				'label'  => __( 'Estimated spend per day', 'handl-ai-connector-access-control' ),
+				'metric' => 'spend',
+			),
+			array(
+				'label'  => __( 'Blocked calls per day', 'handl-ai-connector-access-control' ),
+				'metric' => 'blocks',
+			),
+		);
+
+		echo '<div class="handl-aicac-daily-charts" style="display:flex;flex-wrap:wrap;gap:1.25em;">';
+		foreach ( $charts as $chart ) {
+			$metric = (string) $chart['metric'];
+			$label  = (string) $chart['label'];
+			$aria   = Daily_Trends::sparkline_aria_label( $days, $metric, $label );
+			$svg    = Daily_Trends::sparkline_svg( $days, $metric, 180, 36, $aria );
+			echo '<div class="handl-aicac-daily-chart" style="min-width:12em;">';
+			echo '<p style="margin:0 0 0.35em;"><strong>' . esc_html( $label ) . '</strong></p>';
+			if ( '' === $svg ) {
+				echo '<p class="description">' . esc_html__( 'Not enough days to draw a line.', 'handl-ai-connector-access-control' ) . '</p>';
+			} else {
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sparkline_svg escapes attribute values.
+				echo $svg;
+			}
+			echo '</div>';
+		}
+		echo '</div>';
+		echo '</div>';
 	}
 
 	/**
@@ -2792,8 +2861,11 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 	/**
 	 * @param array<string,mixed> $row
+	 * @param array{
+	 *   plugins?: array<string,array{label:string,days: list<array{key:string,calls:int,spend:float,blocks:int}>}>
+	 * }|null $daily_trends
 	 */
-	private function render_insights_table_row( array $row, int $rank, string $dimension, string $metric, int $chart_max ): void {
+	private function render_insights_table_row( array $row, int $rank, string $dimension, string $metric, int $chart_max, ?array $daily_trends = null ): void {
 		$key         = (string) ( $row['key'] ?? '' );
 		$label       = (string) ( $row['label'] ?? $key );
 		$calls       = (int) ( $row['calls'] ?? 0 );
@@ -2821,6 +2893,55 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<strong>' . esc_html( $label ) . '</strong>';
 		if ( Analytics::UNKNOWN_KEY !== $key && $key !== $label ) {
 			echo '<br /><code class="handl-aicac-insights-key">' . esc_html( $key ) . '</code>';
+		}
+		if ( 'plugin' === $dimension && null !== $daily_trends && isset( $daily_trends['plugins'][ $key ] ) ) {
+			$mini = $daily_trends['plugins'][ $key ];
+			$days = isset( $mini['days'] ) && is_array( $mini['days'] ) ? $mini['days'] : array();
+			$calls_label  = __( 'Calls', 'handl-ai-connector-access-control' );
+			$spend_label  = __( 'Estimated spend', 'handl-ai-connector-access-control' );
+			$blocks_label = __( 'Blocked calls', 'handl-ai-connector-access-control' );
+			$calls_svg    = Daily_Trends::sparkline_svg(
+				$days,
+				'calls',
+				100,
+				24,
+				Daily_Trends::sparkline_aria_label( $days, 'calls', $calls_label )
+			);
+			$spend_svg = Daily_Trends::sparkline_svg(
+				$days,
+				'spend',
+				100,
+				24,
+				Daily_Trends::sparkline_aria_label( $days, 'spend', $spend_label )
+			);
+			$blocks_svg = Daily_Trends::sparkline_svg(
+				$days,
+				'blocks',
+				100,
+				24,
+				Daily_Trends::sparkline_aria_label( $days, 'blocks', $blocks_label )
+			);
+			echo '<details class="handl-aicac-insights-mini-trend" style="margin-top:0.4em;">';
+			echo '<summary>' . esc_html__( 'Daily trends', 'handl-ai-connector-access-control' ) . '</summary>';
+			echo '<p class="description" style="margin:0.4em 0 0.2em;">' . esc_html__( 'Calls, estimated spend, and blocked calls by day from saved Activity.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<div style="display:flex;flex-wrap:wrap;gap:0.75em;align-items:center;">';
+			foreach (
+				array(
+					array( 'svg' => $calls_svg, 'label' => $calls_label ),
+					array( 'svg' => $spend_svg, 'label' => $spend_label ),
+					array( 'svg' => $blocks_svg, 'label' => $blocks_label ),
+				) as $mini_chart
+			) {
+				echo '<span><span class="description">' . esc_html( (string) $mini_chart['label'] ) . '</span><br />';
+				if ( '' === (string) $mini_chart['svg'] ) {
+					echo esc_html__( 'Not enough saved days', 'handl-ai-connector-access-control' );
+				} else {
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sparkline_svg escapes attribute values.
+					echo $mini_chart['svg'];
+				}
+				echo '</span>';
+			}
+			echo '</div></details>';
 		}
 		echo '</td>';
 		echo '<td class="column-chart">';
