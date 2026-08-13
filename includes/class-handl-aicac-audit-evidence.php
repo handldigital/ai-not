@@ -59,10 +59,52 @@ final class Audit_Evidence {
 			'activity'          => $summary,
 			'family_counts'     => $family_counts,
 			'thresholds'        => $thresholds,
-			'change_history'    => array(
-				'available' => false,
-			),
+			'change_history'    => self::change_history_snapshot(),
 			'csv_export_note'   => __( 'For row-level activity, use Download CSV on the Activity tab (same retained log and filters).', 'handl-ai-connector-access-control' ),
+		);
+	}
+
+	/**
+	 * AICAC-HISTORY (#107): recent policy change rows for the printable report.
+	 *
+	 * @return array{available:bool,entries:list<array{when:string,who:string,summary:string,changes:list<string>}>}
+	 */
+	private static function change_history_snapshot(): array {
+		$rows = Policy_Snapshots::history();
+		if ( empty( $rows ) ) {
+			return array(
+				'available' => false,
+				'entries'   => array(),
+			);
+		}
+
+		$entries = array();
+		foreach ( array_slice( $rows, 0, 25 ) as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$ts = (int) ( $row['ts'] ?? 0 );
+			$when = $ts > 0
+				? ( function_exists( 'wp_date' ) ? wp_date( 'Y-m-d H:i:s T', $ts ) : gmdate( 'Y-m-d H:i:s', $ts ) . ' UTC' )
+				: '';
+			$changes = isset( $row['changes'] ) && is_array( $row['changes'] ) ? $row['changes'] : array();
+			$clean   = array();
+			foreach ( $changes as $line ) {
+				if ( is_string( $line ) && '' !== trim( $line ) ) {
+					$clean[] = $line;
+				}
+			}
+			$entries[] = array(
+				'when'    => $when,
+				'who'     => Policy_Snapshots::actor_display( is_array( $row['actor'] ?? null ) ? $row['actor'] : array() ),
+				'summary' => (string) ( $row['summary'] ?? '' ),
+				'changes' => $clean,
+			);
+		}
+
+		return array(
+			'available' => ! empty( $entries ),
+			'entries'   => $entries,
 		);
 	}
 
@@ -184,8 +226,37 @@ th{background:#f0f0f1;}
 
 <div class="section section-major">
 <h2><?php echo esc_html__( 'Policy change history', 'handl-ai-connector-access-control' ); ?></h2>
-<?php if ( ! empty( $history['available'] ) ) : ?>
-<p><?php echo esc_html__( 'Change history is available.', 'handl-ai-connector-access-control' ); ?></p>
+<?php if ( ! empty( $history['available'] ) && ! empty( $history['entries'] ) && is_array( $history['entries'] ) ) : ?>
+<table>
+<thead><tr>
+<th><?php echo esc_html__( 'When', 'handl-ai-connector-access-control' ); ?></th>
+<th><?php echo esc_html__( 'Who', 'handl-ai-connector-access-control' ); ?></th>
+<th><?php echo esc_html__( 'What changed', 'handl-ai-connector-access-control' ); ?></th>
+</tr></thead>
+<tbody>
+<?php foreach ( $history['entries'] as $entry ) : ?>
+<?php if ( ! is_array( $entry ) ) { continue; } ?>
+<tr>
+<td><?php echo esc_html( (string) ( $entry['when'] ?? '' ) ); ?></td>
+<td><?php echo esc_html( (string) ( $entry['who'] ?? '' ) ); ?></td>
+<td>
+<?php
+$lines = isset( $entry['changes'] ) && is_array( $entry['changes'] ) ? $entry['changes'] : array();
+if ( empty( $lines ) ) {
+	echo esc_html( (string) ( $entry['summary'] ?? '' ) );
+} else {
+	echo '<ul>';
+	foreach ( $lines as $line ) {
+		echo '<li>' . esc_html( (string) $line ) . '</li>';
+	}
+	echo '</ul>';
+}
+?>
+</td>
+</tr>
+<?php endforeach; ?>
+</tbody>
+</table>
 <?php else : ?>
 <p class="muted"><?php echo esc_html__( 'Policy change history is not available in this report.', 'handl-ai-connector-access-control' ); ?></p>
 <?php endif; ?>

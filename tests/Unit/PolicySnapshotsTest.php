@@ -18,16 +18,19 @@ final class PolicySnapshotsTest extends TestCase {
 
 	protected function setUp(): void {
 		$GLOBALS['handl_aicac_test_options'] = array();
-		unset( $GLOBALS['handl_aicac_test_filters'] );
+		unset( $GLOBALS['handl_aicac_test_filters'], $GLOBALS['handl_aicac_test_user_id'], $GLOBALS['handl_aicac_test_users'] );
 		delete_option( Plugin::OPTION_KEY );
 		delete_option( Policy_Snapshots::OPTION_KEY );
+		delete_option( Policy_Snapshots::HISTORY_OPTION_KEY );
 		delete_option( Plugin::LOG_OPTION_KEY );
 	}
 
 	protected function tearDown(): void {
 		delete_option( Plugin::OPTION_KEY );
 		delete_option( Policy_Snapshots::OPTION_KEY );
+		delete_option( Policy_Snapshots::HISTORY_OPTION_KEY );
 		delete_option( Plugin::LOG_OPTION_KEY );
+		unset( $GLOBALS['handl_aicac_test_user_id'], $GLOBALS['handl_aicac_test_users'] );
 	}
 
 	/**
@@ -180,5 +183,94 @@ final class PolicySnapshotsTest extends TestCase {
 		// No option stored yet.
 		Policy::save_policy( $this->complex_policy( 'allow', 1 ) );
 		$this->assertSame( array(), Policy_Snapshots::all() );
+		$this->assertSame( array(), Policy_Snapshots::history() );
+	}
+
+	public function test_history_records_actor_and_change_lines(): void {
+		$GLOBALS['handl_aicac_test_user_id'] = 42;
+		$GLOBALS['handl_aicac_test_users']   = array(
+			42 => array(
+				'ID'           => 42,
+				'user_login'   => 'admin42',
+				'display_name' => 'Ada Admin',
+			),
+		);
+
+		update_option( Plugin::OPTION_KEY, $this->complex_policy( 'allow', 1 ), false );
+
+		$next = $this->complex_policy( 'deny', 1 );
+		$next['kill_switch'] = true;
+		$next['log_enabled'] = false;
+		Policy::save_policy( $next );
+
+		$snaps = Policy_Snapshots::all();
+		$this->assertCount( 1, $snaps );
+		$this->assertSame( 'user', $snaps[0]['actor']['type'] ?? null );
+		$this->assertSame( 42, (int) ( $snaps[0]['actor']['user_id'] ?? 0 ) );
+		$this->assertNotEmpty( $snaps[0]['changes'] );
+
+		$history = Policy_Snapshots::history();
+		$this->assertCount( 1, $history );
+		$this->assertSame( 42, (int) ( $history[0]['actor']['user_id'] ?? 0 ) );
+		$joined = implode( ' ', $history[0]['changes'] );
+		$this->assertStringContainsString( 'Emergency stop', $joined );
+		$this->assertStringContainsString( 'Off', $joined );
+		$this->assertStringContainsString( 'On', $joined );
+		$this->assertSame( 'Ada Admin', Policy_Snapshots::actor_display( $history[0]['actor'] ) );
+	}
+
+	public function test_history_survives_full_snapshot_rotation(): void {
+		update_option( Plugin::OPTION_KEY, $this->complex_policy( 'allow', 1 ), false );
+
+		for ( $i = 0; $i < 8; $i++ ) {
+			$p = $this->complex_policy( 0 === $i % 2 ? 'allow' : 'deny', 1 + ( $i % 3 ) );
+			$p['kill_switch'] = ( 0 === $i % 2 );
+			Policy::save_policy( $p );
+		}
+
+		$this->assertCount( Policy_Snapshots::MAX, Policy_Snapshots::all() );
+		$this->assertGreaterThan( Policy_Snapshots::MAX, count( Policy_Snapshots::history() ) );
+		$this->assertSame( 8, count( Policy_Snapshots::history() ) );
+	}
+
+	public function test_kill_switch_history_records_when_activity_logging_off(): void {
+		$base = $this->complex_policy( 'allow', 1 );
+		$base['log_enabled'] = false;
+		$base['audit_only']  = false;
+		$base['kill_switch'] = false;
+		update_option( Plugin::OPTION_KEY, $base, false );
+
+		$next = $base;
+		$next['kill_switch'] = true;
+		Policy::save_policy( $next );
+
+		$history = Policy_Snapshots::history();
+		$this->assertNotEmpty( $history );
+		$joined = implode( ' ', $history[0]['changes'] );
+		$this->assertStringContainsString( 'Emergency stop', $joined );
+	}
+
+	public function test_history_cap_retains_newest_only(): void {
+		update_option( Plugin::OPTION_KEY, $this->complex_policy( 'allow', 1 ), false );
+
+		// Direct append beyond MAX to avoid hundreds of save_policy sanitization cycles.
+		for ( $i = 0; $i < Policy_Snapshots::HISTORY_MAX + 5; $i++ ) {
+			Policy_Snapshots::append_history(
+				array(
+					'ts'      => 1700000000 + $i,
+					'actor'   => array(
+						'type'    => 'system',
+						'user_id' => 0,
+						'login'   => '',
+					),
+					'changes' => array( 'Emergency stop: Off → On' ),
+					'summary' => 'Emergency stop: Off → On',
+				)
+			);
+		}
+
+		$list = Policy_Snapshots::history();
+		$this->assertCount( Policy_Snapshots::HISTORY_MAX, $list );
+		$this->assertSame( 1700000000 + Policy_Snapshots::HISTORY_MAX + 4, (int) $list[0]['ts'] );
 	}
 }

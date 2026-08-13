@@ -1,10 +1,15 @@
 <?php
 /**
- * AICAC-UNDO: automatic policy snapshots + one-click restore (#130).
+ * AICAC-UNDO (#130) + AICAC-HISTORY (#107): policy snapshots, restore, and
+ * who/when/what change trail.
  *
  * Snapshots the full policy before every Policy::save_policy write (max 5,
  * newest first). Restore writes through save_policy so the restore itself is
  * snapshotted (undo-the-undo).
+ *
+ * History (#107): each save also records actor + before→after change lines on
+ * the snapshot and in a longer lightweight trail (separate option; not purged
+ * by activity log TTL). No parallel write path — same save_policy funnel.
  *
  * @package HandL_AICAC
  */
@@ -19,8 +24,14 @@ final class Policy_Snapshots {
 
 	public const OPTION_KEY = 'handl_aicac_policy_snapshots';
 
+	/** Lightweight who/when/summary trail (survives full-snapshot rotation). */
+	public const HISTORY_OPTION_KEY = 'handl_aicac_policy_history';
+
 	/** Maximum retained snapshots (newest first). */
 	public const MAX = 5;
+
+	/** Maximum retained history rows (newest first). */
+	public const HISTORY_MAX = 200;
 
 	/** Transient TTL for confirm-before-restore (seconds). */
 	public const PREVIEW_TTL = 600;
@@ -30,9 +41,10 @@ final class Policy_Snapshots {
 	 *
 	 * No-op when nothing is stored yet (first save has nothing to restore to).
 	 *
-	 * @param int|null $now Injectable clock for tests.
+	 * @param array<string,mixed>|null $incoming Sanitized policy about to be written (for diff).
+	 * @param int|null                 $now      Injectable clock for tests.
 	 */
-	public static function capture_before_save( ?int $now = null ): void {
+	public static function capture_before_save( ?array $incoming = null, ?int $now = null ): void {
 		$raw = get_option( Plugin::OPTION_KEY );
 		if ( ! is_array( $raw ) ) {
 			return;
@@ -40,26 +52,32 @@ final class Policy_Snapshots {
 
 		// Normalized full shape — restore will re-sanitize via save_policy.
 		$policy = Policy::get_policy();
-		self::push( $policy, $now );
+		self::push( $policy, $incoming, $now );
 	}
 
 	/**
-	 * @param array<string,mixed> $policy
-	 * @param int|null            $now
+	 * @param array<string,mixed>      $policy   Policy state being snapshotted (before overwrite).
+	 * @param array<string,mixed>|null $incoming Sanitized policy about to be written.
+	 * @param int|null                 $now
 	 */
-	public static function push( array $policy, ?int $now = null ): void {
+	public static function push( array $policy, ?array $incoming = null, ?int $now = null ): void {
 		$ts = null !== $now ? (int) $now : time();
 		if ( $ts <= 0 ) {
 			$ts = time();
 		}
 
 		// Strip runtime-only / derived keys that should not round-trip as "dirty".
-		$clean = self::strip_runtime_keys( $policy );
+		$clean  = self::strip_runtime_keys( $policy );
+		$actor  = self::detect_actor();
+		$after  = null !== $incoming ? self::strip_runtime_keys( $incoming ) : null;
+		$changes = null !== $after ? self::change_lines( $clean, $after ) : array();
 
 		$entry = array(
 			'ts'      => $ts,
 			'policy'  => $clean,
 			'summary' => self::summary_line( $clean ),
+			'actor'   => $actor,
+			'changes' => $changes,
 		);
 
 		$list = self::all();
@@ -69,10 +87,22 @@ final class Policy_Snapshots {
 		}
 
 		update_option( self::OPTION_KEY, $list, false );
+
+		// History trail: only when something actually changed (avoid no-op spam).
+		if ( ! empty( $changes ) ) {
+			self::append_history(
+				array(
+					'ts'      => $ts,
+					'actor'   => $actor,
+					'changes' => $changes,
+					'summary' => self::history_summary_line( $changes ),
+				)
+			);
+		}
 	}
 
 	/**
-	 * @return list<array{ts:int,policy:array<string,mixed>,summary:string}>
+	 * @return list<array{ts:int,policy:array<string,mixed>,summary:string,actor:array<string,mixed>,changes:list<string>}>
 	 */
 	public static function all(): array {
 		$raw = get_option( self::OPTION_KEY );
@@ -93,10 +123,16 @@ final class Policy_Snapshots {
 			$summary = isset( $row['summary'] ) && is_string( $row['summary'] ) && '' !== $row['summary']
 				? $row['summary']
 				: self::summary_line( $policy );
-			$out[] = array(
+			$actor = isset( $row['actor'] ) && is_array( $row['actor'] )
+				? self::sanitize_actor( $row['actor'] )
+				: self::empty_actor();
+			$changes = self::sanitize_change_lines( $row['changes'] ?? array() );
+			$out[]   = array(
 				'ts'      => $ts,
 				'policy'  => $policy,
 				'summary' => $summary,
+				'actor'   => $actor,
+				'changes' => $changes,
 			);
 		}
 
@@ -106,11 +142,185 @@ final class Policy_Snapshots {
 	/**
 	 * Newest snapshot, or null when the stack is empty.
 	 *
-	 * @return array{ts:int,policy:array<string,mixed>,summary:string}|null
+	 * @return array{ts:int,policy:array<string,mixed>,summary:string,actor:array<string,mixed>,changes:list<string>}|null
 	 */
 	public static function latest(): ?array {
 		$list = self::all();
 		return $list[0] ?? null;
+	}
+
+	/**
+	 * Lightweight change history (newest first). Survives full-snapshot rotation
+	 * and is not touched by activity-log TTL prune.
+	 *
+	 * @return list<array{ts:int,actor:array<string,mixed>,changes:list<string>,summary:string}>
+	 */
+	public static function history(): array {
+		$raw = get_option( self::HISTORY_OPTION_KEY );
+		if ( ! is_array( $raw ) ) {
+			return array();
+		}
+
+		$out = array();
+		foreach ( $raw as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$ts = isset( $row['ts'] ) ? (int) $row['ts'] : 0;
+			if ( $ts <= 0 ) {
+				continue;
+			}
+			$changes = self::sanitize_change_lines( $row['changes'] ?? array() );
+			if ( empty( $changes ) ) {
+				continue;
+			}
+			$actor   = isset( $row['actor'] ) && is_array( $row['actor'] )
+				? self::sanitize_actor( $row['actor'] )
+				: self::empty_actor();
+			$summary = isset( $row['summary'] ) && is_string( $row['summary'] ) && '' !== $row['summary']
+				? self::truncate_text( $row['summary'], 240 )
+				: self::history_summary_line( $changes );
+			$out[]   = array(
+				'ts'      => $ts,
+				'actor'   => $actor,
+				'changes' => $changes,
+				'summary' => $summary,
+			);
+		}
+
+		return $out;
+	}
+
+	/**
+	 * @param array{ts:int,actor:array<string,mixed>,changes:list<string>,summary:string} $entry
+	 */
+	public static function append_history( array $entry ): void {
+		$list = self::history();
+		array_unshift( $list, $entry );
+		if ( count( $list ) > self::HISTORY_MAX ) {
+			$list = array_slice( $list, 0, self::HISTORY_MAX );
+		}
+		update_option( self::HISTORY_OPTION_KEY, $list, false );
+	}
+
+	/**
+	 * Who triggered the current write (user, WP-CLI, REST, cron, or system).
+	 *
+	 * @return array{type:string,user_id:int,login:string}
+	 */
+	public static function detect_actor(): array {
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			return array(
+				'type'    => 'wp-cli',
+				'user_id' => (int) get_current_user_id(),
+				'login'   => self::login_for_user_id( (int) get_current_user_id() ),
+			);
+		}
+		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
+			return array(
+				'type'    => 'cron',
+				'user_id' => 0,
+				'login'   => '',
+			);
+		}
+		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+			$uid = (int) get_current_user_id();
+			return array(
+				'type'    => 'rest',
+				'user_id' => $uid,
+				'login'   => self::login_for_user_id( $uid ),
+			);
+		}
+
+		$uid = (int) get_current_user_id();
+		if ( $uid > 0 ) {
+			return array(
+				'type'    => 'user',
+				'user_id' => $uid,
+				'login'   => self::login_for_user_id( $uid ),
+			);
+		}
+
+		return self::empty_actor();
+	}
+
+	/**
+	 * Display label for an actor row. Prefer live display_name; fall back to
+	 * login captured at write time.
+	 *
+	 * @param array<string,mixed> $actor
+	 */
+	public static function actor_display( array $actor ): string {
+		$actor = self::sanitize_actor( $actor );
+		$type  = $actor['type'];
+		$uid   = $actor['user_id'];
+
+		if ( ( 'user' === $type || 'rest' === $type || 'wp-cli' === $type ) && $uid > 0 ) {
+			$name = self::display_name_for_user_id( $uid );
+			if ( '' === $name && '' !== $actor['login'] ) {
+				$name = $actor['login'];
+			}
+			if ( '' !== $name ) {
+				if ( 'rest' === $type ) {
+					/* translators: %s: user display name */
+					return sprintf( __( '%s (REST API)', 'handl-ai-connector-access-control' ), $name );
+				}
+				if ( 'wp-cli' === $type ) {
+					/* translators: %s: user display name */
+					return sprintf( __( '%s (WP-CLI)', 'handl-ai-connector-access-control' ), $name );
+				}
+				return $name;
+			}
+		}
+
+		switch ( $type ) {
+			case 'wp-cli':
+				return __( 'WP-CLI', 'handl-ai-connector-access-control' );
+			case 'rest':
+				return __( 'REST API', 'handl-ai-connector-access-control' );
+			case 'cron':
+				return __( 'Scheduled task', 'handl-ai-connector-access-control' );
+			default:
+				return __( 'System', 'handl-ai-connector-access-control' );
+		}
+	}
+
+	/**
+	 * Human before→after lines for a policy change (same keys as restore diff).
+	 *
+	 * @param array<string,mixed> $before
+	 * @param array<string,mixed> $after
+	 * @return list<string>
+	 */
+	public static function change_lines( array $before, array $after ): array {
+		$rows  = self::diff_rows( $before, $after );
+		$lines = array();
+		foreach ( $rows as $row ) {
+			$label   = (string) ( $row['label'] ?? '' );
+			$from    = self::truncate_text( (string) ( $row['current'] ?? '' ), 120 );
+			$to      = self::truncate_text( (string) ( $row['new'] ?? '' ), 120 );
+			$lines[] = self::truncate_text( $label . ': ' . $from . ' → ' . $to, 280 );
+		}
+		return $lines;
+	}
+
+	/**
+	 * @param list<string> $changes
+	 */
+	public static function history_summary_line( array $changes ): string {
+		$n = count( $changes );
+		if ( $n <= 0 ) {
+			return '';
+		}
+		if ( 1 === $n ) {
+			return $changes[0];
+		}
+		/* translators: 1: first change line, 2: number of additional changes */
+		return sprintf(
+			__( '%1$s (+%2$d more)', 'handl-ai-connector-access-control' ),
+			$changes[0],
+			$n - 1
+		);
 	}
 
 	/**
@@ -252,6 +462,115 @@ final class Policy_Snapshots {
 
 	public static function preview_transient_key( int $user_id ): string {
 		return 'handl_aicac_undo_preview_' . $user_id;
+	}
+
+	/**
+	 * Whether a history/snapshot timestamp still has a full restore point.
+	 */
+	public static function has_full_snapshot_for_ts( int $ts ): bool {
+		if ( $ts <= 0 ) {
+			return false;
+		}
+		foreach ( self::all() as $row ) {
+			if ( (int) ( $row['ts'] ?? 0 ) === $ts ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * @return array{type:string,user_id:int,login:string}
+	 */
+	private static function empty_actor(): array {
+		return array(
+			'type'    => 'system',
+			'user_id' => 0,
+			'login'   => '',
+		);
+	}
+
+	/**
+	 * @param array<string,mixed> $actor
+	 * @return array{type:string,user_id:int,login:string}
+	 */
+	private static function sanitize_actor( array $actor ): array {
+		$type = (string) ( $actor['type'] ?? 'system' );
+		if ( ! in_array( $type, array( 'user', 'wp-cli', 'rest', 'cron', 'system' ), true ) ) {
+			$type = 'system';
+		}
+		$login = isset( $actor['login'] ) ? sanitize_text_field( (string) $actor['login'] ) : '';
+		if ( strlen( $login ) > 60 ) {
+			$login = substr( $login, 0, 60 );
+		}
+		return array(
+			'type'    => $type,
+			'user_id' => max( 0, (int) ( $actor['user_id'] ?? 0 ) ),
+			'login'   => $login,
+		);
+	}
+
+	/**
+	 * @param mixed $raw
+	 * @return list<string>
+	 */
+	private static function sanitize_change_lines( $raw ): array {
+		if ( ! is_array( $raw ) ) {
+			return array();
+		}
+		$out = array();
+		foreach ( $raw as $line ) {
+			if ( ! is_string( $line ) ) {
+				continue;
+			}
+			$line = trim( self::truncate_text( $line, 280 ) );
+			if ( '' === $line ) {
+				continue;
+			}
+			$out[] = $line;
+			if ( count( $out ) >= 40 ) {
+				break;
+			}
+		}
+		return $out;
+	}
+
+	private static function truncate_text( string $text, int $max ): string {
+		if ( $max < 8 ) {
+			$max = 8;
+		}
+		if ( strlen( $text ) <= $max ) {
+			return $text;
+		}
+		return substr( $text, 0, $max - 1 ) . '…';
+	}
+
+	private static function login_for_user_id( int $user_id ): string {
+		if ( $user_id <= 0 || ! function_exists( 'get_userdata' ) ) {
+			return '';
+		}
+		$user = get_userdata( $user_id );
+		if ( ! $user || empty( $user->user_login ) ) {
+			return '';
+		}
+		return sanitize_text_field( (string) $user->user_login );
+	}
+
+	private static function display_name_for_user_id( int $user_id ): string {
+		if ( $user_id <= 0 || ! function_exists( 'get_userdata' ) ) {
+			return '';
+		}
+		$user = get_userdata( $user_id );
+		if ( ! $user ) {
+			return '';
+		}
+		if ( ! empty( $user->display_name ) ) {
+			return sanitize_text_field( (string) $user->display_name );
+		}
+		if ( ! empty( $user->user_login ) ) {
+			return sanitize_text_field( (string) $user->user_login );
+		}
+		return '';
 	}
 
 	/**

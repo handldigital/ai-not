@@ -11,10 +11,21 @@ namespace HandL\AICAC\Tests\Unit;
 
 use HandL\AICAC\Audit_Evidence;
 use HandL\AICAC\Operations;
+use HandL\AICAC\Policy_Snapshots;
 use HandL\AICAC\Rest;
 use PHPUnit\Framework\TestCase;
 
 final class AuditEvidenceTest extends TestCase {
+
+	protected function setUp(): void {
+		delete_option( Policy_Snapshots::HISTORY_OPTION_KEY );
+		delete_option( Policy_Snapshots::OPTION_KEY );
+	}
+
+	protected function tearDown(): void {
+		delete_option( Policy_Snapshots::HISTORY_OPTION_KEY );
+		delete_option( Policy_Snapshots::OPTION_KEY );
+	}
 
 	public function test_build_report_data_uses_rest_activity_summary(): void {
 		$now    = 1_700_000_000;
@@ -143,5 +154,50 @@ final class AuditEvidenceTest extends TestCase {
 		);
 		$this->assertNotEmpty( $rows );
 		$this->assertTrue( $rows[0]['crossed'] );
+	}
+
+	public function test_change_history_section_renders_when_available(): void {
+		Policy_Snapshots::append_history(
+			array(
+				'ts'      => 1_700_000_100,
+				'actor'   => array(
+					'type'    => 'user',
+					'user_id' => 7,
+					'login'   => 'editor7',
+				),
+				'changes' => array( 'Emergency stop: Off → On' ),
+				'summary' => 'Emergency stop: Off → On',
+			)
+		);
+
+		$GLOBALS['handl_aicac_test_users'] = array(
+			7 => array(
+				'ID'           => 7,
+				'user_login'   => 'editor7',
+				'display_name' => 'Ed Editor',
+			),
+		);
+
+		$data = Audit_Evidence::build_report_data(
+			array(
+				'default'     => 'allow',
+				'log_enabled' => true,
+				'plugins'     => array(),
+			),
+			array(),
+			'7d',
+			1_700_000_000,
+			array()
+		);
+
+		$this->assertTrue( $data['change_history']['available'] );
+		$this->assertSame( 'Ed Editor', $data['change_history']['entries'][0]['who'] );
+
+		$html = Audit_Evidence::build_html( $data );
+		$this->assertStringContainsString( 'Emergency stop: Off → On', $html );
+		$this->assertStringContainsString( 'Ed Editor', $html );
+		$this->assertStringNotContainsString( 'Policy change history is not available in this report.', $html );
+
+		unset( $GLOBALS['handl_aicac_test_users'] );
 	}
 }
