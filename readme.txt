@@ -192,6 +192,9 @@ Yes. With WP-CLI available and this plugin active:
 
 == Changelog ==
 
+= Unreleased =
+* Optional weekly rules backup email on the Rules tab (off by default): emails a JSON rules export once a week, keeps only the latest backup on the site for download, and lets you compare with that backup in one click.
+
 = 1.5.0 =
 * Shared email layout for HandL alerts and reports: same header, intro, and footer on every message, with a plain-text and HTML part. Per-message wording inside the content block is unchanged.
 * Optional weekly governance digest email: last 7 days of AI Client calls, estimated spend vs the previous 7 days, blocked calls, direct connections, usage spike alerts, and top plugins. Off by default.
