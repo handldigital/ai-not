@@ -104,7 +104,7 @@ final class Admin {
 		}
 
 		$posted_action = sanitize_key( wp_unslash( (string) $_POST['handl_aicac_action'] ) );
-		if ( 'export_log' !== $posted_action && 'export_rules' !== $posted_action && 'export_audit_report' !== $posted_action && 'pack_export_backup' !== $posted_action && 'download_latest_backup' !== $posted_action ) {
+		if ( 'export_log' !== $posted_action && 'export_rules' !== $posted_action && 'export_audit_report' !== $posted_action && 'export_prune_candidates' !== $posted_action && 'pack_export_backup' !== $posted_action && 'download_latest_backup' !== $posted_action ) {
 			return;
 		}
 
@@ -121,6 +121,11 @@ final class Admin {
 		if ( 'export_rules' === $posted_action ) {
 			check_admin_referer( 'handl_aicac_export_rules', 'handl_aicac_nonce' );
 			$this->handle_export_rules();
+		}
+
+		if ( 'export_prune_candidates' === $posted_action ) {
+			check_admin_referer( 'handl_aicac_export_prune_candidates', 'handl_aicac_nonce' );
+			$this->handle_export_prune_candidates();
 		}
 
 		if ( 'pack_export_backup' === $posted_action ) {
@@ -270,7 +275,11 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_undo_quick_rule', 'handl_aicac_nonce' );
 				$this->handle_undo_quick_rule();
 			}
-			// export_log / export_rules: handled on admin_init (maybe_handle_file_downloads).
+			if ( 'skip_prune_export' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_skip_prune_export', 'handl_aicac_nonce' );
+				$this->handle_skip_prune_export();
+			}
+			// export_log / export_rules / export_prune_candidates: handled on admin_init (maybe_handle_file_downloads).
 			if ( 'import_rules_preview' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_import_rules', 'handl_aicac_nonce' );
 				$this->handle_import_rules_preview();
@@ -404,6 +413,7 @@ final class Admin {
 		$checks_need_override = isset( $_GET['handl_aicac_checks_need_override'] ) && '1' === (string) $_GET['handl_aicac_checks_need_override'];
 		$checks_saved_ok      = isset( $_GET['handl_aicac_checks_saved'] ) && '1' === (string) $_GET['handl_aicac_checks_saved'];
 		$policy_backup_saved  = isset( $_GET['handl_aicac_policy_backup_saved'] ) && '1' === (string) $_GET['handl_aicac_policy_backup_saved'];
+		$prune_export_skipped = isset( $_GET['handl_aicac_prune_export_skipped'] ) && '1' === (string) $_GET['handl_aicac_prune_export_skipped'];
 
 
 		if ( isset( $_POST['handl_aicac_action'] ) && 'save' === $_POST['handl_aicac_action'] ) {
@@ -448,6 +458,9 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		}
 		if ( $policy_backup_saved ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Weekly rules backup setting saved.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		if ( $prune_export_skipped ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Old activity entries were removed. Daily cleanup will continue automatically.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $renewed_ok ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Temporary allow renewed for 7 more days.', 'handl-ai-connector-access-control' ) . '</p></div>';
@@ -3464,20 +3477,28 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			$warning = Log_Storage::insights_purge_warning( $log, $policy, (int) $current_max_age );
 		}
 
-		// Live warning when the typed TTL would create Insights gaps.
+		// Live warning when the chosen period would create Insights gaps.
 		echo '<p class="description handl-aicac-log-storage-warn" id="handl-aicac-log-storage-warn" style="margin:8px 0 0;' . ( null === $warning ? 'display:none;' : '' ) . '">';
 		echo '<strong>' . esc_html__( 'Before you save:', 'handl-ai-connector-access-control' ) . '</strong> ';
 		echo esc_html__( 'This time limit would remove entries used for weekly trends in Insights. Some weeks would show “No data kept.” Save only if that is acceptable.', 'handl-ai-connector-access-control' );
 		echo '</p>';
 
 		if ( null !== $suggested ) {
+			// Map Insights window (56 days) onto the nearest discrete keep period that covers it.
+			$suggested_choice = 365;
+			foreach ( Log_Retention::PERIOD_DAYS as $days ) {
+				if ( (int) $days >= (int) $suggested ) {
+					$suggested_choice = (int) $days;
+					break;
+				}
+			}
 			echo '<p style="margin:10px 0 0;">';
-			echo '<button type="button" class="button button-secondary" id="handl-aicac-apply-suggested-retention" data-days="' . esc_attr( (string) $suggested ) . '">';
+			echo '<button type="button" class="button button-secondary" id="handl-aicac-apply-suggested-retention" data-days="' . esc_attr( (string) $suggested_choice ) . '">';
 			echo esc_html(
 				sprintf(
 					/* translators: %d: suggested retention days */
 					__( 'Use suggested %d-day limit', 'handl-ai-connector-access-control' ),
-					$suggested
+					$suggested_choice
 				)
 			);
 			echo '</button>';
@@ -3595,7 +3616,6 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$log_enabled = ! empty( $policy['log_enabled'] );
 		$log_limit   = (int) ( $policy['log_limit'] ?? 200 );
 		$max_age     = Policy::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
-		$max_age_val = null === $max_age ? '' : (string) $max_age;
 
 		echo '<p class="description" style="max-width:52em;margin-bottom:1em;">';
 		echo esc_html__( 'Use this tab to see AI Client and direct AI HTTP activity. Learn mode logs every call without blocking it. Manage enforcement on the Rules tab.', 'handl-ai-connector-access-control' );
@@ -3636,11 +3656,18 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '</tr>';
 
 		echo '<tr>';
-		echo '<th scope="row"><label for="handl-aicac-log-max-age-days">' . esc_html__( 'Delete log entries older than (days)', 'handl-ai-connector-access-control' ) . '</label></th>';
+		echo '<th scope="row"><label for="handl-aicac-log-max-age-days">' . esc_html__( 'How long to keep activity', 'handl-ai-connector-access-control' ) . '</label></th>';
 		echo '<td>';
-		echo '<input type="number" id="handl-aicac-log-max-age-days" name="handl_aicac_log_max_age_days" value="' . esc_attr( $max_age_val ) . '" min="1" max="3650" step="1" class="small-text" placeholder="" />';
-		echo ' <span class="description">' . esc_html__( 'Optional. Leave blank for no time limit. When set, older entries are removed the next time the log is read or updated. The entry limit still applies, and the stricter limit wins.', 'handl-ai-connector-access-control' ) . '</span>';
+		$choices = Log_Retention::period_choices( $max_age );
+		$selected = null === $max_age ? '' : (string) $max_age;
+		echo '<select id="handl-aicac-log-max-age-days" name="handl_aicac_log_max_age_days">';
+		foreach ( $choices as $value => $label ) {
+			echo '<option value="' . esc_attr( (string) $value ) . '" ' . selected( $selected, (string) $value, false ) . '>' . esc_html( $label ) . '</option>';
+		}
+		echo '</select>';
+		echo '<p class="description">' . esc_html__( 'Keep activity forever (default), or choose when older entries should be removed. The plugin checks once a day and removes entries past that period in batches. The entry limit also applies; whichever limit is reached first takes effect.', 'handl-ai-connector-access-control' ) . '</p>';
 		$this->render_log_storage_hints( $log, $policy, $max_age );
+		$this->render_log_retention_export_gate( $policy );
 		echo '</td>';
 		echo '</tr>';
 
@@ -5724,13 +5751,87 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	private function handle_save_log(): void {
 		$this->require_admin_mutation( 'handl_aicac_save_policy' );
 
-		$policy = Policy::get_policy();
+		$previous = Policy::get_policy();
+		$policy   = $previous;
 
 		$this->apply_log_settings_from_post( $policy );
 
 		Policy::save_policy( $policy );
-		// Apply a newly saved TTL immediately so the Activity table matches settings.
-		Policy::prune_stored_log();
+		Log_Retention::after_settings_saved( $previous, $policy );
+
+		// Entry-count prune always; time-based prune waits for export-before-prune when pending.
+		if ( ! Log_Retention::should_defer_ttl_prune() ) {
+			Policy::prune_stored_log();
+		} else {
+			// Apply entry-count cap only while export is pending.
+			$cap_policy = Policy::get_policy();
+			$cap_policy['log_max_age_days'] = null;
+			$log = get_option( Plugin::LOG_OPTION_KEY );
+			$log = is_array( $log ) ? $log : array();
+			$kept = Policy::apply_log_retention( $log, $cap_policy, time() );
+			if ( count( $kept ) !== count( $log ) || $kept != $log ) { // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
+				update_option( Plugin::LOG_OPTION_KEY, $kept, false );
+			}
+		}
+	}
+
+	/**
+	 * AICAC-RETENTION: CSV export gate before the first automatic prune.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function render_log_retention_export_gate( array $policy ): void {
+		if ( ! Log_Retention::is_export_pending() ) {
+			$meta = Log_Retention::meta();
+			if ( $meta['last_prune_ts'] > 0 ) {
+				$when = function_exists( 'wp_date' )
+					? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (int) $meta['last_prune_ts'] )
+					: gmdate( 'Y-m-d H:i', (int) $meta['last_prune_ts'] );
+				echo '<p class="description" style="margin-top:8px;">';
+				echo esc_html(
+					sprintf(
+						/* translators: %s: localized date/time of last prune */
+						__( 'Last automatic cleanup: %s.', 'handl-ai-connector-access-control' ),
+						$when
+					)
+				);
+				echo '</p>';
+			}
+			return;
+		}
+
+		$days = Policy::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
+		$log  = get_option( Plugin::LOG_OPTION_KEY );
+		$log  = is_array( $log ) ? $log : array();
+		$n    = null !== $days ? count( Log_Retention::rows_past_retention( $log, $days ) ) : 0;
+
+		echo '<div class="notice notice-warning inline" style="margin-top:10px;"><p>';
+		echo esc_html(
+			sprintf(
+				/* translators: %d: number of activity rows older than the retention period */
+				_n(
+					'%d activity entry is older than your selected keep period. Download it as a CSV before cleanup continues, or delete it without downloading.',
+					'%d activity entries are older than your selected keep period. Download them as a CSV before cleanup continues, or delete them without downloading.',
+					$n,
+					'handl-ai-connector-access-control'
+				),
+				$n
+			)
+		);
+		echo '</p><p>';
+		echo '<form method="post" style="display:inline-block;margin:0 8px 0 0;">';
+		wp_nonce_field( 'handl_aicac_export_prune_candidates', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="export_prune_candidates" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
+		submit_button( __( 'Download rows to be removed (CSV)', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+		echo '</form>';
+		echo '<form method="post" style="display:inline-block;margin:0;">';
+		wp_nonce_field( 'handl_aicac_skip_prune_export', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="skip_prune_export" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
+		submit_button( __( 'Delete without downloading', 'handl-ai-connector-access-control' ), 'link', 'submit', false );
+		echo '</form>';
+		echo '</p></div>';
 	}
 
 	private function render_option( string $value, string $current, string $label ): void {
@@ -6940,6 +7041,79 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		header( 'Content-Length: ' . (string) strlen( $payload ) );
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- raw CSV download body.
 		echo $payload;
+		exit;
+	}
+
+	/**
+	 * AICAC-RETENTION: CSV of rows about to be removed, then clear export gate.
+	 */
+	private function handle_export_prune_candidates(): void {
+		$this->require_admin_mutation( 'handl_aicac_export_prune_candidates' );
+
+		$policy = Policy::get_policy();
+		$days   = Policy::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
+		$log    = get_option( Plugin::LOG_OPTION_KEY );
+		$log    = is_array( $log ) ? $log : array();
+		$rows   = null !== $days ? Log_Retention::rows_past_retention( $log, $days ) : array();
+
+		$plugins = function_exists( 'get_plugins' ) ? get_plugins() : array();
+		if ( ! is_array( $plugins ) ) {
+			$plugins = array();
+		}
+
+		$user_labels = array();
+		foreach ( $rows as $row ) {
+			if ( ! is_array( $row ) || empty( $row['user_id'] ) ) {
+				continue;
+			}
+			$uid = (int) $row['user_id'];
+			if ( $uid < 1 || isset( $user_labels[ $uid ] ) ) {
+				continue;
+			}
+			$user = get_userdata( $uid );
+			$user_labels[ $uid ] = ( $user && isset( $user->display_name ) )
+				? (string) $user->display_name
+				: '';
+		}
+
+		$empty_filters = array(
+			'decision'  => '',
+			'operation' => '',
+			'provider'  => '',
+			'model'     => '',
+			'plugin'    => '',
+		);
+		$payload  = Audit_Export::build_csv( $rows, $empty_filters, $plugins, $policy, $user_labels );
+		$filename = 'handl-aicac-prune-candidates-' . gmdate( 'Ymd-His' ) . '.csv';
+
+		Log_Retention::mark_export_completed();
+
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+		header( 'Content-Length: ' . (string) strlen( $payload ) );
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- raw CSV download body.
+		echo $payload;
+		exit;
+	}
+
+	/**
+	 * AICAC-RETENTION: skip CSV and allow automatic prune.
+	 */
+	private function handle_skip_prune_export(): void {
+		$this->require_admin_mutation( 'handl_aicac_skip_prune_export' );
+		Log_Retention::skip_export();
+		Log_Retention::run_prune_batch( Policy::get_policy(), time() );
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'            => 'handl-ai-connector-access-control',
+					'handl_aicac_tab' => 'activity',
+					'handl_aicac_prune_export_skipped' => '1',
+				),
+				admin_url( 'options-general.php' )
+			)
+		);
 		exit;
 	}
 
