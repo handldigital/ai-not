@@ -2700,7 +2700,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<h3>' . esc_html__( 'Daily trends', 'handl-ai-connector-access-control' ) . '</h3>';
 
 		if ( null === $daily ) {
-			echo '<p class="description">' . esc_html__( 'Daily trend lines need at least two days of saved Activity. Keep logging on, or wait until more days are retained.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Daily trends need at least two days of saved Activity. Keep Activity logging on and retain at least two days.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '</div>';
 			return;
 		}
@@ -2710,37 +2710,33 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '</p>';
 
 		if ( empty( $daily['has_activity'] ) ) {
-			echo '<p class="description">' . esc_html__( 'No AI Client calls in this window yet, so the lines stay flat at zero.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'No recorded calls in this window, so the trend lines stay at zero.', 'handl-ai-connector-access-control' ) . '</p>';
 		}
 
 		$days = $daily['site']['days'];
 		$charts = array(
 			array(
-				'label'  => __( 'Calls / day', 'handl-ai-connector-access-control' ),
+				'label'  => __( 'Calls per day', 'handl-ai-connector-access-control' ),
 				'metric' => 'calls',
-				'hint'   => '',
 			),
 			array(
-				'label'  => __( 'Estimated spend / day', 'handl-ai-connector-access-control' ),
+				'label'  => __( 'Estimated spend per day', 'handl-ai-connector-access-control' ),
 				'metric' => 'spend',
-				'hint'   => __( 'estimated', 'handl-ai-connector-access-control' ),
 			),
 			array(
-				'label'  => __( 'Blocked calls / day', 'handl-ai-connector-access-control' ),
+				'label'  => __( 'Blocked calls per day', 'handl-ai-connector-access-control' ),
 				'metric' => 'blocks',
-				'hint'   => '',
 			),
 		);
 
 		echo '<div class="handl-aicac-daily-charts" style="display:flex;flex-wrap:wrap;gap:1.25em;">';
 		foreach ( $charts as $chart ) {
-			$svg = Daily_Trends::sparkline_svg( $days, (string) $chart['metric'] );
+			$metric = (string) $chart['metric'];
+			$label  = (string) $chart['label'];
+			$aria   = Daily_Trends::sparkline_aria_label( $days, $metric, $label );
+			$svg    = Daily_Trends::sparkline_svg( $days, $metric, 180, 36, $aria );
 			echo '<div class="handl-aicac-daily-chart" style="min-width:12em;">';
-			echo '<p style="margin:0 0 0.35em;"><strong>' . esc_html( (string) $chart['label'] ) . '</strong>';
-			if ( '' !== (string) $chart['hint'] ) {
-				echo ' <span class="description">(' . esc_html( (string) $chart['hint'] ) . ')</span>';
-			}
-			echo '</p>';
+			echo '<p style="margin:0 0 0.35em;"><strong>' . esc_html( $label ) . '</strong></p>';
 			if ( '' === $svg ) {
 				echo '<p class="description">' . esc_html__( 'Not enough days to draw a line.', 'handl-ai-connector-access-control' ) . '</p>';
 			} else {
@@ -2901,23 +2897,44 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		if ( 'plugin' === $dimension && null !== $daily_trends && isset( $daily_trends['plugins'][ $key ] ) ) {
 			$mini = $daily_trends['plugins'][ $key ];
 			$days = isset( $mini['days'] ) && is_array( $mini['days'] ) ? $mini['days'] : array();
-			$calls_svg = Daily_Trends::sparkline_svg( $days, 'calls', 100, 24 );
-			$spend_svg = Daily_Trends::sparkline_svg( $days, 'spend', 100, 24 );
-			$blocks_svg = Daily_Trends::sparkline_svg( $days, 'blocks', 100, 24 );
+			$calls_label  = __( 'Calls', 'handl-ai-connector-access-control' );
+			$spend_label  = __( 'Estimated spend', 'handl-ai-connector-access-control' );
+			$blocks_label = __( 'Blocked calls', 'handl-ai-connector-access-control' );
+			$calls_svg    = Daily_Trends::sparkline_svg(
+				$days,
+				'calls',
+				100,
+				24,
+				Daily_Trends::sparkline_aria_label( $days, 'calls', $calls_label )
+			);
+			$spend_svg = Daily_Trends::sparkline_svg(
+				$days,
+				'spend',
+				100,
+				24,
+				Daily_Trends::sparkline_aria_label( $days, 'spend', $spend_label )
+			);
+			$blocks_svg = Daily_Trends::sparkline_svg(
+				$days,
+				'blocks',
+				100,
+				24,
+				Daily_Trends::sparkline_aria_label( $days, 'blocks', $blocks_label )
+			);
 			echo '<details class="handl-aicac-insights-mini-trend" style="margin-top:0.4em;">';
-			echo '<summary>' . esc_html__( 'Daily trend', 'handl-ai-connector-access-control' ) . '</summary>';
-			echo '<p class="description" style="margin:0.4em 0 0.2em;">' . esc_html__( 'Calls / estimated spend / blocked calls by day from saved Activity.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<summary>' . esc_html__( 'Daily trends', 'handl-ai-connector-access-control' ) . '</summary>';
+			echo '<p class="description" style="margin:0.4em 0 0.2em;">' . esc_html__( 'Calls, estimated spend, and blocked calls by day from saved Activity.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '<div style="display:flex;flex-wrap:wrap;gap:0.75em;align-items:center;">';
 			foreach (
 				array(
-					array( 'svg' => $calls_svg, 'label' => __( 'Calls', 'handl-ai-connector-access-control' ) ),
-					array( 'svg' => $spend_svg, 'label' => __( 'Estimated spend', 'handl-ai-connector-access-control' ) ),
-					array( 'svg' => $blocks_svg, 'label' => __( 'Blocked', 'handl-ai-connector-access-control' ) ),
+					array( 'svg' => $calls_svg, 'label' => $calls_label ),
+					array( 'svg' => $spend_svg, 'label' => $spend_label ),
+					array( 'svg' => $blocks_svg, 'label' => $blocks_label ),
 				) as $mini_chart
 			) {
 				echo '<span><span class="description">' . esc_html( (string) $mini_chart['label'] ) . '</span><br />';
 				if ( '' === (string) $mini_chart['svg'] ) {
-					echo esc_html__( 'Not enough days', 'handl-ai-connector-access-control' );
+					echo esc_html__( 'Not enough saved days', 'handl-ai-connector-access-control' );
 				} else {
 					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sparkline_svg escapes attribute values.
 					echo $mini_chart['svg'];

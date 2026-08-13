@@ -177,8 +177,9 @@ final class Daily_Trends {
 	 *
 	 * @param list<array{calls?:int,spend?:float,blocks?:int}> $days
 	 * @param 'calls'|'spend'|'blocks'                         $metric
+	 * @param string                                           $aria_label Accessible trend summary (required for a11y).
 	 */
-	public static function sparkline_svg( array $days, string $metric = 'calls', int $width = 180, int $height = 36 ): string {
+	public static function sparkline_svg( array $days, string $metric = 'calls', int $width = 180, int $height = 36, string $aria_label = '' ): string {
 		$points = array();
 		foreach ( $days as $d ) {
 			if ( 'spend' === $metric ) {
@@ -212,13 +213,88 @@ final class Daily_Trends {
 		}
 
 		$polyline = esc_attr( implode( ' ', $coords ) );
+		$label    = '' !== $aria_label ? $aria_label : self::sparkline_aria_label( $days, $metric, self::default_metric_label( $metric ) );
 
 		return sprintf(
-			'<svg class="handl-aicac-daily-spark" width="%1$d" height="%2$d" viewBox="0 0 %1$d %2$d" role="img" aria-hidden="true" focusable="false"><polyline fill="none" stroke="currentColor" stroke-width="1.5" points="%3$s" /></svg>',
+			'<svg class="handl-aicac-daily-spark" width="%1$d" height="%2$d" viewBox="0 0 %1$d %2$d" role="img" aria-label="%4$s" focusable="false"><polyline fill="none" stroke="currentColor" stroke-width="1.5" points="%3$s" /></svg>',
 			$width,
 			$height,
-			$polyline
+			$polyline,
+			esc_attr( $label )
 		);
+	}
+
+	/**
+	 * Accessible summary for a daily sparkline.
+	 *
+	 * @param list<array{calls?:int,spend?:float,blocks?:int}> $days
+	 * @param 'calls'|'spend'|'blocks'                         $metric
+	 */
+	public static function sparkline_aria_label( array $days, string $metric, string $metric_label ): string {
+		$points = array();
+		foreach ( $days as $d ) {
+			if ( 'spend' === $metric ) {
+				$points[] = (float) ( $d['spend'] ?? 0 );
+			} elseif ( 'blocks' === $metric ) {
+				$points[] = (float) ( $d['blocks'] ?? 0 );
+			} else {
+				$points[] = (float) ( $d['calls'] ?? 0 );
+			}
+		}
+		$n = count( $points );
+		if ( $n < 1 ) {
+			return $metric_label;
+		}
+
+		$first  = $points[0];
+		$latest = $points[ $n - 1 ];
+		$low    = min( $points );
+		$high   = max( $points );
+
+		return sprintf(
+			/* translators: 1: metric label, 2: day count, 3: first value, 4: latest value, 5: low, 6: high */
+			__( '%1$s over %2$d saved days. First: %3$s. Latest: %4$s. Low: %5$s. High: %6$s.', 'handl-ai-connector-access-control' ),
+			$metric_label,
+			$n,
+			self::format_metric_value( $metric, $first ),
+			self::format_metric_value( $metric, $latest ),
+			self::format_metric_value( $metric, $low ),
+			self::format_metric_value( $metric, $high )
+		);
+	}
+
+	/**
+	 * @param 'calls'|'spend'|'blocks' $metric
+	 */
+	public static function format_metric_value( string $metric, float $value ): string {
+		if ( 'spend' === $metric ) {
+			$amount = ( $value > 0 && $value < 0.01 ) ? 0.01 : $value;
+			$num    = function_exists( 'number_format_i18n' )
+				? number_format_i18n( $amount, 2 )
+				: number_format( $amount, 2, '.', '' );
+
+			return '$' . $num;
+		}
+
+		$rounded = (int) round( $value );
+
+		return function_exists( 'number_format_i18n' )
+			? number_format_i18n( $rounded )
+			: (string) $rounded;
+	}
+
+	/**
+	 * @param 'calls'|'spend'|'blocks' $metric
+	 */
+	public static function default_metric_label( string $metric ): string {
+		if ( 'spend' === $metric ) {
+			return __( 'Estimated spend per day', 'handl-ai-connector-access-control' );
+		}
+		if ( 'blocks' === $metric ) {
+			return __( 'Blocked calls per day', 'handl-ai-connector-access-control' );
+		}
+
+		return __( 'Calls per day', 'handl-ai-connector-access-control' );
 	}
 
 	public static function window_label( int $window_days, bool $full_window ): string {
@@ -232,7 +308,7 @@ final class Daily_Trends {
 
 		return sprintf(
 			/* translators: %d: number of days retained */
-			__( 'Last %d days from saved Activity (not a full 30 days — older days were not kept)', 'handl-ai-connector-access-control' ),
+			__( 'Last %d saved days of Activity (not a full 30-day window because older activity was not kept)', 'handl-ai-connector-access-control' ),
 			max( 0, $window_days )
 		);
 	}

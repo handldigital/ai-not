@@ -72,7 +72,7 @@ final class DailyTrendsTest extends TestCase {
 		$this->assertNotNull( $out );
 		$this->assertFalse( $out['full_window'] );
 		$this->assertSame( 6, $out['window_days'] ); // Aug 7–12 with 5-day TTL from Aug 12.
-		$this->assertStringContainsString( 'not a full 30 days', $out['window_label'] );
+		$this->assertStringContainsString( 'not a full 30-day window', $out['window_label'] );
 		$this->assertTrue( $out['has_activity'] );
 
 		$by_key = array();
@@ -103,7 +103,14 @@ final class DailyTrendsTest extends TestCase {
 		$svg = Daily_Trends::sparkline_svg( $days, 'calls' );
 		$this->assertStringContainsString( '<svg', $svg );
 		$this->assertStringContainsString( 'polyline', $svg );
+		$this->assertStringContainsString( 'aria-label=', $svg );
+		$this->assertStringNotContainsString( 'aria-hidden', $svg );
 		$this->assertSame( '', Daily_Trends::sparkline_svg( array( array( 'calls' => 1 ) ), 'calls' ) );
+
+		$aria = Daily_Trends::sparkline_aria_label( $days, 'spend', 'Estimated spend' );
+		$this->assertStringContainsString( 'Estimated spend over 3 saved days', $aria );
+		$this->assertStringContainsString( 'First: $', $aria );
+		$this->assertStringContainsString( 'High: $', $aria );
 	}
 
 	public function test_full_30_day_window_without_ttl(): void {
