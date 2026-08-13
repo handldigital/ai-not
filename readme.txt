@@ -192,6 +192,9 @@ Yes. With WP-CLI available and this plugin active:
 
 == Changelog ==
 
+= Unreleased =
+* Starter policy packs on the Rules tab: preview Strict, Balanced, or Observe-first, download a JSON backup, then apply without silently replacing your existing per-plugin rules.
+
 = 1.5.0 =
 * Shared email layout for HandL alerts and reports: same header, intro, and footer on every message, with a plain-text and HTML part. Per-message wording inside the content block is unchanged.
 * Optional weekly governance digest email: last 7 days of AI Client calls, estimated spend vs the previous 7 days, blocked calls, direct connections, usage spike alerts, and top plugins. Off by default.
