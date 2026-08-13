@@ -26,7 +26,7 @@ final class Policy_Transfer {
 	 *
 	 * @var list<string>
 	 */
-	public const META_KEYS = array( 'plugin_version', 'exported_at' );
+	public const META_KEYS = array( 'plugin_version', 'exported_at', 'site_url' );
 
 	/**
 	 * Known policy option keys this plugin version understands.
@@ -100,6 +100,9 @@ final class Policy_Transfer {
 			'plugin_version' => $plugin_version,
 			'exported_at'    => $exported_at,
 		);
+		if ( function_exists( 'home_url' ) ) {
+			$out['site_url'] = (string) home_url( '/' );
+		}
 
 		foreach ( self::known_policy_keys() as $key ) {
 			if ( array_key_exists( $key, $policy ) ) {

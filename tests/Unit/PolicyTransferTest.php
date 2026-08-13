@@ -36,6 +36,7 @@ final class PolicyTransferTest extends TestCase {
 
 		$this->assertSame( '1.0.15', $export['plugin_version'] );
 		$this->assertSame( '2026-08-07T00:00:00+00:00', $export['exported_at'] );
+		$this->assertSame( 'https://example.test/', $export['site_url'] );
 		$this->assertSame( 'deny', $export['default'] );
 		$this->assertSame( array( 'acme/plugin.php' => 'allow' ), $export['plugins'] );
 		$this->assertArrayNotHasKey( 'model_force_enabled', $export );
