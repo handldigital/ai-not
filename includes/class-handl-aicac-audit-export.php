@@ -24,8 +24,8 @@ final class Audit_Export {
 	 *
 	 * @return list<string>
 	 */
-	public static function column_headers(): array {
-		return array(
+	public static function column_headers( bool $include_rule_note = false ): array {
+		$headers = array(
 			'Time',
 			'Decision',
 			'Operation / family',
@@ -39,6 +39,11 @@ final class Audit_Export {
 			'User',
 			'URI',
 		);
+		if ( $include_rule_note ) {
+			$headers[] = 'Rule note';
+		}
+
+		return $headers;
 	}
 
 	/**
@@ -227,10 +232,22 @@ final class Audit_Export {
 			return '';
 		}
 
-		fputcsv( $fh, self::column_headers() );
+		$filtered         = self::filtered_rows( $log, $filters );
+		$include_rule_note = false;
+		foreach ( $filtered as $probe ) {
+			if ( '' !== Rule_Notes::from_activity_row( $probe ) ) {
+				$include_rule_note = true;
+				break;
+			}
+		}
+		fputcsv( $fh, self::column_headers( $include_rule_note ) );
 
-		foreach ( self::filtered_rows( $log, $filters ) as $row ) {
-			fputcsv( $fh, self::format_row( $row, $plugins, $policy, $user_labels ) );
+		foreach ( $filtered as $row ) {
+			$cells = self::format_row( $row, $plugins, $policy, $user_labels );
+			if ( $include_rule_note ) {
+				$cells[] = Rule_Notes::from_activity_row( $row );
+			}
+			fputcsv( $fh, $cells );
 		}
 
 		rewind( $fh );

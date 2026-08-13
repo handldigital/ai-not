@@ -73,6 +73,18 @@ if ( ! function_exists( 'sanitize_text_field' ) ) {
 	}
 }
 
+
+if ( ! function_exists( 'sanitize_textarea_field' ) ) {
+	/**
+	 * @param string $str Raw string.
+	 */
+	function sanitize_textarea_field( $str ): string {
+		$str = (string) $str;
+		$str = strip_tags( $str );
+		return trim( $str );
+	}
+}
+
 if ( ! function_exists( 'sanitize_key' ) ) {
 	/**
 	 * @param string $key Raw key.
@@ -719,6 +731,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-attribution.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-shadow-ai.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-keyscan.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-temp-allow.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rule-notes.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-new-plugin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quiet-hours.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';

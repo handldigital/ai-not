@@ -98,6 +98,17 @@ final class Policy {
 			$event['denial_reason']  = 'budget';
 		}
 
+		// AICAC-NOTE (#125): freeze the applicable Rule note on the Activity row.
+		// Snapshot after budget overrides so higher-priority reasons do not inherit it.
+		$frozen_note = Rule_Notes::snapshot_for_event(
+			$policy,
+			is_string( $plugin ) ? $plugin : null,
+			isset( $event['denial_reason'] ) ? (string) $event['denial_reason'] : ''
+		);
+		if ( '' !== $frozen_note ) {
+			$event['rule_note'] = $frozen_note;
+		}
+
 		// AICAC-HOURS: tag rows while a window is live (Deny or Observe).
 		$qh_active = Quiet_Hours::active_window( $policy, $now_ts );
 		if ( null !== $qh_active ) {
@@ -888,6 +899,8 @@ final class Policy {
 		// AICAC-TEMP-ALLOW: optional unix expiry per explicit Allow rule (no new top-level feature flag).
 		$policy['plugin_expires'] = Temp_Allow::sanitize_plugin_expires( $policy['plugin_expires'] ?? array() );
 		$policy                   = Temp_Allow::normalize_expires_against_plugins( $policy );
+		$policy['plugin_notes']   = Rule_Notes::sanitize_plugin_notes( $policy['plugin_notes'] ?? array() );
+		$policy                   = Rule_Notes::normalize_against_plugins( $policy );
 		// AICAC-NEWPLUGIN: review-first for newly activated plugins (off by default).
 		$policy = New_Plugin::normalize_policy( $policy );
 		// Opt-in: logging stores local request metadata (e.g. user id / URI).
@@ -1163,6 +1176,8 @@ final class Policy {
 		unset( $policy['denied_abilities'] );
 		$policy['plugin_expires'] = Temp_Allow::sanitize_plugin_expires( $policy['plugin_expires'] ?? array() );
 		$policy                   = Temp_Allow::normalize_expires_against_plugins( $policy );
+		$policy['plugin_notes']   = Rule_Notes::sanitize_plugin_notes( $policy['plugin_notes'] ?? array() );
+		$policy                   = Rule_Notes::normalize_against_plugins( $policy );
 		$policy                   = New_Plugin::normalize_policy( $policy );
 
 		$policy['alert_on_deny']     = ! empty( $policy['alert_on_deny'] );
@@ -1351,6 +1366,7 @@ final class Policy {
 		}
 		if ( '' === $rule ) {
 			unset( $policy['plugins'][ $plugin_basename ] );
+			$policy = Rule_Notes::clear_for_plugin( $policy, $plugin_basename );
 		} else {
 			$policy['plugins'][ $plugin_basename ] = $rule;
 		}

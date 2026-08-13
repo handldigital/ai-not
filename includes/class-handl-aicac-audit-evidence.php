@@ -189,11 +189,23 @@ th{background:#f0f0f1;}
 <p class="muted"><?php echo esc_html__( 'No explicit plugin rules. All plugins follow the site default.', 'handl-ai-connector-access-control' ); ?></p>
 <?php else : ?>
 <table>
+<?php
+$show_reason = false;
+foreach ( $rules as $rcheck ) {
+	if ( is_array( $rcheck ) && '' !== trim( (string) ( $rcheck['note'] ?? '' ) ) ) {
+		$show_reason = true;
+		break;
+	}
+}
+?>
 <thead><tr>
 <th><?php echo esc_html__( 'Plugin', 'handl-ai-connector-access-control' ); ?></th>
 <th><?php echo esc_html__( 'Access', 'handl-ai-connector-access-control' ); ?></th>
 <th><?php echo esc_html__( 'AI type rules', 'handl-ai-connector-access-control' ); ?></th>
 <th><?php echo esc_html__( 'Allow expiry', 'handl-ai-connector-access-control' ); ?></th>
+<?php if ( $show_reason ) : ?>
+<th><?php echo esc_html__( 'Rule note', 'handl-ai-connector-access-control' ); ?></th>
+<?php endif; ?>
 </tr></thead>
 <tbody>
 <?php foreach ( $rules as $row ) : ?>
@@ -203,6 +215,9 @@ th{background:#f0f0f1;}
 <td><?php echo esc_html( (string) ( $row['rule_label'] ?? '' ) ); ?></td>
 <td><?php echo esc_html( (string) ( $row['families_label'] ?? '' ) ); ?></td>
 <td><?php echo esc_html( (string) ( $row['expires_label'] ?? '' ) ); ?></td>
+<?php if ( $show_reason ) : ?>
+<td><?php echo esc_html( (string) ( $row['note'] ?? '' ) ); ?></td>
+<?php endif; ?>
 </tr>
 <?php endforeach; ?>
 </tbody>
@@ -324,6 +339,7 @@ if ( empty( $lines ) ) {
 		$explicit = is_array( $policy['plugins'] ?? null ) ? (array) $policy['plugins'] : array();
 		$ops      = is_array( $policy['operations'] ?? null ) ? (array) $policy['operations'] : array();
 		$expires  = is_array( $policy['plugin_expires'] ?? null ) ? (array) $policy['plugin_expires'] : array();
+		$notes    = Rule_Notes::sanitize_plugin_notes( $policy['plugin_notes'] ?? array() );
 		$labels   = Operations::family_labels();
 		$out      = array();
 
@@ -372,6 +388,7 @@ if ( empty( $lines ) ) {
 					? __( 'Follow plugin rule', 'handl-ai-connector-access-control' )
 					: implode( '; ', $family_bits ),
 				'expires_label'  => $expires_label,
+				'note'           => isset( $notes[ $basename ] ) ? (string) $notes[ $basename ] : '',
 			);
 		}
 

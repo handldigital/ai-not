@@ -484,6 +484,10 @@ final class Temp_Allow {
 		$policy['plugins']        = $plugins;
 		$policy['plugin_expires'] = $expires;
 		$policy                   = self::normalize_expires_against_plugins( $policy );
+		foreach ( $removed as $basename ) {
+			$policy = Rule_Notes::clear_for_plugin( $policy, $basename );
+		}
+		$policy = Rule_Notes::normalize_against_plugins( $policy );
 
 		if ( ! empty( $removed ) ) {
 			Policy::save_policy( $policy );
