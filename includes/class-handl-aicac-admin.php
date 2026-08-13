@@ -104,7 +104,7 @@ final class Admin {
 		}
 
 		$posted_action = sanitize_key( wp_unslash( (string) $_POST['handl_aicac_action'] ) );
-		if ( 'export_log' !== $posted_action && 'export_rules' !== $posted_action && 'export_audit_report' !== $posted_action ) {
+		if ( 'export_log' !== $posted_action && 'export_rules' !== $posted_action && 'export_audit_report' !== $posted_action && 'pack_export_backup' !== $posted_action ) {
 			return;
 		}
 
@@ -121,6 +121,11 @@ final class Admin {
 		if ( 'export_rules' === $posted_action ) {
 			check_admin_referer( 'handl_aicac_export_rules', 'handl_aicac_nonce' );
 			$this->handle_export_rules();
+		}
+
+		if ( 'pack_export_backup' === $posted_action ) {
+			check_admin_referer( 'handl_aicac_pack_export_backup', 'handl_aicac_nonce' );
+			$this->handle_pack_export_backup();
 		}
 
 		if ( 'export_audit_report' === $posted_action ) {
@@ -285,6 +290,14 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_preset_apply_confirm', 'handl_aicac_nonce' );
 				$this->handle_preset_apply_confirm();
 			}
+			if ( 'pack_preview' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_pack_preview', 'handl_aicac_nonce' );
+				$this->handle_pack_preview();
+			}
+			if ( 'pack_apply_confirm' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_pack_apply_confirm', 'handl_aicac_nonce' );
+				$this->handle_pack_apply_confirm();
+			}
 			if ( 'policy_restore_preview' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_policy_restore_preview', 'handl_aicac_nonce' );
 				$this->handle_policy_restore_preview();
@@ -368,6 +381,10 @@ final class Admin {
 		$show_preset_preview = isset( $_GET['handl_aicac_preset_preview'] ) && '1' === (string) $_GET['handl_aicac_preset_preview'];
 		$preset_status       = isset( $_GET['handl_aicac_preset'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_preset'] ) ) : '';
 		$preset_id_q         = isset( $_GET['handl_aicac_preset_id'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_preset_id'] ) ) : '';
+		$show_pack_preview   = isset( $_GET['handl_aicac_pack_preview'] ) && '1' === (string) $_GET['handl_aicac_pack_preview'];
+		$pack_status         = isset( $_GET['handl_aicac_pack'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_pack'] ) ) : '';
+		$pack_id_q           = isset( $_GET['handl_aicac_pack_id'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_pack_id'] ) ) : '';
+		$pack_backup_needed  = isset( $_GET['handl_aicac_pack_need_backup'] ) && '1' === (string) $_GET['handl_aicac_pack_need_backup'];
 		$show_restore_preview = isset( $_GET['handl_aicac_restore_preview'] ) && '1' === (string) $_GET['handl_aicac_restore_preview'];
 		$restore_status       = isset( $_GET['handl_aicac_restore'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_restore'] ) ) : '';
 		$show_checks_confirm  = isset( $_GET['handl_aicac_checks_confirm'] ) && '1' === (string) $_GET['handl_aicac_checks_confirm'];
@@ -580,6 +597,26 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		} elseif ( 'error' === $preset_status ) {
 			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Could not apply that preset. Your current settings were not changed.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
+		if ( 'applied' === $pack_status ) {
+			$pack_label = $pack_id_q;
+			$pack_def   = '' !== $pack_id_q ? Policy_Packs::get( $pack_id_q ) : null;
+			if ( is_array( $pack_def ) ) {
+				$pack_label = (string) $pack_def['label'];
+			}
+			echo '<div class="notice notice-success is-dismissible"><p>';
+			echo esc_html(
+				sprintf(
+					/* translators: %s: policy pack name */
+					__( 'Applied starter pack: %s.', 'handl-ai-connector-access-control' ),
+					$pack_label
+				)
+			);
+			echo '</p></div>';
+		} elseif ( 'noop' === $pack_status ) {
+			echo '<div class="notice notice-info is-dismissible"><p>' . esc_html__( 'That starter pack is already active. No settings were changed.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		} elseif ( 'error' === $pack_status ) {
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Could not apply that starter pack. Your current settings were not changed.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
 		if ( '' !== $blocked_ok ) {
 			$blocked_label = isset( $plugins[ $blocked_ok ]['Name'] ) ? (string) $plugins[ $blocked_ok ]['Name'] : $blocked_ok;
 			echo '<div class="notice notice-success is-dismissible"><p>';
@@ -731,6 +768,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		echo '})();';
 		echo '</script>';
 
+		$this->render_policy_packs_section( $policy, $show_pack_preview, $pack_backup_needed );
 		$this->render_presets_section( $policy, $show_preset_preview );
 		$this->render_policy_restore_section( $policy, $show_restore_preview, $restore_status );
 		$this->render_policy_checks_section( $plugins, $show_checks_confirm );
@@ -6249,6 +6287,152 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	}
 
 	/**
+	 * Starter policy packs (AICAC-TEMPLATES / #173).
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function render_policy_packs_section( array $policy, bool $show_preview, bool $need_backup = false ): void {
+		echo '<div id="handl-aicac-packs" class="handl-aicac-packs" style="margin:0 0 1.5em;">';
+		echo '<h2>' . esc_html__( 'Starter policy packs', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<p class="description">' . esc_html__( 'Choose Strict, Balanced, or Observe-first. Preview every change, then download a JSON backup before applying the pack. Existing per-plugin rules stay in place when they conflict with a pack.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		$defs = Policy_Packs::definitions();
+		echo '<div class="handl-aicac-pack-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(14em,1fr));gap:12px;max-width:56em;">';
+		foreach ( $defs as $def ) {
+			$id     = (string) $def['id'];
+			$active = Policy_Packs::is_active( $id, $policy );
+			echo '<div class="handl-aicac-pack-card" style="border:1px solid #c3c4c7;padding:12px;background:#fff;">';
+			echo '<p style="margin:0 0 6px;"><strong>' . esc_html( (string) $def['label'] ) . '</strong>';
+			if ( $active ) {
+				echo ' <span class="description">(' . esc_html__( 'Active', 'handl-ai-connector-access-control' ) . ')</span>';
+			}
+			echo '</p>';
+			echo '<p class="description" style="margin:0 0 10px;">' . esc_html( (string) $def['description'] ) . '</p>';
+			echo '<form method="post" style="margin:0;">';
+			wp_nonce_field( 'handl_aicac_pack_preview', 'handl_aicac_nonce' );
+			echo '<input type="hidden" name="handl_aicac_action" value="pack_preview" />';
+			echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+			echo '<input type="hidden" name="handl_aicac_pack_id" value="' . esc_attr( $id ) . '" />';
+			submit_button(
+				$active ? __( 'Review (already active)', 'handl-ai-connector-access-control' ) : __( 'Preview changes', 'handl-ai-connector-access-control' ),
+				'secondary',
+				'submit',
+				false
+			);
+			echo '</form>';
+			echo '</div>';
+		}
+		echo '</div>';
+
+		if ( ! $show_preview ) {
+			echo '</div>';
+			return;
+		}
+
+		$user_id = get_current_user_id();
+		$pending = get_transient( Policy_Packs::preview_transient_key( $user_id ) );
+		if ( ! is_array( $pending ) || empty( $pending['pack_id'] ) ) {
+			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Pack preview expired or was not found. Choose a pack again.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '</div>';
+			return;
+		}
+
+		$pack_id = sanitize_key( (string) $pending['pack_id'] );
+		$def     = Policy_Packs::get( $pack_id );
+		$preview = Policy_Packs::preview( $pack_id, $policy );
+		$backup_ok = ! empty( $pending['backup_downloaded'] );
+
+		echo '<div class="handl-aicac-pack-preview" style="border:1px solid #c3c4c7;padding:12px 16px;background:#fff;max-width:52em;margin-top:1em;">';
+		echo '<h3>' . esc_html__( 'Starter pack preview', 'handl-ai-connector-access-control' ) . '</h3>';
+		if ( is_array( $def ) ) {
+			echo '<p><strong>' . esc_html( (string) $def['label'] ) . '</strong> — ' . esc_html( (string) $def['description'] ) . '</p>';
+		}
+
+		if ( ! empty( $preview['active'] ) ) {
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'That starter pack is already active. Applying it again will not change any settings.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<form method="post">';
+			wp_nonce_field( 'handl_aicac_pack_apply_confirm', 'handl_aicac_nonce' );
+			echo '<input type="hidden" name="handl_aicac_action" value="pack_apply_confirm" />';
+			echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+			submit_button( __( 'Dismiss', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+			echo '</form>';
+			echo '</div></div>';
+			return;
+		}
+
+		if ( empty( $preview['ok'] ) ) {
+			echo '<div class="notice notice-error inline"><p>' . esc_html__( 'Could not build a preview for that pack.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '</div></div>';
+			return;
+		}
+
+		$rows = isset( $preview['rows'] ) && is_array( $preview['rows'] ) ? $preview['rows'] : array();
+		$this->render_confirm_diff_table(
+			$rows,
+			__( 'After applying', 'handl-ai-connector-access-control' ),
+			__( 'No settings would change.', 'handl-ai-connector-access-control' )
+		);
+
+		$conflicts = isset( $preview['conflicts'] ) && is_array( $preview['conflicts'] ) ? $preview['conflicts'] : array();
+		if ( ! empty( $conflicts ) ) {
+			echo '<div class="notice notice-warning inline"><p><strong>' . esc_html__( 'Your existing rules stay in place where they conflict.', 'handl-ai-connector-access-control' ) . '</strong></p><ul style="margin:0.5em 0 0 1.25em;">';
+			foreach ( $conflicts as $conflict ) {
+				if ( ! is_array( $conflict ) ) {
+					continue;
+				}
+				echo '<li>' . esc_html(
+					sprintf(
+						/* translators: 1: rule key, 2: current value, 3: pack value */
+						__( '%1$s: keeping %2$s. This pack would use %3$s.', 'handl-ai-connector-access-control' ),
+						(string) ( $conflict['key'] ?? '' ),
+						(string) ( $conflict['current'] ?? '' ),
+						(string) ( $conflict['pack'] ?? '' )
+					)
+				) . '</li>';
+			}
+			echo '</ul></div>';
+		}
+
+		if ( $need_backup && ! $backup_ok ) {
+			echo '<div class="notice notice-error inline"><p>' . esc_html__( 'Download a JSON backup of your current rules before applying this pack.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		} elseif ( $backup_ok ) {
+			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'Backup downloaded. You can apply this pack.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+
+		echo '<form method="post" style="display:inline-block;margin:0 8px 8px 0;">';
+		wp_nonce_field( 'handl_aicac_pack_export_backup', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="pack_export_backup" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		submit_button( __( 'Download backup (JSON)', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+		echo '</form>';
+
+		$pack_target  = Policy_Packs::build_target( $pack_id, $policy );
+		$plugins      = function_exists( 'get_plugins' ) ? get_plugins() : array();
+		$plugins      = is_array( $plugins ) ? $plugins : array();
+		$check_report = is_array( $pack_target ) ? Policy_Checks::evaluate_all( $pack_target ) : array( 'failures' => array() );
+		$this->render_policy_checks_failure_block( $check_report['failures'], $plugins );
+
+		echo '<form method="post" style="display:inline-block;margin:0 0 8px;">';
+		wp_nonce_field( 'handl_aicac_pack_apply_confirm', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="pack_apply_confirm" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		if ( ! empty( $check_report['failures'] ) ) {
+			echo '<p><label><input type="checkbox" name="handl_aicac_checks_override" value="1" /> ';
+			echo esc_html__( 'Save anyway, even though policy checks will fail', 'handl-ai-connector-access-control' );
+			echo '</label></p>';
+		}
+		submit_button(
+			$backup_ok ? __( 'Apply starter pack', 'handl-ai-connector-access-control' ) : __( 'Apply after backup', 'handl-ai-connector-access-control' ),
+			'primary',
+			'submit',
+			false
+		);
+		echo '</form>';
+		echo '</div>';
+		echo '</div>';
+	}
+
+	/**
 	 * One-click policy presets (AICAC-PRESET / #106).
 	 *
 	 * @param array<string,mixed> $policy
@@ -6560,7 +6744,13 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	 */
 	private function handle_export_rules(): void {
 		$this->require_admin_mutation( 'handl_aicac_export_rules' );
+		$this->stream_rules_json_download();
+	}
 
+	/**
+	 * Shared JSON rules download body (export_rules + pack_export_backup).
+	 */
+	private function stream_rules_json_download(): void {
 		$policy  = Policy::get_policy();
 		$export  = Policy_Transfer::build_export(
 			$policy,
@@ -7079,6 +7269,178 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 					array(
 						'handl_aicac_preset'    => $status,
 						'handl_aicac_preset_id' => $preset_id,
+					)
+				),
+				admin_url( 'options-general.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * Stash pack id for confirmation screen (no policy write).
+	 */
+	private function handle_pack_preview(): void {
+		$this->require_admin_mutation( 'handl_aicac_pack_preview' );
+
+		$redirect_base = array(
+			'page'            => 'handl-ai-connector-access-control',
+			'handl_aicac_tab' => 'rules',
+		);
+
+		$pack_id = isset( $_POST['handl_aicac_pack_id'] )
+			? sanitize_key( wp_unslash( (string) $_POST['handl_aicac_pack_id'] ) )
+			: '';
+		if ( null === Policy_Packs::get( $pack_id ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge( $redirect_base, array( 'handl_aicac_pack' => 'error' ) ),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		set_transient(
+			Policy_Packs::preview_transient_key( get_current_user_id() ),
+			array(
+				'pack_id'            => $pack_id,
+				'backup_downloaded'  => false,
+			),
+			Policy_Packs::PREVIEW_TTL
+		);
+
+		wp_safe_redirect(
+			add_query_arg(
+				array_merge( $redirect_base, array( 'handl_aicac_pack_preview' => '1' ) ),
+				admin_url( 'options-general.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * Stream JSON backup and mark the pending pack preview as backed up.
+	 */
+	private function handle_pack_export_backup(): void {
+		$this->require_admin_mutation( 'handl_aicac_pack_export_backup' );
+
+		$key     = Policy_Packs::preview_transient_key( get_current_user_id() );
+		$pending = get_transient( $key );
+		if ( is_array( $pending ) && ! empty( $pending['pack_id'] ) ) {
+			$pending['backup_downloaded'] = true;
+			set_transient( $key, $pending, Policy_Packs::PREVIEW_TTL );
+		}
+
+		// Reuse the same export payload as Rules → Download rules (JSON).
+		$this->stream_rules_json_download();
+	}
+
+	/**
+	 * Apply pending starter pack after JSON backup (or no-op when already active).
+	 */
+	private function handle_pack_apply_confirm(): void {
+		$this->require_admin_mutation( 'handl_aicac_pack_apply_confirm' );
+
+		$redirect_base = array(
+			'page'            => 'handl-ai-connector-access-control',
+			'handl_aicac_tab' => 'rules',
+		);
+
+		$key     = Policy_Packs::preview_transient_key( get_current_user_id() );
+		$pending = get_transient( $key );
+
+		if ( ! is_array( $pending ) || empty( $pending['pack_id'] ) ) {
+			delete_transient( $key );
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge( $redirect_base, array( 'handl_aicac_pack' => 'error' ) ),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		$pack_id = sanitize_key( (string) $pending['pack_id'] );
+		$current = Policy::get_policy();
+
+		// Dismiss path when already active (same as presets).
+		if ( Policy_Packs::is_active( $pack_id, $current ) ) {
+			delete_transient( $key );
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge(
+						$redirect_base,
+						array(
+							'handl_aicac_pack'    => 'noop',
+							'handl_aicac_pack_id' => $pack_id,
+						)
+					),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		if ( empty( $pending['backup_downloaded'] ) ) {
+			// Keep preview; force backup first.
+			wp_safe_redirect(
+				add_query_arg(
+					array_merge(
+						$redirect_base,
+						array(
+							'handl_aicac_pack_preview'     => '1',
+							'handl_aicac_pack_need_backup' => '1',
+						)
+					),
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		$target = Policy_Packs::build_target( $pack_id, $current );
+		if ( null !== $target ) {
+			$report = Policy_Checks::evaluate_all( $target );
+			$fails  = $report['failures'];
+			if ( ! empty( $fails ) && empty( $_POST['handl_aicac_checks_override'] ) ) {
+				wp_safe_redirect(
+					add_query_arg(
+						array_merge(
+							$redirect_base,
+							array(
+								'handl_aicac_pack_preview'          => '1',
+								'handl_aicac_checks_need_override'  => '1',
+							)
+						),
+						admin_url( 'options-general.php' )
+					)
+				);
+				exit;
+			}
+		}
+
+		delete_transient( $key );
+		$result = Policy_Packs::apply( $pack_id, $current );
+		$status = ! empty( $result['ok'] ) ? (string) ( $result['status'] ?? 'applied' ) : 'error';
+		if ( 'applied' === $status ) {
+			$live = Policy::get_policy();
+			$rep  = Policy_Checks::evaluate_all( $live );
+			if ( ! empty( $rep['failures'] ) ) {
+				Policy_Checks::record_override_audit( $rep['failures'], 'pack' );
+				Policy_Checks::after_policy_saved( $live, $rep['failures'] );
+			} else {
+				Policy_Checks::after_policy_saved( $live, null );
+			}
+		}
+
+		wp_safe_redirect(
+			add_query_arg(
+				array_merge(
+					$redirect_base,
+					array(
+						'handl_aicac_pack'    => $status,
+						'handl_aicac_pack_id' => $pack_id,
 					)
 				),
 				admin_url( 'options-general.php' )

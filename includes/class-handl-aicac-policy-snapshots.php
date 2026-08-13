@@ -170,6 +170,8 @@ final class Policy_Snapshots {
 			'alert_on_deny',
 			'alert_on_shadow',
 			'alert_mode',
+			'new_plugin_review_enabled',
+			'new_plugin_interim',
 			'plugins',
 			'operations',
 			'denied_tools',
@@ -291,7 +293,10 @@ final class Policy_Snapshots {
 			case 'role_gate_enabled':
 			case 'alert_on_deny':
 			case 'alert_on_shadow':
+			case 'new_plugin_review_enabled':
 				return (bool) $raw;
+			case 'new_plugin_interim':
+				return New_Plugin::sanitize_interim( $raw );
 			case 'unknown_operation':
 				$v = (string) $raw;
 				return in_array( $v, array( 'inherit', 'allow', 'deny' ), true ) ? $v : 'inherit';
@@ -333,10 +338,12 @@ final class Policy_Snapshots {
 			'shadow_block_enabled' => __( 'Block direct AI connections', 'handl-ai-connector-access-control' ),
 			'unknown_operation'    => __( 'Unknown AI operations', 'handl-ai-connector-access-control' ),
 			'role_gate_enabled'    => __( 'Limit by role', 'handl-ai-connector-access-control' ),
-			'alert_on_deny'        => __( 'Blocked-call email alerts', 'handl-ai-connector-access-control' ),
-			'alert_on_shadow'      => __( 'Direct-connection email alerts', 'handl-ai-connector-access-control' ),
-			'alert_mode'           => __( 'Alert timing', 'handl-ai-connector-access-control' ),
-			'plugins'              => __( 'Per-plugin rules', 'handl-ai-connector-access-control' ),
+			'alert_on_deny'             => __( 'Blocked-call email alerts', 'handl-ai-connector-access-control' ),
+			'alert_on_shadow'           => __( 'Direct-connection email alerts', 'handl-ai-connector-access-control' ),
+			'alert_mode'                => __( 'Alert timing', 'handl-ai-connector-access-control' ),
+			'new_plugin_review_enabled' => __( 'Review new plugins', 'handl-ai-connector-access-control' ),
+			'new_plugin_interim'        => __( 'New plugin interim mode', 'handl-ai-connector-access-control' ),
+			'plugins'                   => __( 'Per-plugin rules', 'handl-ai-connector-access-control' ),
 			'operations'           => __( 'Capability-family rules', 'handl-ai-connector-access-control' ),
 			'denied_tools'         => __( 'Blocked AI tools', 'handl-ai-connector-access-control' ),
 			'model_force_plugins'  => __( 'Model routes', 'handl-ai-connector-access-control' ),
@@ -364,9 +371,14 @@ final class Policy_Snapshots {
 			case 'role_gate_enabled':
 			case 'alert_on_deny':
 			case 'alert_on_shadow':
+			case 'new_plugin_review_enabled':
 				return $value
 					? __( 'On', 'handl-ai-connector-access-control' )
 					: __( 'Off', 'handl-ai-connector-access-control' );
+			case 'new_plugin_interim':
+				return ( New_Plugin::INTERIM_OBSERVE === $value )
+					? __( 'Observe-only mode', 'handl-ai-connector-access-control' )
+					: __( 'Deny', 'handl-ai-connector-access-control' );
 			case 'unknown_operation':
 				if ( 'allow' === $value ) {
 					return __( 'Allow', 'handl-ai-connector-access-control' );
