@@ -24,8 +24,8 @@ final class Audit_Export {
 	 *
 	 * @return list<string>
 	 */
-	public static function column_headers(): array {
-		return array(
+	public static function column_headers( bool $include_reason = false ): array {
+		$headers = array(
 			'Time',
 			'Decision',
 			'Operation / family',
@@ -39,6 +39,11 @@ final class Audit_Export {
 			'User',
 			'URI',
 		);
+		if ( $include_reason ) {
+			$headers[] = 'Reason';
+		}
+
+		return $headers;
 	}
 
 	/**
@@ -227,10 +232,16 @@ final class Audit_Export {
 			return '';
 		}
 
-		fputcsv( $fh, self::column_headers() );
+		$include_reason = Rule_Notes::any( $policy );
+		fputcsv( $fh, self::column_headers( $include_reason ) );
 
 		foreach ( self::filtered_rows( $log, $filters ) as $row ) {
-			fputcsv( $fh, self::format_row( $row, $plugins, $policy, $user_labels ) );
+			$cells = self::format_row( $row, $plugins, $policy, $user_labels );
+			if ( $include_reason ) {
+				$plugin = isset( $row['plugin'] ) ? (string) $row['plugin'] : '';
+				$cells[] = Rule_Notes::get( $policy, $plugin );
+			}
+			fputcsv( $fh, $cells );
 		}
 
 		rewind( $fh );

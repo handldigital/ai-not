@@ -876,6 +876,8 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 						$grad_label
 					)
 				);
+				echo ' ';
+				echo esc_html__( 'Optional: add a short note about why in the Why field on that row.', 'handl-ai-connector-access-control' );
 				$bits = array();
 				if ( '' !== $graduate['family'] ) {
 					$bits[] = sprintf(
@@ -1076,6 +1078,22 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				echo '<button type="submit" class="button button-small" form="handl-aicac-renew-form" name="handl_aicac_renew_plugin" value="' . esc_attr( $basename ) . '">';
 				echo esc_html__( 'Renew 7 days', 'handl-ai-connector-access-control' );
 				echo '</button>';
+				echo '</p>';
+			}
+			echo '</div>';
+			// AICAC-NOTE (#125): optional why-note for this rule.
+			$rule_note = Rule_Notes::get( $policy, (string) $basename );
+			echo '<div class="handl-aicac-rule-note" style="margin-top:8px;max-width:18em;">';
+			echo '<label for="handl-aicac-rule-note-' . esc_attr( md5( $basename ) ) . '" class="description" style="display:block;margin-bottom:2px;">';
+			echo esc_html__( 'Why (optional)', 'handl-ai-connector-access-control' );
+			echo '</label>';
+			echo '<textarea class="large-text" rows="2" style="width:100%;max-width:18em;" id="handl-aicac-rule-note-' . esc_attr( md5( $basename ) ) . '" name="handl_aicac_rule_note[' . esc_attr( $basename ) . ']" form="' . esc_attr( $rules_form_id ) . '" maxlength="' . esc_attr( (string) Rule_Notes::MAX_LENGTH ) . '" placeholder="' . esc_attr__( 'Why this rule exists', 'handl-ai-connector-access-control' ) . '">';
+			echo esc_textarea( $rule_note );
+			echo '</textarea>';
+			if ( '' !== $rule_note ) {
+				$trunc = Rule_Notes::truncate_for_display( $rule_note );
+				echo '<p class="description handl-aicac-rule-note-preview" style="margin:4px 0 0;" title="' . esc_attr( $rule_note ) . '">';
+				echo esc_html( $trunc );
 				echo '</p>';
 			}
 			echo '</div>';
@@ -1734,6 +1752,13 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			)
 		);
 		echo ')</span></p>';
+
+		$profile_note = Rule_Notes::get( $policy, $plugin );
+		if ( '' !== $profile_note ) {
+			echo '<p><strong>' . esc_html__( 'Why:', 'handl-ai-connector-access-control' ) . '</strong> ';
+			echo esc_html( $profile_note );
+			echo '</p>';
+		}
 
 		echo '<table class="widefat striped" style="max-width:48em;"><thead><tr>';
 		echo '<th>' . esc_html__( 'AI type', 'handl-ai-connector-access-control' ) . '</th>';
@@ -4326,6 +4351,43 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 		$policy['plugin_expires'] = $expires;
 
+		// AICAC-NOTE (#125): optional why notes per explicit rule.
+		$notes         = $merge_missing && isset( $base['plugin_notes'] ) && is_array( $base['plugin_notes'] )
+			? Rule_Notes::sanitize_plugin_notes( $base['plugin_notes'] )
+			: array();
+		$posted_notes  = filter_input( INPUT_POST, 'handl_aicac_rule_note', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		if ( ! is_array( $posted_notes ) ) {
+			$posted_notes = array();
+		}
+		if ( ! $merge_missing ) {
+			$notes = array();
+		}
+		foreach ( $rules as $basename => $rule ) {
+			if ( 'allow' !== (string) $rule && 'deny' !== (string) $rule ) {
+				unset( $notes[ $basename ] );
+				continue;
+			}
+			if ( ! array_key_exists( $basename, $posted_notes ) ) {
+				if ( ! $merge_missing ) {
+					unset( $notes[ $basename ] );
+				}
+				continue;
+			}
+			$clean = Rule_Notes::sanitize_note( $posted_notes[ $basename ] ?? '' );
+			if ( '' === $clean ) {
+				unset( $notes[ $basename ] );
+			} else {
+				$notes[ $basename ] = $clean;
+			}
+		}
+		// Drop notes for plugins no longer explicit.
+		foreach ( array_keys( $notes ) as $basename ) {
+			if ( ! isset( $rules[ $basename ] ) ) {
+				unset( $notes[ $basename ] );
+			}
+		}
+		$policy['plugin_notes'] = $notes;
+
 		$posted_ops = filter_input( INPUT_POST, 'handl_aicac_operation', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
 		if ( is_array( $posted_ops ) ) {
 			$sanitized_ops = Policy::sanitize_operations( $posted_ops );
@@ -6240,6 +6302,13 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			if ( $file ) {
 				echo '<br /><span class="description" style="font-size:11px;">' . esc_html( wp_basename( $file ) ) . '</span>';
 			}
+			$why = Rule_Notes::get( $policy, $plugin );
+			if ( '' !== $why ) {
+				$trunc = Rule_Notes::truncate_for_display( $why );
+				echo '<br /><span class="description handl-aicac-rule-why" style="font-size:11px;" title="' . esc_attr( $why ) . '">';
+				echo esc_html__( 'Why:', 'handl-ai-connector-access-control' ) . ' ' . esc_html( $trunc );
+				echo '</span>';
+			}
 		} else {
 			echo '<span class="handl-aicac-muted">' . esc_html__( 'unknown', 'handl-ai-connector-access-control' ) . '</span>';
 		}
@@ -6864,6 +6933,11 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo esc_html__( 'Save anyway, even though policy checks will fail', 'handl-ai-connector-access-control' );
 			echo '</label></p>';
 		}
+		echo '<p style="margin-top:12px;max-width:36em;">';
+		echo '<label for="handl-aicac-preset-note"><strong>' . esc_html__( 'Add a note about why (optional)', 'handl-ai-connector-access-control' ) . '</strong></label><br />';
+		echo '<textarea class="large-text" rows="2" id="handl-aicac-preset-note" name="handl_aicac_preset_note" maxlength="' . esc_attr( (string) Rule_Notes::MAX_LENGTH ) . '" placeholder="' . esc_attr__( 'Why you are applying this preset', 'handl-ai-connector-access-control' ) . '"></textarea>';
+		echo '<span class="description">' . esc_html__( 'Saved on any plugin rules this preset changes.', 'handl-ai-connector-access-control' ) . '</span>';
+		echo '</p>';
 		submit_button( __( 'Apply preset', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
 		echo '</form>';
 		echo '</div>';
@@ -7813,10 +7887,32 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			}
 		}
 
+		$preset_note = isset( $_POST['handl_aicac_preset_note'] )
+			? Rule_Notes::sanitize_note( wp_unslash( (string) $_POST['handl_aicac_preset_note'] ) )
+			: '';
+
 		$result = Presets::apply( $preset_id, $current );
 		$status = ! empty( $result['ok'] ) ? (string) ( $result['status'] ?? 'applied' ) : 'error';
 		if ( 'applied' === $status ) {
 			$live = Policy::get_policy();
+			if ( '' !== $preset_note ) {
+				$before_plugins = is_array( $current['plugins'] ?? null ) ? (array) $current['plugins'] : array();
+				$after_plugins  = is_array( $live['plugins'] ?? null ) ? (array) $live['plugins'] : array();
+				foreach ( $after_plugins as $basename => $rule ) {
+					$basename = (string) $basename;
+					$rule     = (string) $rule;
+					if ( 'allow' !== $rule && 'deny' !== $rule ) {
+						continue;
+					}
+					$prev = isset( $before_plugins[ $basename ] ) ? (string) $before_plugins[ $basename ] : '';
+					if ( $prev === $rule ) {
+						continue;
+					}
+					$live = Rule_Notes::set_for_plugin( $live, $basename, $preset_note );
+				}
+				Policy::save_policy( $live );
+				$live = Policy::get_policy();
+			}
 			$rep  = Policy_Checks::evaluate_all( $live );
 			if ( ! empty( $rep['failures'] ) ) {
 				Policy_Checks::record_override_audit( $rep['failures'], 'preset' );

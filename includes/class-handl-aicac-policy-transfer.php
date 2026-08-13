@@ -38,6 +38,7 @@ final class Policy_Transfer {
 			'default',
 			'plugins',
 			'plugin_expires',
+			'plugin_notes',
 			'log_enabled',
 			'audit_only',
 			'kill_switch',
