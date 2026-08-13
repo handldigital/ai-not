@@ -35,6 +35,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-budget.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-forecast.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-usage-trends.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-daily-trends.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-log-storage.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-log-retention.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-anomaly.php';
