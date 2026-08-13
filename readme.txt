@@ -193,6 +193,7 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = Unreleased =
+* Starter policy packs on the Rules tab: preview Strict, Balanced, or Observe-first, download a JSON backup, then apply without silently replacing your existing per-plugin rules.
 * Optional weekly rules backup email on the Rules tab, off by default: sends a JSON rules export once a week, stores only the latest backup on the site, and lets you download or compare it.
 
 = 1.5.0 =
