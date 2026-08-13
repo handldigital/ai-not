@@ -34,18 +34,26 @@ final class CliPolicyApplyTest extends TestCase {
 	/**
 	 * @return array<string,mixed>
 	 */
-	private function base_policy( string $default = 'allow' ): array {
-		return array(
-			'default'     => $default,
-			'log_enabled' => true,
-			'audit_only'  => false,
-			'kill_switch' => false,
-			'plugins'     => array(
-				'acme/a.php' => 'allow',
+	private function seed_live( array $overrides = array() ): array {
+		$base = array_merge(
+			array(
+				'default'     => 'allow',
+				'log_enabled' => true,
+				'audit_only'  => false,
+				'kill_switch' => false,
+				'plugins'     => array(
+					'acme/a.php' => 'allow',
+				),
 			),
+			$overrides
 		);
+		update_option( Plugin::OPTION_KEY, $base, false );
+		return Policy::get_policy();
 	}
 
+	/**
+	 * @param array<string,mixed> $policy Full or near-full policy (prefer get_policy shape).
+	 */
 	private function export_json( array $policy, string $site_url = 'https://example.test/' ): string {
 		$export = Policy_Transfer::build_export( $policy, '1.5.0', '2026-08-13T00:00:00Z' );
 		$export['site_url'] = $site_url;
@@ -65,24 +73,29 @@ final class CliPolicyApplyTest extends TestCase {
 	}
 
 	public function test_prepare_rejects_site_mismatch_without_flag(): void {
-		update_option( Plugin::OPTION_KEY, $this->base_policy( 'allow' ), false );
-		$json = $this->export_json( $this->base_policy( 'deny' ), 'https://other.example/' );
+		$live = $this->seed_live();
+		$incoming = $live;
+		$incoming['default'] = 'deny';
+		$json = $this->export_json( $incoming, 'https://other.example/' );
 		$result = CLI_Policy_Apply::prepare_apply( $json, 'https://example.test/', false );
 		$this->assertFalse( $result['ok'] );
 		$this->assertSame( 'site_mismatch', $result['error'] );
 	}
 
 	public function test_prepare_allows_site_mismatch_with_flag(): void {
-		update_option( Plugin::OPTION_KEY, $this->base_policy( 'allow' ), false );
-		$json = $this->export_json( $this->base_policy( 'deny' ), 'https://other.example/' );
+		$live = $this->seed_live();
+		$incoming = $live;
+		$incoming['default'] = 'deny';
+		$json = $this->export_json( $incoming, 'https://other.example/' );
 		$result = CLI_Policy_Apply::prepare_apply( $json, 'https://example.test/', true );
 		$this->assertTrue( $result['ok'] );
 		$this->assertTrue( $result['has_changes'] );
 	}
 
 	public function test_dry_run_diff_matches_apply_result(): void {
-		update_option( Plugin::OPTION_KEY, $this->base_policy( 'allow' ), false );
-		$incoming = $this->base_policy( 'deny' );
+		$live = $this->seed_live();
+		$incoming = $live;
+		$incoming['default']     = 'deny';
 		$incoming['kill_switch'] = true;
 		$json = $this->export_json( $incoming, 'https://example.test/' );
 
@@ -95,19 +108,182 @@ final class CliPolicyApplyTest extends TestCase {
 
 		CLI_Policy_Apply::commit_apply( $prepared['policy'] );
 
-		$live = Policy::get_policy();
-		$this->assertSame( 'deny', $live['default'] );
-		$this->assertTrue( ! empty( $live['kill_switch'] ) );
+		$live_after = Policy::get_policy();
+		$this->assertSame( 'deny', $live_after['default'] );
+		$this->assertTrue( ! empty( $live_after['kill_switch'] ) );
 
-		// Same export vs post-apply live → no changes (dry-run exit 0 path).
 		$again = CLI_Policy_Apply::prepare_apply( $json, 'https://example.test/', false );
 		$this->assertTrue( $again['ok'] );
 		$this->assertFalse( $again['has_changes'] );
 	}
 
+	public function test_parity_surfaces_policy_backup_email_enabled(): void {
+		$live = $this->seed_live( array( 'policy_backup_email_enabled' => false ) );
+		$incoming = $live;
+		$incoming['policy_backup_email_enabled'] = true;
+		$json = $this->export_json( $incoming );
+
+		$prepared = CLI_Policy_Apply::prepare_apply( $json, 'https://example.test/', false );
+		$this->assertTrue( $prepared['ok'] );
+		$this->assertTrue( $prepared['has_changes'] );
+		$joined = implode( "\n", $prepared['diff_lines'] );
+		$this->assertStringContainsString( 'Weekly rules backup email', $joined );
+
+		$dry = CLI_Policy_Apply::execute( $json, 'https://example.test/', true, false, false );
+		$this->assertSame( 1, $dry['exit_code'] );
+		$this->assertFalse( $dry['wrote'] );
+
+		$apply = CLI_Policy_Apply::execute( $json, 'https://example.test/', false, true, false );
+		$this->assertSame( 0, $apply['exit_code'] );
+		$this->assertTrue( $apply['wrote'] );
+		$this->assertTrue( ! empty( Policy::get_policy()['policy_backup_email_enabled'] ) );
+	}
+
+	public function test_parity_surfaces_new_plugin_known_and_pending(): void {
+		$live = $this->seed_live(
+			array(
+				'new_plugin_review_enabled' => true,
+				'new_plugin_known'          => array( 'acme/a.php' ),
+				'new_plugin_pending'        => array(),
+			)
+		);
+		$incoming = $live;
+		$incoming['new_plugin_known']   = array( 'acme/a.php', 'other/b.php' );
+		$incoming['new_plugin_pending'] = array( 'fresh/c.php' => 1700000000 );
+		$json = $this->export_json( $incoming );
+
+		$prepared = CLI_Policy_Apply::prepare_apply( $json, 'https://example.test/', false );
+		$this->assertTrue( $prepared['ok'] );
+		$this->assertTrue( $prepared['has_changes'] );
+		$joined = implode( "\n", $prepared['diff_lines'] );
+		$this->assertStringContainsString( 'Known plugins', $joined );
+		$this->assertStringContainsString( 'Pending plugins', $joined );
+
+		$apply = CLI_Policy_Apply::execute( $json, 'https://example.test/', false, true, false );
+		$this->assertSame( 0, $apply['exit_code'] );
+		$this->assertTrue( $apply['wrote'] );
+		$after = Policy::get_policy();
+		$this->assertContains( 'other/b.php', $after['new_plugin_known'] );
+		$this->assertArrayHasKey( 'fresh/c.php', $after['new_plugin_pending'] );
+	}
+
+	public function test_parity_surfaces_plugin_notes_when_supported(): void {
+		if ( ! class_exists( \HandL\AICAC\Rule_Notes::class ) ) {
+			$this->markTestSkipped( 'Rule notes land after AICAC-NOTE (#125) merge.' );
+		}
+		if ( ! in_array( 'plugin_notes', Policy_Transfer::known_policy_keys(), true ) ) {
+			$this->markTestSkipped( 'plugin_notes not yet a known transfer key.' );
+		}
+
+		$live = $this->seed_live();
+		$incoming = $live;
+		$incoming['plugin_notes'] = array(
+			'acme/a.php' => 'Allow for checkout AI.',
+		);
+		$json = $this->export_json( $incoming );
+
+		$prepared = CLI_Policy_Apply::prepare_apply( $json, 'https://example.test/', false );
+		$this->assertTrue( $prepared['ok'] );
+		$this->assertTrue( $prepared['has_changes'] );
+		$this->assertStringContainsString( 'Rule notes', implode( "\n", $prepared['diff_lines'] ) );
+	}
+
+	public function test_execute_identical_dry_run_exits_0_without_write(): void {
+		$live = $this->seed_live();
+		$json = $this->export_json( $live );
+
+		$before = Policy::get_policy();
+		$snaps  = count( Policy_Snapshots::all() );
+		$result = CLI_Policy_Apply::execute( $json, 'https://example.test/', true, false, false );
+
+		$this->assertSame( 0, $result['exit_code'] );
+		$this->assertFalse( $result['wrote'] );
+		$this->assertFalse( $result['has_changes'] );
+		$this->assertSame( 'Dry run complete: the current policy matches this export.', $result['success'] ?? null );
+		$this->assertSame( $before['default'], Policy::get_policy()['default'] );
+		$this->assertSame( $snaps, count( Policy_Snapshots::all() ) );
+	}
+
+	public function test_execute_different_dry_run_exits_1_without_write(): void {
+		$live = $this->seed_live();
+		$incoming = $live;
+		$incoming['default'] = 'deny';
+		$json = $this->export_json( $incoming );
+
+		$result = CLI_Policy_Apply::execute( $json, 'https://example.test/', true, true, false );
+		$this->assertSame( 1, $result['exit_code'] );
+		$this->assertFalse( $result['wrote'] );
+		$this->assertTrue( $result['has_changes'] );
+		$this->assertSame(
+			'Dry run only: the policy would change. Run this command again without --dry-run and add --yes to apply it.',
+			$result['warning'] ?? null
+		);
+		$this->assertSame( 'allow', Policy::get_policy()['default'] );
+		$this->assertSame( array(), Policy_Snapshots::all() );
+	}
+
+	public function test_execute_apply_without_yes_exits_1_without_write(): void {
+		$live = $this->seed_live();
+		$incoming = $live;
+		$incoming['default'] = 'deny';
+		$json = $this->export_json( $incoming );
+
+		$result = CLI_Policy_Apply::execute( $json, 'https://example.test/', false, false, false );
+		$this->assertSame( 1, $result['exit_code'] );
+		$this->assertFalse( $result['wrote'] );
+		$this->assertSame(
+			'Policy not applied. Use --dry-run to preview changes, or add --yes to confirm the update.',
+			$result['error'] ?? null
+		);
+		$this->assertSame( 'allow', Policy::get_policy()['default'] );
+		$this->assertSame( array(), Policy_Snapshots::all() );
+	}
+
+	public function test_execute_apply_with_yes_writes_and_snapshots(): void {
+		$live = $this->seed_live();
+		$incoming = $live;
+		$incoming['default'] = 'deny';
+		$json = $this->export_json( $incoming );
+
+		$result = CLI_Policy_Apply::execute( $json, 'https://example.test/', false, true, false );
+		$this->assertSame( 0, $result['exit_code'] );
+		$this->assertTrue( $result['wrote'] );
+		$this->assertSame(
+			'Policy applied. A restore snapshot of the previous policy was saved.',
+			$result['success'] ?? null
+		);
+		$this->assertSame( 'deny', Policy::get_policy()['default'] );
+		$snaps = Policy_Snapshots::all();
+		$this->assertNotEmpty( $snaps );
+		$this->assertSame( 'allow', $snaps[0]['policy']['default'] ?? null );
+	}
+
+	public function test_execute_mismatched_site_exits_1_unless_allowed(): void {
+		$live = $this->seed_live();
+		$incoming = $live;
+		$incoming['default'] = 'deny';
+		$json = $this->export_json( $incoming, 'https://other.example/' );
+
+		$blocked = CLI_Policy_Apply::execute( $json, 'https://example.test/', false, true, false );
+		$this->assertSame( 1, $blocked['exit_code'] );
+		$this->assertFalse( $blocked['wrote'] );
+		$this->assertSame(
+			'This export was created for a different site. If that is intentional, run the command again with --allow-mismatched-site.',
+			$blocked['error'] ?? null
+		);
+		$this->assertSame( 'allow', Policy::get_policy()['default'] );
+
+		$allowed = CLI_Policy_Apply::execute( $json, 'https://example.test/', false, true, true );
+		$this->assertSame( 0, $allowed['exit_code'] );
+		$this->assertTrue( $allowed['wrote'] );
+		$this->assertSame( 'deny', Policy::get_policy()['default'] );
+	}
+
 	public function test_apply_creates_snapshot_via_save_policy(): void {
-		update_option( Plugin::OPTION_KEY, $this->base_policy( 'allow' ), false );
-		$json = $this->export_json( $this->base_policy( 'deny' ), 'https://example.test/' );
+		$live = $this->seed_live();
+		$incoming = $live;
+		$incoming['default'] = 'deny';
+		$json = $this->export_json( $incoming );
 		$prepared = CLI_Policy_Apply::prepare_apply( $json, 'https://example.test/', false );
 		$this->assertTrue( $prepared['ok'] );
 
@@ -119,7 +295,7 @@ final class CliPolicyApplyTest extends TestCase {
 	}
 
 	public function test_malformed_never_partially_applies(): void {
-		update_option( Plugin::OPTION_KEY, $this->base_policy( 'allow' ), false );
+		$this->seed_live();
 		$before = Policy::get_policy();
 		$result = CLI_Policy_Apply::prepare_apply( '{"plugin_version":"1.0","exported_at":"x"', 'https://example.test/', false );
 		$this->assertFalse( $result['ok'] );
@@ -131,6 +307,17 @@ final class CliPolicyApplyTest extends TestCase {
 	public function test_site_url_normalization_ignores_trailing_slash(): void {
 		$this->assertTrue(
 			CLI_Policy_Apply::site_urls_match( 'https://Example.TEST/', 'https://example.test' )
+		);
+	}
+
+	public function test_operator_copy_strings(): void {
+		$this->assertSame(
+			'This export was created for a different site. If that is intentional, run the command again with --allow-mismatched-site.',
+			CLI_Policy_Apply::error_message( 'site_mismatch' )
+		);
+		$this->assertStringContainsString(
+			'cannot be previewed safely: alert_email',
+			CLI_Policy_Apply::error_message( 'non_comparable_applied', '', array( 'alert_email' ) )
 		);
 	}
 }
