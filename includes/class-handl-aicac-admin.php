@@ -780,6 +780,15 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
 		echo '</form>';
 
+		// Packs / presets / restore / checks each emit their own <form>. They must
+		// be siblings of the Rules form: a nested </form> closes it early and the
+		// browser adopts that inner nonce/action, so Save dies with "link expired".
+		$this->render_policy_packs_section( $policy, $show_pack_preview, $pack_backup_needed );
+		$this->render_presets_section( $policy, $show_preset_preview );
+		$this->render_policy_restore_section( $policy, $show_restore_preview, $restore_status );
+		$this->render_policy_change_history_section();
+		$this->render_policy_checks_section( $plugins, $show_checks_confirm );
+
 		// Visible Rules form — do NOT use handl-aicac-rules-save-form (that class is
 		// display:none for empty shells that only exist for form= association).
 		echo '<form method="post" id="' . esc_attr( $rules_form_id ) . '">';
@@ -797,12 +806,11 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		echo 'form.addEventListener("submit",function(e){var b=e.submitter;if(b&&b.getAttribute("data-aicac-action")){action.value=b.getAttribute("data-aicac-action");}});';
 		echo '})();';
 		echo '</script>';
-
-		$this->render_policy_packs_section( $policy, $show_pack_preview, $pack_backup_needed );
-		$this->render_presets_section( $policy, $show_preset_preview );
-		$this->render_policy_restore_section( $policy, $show_restore_preview, $restore_status );
-		$this->render_policy_change_history_section();
-		$this->render_policy_checks_section( $plugins, $show_checks_confirm );
+		// First submit owned by this form (clip, not display:none) so Enter saves
+		// instead of hitting Run test, which is earlier in visual order.
+		echo '<button type="submit" name="handl_aicac_action" value="save" class="screen-reader-text" form="' . esc_attr( $rules_form_id ) . '" data-aicac-action="save">';
+		echo esc_html__( 'Save changes', 'handl-ai-connector-access-control' );
+		echo '</button>';
 
 		// Settings demoted: collapsible panel, not the first thing you see (F5 IA).
 		echo '<details class="handl-aicac-settings-panel">';
@@ -1164,8 +1172,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '</script>';
 
 		echo '<p class="submit">';
-		// Nested pack/preset/restore/check <form>s close this form in the parsed
-		// DOM; associate Save explicitly so the button still submits.
+		// Keep form= even when Save is inside the Rules form by containment —
+		// that association is what the source test can see.
 		echo '<button type="submit" name="handl_aicac_action" value="save" class="button button-primary" form="' . esc_attr( $rules_form_id ) . '" data-aicac-action="save">';
 		echo esc_html__( 'Save changes', 'handl-ai-connector-access-control' );
 		echo '</button>';
