@@ -145,7 +145,7 @@ final class Break_Glass {
 			$state,
 			sprintf(
 				/* translators: 1: minutes, 2: reason */
-				__( "Break glass is on for %1\$d minutes.\n\nReason: %2\$s\n\nPolicy is not enforced until the window ends or you cancel it.", 'handl-ai-connector-access-control' ),
+				__( "Break-glass mode is on for %1\$d minutes.\n\nReason: %2\$s\n\nPolicy rules will not block AI calls until the window ends or you cancel it.", 'handl-ai-connector-access-control' ),
 				$minutes,
 				$reason
 			)
@@ -333,7 +333,7 @@ final class Break_Glass {
 		if ( '' === $to ) {
 			return;
 		}
-		$subject = __( 'HandL AI Connector Access Control — Break glass', 'handl-ai-connector-access-control' );
+		$subject = __( 'HandL AI Connector Access Control: Break-glass mode.', 'handl-ai-connector-access-control' );
 		Alerts::safe_wp_mail( $to, $subject, $body );
 	}
 }

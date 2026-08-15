@@ -55,7 +55,7 @@ final class CLI_Break_Glass {
 		if ( empty( $result['ok'] ) ) {
 			$code = (string) ( $result['error'] ?? 'error' );
 			if ( 'already_active' === $code ) {
-				\WP_CLI::error( 'Break glass is already active. Cancel it first, or wait for it to end.' );
+				\WP_CLI::error( 'Break-glass mode is already active. Cancel it first, or wait for it to end.' );
 			}
 			if ( 'invalid_minutes' === $code ) {
 				\WP_CLI::error( 'Minutes must be 15, 30, or 60.' );
@@ -63,13 +63,13 @@ final class CLI_Break_Glass {
 			if ( 'reason_required' === $code ) {
 				\WP_CLI::error( 'A non-empty --reason is required.' );
 			}
-			\WP_CLI::error( 'Could not start break glass.' );
+			\WP_CLI::error( 'Could not start break-glass mode.' );
 		}
 
 		$state = $result['state'] ?? array();
 		\WP_CLI::success(
 			sprintf(
-				'Break glass on for %d minutes (expires %s). Policy is not enforced until it ends.',
+				'Break-glass mode is active for %d minutes (expires %s). Policy rules will not block AI calls until it ends.',
 				(int) ( $state['minutes'] ?? $minutes ),
 				gmdate( 'c', (int) ( $state['expires_ts'] ?? 0 ) )
 			)
@@ -92,9 +92,9 @@ final class CLI_Break_Glass {
 		unset( $args, $assoc_args );
 		$result = Break_Glass::cancel();
 		if ( empty( $result['ok'] ) ) {
-			\WP_CLI::error( 'No active break-glass window to cancel.' );
+			\WP_CLI::error( 'No active break-glass mode to cancel.' );
 		}
-		\WP_CLI::success( 'Break glass cancelled. Previous policy restored.' );
+		\WP_CLI::success( 'Break-glass mode cancelled. Previous policy restored.' );
 	}
 
 	/**
@@ -131,7 +131,7 @@ final class CLI_Break_Glass {
 		}
 
 		if ( empty( $st['active'] ) ) {
-			\WP_CLI::log( 'Break glass: inactive' );
+			\WP_CLI::log( 'Break-glass mode: inactive' );
 			return;
 		}
 
@@ -139,7 +139,7 @@ final class CLI_Break_Glass {
 		$secs = ( (int) $st['remaining_seconds'] ) % 60;
 		\WP_CLI::log(
 			sprintf(
-				'Break glass: active | remaining %dm %ds | reason: %s',
+				'Break-glass mode: active | remaining %dm %ds | reason: %s',
 				$mins,
 				$secs,
 				(string) $st['reason']
