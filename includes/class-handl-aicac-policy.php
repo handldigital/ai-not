@@ -191,6 +191,16 @@ final class Policy {
 			}
 		}
 
+		// AICAC-BLOCKED-UX Phase 1: capture request context + caller-facing error on real denies.
+		if ( $prevent ) {
+			$event['request_context'] = self::detect_request_context();
+			// Generating methods: AI Client returns WP_Error(prompt_prevented, …).
+			// Support checks return false with no WP_Error — leave returned_error empty.
+			$event['returned_error'] = self::is_generating_operation( $operation )
+				? self::caller_deny_error_message()
+				: '';
+		}
+
 		$this->log_event( $event );
 
 		// Observability only: opt-in denial email / digest. Never changes $prevent.
@@ -199,6 +209,99 @@ final class Policy {
 		}
 
 		return $prevent;
+	}
+
+	/**
+	 * Canonical WP_Error message AI Client hands back when prevent_prompt is true
+	 * on a generating method (see WP_AI_Client_Prompt_Builder).
+	 */
+	public static function caller_deny_error_message(): string {
+		return __( 'Prompt execution was prevented by a filter.', 'handl-ai-connector-access-control' );
+	}
+
+	/**
+	 * Allowed request-context tokens for Activity rows (AICAC-BLOCKED-UX / #191 foundation).
+	 *
+	 * @return list<string>
+	 */
+	public static function request_context_values(): array {
+		return array( 'frontend', 'admin', 'cron', 'rest' );
+	}
+
+	/**
+	 * Detect the current HTTP/runtime context for a denial row.
+	 *
+	 * Priority: cron → REST → admin → frontend. WP-CLI (non-cron) → unknown.
+	 * Legacy rows omit the field and must normalize to unknown — never frontend.
+	 *
+	 * @param array{doing_cron?:bool,rest?:bool,is_admin?:bool,doing_cli?:bool}|null $flags
+	 *        Optional explicit flags for unit tests; null reads live WP state.
+	 */
+	public static function detect_request_context( ?array $flags = null ): string {
+		if ( null === $flags ) {
+			$flags = array(
+				'doing_cron' => ( function_exists( 'wp_doing_cron' ) && wp_doing_cron() )
+					|| ( defined( 'DOING_CRON' ) && DOING_CRON ),
+				'rest'       => defined( 'REST_REQUEST' ) && REST_REQUEST,
+				'is_admin'   => function_exists( 'is_admin' ) && is_admin(),
+				'doing_cli'  => defined( 'WP_CLI' ) && WP_CLI,
+			);
+		}
+
+		if ( ! empty( $flags['doing_cron'] ) ) {
+			return 'cron';
+		}
+		if ( ! empty( $flags['rest'] ) ) {
+			return 'rest';
+		}
+		if ( ! empty( $flags['is_admin'] ) ) {
+			return 'admin';
+		}
+		if ( ! empty( $flags['doing_cli'] ) ) {
+			return 'unknown';
+		}
+
+		return 'frontend';
+	}
+
+	/**
+	 * Normalize a stored/raw context token. Unknown or missing → unknown (never frontend).
+	 *
+	 * @param mixed $raw
+	 */
+	public static function normalize_request_context( $raw ): string {
+		$ctx = is_string( $raw ) ? sanitize_key( $raw ) : '';
+		if ( in_array( $ctx, self::request_context_values(), true ) ) {
+			return $ctx;
+		}
+
+		return 'unknown';
+	}
+
+	/**
+	 * Read request_context from an Activity row. Missing key → unknown (legacy rows).
+	 *
+	 * @param array<string,mixed> $row
+	 */
+	public static function request_context_from_row( array $row ): string {
+		if ( ! array_key_exists( 'request_context', $row ) ) {
+			return 'unknown';
+		}
+
+		return self::normalize_request_context( $row['request_context'] );
+	}
+
+	/**
+	 * Caller-facing error text from an Activity row (empty when absent).
+	 *
+	 * @param array<string,mixed> $row
+	 */
+	public static function returned_error_from_row( array $row ): string {
+		if ( ! isset( $row['returned_error'] ) ) {
+			return '';
+		}
+
+		return sanitize_text_field( (string) $row['returned_error'] );
 	}
 
 	/**

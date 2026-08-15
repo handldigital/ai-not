@@ -264,6 +264,14 @@ final class Rest {
 		$shadow_count      = 0;
 		$shadow_blocks     = 0;
 		$client_calls      = 0;
+		$denials_by_context = array(
+			'frontend' => 0,
+			'admin'    => 0,
+			'cron'     => 0,
+			'rest'     => 0,
+			'unknown'  => 0,
+		);
+		$recent_denials = array();
 
 		foreach ( $filtered as $row ) {
 			if ( ! is_array( $row ) ) {
@@ -291,6 +299,20 @@ final class Rest {
 				$calls_by_decision[ $decision ] = 0;
 			}
 			++$calls_by_decision[ $decision ];
+
+			if ( 'deny' === $decision ) {
+				$ctx = Policy::request_context_from_row( $row );
+				if ( ! isset( $denials_by_context[ $ctx ] ) ) {
+					$denials_by_context[ $ctx ] = 0;
+				}
+				++$denials_by_context[ $ctx ];
+				$recent_denials[] = array(
+					'ts'              => isset( $row['ts'] ) ? (int) $row['ts'] : 0,
+					'plugin'          => isset( $row['plugin'] ) ? (string) $row['plugin'] : '',
+					'request_context' => $ctx,
+					'returned_error'  => Policy::returned_error_from_row( $row ),
+				);
+			}
 
 			$plugin = isset( $row['plugin'] ) ? trim( (string) $row['plugin'] ) : '';
 			if ( '' === $plugin ) {
@@ -350,6 +372,15 @@ final class Rest {
 
 		ksort( $calls_by_decision );
 
+		// Newest denials first for QA without UI (AICAC-BLOCKED-UX Phase 1).
+		usort(
+			$recent_denials,
+			static function ( array $a, array $b ): int {
+				return (int) $b['ts'] <=> (int) $a['ts'];
+			}
+		);
+		$recent_denials = array_slice( $recent_denials, 0, self::TOP_PLUGINS * 2 );
+
 		$payload = array_merge(
 			$base,
 			array(
@@ -359,6 +390,8 @@ final class Rest {
 				'top_plugins'                  => $top,
 				'shadow_ai_observation_count'  => $shadow_count,
 				'shadow_ai_block_count'        => $shadow_blocks,
+				'denials_by_context'           => $denials_by_context,
+				'recent_denials'               => $recent_denials,
 			)
 		);
 

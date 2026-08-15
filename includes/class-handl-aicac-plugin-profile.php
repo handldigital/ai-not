@@ -19,6 +19,9 @@ final class Plugin_Profile {
 	/** Max incident rows listed on the profile page. */
 	public const INCIDENT_LIST_LIMIT = 20;
 
+	/** Max denials kept per request context in the Phase 1 "what they saw" payload. */
+	public const WHAT_THEY_SAW_PER_CONTEXT = 20;
+
 	/**
 	 * Sanitize a plugin basename from a query/path argument.
 	 * Rejects traversal and non-plugin shapes; does not require the plugin to be installed.
@@ -168,11 +171,65 @@ final class Plugin_Profile {
 			'effective'        => self::effective_ruleset( $policy, $plugin ),
 			'usage'            => self::usage_from_rows( $rows, $policy ),
 			'incidents'        => self::incidents_from_rows( $rows ),
+			// AICAC-BLOCKED-UX Phase 1: structured payload only — Phase 2 renders it.
+			'what_they_saw'    => self::what_they_saw_from_rows( $rows ),
 			'actions'          => array(
 				'rules_url'    => self::rules_url( $plugin ),
 				'activity_url' => self::activity_url( $plugin ),
 				'profile_url'  => self::profile_url( $plugin ),
 			),
+		);
+	}
+
+	/**
+	 * Group recent denials by request context for the "what they saw" panel (Phase 2).
+	 *
+	 * Legacy rows without request_context read as unknown — never frontend.
+	 *
+	 * @param list<array<string,mixed>> $rows
+	 * @return array{denial_count:int,by_context:array<string,list<array<string,mixed>>>}
+	 */
+	public static function what_they_saw_from_rows( array $rows ): array {
+		$contexts = array_merge( Policy::request_context_values(), array( 'unknown' ) );
+		$by       = array();
+		foreach ( $contexts as $ctx ) {
+			$by[ $ctx ] = array();
+		}
+
+		$total = 0;
+		// Newest first.
+		foreach ( array_reverse( $rows ) as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$channel = isset( $row['channel'] ) ? (string) $row['channel'] : '';
+			if ( 'direct_http' === $channel || 'spend_threshold' === $channel ) {
+				continue;
+			}
+			if ( 'deny' !== (string) ( $row['decision'] ?? '' ) ) {
+				continue;
+			}
+
+			++$total;
+			$ctx = Policy::request_context_from_row( $row );
+			if ( ! isset( $by[ $ctx ] ) ) {
+				$by[ $ctx ] = array();
+			}
+			if ( count( $by[ $ctx ] ) >= self::WHAT_THEY_SAW_PER_CONTEXT ) {
+				continue;
+			}
+
+			$by[ $ctx ][] = array(
+				'ts'             => isset( $row['ts'] ) ? (int) $row['ts'] : 0,
+				'returned_error' => Policy::returned_error_from_row( $row ),
+				'operation'      => isset( $row['operation'] ) ? (string) $row['operation'] : '',
+				'denial_reason'  => isset( $row['denial_reason'] ) ? (string) $row['denial_reason'] : '',
+			);
+		}
+
+		return array(
+			'denial_count' => $total,
+			'by_context'   => $by,
 		);
 	}
 
