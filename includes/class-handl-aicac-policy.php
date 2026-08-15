@@ -1274,6 +1274,82 @@ final class Policy {
 	}
 
 	/**
+	 * True when the posted plugin-rule map has as many rows as the Rules form
+	 * said it rendered. A mismatch means PHP truncated the POST (max_input_vars)
+	 * and the payload must not be written.
+	 *
+	 * @param mixed $posted_rules handl_aicac_rule array from POST.
+	 * @param mixed $expected     handl_aicac_rules_expected from POST.
+	 */
+	public static function posted_rules_match_expected( $posted_rules, $expected ): bool {
+		if ( is_string( $expected ) && is_numeric( $expected ) ) {
+			$expected = (int) $expected;
+		}
+		if ( ! is_int( $expected ) || $expected < 0 ) {
+			return false;
+		}
+		$arrived = is_array( $posted_rules ) ? count( $posted_rules ) : 0;
+		return $arrived === $expected;
+	}
+
+	/**
+	 * Apply posted Allow/Deny values onto a stored plugins map.
+	 * Keys absent from $posted stay as stored. An empty posted value drops
+	 * the explicit rule (back to Default).
+	 *
+	 * @param array<string,string> $base   Stored plugins map.
+	 * @param mixed                $posted Posted handl_aicac_rule map.
+	 * @return array<string,string>
+	 */
+	public static function merge_posted_plugin_rules( array $base, $posted ): array {
+		if ( ! is_array( $posted ) ) {
+			return $base;
+		}
+		$rules = $base;
+		foreach ( $posted as $basename => $rule ) {
+			$basename = sanitize_text_field( (string) $basename );
+			$rule     = sanitize_text_field( (string) $rule );
+			if ( '' === $basename ) {
+				continue;
+			}
+			if ( 'allow' === $rule || 'deny' === $rule ) {
+				$rules[ $basename ] = $rule;
+			} else {
+				unset( $rules[ $basename ] );
+			}
+		}
+		return $rules;
+	}
+
+	/**
+	 * Merge posted model-route rows onto a stored map. Keys absent from
+	 * $posted stay as stored. A posted row that sanitizes empty is removed.
+	 *
+	 * @param array<string,array<string,string>> $base
+	 * @param mixed                              $posted
+	 * @return array<string,array<string,string>>
+	 */
+	public static function merge_posted_model_force( array $base, $posted ): array {
+		$base = Model_Force::sanitize_force_map( $base );
+		if ( ! is_array( $posted ) ) {
+			return $base;
+		}
+		$sanitized = Model_Force::sanitize_force_map( $posted );
+		foreach ( $posted as $basename => $_row ) {
+			$basename = sanitize_text_field( (string) $basename );
+			if ( '' === $basename ) {
+				continue;
+			}
+			if ( isset( $sanitized[ $basename ] ) ) {
+				$base[ $basename ] = $sanitized[ $basename ];
+			} else {
+				unset( $base[ $basename ] );
+			}
+		}
+		return $base;
+	}
+
+	/**
 	 * @param array<string,mixed> $policy
 	 */
 	public static function save_policy( array $policy ): void {

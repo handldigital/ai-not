@@ -35,6 +35,9 @@ final class Admin {
 	 */
 	private ?array $bulk_result = null;
 
+	/** Set when a Rules save is refused because the POST was truncated. */
+	private bool $rules_save_truncated = false;
+
 	/**
 	 * AICAC-SIM dry-run result for Rules-tab panel (never persists policy).
 	 *
@@ -420,10 +423,10 @@ final class Admin {
 			check_admin_referer( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
 			if ( 'activity' === $tab ) {
 				$this->handle_save_log();
+				$saved = true;
 			} else {
-				$this->handle_save_rules();
+				$saved = $this->handle_save_rules();
 			}
-			$saved = true;
 		}
 
 		$policy = Policy::get_policy();
@@ -452,6 +455,9 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		}
 		if ( $checks_need_override ) {
 			echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__( 'This change would make one or more policy checks fail. Review the list below and select “Save anyway” if you still want to apply it.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		if ( $this->rules_save_truncated ) {
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Rules were not saved. The form sent more plugin rows than PHP will accept (max_input_vars). Nothing was changed. Filter the plugin list so fewer rows are shown, or raise max_input_vars.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $saved ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Saved.', 'handl-ai-connector-access-control' ) . '</p></div>';
@@ -751,6 +757,15 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 
 		$rules_form_id = 'handl-aicac-rules-save';
 		$bulk_form_id  = 'handl-aicac-bulk-rules';
+		$default_rule  = ( ( $policy['default'] ?? 'allow' ) === 'deny' ) ? 'deny' : 'allow';
+		$rules_expected = 0;
+		foreach ( $plugins as $basename => $data ) {
+			$rule    = $policy['plugins'][ $basename ] ?? '';
+			$enabled = isset( $active[ $basename ] );
+			if ( $this->plugin_rule_row_is_visible( (string) $rule, $enabled, $plugin_status_filter, $plugin_access_filter, $default_rule ) ) {
+				++$rules_expected;
+			}
+		}
 
 		// Bulk shell first — must not nest inside the rules form.
 		echo '<form method="post" id="' . esc_attr( $bulk_form_id ) . '" class="handl-aicac-rules-save-form">';
@@ -799,6 +814,8 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		// Early action slot: Save is after the matrix and can be truncated by
 		// max_input_vars. Click/submit handlers copy data-aicac-action here first.
 		echo '<input type="hidden" name="handl_aicac_action" id="handl-aicac-action" value="" />';
+		// Early sentinel: must arrive even when the matrix is truncated.
+		echo '<input type="hidden" name="handl_aicac_rules_expected" id="handl-aicac-rules-expected" value="' . esc_attr( (string) $rules_expected ) . '" />';
 		echo '<script>';
 		echo '(function(){var form=document.getElementById(' . wp_json_encode( $rules_form_id ) . ');';
 		echo 'var action=document.getElementById("handl-aicac-action");if(!form||!action)return;';
@@ -969,24 +986,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			$name    = isset( $data['Name'] ) ? (string) $data['Name'] : $basename;
 			$rule    = $policy['plugins'][ $basename ] ?? '';
 			$enabled = isset( $active[ $basename ] );
-
-			if ( 'active' === $plugin_status_filter && ! $enabled ) {
-				continue;
-			}
-			if ( 'inactive' === $plugin_status_filter && $enabled ) {
-				continue;
-			}
-
-			$explicit = ( 'allow' === $rule || 'deny' === $rule ) ? $rule : '';
-			$effective = $explicit ? $explicit : ( ( $policy['default'] ?? 'allow' ) === 'deny' ? 'deny' : 'allow' );
-
-			if ( 'default-only' === $plugin_access_filter && '' !== $explicit ) {
-				continue;
-			}
-			if ( 'effective-allow' === $plugin_access_filter && 'allow' !== $effective ) {
-				continue;
-			}
-			if ( 'effective-deny' === $plugin_access_filter && 'deny' !== $effective ) {
+			$default_rule = ( ( $policy['default'] ?? 'allow' ) === 'deny' ) ? 'deny' : 'allow';
+			if ( ! $this->plugin_rule_row_is_visible( (string) $rule, $enabled, $plugin_status_filter, $plugin_access_filter, $default_rule ) ) {
 				continue;
 			}
 
@@ -1186,6 +1187,34 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		echo '</div>'; // .handl-aicac-tab-panel
 		echo '</div>'; // .wrap
+	}
+
+	/**
+	 * Whether a plugin row is shown on the current Rules filter.
+	 * Count and render must use the same predicate so the expected-row sentinel matches.
+	 */
+	private function plugin_rule_row_is_visible( string $rule, bool $enabled, string $status_filter, string $access_filter, string $default ): bool {
+		if ( 'active' === $status_filter && ! $enabled ) {
+			return false;
+		}
+		if ( 'inactive' === $status_filter && $enabled ) {
+			return false;
+		}
+
+		$explicit  = ( 'allow' === $rule || 'deny' === $rule ) ? $rule : '';
+		$effective = '' !== $explicit ? $explicit : ( 'deny' === $default ? 'deny' : 'allow' );
+
+		if ( 'default-only' === $access_filter && '' !== $explicit ) {
+			return false;
+		}
+		if ( 'effective-allow' === $access_filter && 'allow' !== $effective ) {
+			return false;
+		}
+		if ( 'effective-deny' === $access_filter && 'deny' !== $effective ) {
+			return false;
+		}
+
+		return true;
 	}
 
 	private function render_plugin_rules_filters( string $plugin_status_filter, string $plugin_access_filter ): void {
@@ -4116,10 +4145,17 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '</table>';
 	}
 
-	private function handle_save_rules(): void {
+	private function handle_save_rules(): bool {
 		$this->require_admin_mutation( 'handl_aicac_save_policy' );
 
-		$policy = $this->build_rules_policy_from_post( Policy::get_policy() );
+		$expected     = filter_input( INPUT_POST, 'handl_aicac_rules_expected', FILTER_VALIDATE_INT );
+		$posted_rules = filter_input( INPUT_POST, 'handl_aicac_rule', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		if ( ! Policy::posted_rules_match_expected( $posted_rules, $expected ) ) {
+			$this->rules_save_truncated = true;
+			return false;
+		}
+
+		$policy = $this->build_rules_policy_from_post( Policy::get_policy(), true );
 		$report = Policy_Checks::evaluate_all( $policy );
 		$fails  = $report['failures'];
 		if ( ! empty( $fails ) ) {
@@ -4147,6 +4183,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		Policy::save_policy( $policy );
 		Policy_Checks::after_policy_saved( $policy, null );
+		return true;
 	}
 
 	/**
@@ -4258,20 +4295,14 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	}
 
 	/**
-	 * Build a rules-tab policy from POST without saving (used by save + AICAC-SIM).
-	 *
-	 * @param array<string,mixed> $base Starting policy (usually saved).
-	 * @return array<string,mixed>
-	 */
-	/**
 	 * Build a policy array from Rules-tab POST fields.
 	 *
 	 * @param array<string,mixed> $base          Saved policy used as the starting point.
-	 * @param bool                $merge_missing When true (simulator), keep base plugin /
-	 *                                           operation / force rules for keys absent from
-	 *                                           POST. Needed when max_input_vars truncates the
-	 *                                           matrix so a partial POST does not wipe rules.
-	 *                                           Save keeps false: empty selects mean "Default".
+	 * @param bool                $merge_missing When true (save + simulator), keep base
+	 *                                           plugin / operation / force rules for keys
+	 *                                           absent from POST so a partial or filtered
+	 *                                           POST does not wipe stored rules. Empty
+	 *                                           posted selects still mean "Default".
 	 * @return array<string,mixed>
 	 */
 	private function build_rules_policy_from_post( array $base, bool $merge_missing = false ): array {
@@ -4287,26 +4318,13 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			$policy['unknown_operation'] = Policy::sanitize_unknown_operation( $posted_unknown );
 		}
 
-		$rules        = $merge_missing && isset( $base['plugins'] ) && is_array( $base['plugins'] )
-			? $base['plugins']
-			: array();
 		$posted_rules = filter_input( INPUT_POST, 'handl_aicac_rule', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
-		if ( is_array( $posted_rules ) ) {
-			if ( $merge_missing ) {
-				foreach ( $posted_rules as $basename => $rule ) {
-					$basename = sanitize_text_field( (string) $basename );
-					$rule     = sanitize_text_field( (string) $rule );
-					if ( '' === $basename ) {
-						continue;
-					}
-					if ( 'allow' === $rule || 'deny' === $rule ) {
-						$rules[ $basename ] = $rule;
-					} else {
-						unset( $rules[ $basename ] );
-					}
-				}
-			} else {
-				$rules = array();
+		if ( $merge_missing ) {
+			$base_rules = isset( $base['plugins'] ) && is_array( $base['plugins'] ) ? $base['plugins'] : array();
+			$policy['plugins'] = Policy::merge_posted_plugin_rules( $base_rules, $posted_rules );
+		} else {
+			$rules = array();
+			if ( is_array( $posted_rules ) ) {
 				foreach ( $posted_rules as $basename => $rule ) {
 					$basename = sanitize_text_field( (string) $basename );
 					$rule     = sanitize_text_field( (string) $rule );
@@ -4318,10 +4336,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 					}
 				}
 			}
-		} elseif ( ! $merge_missing ) {
-			$rules = array();
+			$policy['plugins'] = $rules;
 		}
-		$policy['plugins'] = $rules;
+		$rules = $policy['plugins'];
 
 		// AICAC-TEMP-ALLOW: optional expiry presets for Allow rules.
 		$expires        = $merge_missing && isset( $base['plugin_expires'] ) && is_array( $base['plugin_expires'] )
@@ -4426,7 +4443,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$this->apply_shadow_block_settings_from_post( $policy );
 		$this->apply_role_gate_settings_from_post( $policy );
 		$this->apply_new_plugin_settings_from_post( $policy );
-		$this->apply_model_force_settings_from_post( $policy );
+		$this->apply_model_force_settings_from_post( $policy, $merge_missing );
 		$this->apply_plugin_budget_settings_from_post( $policy, $base );
 
 		// AICAC-NEWPLUGIN: explicit Allow/Deny on save completes review.
@@ -4770,16 +4787,25 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	/**
 	 * @param array<string,mixed> $policy
 	 */
-	private function apply_model_force_settings_from_post( array &$policy ): void {
+	private function apply_model_force_settings_from_post( array &$policy, bool $merge_missing = false ): void {
 		$this->require_admin_mutation( 'handl_aicac_save_policy' );
 
 		$posted_map = filter_input( INPUT_POST, 'handl_aicac_model_force', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
-		$policy['model_force_plugins'] = Model_Force::sanitize_force_map( is_array( $posted_map ) ? $posted_map : array() );
+		if ( $merge_missing ) {
+			$base_map = isset( $policy['model_force_plugins'] ) && is_array( $policy['model_force_plugins'] )
+				? $policy['model_force_plugins']
+				: array();
+			$policy['model_force_plugins'] = Policy::merge_posted_model_force( $base_map, $posted_map );
+		} else {
+			$policy['model_force_plugins'] = Model_Force::sanitize_force_map( is_array( $posted_map ) ? $posted_map : array() );
+		}
 
 		$posted_ua = filter_input( INPUT_POST, 'handl_aicac_model_force_unattributed', FILTER_UNSAFE_RAW );
-		$policy['model_force_unattributed']          = Model_Force::sanitize_unattributed_mode( $posted_ua );
-		$policy['model_force_unattributed_provider'] = Model_Force::sanitize_id( filter_input( INPUT_POST, 'handl_aicac_model_force_unattributed_provider', FILTER_UNSAFE_RAW ) );
-		$policy['model_force_unattributed_model']    = Model_Force::sanitize_id( filter_input( INPUT_POST, 'handl_aicac_model_force_unattributed_model', FILTER_UNSAFE_RAW ) );
+		if ( ! $merge_missing || ( null !== $posted_ua && false !== $posted_ua ) ) {
+			$policy['model_force_unattributed']          = Model_Force::sanitize_unattributed_mode( $posted_ua );
+			$policy['model_force_unattributed_provider'] = Model_Force::sanitize_id( filter_input( INPUT_POST, 'handl_aicac_model_force_unattributed_provider', FILTER_UNSAFE_RAW ) );
+			$policy['model_force_unattributed_model']    = Model_Force::sanitize_id( filter_input( INPUT_POST, 'handl_aicac_model_force_unattributed_model', FILTER_UNSAFE_RAW ) );
+		}
 
 		// Legacy site-wide fields must not reappear.
 		unset( $policy['model_force_enabled'], $policy['model_force_provider'], $policy['model_force_model'] );
