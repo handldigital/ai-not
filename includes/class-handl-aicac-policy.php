@@ -62,6 +62,7 @@ final class Policy {
 			: array();
 
 		$now_ts     = time();
+		$bg_active  = Break_Glass::is_active( $now_ts );
 		$would_eval = self::evaluate( $policy, $plugin, $operation, $armed, $family, $now_ts );
 		$eval       = ! empty( $policy['audit_only'] )
 			? array( 'prevent' => false, 'reason' => '', 'matched_tools' => array() )
@@ -89,6 +90,11 @@ final class Policy {
 			),
 			$snapshot
 		);
+
+		// AICAC-BREAKGLASS: tag every call that ran while the window was open.
+		if ( $bg_active ) {
+			$event['break_glass'] = true;
+		}
 
 		// AICAC-BUDGET-B: degrade-to-observe — call continues; row records would-have-blocked.
 		if ( ! $prevent && ! empty( $would_eval['budget_over'] ) && Budget::MODE_OBSERVE === (string) ( $would_eval['budget_mode'] ?? '' ) ) {
@@ -352,6 +358,15 @@ final class Policy {
 	 * @return array{prevent:bool,reason:string,matched_tools:list<string>}
 	 */
 	public static function evaluate( array $policy, ?string $plugin_basename, ?string $operation = null, ?array $armed_tools = null, ?string $capability_family = null, ?int $now = null ): array {
+		// AICAC-BREAKGLASS: temporary global allow (fail-safe closes a missed cron first).
+		if ( Break_Glass::is_active( $now ) ) {
+			return array(
+				'prevent'       => false,
+				'reason'        => 'break_glass',
+				'matched_tools' => array(),
+			);
+		}
+
 		if ( ! empty( $policy['kill_switch'] ) ) {
 			$exceptions = self::get_kill_switch_exceptions( $policy );
 			if ( $plugin_basename && in_array( $plugin_basename, $exceptions, true ) ) {

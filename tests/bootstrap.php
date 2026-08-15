@@ -463,6 +463,22 @@ if ( ! function_exists( 'wp_schedule_event' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_schedule_single_event' ) ) {
+	/**
+	 * @param int    $timestamp Timestamp.
+	 * @param string $hook Hook.
+	 * @param array  $args Args.
+	 */
+	function wp_schedule_single_event( $timestamp, $hook, $args = array() ): bool {
+		unset( $args );
+		if ( ! isset( $GLOBALS['handl_aicac_test_cron'] ) || ! is_array( $GLOBALS['handl_aicac_test_cron'] ) ) {
+			$GLOBALS['handl_aicac_test_cron'] = array();
+		}
+		$GLOBALS['handl_aicac_test_cron'][ (string) $hook ] = (int) $timestamp;
+		return true;
+	}
+}
+
 if ( ! function_exists( 'wp_unschedule_event' ) ) {
 	/**
 	 * @param int    $timestamp Timestamp.
@@ -480,7 +496,10 @@ if ( ! function_exists( 'wp_unschedule_event' ) ) {
 
 if ( ! function_exists( 'wp_clear_scheduled_hook' ) ) {
 	function wp_clear_scheduled_hook( $hook, $args = array() ) {
-		unset( $hook, $args );
+		unset( $args );
+		if ( isset( $GLOBALS['handl_aicac_test_cron'][ (string) $hook ] ) ) {
+			unset( $GLOBALS['handl_aicac_test_cron'][ (string) $hook ] );
+		}
 		return true;
 	}
 }
@@ -734,6 +753,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-temp-allow.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rule-notes.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-new-plugin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quiet-hours.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-break-glass.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-simulator.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-checks.php';

@@ -56,6 +56,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rule-notes.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-new-plugin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quiet-hours.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-break-glass.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-simulator.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-checks.php';
@@ -80,6 +81,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
 
 		Policy::instance()->init();
+		Break_Glass::init();
 		Temp_Allow::instance()->init();
 		New_Plugin::instance()->init();
 		Alerts::instance()->init();
@@ -102,9 +104,11 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-audit.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-policy-apply.php';
+			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-break-glass.php';
 			CLI::register();
 			CLI_Audit::register();
 			CLI_Policy_Apply::register();
+			CLI_Break_Glass::register();
 		}
 	}
 
