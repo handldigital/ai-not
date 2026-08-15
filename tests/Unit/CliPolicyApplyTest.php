@@ -434,4 +434,66 @@ final class CliPolicyApplyTest extends TestCase {
 			CLI_Policy_Apply::error_message( 'non_comparable_applied', '', array( 'alert_email' ) )
 		);
 	}
+
+	public function test_redacted_cli_export_json_has_no_email_url_or_note_text(): void {
+		$note = 'cli-note-must-not-leak';
+		$this->seed_live(
+			array(
+				'alert_email'       => 'qa-cli@handldigital.example',
+				'alert_webhook_url' => 'https://hooks.example.test/cli-secret',
+				'plugin_notes'      => array( 'acme/a.php' => $note ),
+			)
+		);
+
+		$plain = CLI_Policy_Apply::export_current( false );
+		$this->assertStringContainsString( 'qa-cli@handldigital.example', $plain['json'] );
+		$this->assertArrayNotHasKey( 'redacted', $plain['export'] );
+
+		$out = CLI_Policy_Apply::export_current( true );
+		$this->assertTrue( $out['redacted'] );
+		$this->assertTrue( $out['export']['redacted'] );
+		$json = $out['json'];
+		$this->assertDoesNotMatchRegularExpression(
+			'/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i',
+			$json
+		);
+		$this->assertDoesNotMatchRegularExpression( '#https?://#i', $json );
+		$this->assertStringNotContainsString( $note, $json );
+		$this->assertStringContainsString( '"redacted": true', $json );
+	}
+
+	public function test_apply_redacted_export_skips_placeholders_and_keeps_live_secrets(): void {
+		$live = $this->seed_live(
+			array(
+				'alert_email'       => 'keep-apply@handldigital.example',
+				'alert_webhook_url' => 'https://hooks.live.test/keep-apply',
+				'plugin_notes'      => array( 'acme/a.php' => 'live note stays' ),
+			)
+		);
+		$incoming = $live;
+		$incoming['default']           = 'deny';
+		$incoming['alert_email']       = 'overwrite-me@handldigital.example';
+		$incoming['alert_webhook_url'] = 'https://hooks.example.test/overwrite';
+		$incoming['plugin_notes']      = array( 'acme/a.php' => 'imported note must not land' );
+		$json = Policy_Transfer::encode_export(
+			Policy_Transfer::build_export( $incoming, '1.5.0', '2026-08-15T00:00:00Z', true )
+		);
+
+		$prepared = CLI_Policy_Apply::prepare_apply( $json, 'https://example.test/', true );
+		$this->assertTrue( $prepared['ok'] );
+		$this->assertSame( array( 'alert_email', 'alert_webhook_url', 'plugin_notes' ), $prepared['skipped'] );
+
+		$result = CLI_Policy_Apply::execute( $json, 'https://example.test/', false, true, true );
+		$this->assertSame( 0, $result['exit_code'] );
+		$this->assertTrue( $result['wrote'] );
+		$joined = implode( "\n", $result['logs'] );
+		$this->assertStringContainsString( 'Skipped redacted fields:', $joined );
+
+		$after = Policy::get_policy();
+		$this->assertSame( 'deny', $after['default'] );
+		$this->assertSame( 'keep-apply@handldigital.example', $after['alert_email'] );
+		$this->assertSame( 'https://hooks.live.test/keep-apply', $after['alert_webhook_url'] );
+		$this->assertSame( 'live note stays', $after['plugin_notes']['acme/a.php'] );
+		$this->assertNotSame( Policy_Transfer::REDACT_PRESENT, $after['alert_email'] );
+	}
 }
