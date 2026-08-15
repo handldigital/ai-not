@@ -807,8 +807,9 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		echo '})();';
 		echo '</script>';
 		// First submit owned by this form (clip, not display:none) so Enter saves
-		// instead of hitting Run test, which is earlier in visual order.
-		echo '<button type="submit" name="handl_aicac_action" value="save" class="screen-reader-text" form="' . esc_attr( $rules_form_id ) . '" data-aicac-action="save">';
+		// instead of hitting Run test. tabindex=-1 keeps it out of the tab order
+		// and off the SR "two Save changes" announcement. Do not aria-hide it.
+		echo '<button type="submit" name="handl_aicac_action" value="save" class="screen-reader-text" tabindex="-1" form="' . esc_attr( $rules_form_id ) . '" data-aicac-action="save">';
 		echo esc_html__( 'Save changes', 'handl-ai-connector-access-control' );
 		echo '</button>';
 

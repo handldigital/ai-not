@@ -152,6 +152,16 @@ final class RulesSaveFormAssociationTest extends TestCase {
 			$attrs,
 			'Default Save must stay clipped (Enter target) rather than display:none'
 		);
+		$this->assertStringContainsString(
+			'tabindex="-1"',
+			$attrs,
+			'Clipped Save must stay out of the tab order so only the visible Save is announced'
+		);
+		$this->assertStringNotContainsString(
+			'aria-hidden',
+			$attrs,
+			'Do not aria-hide a focusable control'
+		);
 		$this->assertStringNotContainsString(
 			'simulate_policy',
 			$attrs,
