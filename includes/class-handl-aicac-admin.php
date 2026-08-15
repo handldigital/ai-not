@@ -425,6 +425,9 @@ final class Admin {
 			}
 			$saved = true;
 		}
+		if ( ! $saved && isset( $_GET['settings-updated'] ) && 'true' === (string) $_GET['settings-updated'] ) {
+			$saved = true;
+		}
 
 		$policy = Policy::get_policy();
 
@@ -447,6 +450,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 
 		$this->render_tabs( $tab, $plugin_status_filter, $plugin_access_filter, $this->log_filters );
 
+		echo '<div id="handl-aicac-notices" role="status" aria-live="polite">';
 		if ( $checks_saved_ok ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Policy check list updated.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
@@ -668,6 +672,10 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 			echo '</form>';
 			echo '</p></div>';
 		}
+		echo '</div>';
+		echo '<script>';
+		echo '(function(){var box=document.getElementById("handl-aicac-notices");if(!box)return;var n=box.querySelector(".notice");if(!n)return;if(!n.hasAttribute("tabindex"))n.setAttribute("tabindex","-1");n.focus();})();';
+		echo '</script>';
 
 		// Honesty banner: core skips our filter when AI is disabled site-wide.
 		if ( function_exists( 'wp_supports_ai' ) && ! wp_supports_ai() ) {
@@ -811,9 +819,9 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		echo '</summary>';
 		echo '<table class="form-table" role="presentation">';
 		echo '<tr>';
-		echo '<th scope="row">' . esc_html__( 'Default policy', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="row"><label for="handl-aicac-default">' . esc_html__( 'Default policy', 'handl-ai-connector-access-control' ) . '</label></th>';
 		echo '<td>';
-		echo '<select name="handl_aicac_default" form="' . esc_attr( $rules_form_id ) . '">';
+		echo '<select name="handl_aicac_default" id="handl-aicac-default" form="' . esc_attr( $rules_form_id ) . '">';
 		$this->render_option( 'allow', $policy['default'] ?? 'allow', __( 'Allow', 'handl-ai-connector-access-control' ) );
 		$this->render_option( 'deny', $policy['default'] ?? 'allow', __( 'Deny', 'handl-ai-connector-access-control' ) );
 		echo '</select>';
@@ -821,10 +829,10 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		echo '</td>';
 		echo '</tr>';
 		echo '<tr>';
-		echo '<th scope="row">' . esc_html__( 'Unknown AI operations', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="row"><label for="handl-aicac-unknown-operation">' . esc_html__( 'Unknown AI operations', 'handl-ai-connector-access-control' ) . '</label></th>';
 		echo '<td>';
 		$unknown = $policy['unknown_operation'] ?? 'inherit';
-		echo '<select name="handl_aicac_unknown_operation" form="' . esc_attr( $rules_form_id ) . '">';
+		echo '<select name="handl_aicac_unknown_operation" id="handl-aicac-unknown-operation" form="' . esc_attr( $rules_form_id ) . '">';
 		$this->render_option( 'inherit', (string) $unknown, __( 'Follow plugin rule', 'handl-ai-connector-access-control' ) );
 		$this->render_option( 'allow', (string) $unknown, __( 'Allow', 'handl-ai-connector-access-control' ) );
 		$this->render_option( 'deny', (string) $unknown, __( 'Deny', 'handl-ai-connector-access-control' ) );
@@ -937,18 +945,18 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		echo '<table class="widefat striped handl-aicac-rules-matrix">';
 		echo '<thead><tr>';
-		echo '<td id="cb" class="manage-column column-cb check-column"><label class="screen-reader-text" for="handl-aicac-bulk-select-all">' . esc_html__( 'Select all', 'handl-ai-connector-access-control' ) . '</label>';
-		echo '<input id="handl-aicac-bulk-select-all" type="checkbox" /></td>';
-		echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Status', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'AI access', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" id="cb" class="manage-column column-cb check-column"><label class="screen-reader-text" for="handl-aicac-bulk-select-all">' . esc_html__( 'Select all', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<input id="handl-aicac-bulk-select-all" type="checkbox" /></th>';
+		echo '<th scope="col">' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Status', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'AI access', 'handl-ai-connector-access-control' ) . '</th>';
 		foreach ( $family_labels as $family_id => $family_label ) {
-			echo '<th class="handl-aicac-col-family">' . esc_html( $family_label ) . '</th>';
+			echo '<th scope="col" class="handl-aicac-col-family">' . esc_html( $family_label ) . '</th>';
 		}
-		echo '<th class="handl-aicac-col-force">' . esc_html__( 'Provider route (experimental)', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="handl-aicac-col-force">' . esc_html__( 'Model route (experimental)', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="handl-aicac-col-budget">' . esc_html__( 'Estimated budget', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Plugin file', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="handl-aicac-col-force">' . esc_html__( 'Provider route (experimental)', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="handl-aicac-col-force">' . esc_html__( 'Model route (experimental)', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="handl-aicac-col-budget">' . esc_html__( 'Estimated budget', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Plugin file', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead>';
 		echo '<tbody>';
 
@@ -1093,7 +1101,12 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '<p class="description" style="margin:4px 0 0;">' . esc_html__( 'Stored locally and included in rules exports, Activity CSV exports, and printable evidence. Do not enter secrets.', 'handl-ai-connector-access-control' ) . '</p>';
 			if ( '' !== $rule_note ) {
 				$trunc = Rule_Notes::truncate_for_display( $rule_note );
-				echo '<p class="description handl-aicac-rule-note-preview" style="margin:4px 0 0;" title="' . esc_attr( $rule_note ) . '">';
+				$aria  = sprintf(
+					/* translators: %s: full Rule note text */
+					__( 'Rule note: %s', 'handl-ai-connector-access-control' ),
+					$rule_note
+				);
+				echo '<p class="description handl-aicac-rule-note-preview" style="margin:4px 0 0;" title="' . esc_attr( $rule_note ) . '" aria-label="' . esc_attr( $aria ) . '">';
 				echo esc_html( $trunc );
 				echo '</p>';
 			}
@@ -1762,9 +1775,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 
 		echo '<table class="widefat striped" style="max-width:48em;"><thead><tr>';
-		echo '<th>' . esc_html__( 'AI type', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Saved setting', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Result', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'AI type', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Saved setting', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Result', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead><tbody>';
 		foreach ( (array) ( $eff['families'] ?? array() ) as $fam ) {
 			if ( ! is_array( $fam ) ) {
@@ -1799,9 +1812,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			if ( ! empty( $usage['by_day'] ) ) {
 				echo '<h4>' . esc_html__( 'By day', 'handl-ai-connector-access-control' ) . '</h4>';
 				echo '<table class="widefat striped" style="max-width:36em;"><thead><tr>';
-				echo '<th>' . esc_html__( 'Day', 'handl-ai-connector-access-control' ) . '</th>';
-				echo '<th class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
-				echo '<th class="column-num">' . esc_html__( 'Estimated spend', 'handl-ai-connector-access-control' ) . '</th>';
+				echo '<th scope="col">' . esc_html__( 'Day', 'handl-ai-connector-access-control' ) . '</th>';
+				echo '<th scope="col" class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
+				echo '<th scope="col" class="column-num">' . esc_html__( 'Estimated spend', 'handl-ai-connector-access-control' ) . '</th>';
 				echo '</tr></thead><tbody>';
 				foreach ( (array) $usage['by_day'] as $day_row ) {
 					if ( ! is_array( $day_row ) ) {
@@ -1939,9 +1952,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	 */
 	private function render_profile_bucket_table( array $rows ): void {
 		echo '<table class="widefat striped" style="max-width:40em;"><thead><tr>';
-		echo '<th>' . esc_html__( 'Name', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-num">' . esc_html__( 'Estimated spend', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Name', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-num">' . esc_html__( 'Estimated spend', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead><tbody>';
 		$shown = 0;
 		foreach ( $rows as $row ) {
@@ -2279,9 +2292,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			}
 
 			echo '<table class="widefat striped handl-aicac-tile-table"><thead><tr>';
-			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th class="column-num">' . esc_html__( 'Estimated $', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col" class="column-num">' . esc_html__( 'Estimated $', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col" class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '</tr></thead><tbody>';
 			$i = 0;
 			foreach ( $plugin_spend as $p => $row ) {
@@ -2359,10 +2372,10 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '<p class="description">' . esc_html__( 'No identified AI Client callers in this log yet.', 'handl-ai-connector-access-control' ) . '</p>';
 		} else {
 			echo '<table class="widefat striped handl-aicac-tile-table"><thead><tr>';
-			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'Rule', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'Actions', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col" class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'Rule', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'Actions', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '</tr></thead><tbody>';
 			$i = 0;
 			foreach ( $offenders as $p => $calls ) {
@@ -2397,9 +2410,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '<h3 style="margin-top:1.25em;">' . esc_html__( 'Outside AI Client (observe only)', 'handl-ai-connector-access-control' ) . '</h3>';
 			echo '<p class="description">' . esc_html__( 'These calls bypass the AI Client, so Allow and Deny rules cannot control them.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '<table class="widefat striped handl-aicac-tile-table"><thead><tr>';
-			echo '<th>' . esc_html__( 'Caller', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'Actions', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'Caller', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col" class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'Actions', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '</tr></thead><tbody>';
 			$i = 0;
 			foreach ( $shadow_top as $row ) {
@@ -2584,9 +2597,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '<h3>' . esc_html__( 'Estimated month-end by plugin', 'handl-ai-connector-access-control' ) . '</h3>';
 			echo '<p class="description">' . esc_html__( 'Projected from this month’s estimated spend so far. Estimate only, not a bill.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '<table class="widefat striped"><thead><tr>';
-			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th class="column-num">' . esc_html__( 'Estimated so far this month', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th class="column-num">' . esc_html__( 'Estimated month-end', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col" class="column-num">' . esc_html__( 'Estimated so far this month', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col" class="column-num">' . esc_html__( 'Estimated month-end', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '</tr></thead><tbody>';
 			$i = 0;
 			foreach ( $forecast['plugins'] as $basename => $row ) {
@@ -2670,15 +2683,15 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<div class="handl-aicac-insights-panel">';
 		echo '<table class="widefat handl-aicac-insights-table">';
 		echo '<thead><tr>';
-		echo '<th class="column-rank">' . esc_html__( '#', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-label">' . esc_html( $dimensions[ $dimension ] ) . '</th>';
-		echo '<th class="column-chart">' . esc_html__( 'Share', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-num">' . esc_html__( 'Total tokens', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-num">' . esc_html__( 'Largest call', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-num">' . esc_html__( 'Largest input', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-num">' . esc_html__( 'Largest output', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-time">' . esc_html__( 'Last seen', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-rank">' . esc_html__( '#', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-label">' . esc_html( $dimensions[ $dimension ] ) . '</th>';
+		echo '<th scope="col" class="column-chart">' . esc_html__( 'Share', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-num">' . esc_html__( 'Total tokens', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-num">' . esc_html__( 'Largest call', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-num">' . esc_html__( 'Largest input', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-num">' . esc_html__( 'Largest output', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-time">' . esc_html__( 'Last seen', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead><tbody>';
 
 		$rank = 0;
@@ -2798,11 +2811,11 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		echo '<table class="widefat striped handl-aicac-trends-table">';
 		echo '<thead><tr>';
-		echo '<th>' . esc_html__( 'Scope', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Calls trend', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Calls vs last week', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Estimated spend trend', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Estimated spend vs last week', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Scope', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Calls trend', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Calls vs last week', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Estimated spend trend', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Estimated spend vs last week', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead><tbody>';
 
 		$this->render_insights_trend_row(
@@ -2914,7 +2927,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<tr' . ( $is_peak_row ? ' class="handl-aicac-insights-row--leader"' : '' ) . '>';
 		echo '<td class="column-rank">';
 		if ( $is_peak_row ) {
-			echo '<span class="handl-aicac-insights-rank-badge" title="' . esc_attr__( 'Highest value in this view', 'handl-ai-connector-access-control' ) . '">★</span> ';
+			echo '<span class="handl-aicac-insights-rank-badge" aria-label="' . esc_attr__( 'Highest value in this view', 'handl-ai-connector-access-control' ) . '"><span aria-hidden="true">★</span></span> ';
 		}
 		echo esc_html( (string) $rank );
 		echo '</td>';
@@ -3193,19 +3206,19 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '</p>';
 		echo '<table class="widefat striped handl-aicac-log-table">';
 		echo '<thead><tr>';
-		echo '<th class="column-time">' . esc_html__( 'Time', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Decision', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-operation">' . esc_html__( 'Operation / AI type', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-provider">' . esc_html__( 'Provider', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-model">' . esc_html__( 'Model', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-tokens">' . esc_html__( 'Input tokens', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-tokens">' . esc_html__( 'Output tokens', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-tokens">' . esc_html__( 'Estimated $', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Prompt', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'User', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Request URL', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th class="column-actions">' . esc_html__( 'Actions', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-time">' . esc_html__( 'Time', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Decision', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-operation">' . esc_html__( 'Operation / AI type', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-provider">' . esc_html__( 'Provider', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-model">' . esc_html__( 'Model', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-tokens">' . esc_html__( 'Input tokens', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-tokens">' . esc_html__( 'Output tokens', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-tokens">' . esc_html__( 'Estimated $', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Prompt', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'User', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Request URL', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-actions">' . esc_html__( 'Actions', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead><tbody>';
 
 		foreach ( $rows_to_show as $row ) {
@@ -3989,9 +4002,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<p style="margin-top:12px;"><strong>' . esc_html__( 'Rates by provider (optional)', 'handl-ai-connector-access-control' ) . '</strong></p>';
 		echo '<p class="description">' . esc_html__( 'Leave both fields blank to use the default rates for that provider. Estimates only, not billing.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<table class="widefat striped" style="max-width:36em;"><thead><tr>';
-		echo '<th>' . esc_html__( 'Provider', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Input $ per 1M tokens', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Output $ per 1M tokens', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Provider', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Input $ per 1M tokens', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Output $ per 1M tokens', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead><tbody>';
 		foreach ( Cost::KNOWN_PROVIDERS as $provider_id ) {
 			$row_in  = isset( $provider_rates[ $provider_id ] ) ? (string) $provider_rates[ $provider_id ]['input_per_m'] : '';
@@ -4043,8 +4056,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '<p class="description">' . esc_html__( 'No installed plugins found.', 'handl-ai-connector-access-control' ) . '</p>';
 		} else {
 			echo '<table class="widefat striped" style="margin:0;"><thead><tr>';
-			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'Threshold (USD)', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'Threshold (USD)', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '</tr></thead><tbody>';
 			foreach ( $plugins_for_threshold as $basename => $meta ) {
 				$name  = isset( $meta['Name'] ) ? (string) $meta['Name'] : (string) $basename;
@@ -4829,7 +4842,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		echo '<table class="form-table" role="presentation">';
 		echo '<tr>';
-		echo '<th scope="row">' . esc_html__( 'Calls with no detected plugin', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="row"><label for="handl-aicac-model-force-unattributed">' . esc_html__( 'Calls with no detected plugin', 'handl-ai-connector-access-control' ) . '</label></th>';
 		echo '<td>';
 		echo '<select name="handl_aicac_model_force_unattributed" id="handl-aicac-model-force-unattributed" form="' . esc_attr( $form_id ) . '">';
 		$this->render_option( 'none', $ua_mode, __( 'Do not route (recommended)', 'handl-ai-connector-access-control' ) );
@@ -5724,19 +5737,19 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		} elseif ( $fill >= 80 ) {
 			$bar_class .= ' handl-aicac-budget-bar--warn';
 		}
-		echo '<div class="' . esc_attr( $bar_class ) . '" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' . esc_attr( (string) $fill ) . '">';
+		$progress_label = sprintf(
+			/* translators: 1: estimated spend, 2: estimated budget, 3: percent used */
+			__( 'Estimated $%1$s of $%2$s this month (%3$s%%)', 'handl-ai-connector-access-control' ),
+			Budget::format_amount( (float) $status['spend'] ),
+			Budget::format_amount( (float) $status['budget'] ),
+			number_format_i18n( (float) ( $status['percent_used'] ?? 0 ), 0 )
+		);
+		$progress_id = 'handl-aicac-budget-progress-' . $hash;
+		echo '<div class="' . esc_attr( $bar_class ) . '" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' . esc_attr( (string) $fill ) . '" aria-labelledby="' . esc_attr( $progress_id ) . '" aria-valuetext="' . esc_attr( $progress_label ) . '">';
 		echo '<span class="handl-aicac-budget-bar__fill" style="width:' . esc_attr( (string) $fill ) . '%;"></span>';
 		echo '</div>';
-		echo '<p class="description handl-aicac-budget-progress-label" style="margin:4px 0 0;">';
-		echo esc_html(
-			sprintf(
-				/* translators: 1: estimated spend, 2: estimated budget, 3: percent used */
-				__( 'Estimated $%1$s of $%2$s this month (%3$s%%)', 'handl-ai-connector-access-control' ),
-				Budget::format_amount( (float) $status['spend'] ),
-				Budget::format_amount( (float) $status['budget'] ),
-				number_format_i18n( (float) ( $status['percent_used'] ?? 0 ), 0 )
-			)
-		);
+		echo '<p class="description handl-aicac-budget-progress-label" id="' . esc_attr( $progress_id ) . '" style="margin:4px 0 0;">';
+		echo esc_html( $progress_label );
 		echo '</p>';
 		if ( $over ) {
 			echo '<p class="description handl-aicac-budget-over-note" style="margin:2px 0 0;color:#b32d2e;">';
@@ -5938,12 +5951,12 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		echo '<table class="widefat striped handl-aicac-suggested-rules">';
 		echo '<thead><tr>';
-		echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Last seen', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Rule', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Would block at plugin level', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Actions', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Last seen', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Rule', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Would block at plugin level', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Actions', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead><tbody>';
 
 		foreach ( array_slice( $suggested, 0, 30 ) as $row ) {
@@ -6905,9 +6918,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		} else {
 			echo '<table class="widefat striped" style="margin:0.5em 0 1em;">';
 			echo '<thead><tr>';
-			echo '<th>' . esc_html__( 'Setting', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'Current', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'New', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'Setting', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'Current', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'New', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '</tr></thead><tbody>';
 			foreach ( $rows as $row ) {
 				if ( ! is_array( $row ) ) {
@@ -7163,9 +7176,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		echo '<table class="widefat striped" style="margin:0.5em 0 1em;">';
 		echo '<thead><tr>';
-		echo '<th>' . esc_html__( 'Setting', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Current', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html( $new_column_label ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Setting', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Current', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html( $new_column_label ) . '</th>';
 		echo '</tr></thead><tbody>';
 		foreach ( $rows as $row ) {
 			if ( ! is_array( $row ) ) {
@@ -7716,11 +7729,11 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		} else {
 			echo '<table class="widefat striped" style="margin:0.5em 0 1em;">';
 			echo '<thead><tr>';
-			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'Location', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'Provider', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'Possible key (masked)', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'First seen', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'Location', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'Provider', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'Possible key (masked)', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'First seen', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '</tr></thead><tbody>';
 			foreach ( $findings as $row ) {
 				if ( ! is_array( $row ) ) {
@@ -8447,10 +8460,10 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		} else {
 			echo '<table class="widefat striped" style="max-width:52em;margin:0.5em 0 1em;">';
 			echo '<thead><tr>';
-			echo '<th>' . esc_html__( 'Check', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'Should be', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th>' . esc_html__( 'Status', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th></th>';
+			echo '<th scope="col">' . esc_html__( 'Check', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'Should be', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'Status', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col"><span class="screen-reader-text">' . esc_html__( 'Actions', 'handl-ai-connector-access-control' ) . '</span></th>';
 			echo '</tr></thead><tbody>';
 			$live = Policy::get_policy();
 			foreach ( $checks as $check ) {
