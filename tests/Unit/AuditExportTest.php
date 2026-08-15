@@ -44,6 +44,8 @@ final class AuditExportTest extends TestCase {
 				'Prompt',
 				'User',
 				'URI',
+				'Request context',
+				'Returned error',
 			),
 			$headers
 		);
@@ -99,6 +101,8 @@ final class AuditExportTest extends TestCase {
 		$this->assertSame( '', $cells[9] ); // Prompt
 		$this->assertSame( '', $cells[10] ); // User
 		$this->assertSame( '', $cells[11] ); // URI
+		$this->assertSame( 'unknown', $cells[12] ); // Request context (legacy)
+		$this->assertSame( '', $cells[13] ); // Returned error
 
 		$csv = Audit_Export::build_csv( array( $row ), $this->empty_filters(), array(), array() );
 		$this->assertStringNotContainsString( 'null', strtolower( $csv ) );

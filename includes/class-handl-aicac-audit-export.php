@@ -38,6 +38,8 @@ final class Audit_Export {
 			'Prompt',
 			'User',
 			'URI',
+			'Request context',
+			'Returned error',
 		);
 		if ( $include_rule_note ) {
 			$headers[] = 'Rule note';
@@ -212,6 +214,8 @@ final class Audit_Export {
 			$prompt,
 			$user_cell,
 			$uri,
+			Policy::request_context_from_row( $row ),
+			Policy::returned_error_from_row( $row ),
 		);
 	}
 
