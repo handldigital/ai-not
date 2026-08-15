@@ -1164,7 +1164,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '</script>';
 
 		echo '<p class="submit">';
-		echo '<button type="submit" name="handl_aicac_action" value="save" class="button button-primary" data-aicac-action="save">';
+		// Nested pack/preset/restore/check <form>s close this form in the parsed
+		// DOM; associate Save explicitly so the button still submits.
+		echo '<button type="submit" name="handl_aicac_action" value="save" class="button button-primary" form="' . esc_attr( $rules_form_id ) . '" data-aicac-action="save">';
 		echo esc_html__( 'Save changes', 'handl-ai-connector-access-control' );
 		echo '</button>';
 		echo '</p>';
