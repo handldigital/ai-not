@@ -112,26 +112,130 @@ final class RulesSaveTruncationTest extends TestCase {
 		$this->assertNotFalse( $save_pos, 'handle_save_rules must still save on a complete POST' );
 		$this->assertLessThan( $save_pos, $match_pos );
 		$this->assertStringContainsString( 'return false', $body );
-		$this->assertStringContainsString( 'build_rules_policy_from_post( Policy::get_policy(), true )', $body );
+		$this->assertStringContainsString( 'get_option( Plugin::OPTION_KEY )', $body );
+		$this->assertStringContainsString( 'build_rules_policy_from_post( $stored, true )', $body );
+		$this->assertStringNotContainsString(
+			'build_rules_policy_from_post( Policy::get_policy()',
+			$body,
+			'Save must start from the raw option so get_policy() defaults are not persisted'
+		);
 	}
 
-	public function test_rules_form_posts_expected_count_before_nested_sections(): void {
+	public function test_rules_form_posts_expected_count_inside_rules_form_before_matrix(): void {
 		$src = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php' );
 
-		$this->assertTrue(
-			(bool) preg_match(
-				'/echo \'<form method="post" id="\' \. esc_attr\( \$rules_form_id \) \. \'">\';(?P<body>[\s\S]*?)\$this->render_policy_packs_section\(/',
-				$src,
-				$m
-			)
+		$open     = strpos( $src, 'echo \'<form method="post" id="\' . esc_attr( $rules_form_id ) . \'">\';' );
+		$expected = strpos( $src, 'name="handl_aicac_rules_expected"' );
+		$matrix   = strpos( $src, 'handl-aicac-rules-matrix' );
+		$this->assertNotFalse( $open, 'Rules form open must exist' );
+		$this->assertNotFalse( $expected, 'Expected-row sentinel must exist' );
+		$this->assertNotFalse( $matrix, 'Rules matrix must exist' );
+		$this->assertGreaterThan( $open, $expected, 'Expected-row sentinel must be inside the Rules form' );
+		$this->assertLessThan( $matrix, $expected, 'Expected-row sentinel must arrive before the matrix' );
+		$this->assertStringContainsString( 'id="handl-aicac-rules-expected"', $src );
+	}
+
+	/**
+	 * Filtered / truncated POST: only posted plugin rows change. Role, kill,
+	 * shadow, new-plugin, budgets, and hidden model routes stay put.
+	 */
+	public function test_filtered_subset_changes_only_posted_plugin_and_route_rows(): void {
+		$stored = array(
+			'plugins'                  => array(
+				'visible/a.php' => 'allow',
+				'hidden/b.php'  => 'deny',
+			),
+			'role_gate_enabled'        => true,
+			'allowed_roles'            => array( 'administrator' ),
+			'kill_switch'              => true,
+			'kill_switch_exceptions'   => array( 'hidden/b.php' ),
+			'shadow_block_enabled'     => true,
+			'shadow_block_exceptions'  => array( 'hidden/b.php' ),
+			'model_force_plugins'      => array(
+				'visible/a.php' => array( 'provider' => 'openai', 'model' => 'gpt-4o' ),
+				'hidden/b.php'  => array( 'provider' => 'anthropic', 'model' => 'claude-3' ),
+			),
+			'plugin_budgets'           => array( 'hidden/b.php' => 10.0 ),
+			'new_plugin_review_enabled'=> true,
+		);
+
+		$after                          = $stored;
+		$after['plugins']               = Policy::merge_posted_plugin_rules(
+			$stored['plugins'],
+			array( 'visible/a.php' => 'deny' )
+		);
+		$after['model_force_plugins']   = Policy::merge_posted_model_force(
+			$stored['model_force_plugins'],
+			array( 'visible/a.php' => array( 'provider' => 'openai', 'model' => 'gpt-4o-mini' ) )
+		);
+
+		$this->assertSame( 'deny', $after['plugins']['visible/a.php'] );
+		$untouched = $stored;
+		unset( $untouched['plugins'], $untouched['model_force_plugins'] );
+		$after_rest = $after;
+		unset( $after_rest['plugins'], $after_rest['model_force_plugins'] );
+		$this->assertSame( $untouched, $after_rest );
+		$this->assertSame( 'deny', $after['plugins']['hidden/b.php'] );
+		$this->assertSame( 'claude-3', $after['model_force_plugins']['hidden/b.php']['model'] );
+	}
+
+	/**
+	 * Settings checkbox writers must not fire on a merge save unless the
+	 * panel sentinel was posted. Unchecked boxes cannot be told from absent
+	 * without that field.
+	 */
+	public function test_settings_writers_require_panel_sentinel_when_merging(): void {
+		$src = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php' );
+
+		$this->assertStringContainsString(
+			'name="handl_aicac_settings_present"',
+			$src
 		);
 		$this->assertStringContainsString(
-			'name="handl_aicac_rules_expected"',
-			$m['body']
+			'apply_kill_switch_settings_from_post( $policy, $merge_missing )',
+			$src
 		);
 		$this->assertStringContainsString(
-			'id="handl-aicac-rules-expected"',
-			$m['body']
+			'apply_shadow_block_settings_from_post( $policy, $merge_missing )',
+			$src
 		);
+		$this->assertStringContainsString(
+			'apply_role_gate_settings_from_post( $policy, $merge_missing )',
+			$src
+		);
+		$this->assertStringContainsString(
+			'apply_new_plugin_settings_from_post( $policy, $merge_missing )',
+			$src
+		);
+		$this->assertStringContainsString(
+			'apply_model_force_settings_from_post( $policy, $merge_missing )',
+			$src
+		);
+		$this->assertStringContainsString(
+			'apply_plugin_budget_settings_from_post( $policy, $base )',
+			$src
+		);
+
+		foreach ( array(
+			'apply_kill_switch_settings_from_post',
+			'apply_shadow_block_settings_from_post',
+			'apply_role_gate_settings_from_post',
+			'apply_new_plugin_settings_from_post',
+		) as $fn ) {
+			$this->assertTrue(
+				(bool) preg_match(
+					'/function ' . preg_quote( $fn, '/' ) . '\( array &\$policy, bool \$merge_missing = false \): void \{(?P<body>[\s\S]*?)\n\t\}/',
+					$src,
+					$m
+				),
+				$fn . ' must take $merge_missing'
+			);
+			$this->assertStringContainsString(
+				'if ( $merge_missing && ! $this->rules_settings_panel_posted() )',
+				$m['body'],
+				$fn . ' must keep stored keys when Settings was not submitted'
+			);
+			$this->assertStringContainsString( 'return;', $m['body'] );
+		}
 	}
 }

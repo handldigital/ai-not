@@ -835,6 +835,10 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		echo '<summary><strong>' . esc_html__( 'Settings', 'handl-ai-connector-access-control' ) . '</strong> — ';
 		echo esc_html__( 'site default, unknown operations, emergency stop, limit by role, blocked tools, model routing', 'handl-ai-connector-access-control' );
 		echo '</summary>';
+		// Sentinel: unchecked Settings checkboxes do not POST. Presence of this
+		// field means the panel was in the submitted view; absence means keep
+		// stored role / kill / shadow / new-plugin keys (filtered or truncated).
+		echo '<input type="hidden" name="handl_aicac_settings_present" value="1" form="' . esc_attr( $rules_form_id ) . '" />';
 		echo '<table class="form-table" role="presentation">';
 		echo '<tr>';
 		echo '<th scope="row">' . esc_html__( 'Default policy', 'handl-ai-connector-access-control' ) . '</th>';
@@ -4155,7 +4159,13 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			return false;
 		}
 
-		$policy = $this->build_rules_policy_from_post( Policy::get_policy(), true );
+		// Raw option, not get_policy(): the read path injects defaults and
+		// bool-casts that would otherwise persist as unrelated key changes.
+		$stored = get_option( Plugin::OPTION_KEY );
+		if ( ! is_array( $stored ) ) {
+			$stored = array();
+		}
+		$policy = $this->build_rules_policy_from_post( $stored, true );
 		$report = Policy_Checks::evaluate_all( $policy );
 		$fails  = $report['failures'];
 		if ( ! empty( $fails ) ) {
@@ -4439,10 +4449,10 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			$policy['denied_tools'] = Policy::sanitize_denied_tools( (string) $posted_tools );
 		}
 
-		$this->apply_kill_switch_settings_from_post( $policy );
-		$this->apply_shadow_block_settings_from_post( $policy );
-		$this->apply_role_gate_settings_from_post( $policy );
-		$this->apply_new_plugin_settings_from_post( $policy );
+		$this->apply_kill_switch_settings_from_post( $policy, $merge_missing );
+		$this->apply_shadow_block_settings_from_post( $policy, $merge_missing );
+		$this->apply_role_gate_settings_from_post( $policy, $merge_missing );
+		$this->apply_new_plugin_settings_from_post( $policy, $merge_missing );
 		$this->apply_model_force_settings_from_post( $policy, $merge_missing );
 		$this->apply_plugin_budget_settings_from_post( $policy, $base );
 
@@ -5027,10 +5037,26 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	}
 
 	/**
-	 * @param array<string,mixed> $policy
+	 * True when the Settings panel posted its sentinel. Unchecked checkboxes
+	 * do not appear in POST; the sentinel is how we tell "off" from "absent".
 	 */
-	private function apply_kill_switch_settings_from_post( array &$policy ): void {
+	private function rules_settings_panel_posted(): bool {
+		$posted = filter_input( INPUT_POST, 'handl_aicac_settings_present', FILTER_UNSAFE_RAW );
+		return null !== $posted && false !== $posted && '' !== (string) $posted;
+	}
+
+	/**
+	 * @param array<string,mixed> $policy
+	 * @param bool                $merge_missing When true, leave stored kill-switch
+	 *                                           keys alone unless the Settings panel
+	 *                                           was in the submitted view.
+	 */
+	private function apply_kill_switch_settings_from_post( array &$policy, bool $merge_missing = false ): void {
 		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
+		if ( $merge_missing && ! $this->rules_settings_panel_posted() ) {
+			return;
+		}
 
 		$posted_kill = filter_input( INPUT_POST, 'handl_aicac_kill_switch', FILTER_UNSAFE_RAW );
 		$policy['kill_switch'] = ! empty( $posted_kill );
@@ -5052,9 +5078,16 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	 * AICAC-23: opt-in block of direct AI provider HTTP (Rules tab).
 	 *
 	 * @param array<string,mixed> $policy
+	 * @param bool                $merge_missing When true, leave stored shadow-block
+	 *                                           keys alone unless the Settings panel
+	 *                                           was in the submitted view.
 	 */
-	private function apply_shadow_block_settings_from_post( array &$policy ): void {
+	private function apply_shadow_block_settings_from_post( array &$policy, bool $merge_missing = false ): void {
 		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
+		if ( $merge_missing && ! $this->rules_settings_panel_posted() ) {
+			return;
+		}
 
 		$posted = filter_input( INPUT_POST, 'handl_aicac_shadow_block_enabled', FILTER_UNSAFE_RAW );
 		$policy['shadow_block_enabled'] = ! empty( $posted );
@@ -5074,9 +5107,16 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 	/**
 	 * @param array<string,mixed> $policy
+	 * @param bool                $merge_missing When true, leave stored role-gate
+	 *                                           keys alone unless the Settings panel
+	 *                                           was in the submitted view.
 	 */
-	private function apply_role_gate_settings_from_post( array &$policy ): void {
+	private function apply_role_gate_settings_from_post( array &$policy, bool $merge_missing = false ): void {
 		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
+		if ( $merge_missing && ! $this->rules_settings_panel_posted() ) {
+			return;
+		}
 
 		$posted_enabled = filter_input( INPUT_POST, 'handl_aicac_role_gate_enabled', FILTER_UNSAFE_RAW );
 		$policy['role_gate_enabled'] = ! empty( $posted_enabled );
@@ -5430,9 +5470,16 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 	/**
 	 * @param array<string,mixed> $policy
+	 * @param bool                $merge_missing When true, leave stored new-plugin
+	 *                                           keys alone unless the Settings panel
+	 *                                           was in the submitted view.
 	 */
-	private function apply_new_plugin_settings_from_post( array &$policy ): void {
+	private function apply_new_plugin_settings_from_post( array &$policy, bool $merge_missing = false ): void {
 		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
+		if ( $merge_missing && ! $this->rules_settings_panel_posted() ) {
+			return;
+		}
 
 		$previous = Policy::get_policy();
 		$posted   = filter_input( INPUT_POST, 'handl_aicac_new_plugin_review_enabled', FILTER_UNSAFE_RAW );
