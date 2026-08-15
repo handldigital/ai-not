@@ -746,6 +746,17 @@ if ( ! function_exists( 'get_plugins' ) ) {
 	}
 }
 
+if ( ! function_exists( 'check_admin_referer' ) ) {
+	/**
+	 * @param string $action Action.
+	 * @param string $query_arg Query arg.
+	 */
+	function check_admin_referer( $action = -1, $query_arg = '_wpnonce' ): bool {
+		unset( $action, $query_arg );
+		return true;
+	}
+}
+
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-attribution.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-shadow-ai.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-keyscan.php';
@@ -775,3 +786,4 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-site-health.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rest.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
+require_once __DIR__ . '/stubs/namespace-filter-input.php';

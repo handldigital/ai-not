@@ -4166,6 +4166,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			$stored = array();
 		}
 		$policy = $this->build_rules_policy_from_post( $stored, true );
+		$policy = Policy::omit_unsolicited_defaults( $policy, $stored );
 		$report = Policy_Checks::evaluate_all( $policy );
 		$fails  = $report['failures'];
 		if ( ! empty( $fails ) ) {
@@ -4388,7 +4389,11 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				$expires[ $basename ] = $ts;
 			}
 		}
-		$policy['plugin_expires'] = $expires;
+		if ( array() !== $expires || array_key_exists( 'plugin_expires', $base ) ) {
+			$policy['plugin_expires'] = $expires;
+		} else {
+			unset( $policy['plugin_expires'] );
+		}
 
 		// AICAC-NOTE (#125): optional why notes per explicit rule.
 		$notes         = $merge_missing && isset( $base['plugin_notes'] ) && is_array( $base['plugin_notes'] )
@@ -4425,7 +4430,11 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				unset( $notes[ $basename ] );
 			}
 		}
-		$policy['plugin_notes'] = $notes;
+		if ( array() !== $notes || array_key_exists( 'plugin_notes', $base ) ) {
+			$policy['plugin_notes'] = $notes;
+		} else {
+			unset( $policy['plugin_notes'] );
+		}
 
 		$posted_ops = filter_input( INPUT_POST, 'handl_aicac_operation', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
 		if ( is_array( $posted_ops ) ) {
@@ -5118,10 +5127,12 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			return;
 		}
 
+		$stored_gate    = ! empty( $policy['role_gate_enabled'] );
 		$posted_enabled = filter_input( INPUT_POST, 'handl_aicac_role_gate_enabled', FILTER_UNSAFE_RAW );
-		$policy['role_gate_enabled'] = ! empty( $posted_enabled );
+		$gate_on        = ! empty( $posted_enabled );
+		$policy['role_gate_enabled'] = $gate_on;
 
-		$roles = array();
+		$roles        = array();
 		$posted_roles = filter_input( INPUT_POST, 'handl_aicac_allowed_roles', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
 		if ( is_array( $posted_roles ) ) {
 			foreach ( $posted_roles as $role ) {
@@ -5131,7 +5142,23 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				}
 			}
 		}
-		$policy['allowed_roles'] = Policy::sanitize_allowed_roles( $roles );
+		$roles = Policy::sanitize_allowed_roles( $roles );
+
+		$rendered_raw = filter_input( INPUT_POST, 'handl_aicac_allowed_roles_rendered', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		$rendered     = Policy::sanitize_allowed_roles( is_array( $rendered_raw ) ? $rendered_raw : array() );
+
+		// Posted checklist matches what the page showed and the gate did not
+		// flip — keep the stored value. All-checked is how "no restriction"
+		// renders; writing that list would freeze today's roles.
+		if ( Policy::posted_roles_match_rendered( $roles, $rendered ) && $gate_on === $stored_gate ) {
+			return;
+		}
+
+		$policy['allowed_roles'] = Policy::canonicalize_unrestricted_roles(
+			$roles,
+			Policy::available_roles_for_gate(),
+			$gate_on
+		);
 	}
 
 	/**
@@ -5877,8 +5904,16 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			}
 		}
 
-		$policy['plugin_budgets']      = $budgets;
-		$policy['plugin_budget_modes'] = $modes;
+		if ( array() !== $budgets || array_key_exists( 'plugin_budgets', $base ) ) {
+			$policy['plugin_budgets'] = $budgets;
+		} else {
+			unset( $policy['plugin_budgets'] );
+		}
+		if ( array() !== $modes || array_key_exists( 'plugin_budget_modes', $base ) ) {
+			$policy['plugin_budget_modes'] = $modes;
+		} else {
+			unset( $policy['plugin_budget_modes'] );
+		}
 	}
 
 	/**
@@ -5985,6 +6020,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		if ( empty( $available ) ) {
 			echo '<p class="description">' . esc_html__( 'No WordPress roles are available on this site.', 'handl-ai-connector-access-control' ) . '</p>';
 		} else {
+			foreach ( $checked as $slug ) {
+				echo '<input type="hidden" name="handl_aicac_allowed_roles_rendered[]" value="' . esc_attr( (string) $slug ) . '" form="' . esc_attr( $form_id ) . '" />';
+			}
 			echo '<div class="handl-aicac-role-gate__list" role="group" aria-labelledby="handl-aicac-role-gate-heading" aria-describedby="handl-aicac-role-gate-state">';
 			$i = 0;
 			foreach ( $available as $slug => $label ) {

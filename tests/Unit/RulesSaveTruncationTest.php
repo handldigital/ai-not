@@ -114,6 +114,7 @@ final class RulesSaveTruncationTest extends TestCase {
 		$this->assertStringContainsString( 'return false', $body );
 		$this->assertStringContainsString( 'get_option( Plugin::OPTION_KEY )', $body );
 		$this->assertStringContainsString( 'build_rules_policy_from_post( $stored, true )', $body );
+		$this->assertStringContainsString( 'Policy::omit_unsolicited_defaults( $policy, $stored )', $body );
 		$this->assertStringNotContainsString(
 			'build_rules_policy_from_post( Policy::get_policy()',
 			$body,
@@ -215,6 +216,11 @@ final class RulesSaveTruncationTest extends TestCase {
 			'apply_plugin_budget_settings_from_post( $policy, $base )',
 			$src
 		);
+		$this->assertStringContainsString(
+			'name="handl_aicac_allowed_roles_rendered[]"',
+			$src,
+			'Rendered role checklist must be posted so a no-op save can keep stored []'
+		);
 
 		foreach ( array(
 			'apply_kill_switch_settings_from_post',
@@ -237,5 +243,155 @@ final class RulesSaveTruncationTest extends TestCase {
 			);
 			$this->assertStringContainsString( 'return;', $m['body'] );
 		}
+	}
+
+	/**
+	 * Saving the form without changing anything must leave the stored option
+	 * byte-identical. No allowlist: any writer that materializes a default
+	 * or transcribes a rendered checklist fails this instantly.
+	 */
+	public function test_noop_save_leaves_stored_option_byte_identical(): void {
+		$available = array(
+			'administrator' => 'Administrator',
+			'editor'        => 'Editor',
+			'author'        => 'Author',
+			'contributor'   => 'Contributor',
+			'subscriber'    => 'Subscriber',
+		);
+		$roles     = array_keys( $available );
+		$stored    = $this->sparseRulesFixture();
+
+		update_option( \HandL\AICAC\Plugin::OPTION_KEY, $stored, false );
+		$GLOBALS['handl_aicac_test_available_roles'] = $available;
+		$GLOBALS['handl_aicac_test_post']            = $this->renderedRulesPost( $stored, $roles, $roles );
+
+		$after = $this->runRulesSave( $stored );
+
+		$this->assertSame(
+			$stored,
+			$after,
+			'No-op save must not add, remove, or rewrite any stored key'
+		);
+
+		unset( $GLOBALS['handl_aicac_test_post'], $GLOBALS['handl_aicac_test_available_roles'] );
+	}
+
+	/**
+	 * Intended rule flip is the only stored delta. The same writers that
+	 * used to add plugin_notes / budget modes / digest flags stay silent.
+	 */
+	public function test_intended_rule_flip_is_only_stored_delta(): void {
+		$available = array(
+			'administrator' => 'Administrator',
+			'editor'        => 'Editor',
+		);
+		$roles     = array_keys( $available );
+		$stored    = $this->sparseRulesFixture();
+
+		update_option( \HandL\AICAC\Plugin::OPTION_KEY, $stored, false );
+		$GLOBALS['handl_aicac_test_available_roles'] = $available;
+
+		$post                          = $this->renderedRulesPost( $stored, $roles, $roles );
+		$post['handl_aicac_rule']['ai/ai.php'] = 'deny';
+		$GLOBALS['handl_aicac_test_post']      = $post;
+
+		$after    = $this->runRulesSave( $stored );
+		$expected = $stored;
+		$expected['plugins']['ai/ai.php'] = 'deny';
+
+		$this->assertSame( $expected, $after );
+
+		unset( $GLOBALS['handl_aicac_test_post'], $GLOBALS['handl_aicac_test_available_roles'] );
+	}
+
+	public function test_omit_unsolicited_defaults_drops_false_and_empty_additions(): void {
+		$previous = array(
+			'default'        => 'allow',
+			'allowed_roles'  => array(),
+		);
+		$policy   = $previous;
+		$policy['plugin_notes']                    = array();
+		$policy['plugin_budget_modes']             = array();
+		$policy['governance_digest_enabled']       = false;
+		$policy['governance_digest_always_send']   = false;
+		$policy['policy_backup_email_enabled']     = false;
+		$policy['kill_switch']                     = true;
+
+		$out = Policy::omit_unsolicited_defaults( $policy, $previous );
+
+		$this->assertArrayNotHasKey( 'plugin_notes', $out );
+		$this->assertArrayNotHasKey( 'plugin_budget_modes', $out );
+		$this->assertArrayNotHasKey( 'governance_digest_enabled', $out );
+		$this->assertArrayNotHasKey( 'governance_digest_always_send', $out );
+		$this->assertArrayNotHasKey( 'policy_backup_email_enabled', $out );
+		$this->assertTrue( $out['kill_switch'] );
+		$this->assertSame( array(), $out['allowed_roles'] );
+	}
+
+	/**
+	 * @return array<string,mixed>
+	 */
+	private function sparseRulesFixture(): array {
+		return array(
+			'default'                    => 'allow',
+			'plugins'                    => array(
+				'ai/ai.php'    => 'allow',
+				'hidden/b.php' => 'deny',
+			),
+			'plugin_expires'             => array(),
+			'role_gate_enabled'          => false,
+			'allowed_roles'              => array(),
+			'kill_switch'                => false,
+			'kill_switch_exceptions'     => array(),
+			'shadow_block_enabled'       => false,
+			'shadow_block_exceptions'    => array(),
+			'new_plugin_review_enabled'  => false,
+			'new_plugin_interim'         => 'deny',
+			'new_plugin_known'           => array(),
+			'new_plugin_pending'         => array(),
+			'model_force_plugins'        => array(),
+			'plugin_budgets'             => array(),
+		);
+	}
+
+	/**
+	 * @param array<string,mixed> $stored
+	 * @param list<string>        $posted_roles
+	 * @param list<string>        $rendered_roles
+	 * @return array<string,mixed>
+	 */
+	private function renderedRulesPost( array $stored, array $posted_roles, array $rendered_roles ): array {
+		$rules = isset( $stored['plugins'] ) && is_array( $stored['plugins'] )
+			? $stored['plugins']
+			: array();
+		return array(
+			'handl_aicac_settings_present'        => '1',
+			'handl_aicac_rules_expected'          => count( $rules ),
+			'handl_aicac_rule'                    => $rules,
+			'handl_aicac_allowed_roles'           => $posted_roles,
+			'handl_aicac_allowed_roles_rendered'  => $rendered_roles,
+		);
+	}
+
+	/**
+	 * @param array<string,mixed> $stored
+	 * @return array<string,mixed>
+	 */
+	private function runRulesSave( array $stored ): array {
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php';
+
+		$ref   = new \ReflectionClass( \HandL\AICAC\Admin::class );
+		$admin = $ref->newInstanceWithoutConstructor();
+		$build = $ref->getMethod( 'build_rules_policy_from_post' );
+		$build->setAccessible( true );
+
+		$policy = $build->invoke( $admin, $stored, true );
+		$this->assertIsArray( $policy );
+		$policy = Policy::omit_unsolicited_defaults( $policy, $stored );
+		Policy::save_policy( $policy );
+
+		$after = get_option( \HandL\AICAC\Plugin::OPTION_KEY );
+		$this->assertIsArray( $after );
+		return $after;
 	}
 }

@@ -165,4 +165,45 @@ final class RoleGateTest extends TestCase {
 		$this->assertSame( array( 'administrator', 'editor' ), Policy::role_gate_checked_roles( false, array(), $available ) );
 	}
 
+	public function test_all_checked_canonicalizes_to_empty_when_gate_off(): void {
+		$available = array( 'administrator' => 'Administrator', 'editor' => 'Editor', 'author' => 'Author' );
+		$posted    = array( 'author', 'administrator', 'editor' );
+		$this->assertSame(
+			array(),
+			Policy::canonicalize_unrestricted_roles( $posted, $available, false )
+		);
+	}
+
+	public function test_all_checked_stays_listed_when_gate_on(): void {
+		$available = array( 'administrator' => 'Administrator', 'editor' => 'Editor' );
+		$posted    = array( 'administrator', 'editor' );
+		$this->assertSame(
+			array( 'administrator', 'editor' ),
+			Policy::canonicalize_unrestricted_roles( $posted, $available, true )
+		);
+	}
+
+	public function test_subset_is_not_canonicalized(): void {
+		$available = array( 'administrator' => 'Administrator', 'editor' => 'Editor', 'author' => 'Author' );
+		$this->assertSame(
+			array( 'administrator', 'editor' ),
+			Policy::canonicalize_unrestricted_roles( array( 'administrator', 'editor' ), $available, false )
+		);
+	}
+
+	public function test_posted_roles_match_rendered_ignores_order(): void {
+		$this->assertTrue(
+			Policy::posted_roles_match_rendered(
+				array( 'editor', 'administrator' ),
+				array( 'administrator', 'editor' )
+			)
+		);
+		$this->assertFalse(
+			Policy::posted_roles_match_rendered(
+				array( 'administrator' ),
+				array( 'administrator', 'editor' )
+			)
+		);
+	}
+
 }
