@@ -26,7 +26,26 @@ final class Policy_Transfer {
 	 *
 	 * @var list<string>
 	 */
-	public const META_KEYS = array( 'plugin_version', 'exported_at', 'site_url' );
+	public const META_KEYS = array( 'plugin_version', 'exported_at', 'site_url', 'redacted' );
+
+	/** Presence-only placeholder when a recipient/endpoint was configured. */
+	public const REDACT_PRESENT = 'present';
+
+	/** Presence-only placeholder when a recipient/endpoint was empty. */
+	public const REDACT_ABSENT = 'absent';
+
+	/**
+	 * Policy keys replaced or stripped in a share-safe (redacted) export.
+	 *
+	 * @return list<string>
+	 */
+	public static function redactable_policy_keys(): array {
+		return array(
+			'alert_email',
+			'alert_webhook_url',
+			'plugin_notes',
+		);
+	}
 
 	/**
 	 * Known policy option keys this plugin version understands.
@@ -93,10 +112,13 @@ final class Policy_Transfer {
 	/**
 	 * Build export array: full policy option plus forward-compat metadata.
 	 *
-	 * @param array<string,mixed> $policy Normalized policy (e.g. from Policy::get_policy()).
+	 * @param array<string,mixed> $policy          Normalized policy (e.g. from Policy::get_policy()).
+	 * @param string              $plugin_version  Plugin version string.
+	 * @param string              $exported_at     Timestamp string.
+	 * @param bool                $redact          When true, strip secrets/notes for sharing.
 	 * @return array<string,mixed>
 	 */
-	public static function build_export( array $policy, string $plugin_version, string $exported_at ): array {
+	public static function build_export( array $policy, string $plugin_version, string $exported_at, bool $redact = false ): array {
 		$out = array(
 			'plugin_version' => $plugin_version,
 			'exported_at'    => $exported_at,
@@ -114,7 +136,39 @@ final class Policy_Transfer {
 		// Never export superseded site-wide force keys.
 		unset( $out['model_force_enabled'], $out['model_force_provider'], $out['model_force_model'], $out['denied_abilities'] );
 
+		if ( $redact ) {
+			$out = self::redact_export( $out );
+		}
+
 		return $out;
+	}
+
+	/**
+	 * Replace recipients / endpoints with presence-only placeholders, strip notes,
+	 * drop site_url, and mark the file `redacted: true`.
+	 *
+	 * @param array<string,mixed> $export
+	 * @return array<string,mixed>
+	 */
+	public static function redact_export( array $export ): array {
+		$export['redacted'] = true;
+		unset( $export['site_url'] );
+
+		if ( array_key_exists( 'alert_email', $export ) ) {
+			$export['alert_email'] = self::secret_is_present( $export['alert_email'] )
+				? self::REDACT_PRESENT
+				: self::REDACT_ABSENT;
+		}
+		if ( array_key_exists( 'alert_webhook_url', $export ) ) {
+			$export['alert_webhook_url'] = self::secret_is_present( $export['alert_webhook_url'] )
+				? self::REDACT_PRESENT
+				: self::REDACT_ABSENT;
+		}
+		if ( array_key_exists( 'plugin_notes', $export ) ) {
+			$export['plugin_notes'] = array();
+		}
+
+		return $export;
 	}
 
 	/**
@@ -139,6 +193,8 @@ final class Policy_Transfer {
 	 *   ok:true,
 	 *   policy:array<string,mixed>,
 	 *   ignored:list<string>,
+	 *   skipped:list<string>,
+	 *   redacted:bool,
 	 *   plugin_version:string,
 	 *   exported_at:string
 	 * }|array{ok:false,error:string}
@@ -176,9 +232,11 @@ final class Policy_Transfer {
 			);
 		}
 
-		$known   = array_flip( array_merge( self::META_KEYS, self::known_policy_keys() ) );
-		$ignored = array();
-		$policy  = array();
+		$known    = array_flip( array_merge( self::META_KEYS, self::known_policy_keys() ) );
+		$ignored  = array();
+		$skipped  = array();
+		$policy   = array();
+		$redacted = ! empty( $data['redacted'] );
 
 		foreach ( $data as $key => $value ) {
 			$key = (string) $key;
@@ -189,17 +247,88 @@ final class Policy_Transfer {
 				$ignored[] = $key;
 				continue;
 			}
+			if ( $redacted && in_array( $key, self::redactable_policy_keys(), true ) ) {
+				$skipped[] = $key;
+				continue;
+			}
+			if ( self::is_redacted_placeholder( $key, $value ) ) {
+				$skipped[] = $key;
+				continue;
+			}
 			$policy[ $key ] = $value;
 		}
 
 		sort( $ignored, SORT_STRING );
+		sort( $skipped, SORT_STRING );
 
 		return array(
 			'ok'             => true,
 			'policy'         => $policy,
 			'ignored'        => $ignored,
+			'skipped'        => $skipped,
+			'redacted'       => $redacted,
 			'plugin_version' => $plugin_version,
 			'exported_at'    => $exported_at,
+		);
+	}
+
+	/**
+	 * Copy live values for skipped redacted keys so a full-replace save
+	 * never writes a placeholder over a real recipient, endpoint, or note.
+	 *
+	 * @param array<string,mixed> $imported Parsed import policy (placeholders already stripped).
+	 * @param array<string,mixed> $current  Live policy on the import target.
+	 * @param list<string>        $skipped  Keys parse_import refused from the file.
+	 * @return array<string,mixed>
+	 */
+	public static function restore_skipped_fields( array $imported, array $current, array $skipped ): array {
+		foreach ( $skipped as $key ) {
+			$key = (string) $key;
+			if ( '' === $key ) {
+				continue;
+			}
+			if ( array_key_exists( $key, $current ) ) {
+				$imported[ $key ] = $current[ $key ];
+			} else {
+				unset( $imported[ $key ] );
+			}
+		}
+		return $imported;
+	}
+
+	/**
+	 * @param mixed $raw
+	 */
+	private static function secret_is_present( $raw ): bool {
+		if ( is_string( $raw ) ) {
+			return '' !== trim( $raw );
+		}
+		if ( is_array( $raw ) ) {
+			return ! empty( $raw );
+		}
+		return ! empty( $raw );
+	}
+
+	/**
+	 * Placeholder values that must never be written as a real email, URL, or note.
+	 *
+	 * @param mixed $value
+	 */
+	private static function is_redacted_placeholder( string $key, $value ): bool {
+		if ( ! in_array( $key, array( 'alert_email', 'alert_webhook_url' ), true ) ) {
+			return false;
+		}
+		if ( is_bool( $value ) ) {
+			return true;
+		}
+		if ( ! is_string( $value ) ) {
+			return false;
+		}
+		$normalized = strtolower( trim( $value ) );
+		return in_array(
+			$normalized,
+			array( self::REDACT_PRESENT, self::REDACT_ABSENT ),
+			true
 		);
 	}
 

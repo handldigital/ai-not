@@ -229,6 +229,132 @@ final class PolicyTransferTest extends TestCase {
 	public function test_max_upload_bytes_is_one_megabyte(): void {
 		$this->assertSame( 1048576, Policy_Transfer::MAX_UPLOAD_BYTES );
 	}
+
+	public function test_redacted_export_serialized_string_has_no_email_url_or_note_text(): void {
+		$note = 'finance-team-do-not-share';
+		$policy = array(
+			'default'           => 'deny',
+			'alert_email'       => 'ops@handldigital.example',
+			'alert_webhook_url' => 'https://hooks.example.test/secret-token',
+			'plugin_notes'      => array(
+				'acme/plugin.php' => $note,
+			),
+			'plugins'           => array( 'acme/plugin.php' => 'allow' ),
+		);
+
+		$plain = Policy_Transfer::build_export( $policy, '1.5.0', '2026-08-15T00:00:00Z', false );
+		$this->assertSame( 'ops@handldigital.example', $plain['alert_email'] );
+		$this->assertSame( 'https://hooks.example.test/secret-token', $plain['alert_webhook_url'] );
+		$this->assertSame( $note, $plain['plugin_notes']['acme/plugin.php'] );
+		$this->assertArrayNotHasKey( 'redacted', $plain );
+
+		$export = Policy_Transfer::build_export( $policy, '1.5.0', '2026-08-15T00:00:00Z', true );
+		$this->assertTrue( $export['redacted'] );
+		$this->assertSame( Policy_Transfer::REDACT_PRESENT, $export['alert_email'] );
+		$this->assertSame( Policy_Transfer::REDACT_PRESENT, $export['alert_webhook_url'] );
+		$this->assertSame( array(), $export['plugin_notes'] );
+		$this->assertArrayNotHasKey( 'site_url', $export );
+
+		$json = Policy_Transfer::encode_export( $export );
+		$this->assertStringContainsString( '"redacted": true', $json );
+		$this->assertDoesNotMatchRegularExpression(
+			'/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i',
+			$json,
+			'Redacted export JSON must contain zero email addresses'
+		);
+		$this->assertDoesNotMatchRegularExpression(
+			'#https?://#i',
+			$json,
+			'Redacted export JSON must contain zero URLs'
+		);
+		$this->assertStringNotContainsString( $note, $json );
+		$this->assertStringNotContainsString( 'finance-team', $json );
+	}
+
+	public function test_redacted_export_marks_empty_secrets_absent(): void {
+		$export = Policy_Transfer::build_export(
+			array(
+				'default'           => 'allow',
+				'alert_email'       => '',
+				'alert_webhook_url' => '',
+				'plugin_notes'      => array(),
+			),
+			'1.5.0',
+			'2026-08-15T00:00:00Z',
+			true
+		);
+		$this->assertSame( Policy_Transfer::REDACT_ABSENT, $export['alert_email'] );
+		$this->assertSame( Policy_Transfer::REDACT_ABSENT, $export['alert_webhook_url'] );
+	}
+
+	public function test_parse_import_skips_redacted_fields_and_never_returns_placeholders(): void {
+		$json = Policy_Transfer::encode_export(
+			Policy_Transfer::build_export(
+				array(
+					'default'           => 'deny',
+					'alert_email'       => 'ops@handldigital.example',
+					'alert_webhook_url' => 'https://hooks.example.test/secret-token',
+					'plugin_notes'      => array( 'acme/plugin.php' => 'finance-team-do-not-share' ),
+					'plugins'           => array( 'acme/plugin.php' => 'allow' ),
+				),
+				'1.5.0',
+				'2026-08-15T00:00:00Z',
+				true
+			)
+		);
+
+		$parsed = Policy_Transfer::parse_import( $json );
+		$this->assertTrue( $parsed['ok'] );
+		$this->assertTrue( $parsed['redacted'] );
+		$this->assertSame(
+			array( 'alert_email', 'alert_webhook_url', 'plugin_notes' ),
+			$parsed['skipped']
+		);
+		$this->assertSame( 'deny', $parsed['policy']['default'] );
+		$this->assertArrayNotHasKey( 'alert_email', $parsed['policy'] );
+		$this->assertArrayNotHasKey( 'alert_webhook_url', $parsed['policy'] );
+		$this->assertArrayNotHasKey( 'plugin_notes', $parsed['policy'] );
+		$this->assertArrayNotHasKey( 'redacted', $parsed['policy'] );
+	}
+
+	public function test_restore_skipped_fields_keeps_live_secrets_not_placeholders(): void {
+		$imported = array(
+			'default' => 'deny',
+			'plugins' => array( 'acme/plugin.php' => 'allow' ),
+		);
+		$current = array(
+			'default'           => 'allow',
+			'alert_email'       => 'keep-me@handldigital.example',
+			'alert_webhook_url' => 'https://hooks.live.test/keep',
+			'plugin_notes'      => array( 'acme/plugin.php' => 'live note stays' ),
+		);
+		$skipped = array( 'alert_email', 'alert_webhook_url', 'plugin_notes' );
+
+		$merged = Policy_Transfer::restore_skipped_fields( $imported, $current, $skipped );
+		$this->assertSame( 'deny', $merged['default'] );
+		$this->assertSame( 'keep-me@handldigital.example', $merged['alert_email'] );
+		$this->assertSame( 'https://hooks.live.test/keep', $merged['alert_webhook_url'] );
+		$this->assertSame( array( 'acme/plugin.php' => 'live note stays' ), $merged['plugin_notes'] );
+		$this->assertNotContains( Policy_Transfer::REDACT_PRESENT, $merged );
+	}
+
+	public function test_parse_import_skips_placeholders_even_without_redacted_flag(): void {
+		$json = wp_json_encode_compat(
+			array(
+				'plugin_version'    => '1.5.0',
+				'exported_at'       => '2026-08-15T00:00:00Z',
+				'default'           => 'allow',
+				'alert_email'       => Policy_Transfer::REDACT_PRESENT,
+				'alert_webhook_url' => Policy_Transfer::REDACT_ABSENT,
+			)
+		);
+		$parsed = Policy_Transfer::parse_import( $json );
+		$this->assertTrue( $parsed['ok'] );
+		$this->assertFalse( $parsed['redacted'] );
+		$this->assertSame( array( 'alert_email', 'alert_webhook_url' ), $parsed['skipped'] );
+		$this->assertArrayNotHasKey( 'alert_email', $parsed['policy'] );
+		$this->assertArrayNotHasKey( 'alert_webhook_url', $parsed['policy'] );
+	}
 }
 
 /**

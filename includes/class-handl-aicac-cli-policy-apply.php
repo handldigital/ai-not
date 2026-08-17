@@ -2,8 +2,9 @@
 /**
  * AICAC-CLI-APPLY (#195): WP-CLI policy apply with dry-run diff.
  *
- * Registers `wp handl-aicac policy apply`. Writes only through
- * Policy::save_policy() so Policy_Snapshots (undo + history actor) stay intact.
+ * Registers `wp handl-aicac policy apply` and `wp handl-aicac policy export`.
+ * Writes only through Policy::save_policy() so Policy_Snapshots (undo + history
+ * actor) stay intact.
  *
  * Exit codes (documented for scripting):
  * - 0: applied successfully, or dry-run with no differences
@@ -58,6 +59,7 @@ final class CLI_Policy_Apply {
 			return;
 		}
 		\WP_CLI::add_command( 'handl-aicac policy apply', array( self::class, 'cmd_apply' ) );
+		\WP_CLI::add_command( 'handl-aicac policy export', array( self::class, 'cmd_export' ) );
 	}
 
 	/**
@@ -129,6 +131,54 @@ final class CLI_Policy_Apply {
 	}
 
 	/**
+	 * Print the live policy as a HandL AICAC rules export JSON file.
+	 *
+	 * Regular export includes recipients, webhook URLs, and rule notes.
+	 * `--redacted` produces a share-safe file: presence-only placeholders for
+	 * those fields, notes stripped, `redacted: true`.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--redacted]
+	 * : Share-safe export. Recipients and webhook URLs become presence-only
+	 *   placeholders; rule notes are stripped.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp handl-aicac policy export
+	 *     wp handl-aicac policy export --redacted
+	 *
+	 * @param array<int,string>    $args
+	 * @param array<string,string> $assoc_args
+	 */
+	public static function cmd_export( $args, $assoc_args ): void {
+		unset( $args );
+		$redacted = ! empty( $assoc_args['redacted'] );
+		$result   = self::export_current( $redacted );
+		\WP_CLI::log( (string) $result['json'] );
+	}
+
+	/**
+	 * Build the live-policy export JSON (PHPUnit + CLI).
+	 *
+	 * @return array{
+	 *   export:array<string,mixed>,
+	 *   json:string,
+	 *   redacted:bool
+	 * }
+	 */
+	public static function export_current( bool $redacted ): array {
+		$policy  = Policy::get_policy();
+		$version = defined( 'HANDL_AICAC_VERSION' ) ? (string) HANDL_AICAC_VERSION : '0';
+		$export  = Policy_Transfer::build_export( $policy, $version, gmdate( 'c' ), $redacted );
+		return array(
+			'export'   => $export,
+			'json'     => Policy_Transfer::encode_export( $export ),
+			'redacted' => $redacted,
+		);
+	}
+
+	/**
 	 * Command-level apply/dry-run without WP-CLI (PHPUnit).
 	 *
 	 * @return array{
@@ -168,6 +218,9 @@ final class CLI_Policy_Apply {
 
 		if ( ! empty( $prepared['ignored'] ) && is_array( $prepared['ignored'] ) ) {
 			$logs[] = 'Ignored unknown export keys: ' . implode( ', ', $prepared['ignored'] );
+		}
+		if ( ! empty( $prepared['skipped'] ) && is_array( $prepared['skipped'] ) ) {
+			$logs[] = 'Skipped redacted fields: ' . implode( ', ', $prepared['skipped'] );
 		}
 
 		if ( empty( $lines ) ) {
@@ -236,6 +289,7 @@ final class CLI_Policy_Apply {
 	 *   ok:true,
 	 *   policy:array<string,mixed>,
 	 *   ignored:list<string>,
+	 *   skipped:list<string>,
 	 *   diff_lines:list<string>,
 	 *   has_changes:bool,
 	 *   export_site_url:string
@@ -263,6 +317,8 @@ final class CLI_Policy_Apply {
 		$incoming = Policy_Transfer::policy_for_save( is_array( $parsed['policy'] ?? null ) ? $parsed['policy'] : array() );
 		$current  = Policy::get_policy();
 		$ignored  = isset( $parsed['ignored'] ) && is_array( $parsed['ignored'] ) ? $parsed['ignored'] : array();
+		$skipped  = isset( $parsed['skipped'] ) && is_array( $parsed['skipped'] ) ? array_values( array_map( 'strval', $parsed['skipped'] ) ) : array();
+		$incoming = Policy_Transfer::restore_skipped_fields( $incoming, $current, $skipped );
 		$compare  = Policy_Transfer::compare_diff( $current, $incoming, $ignored );
 		$rows     = isset( $compare['rows'] ) && is_array( $compare['rows'] ) ? $compare['rows'] : array();
 
@@ -282,6 +338,7 @@ final class CLI_Policy_Apply {
 			'ok'              => true,
 			'policy'          => $incoming,
 			'ignored'         => $ignored,
+			'skipped'         => $skipped,
 			'diff_lines'      => $lines,
 			'has_changes'     => ! empty( $lines ),
 			'export_site_url' => $export_site,
