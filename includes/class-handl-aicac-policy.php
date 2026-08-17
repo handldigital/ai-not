@@ -618,6 +618,60 @@ final class Policy {
 		return $allowed;
 	}
 
+	/**
+	 * True when the posted role checklist matches what the form rendered.
+	 *
+	 * @param list<string> $posted
+	 * @param list<string> $rendered
+	 */
+	public static function posted_roles_match_rendered( array $posted, array $rendered ): bool {
+		$posted   = self::sanitize_allowed_roles( $posted );
+		$rendered = self::sanitize_allowed_roles( $rendered );
+		sort( $posted );
+		sort( $rendered );
+		return $posted === $rendered;
+	}
+
+	/**
+	 * Gate off + every available role checked means "no restriction", not a
+	 * snapshot of today's role list. Persist that as [].
+	 *
+	 * @param list<string>         $posted
+	 * @param array<string,string> $available slug => label
+	 * @return list<string>
+	 */
+	public static function canonicalize_unrestricted_roles( array $posted, array $available, bool $gate_enabled ): array {
+		$posted = self::sanitize_allowed_roles( $posted );
+		if ( $gate_enabled || array() === $available ) {
+			return $posted;
+		}
+		$all  = array_keys( $available );
+		$left = $posted;
+		sort( $left );
+		sort( $all );
+		return $left === $all ? array() : $posted;
+	}
+
+	/**
+	 * Drop keys a writer invented from empty / false defaults. A save is a
+	 * statement of intent — absent-from-store plus empty/false is not intent.
+	 *
+	 * @param array<string,mixed> $policy
+	 * @param array<string,mixed> $previous Raw stored option.
+	 * @return array<string,mixed>
+	 */
+	public static function omit_unsolicited_defaults( array $policy, array $previous ): array {
+		foreach ( $policy as $key => $value ) {
+			if ( array_key_exists( $key, $previous ) ) {
+				continue;
+			}
+			if ( false === $value || null === $value || '' === $value || array() === $value ) {
+				unset( $policy[ $key ] );
+			}
+		}
+		return $policy;
+	}
+
 	public static function available_roles_for_gate(): array {
 		if ( array_key_exists( 'handl_aicac_test_available_roles', $GLOBALS ) && is_array( $GLOBALS['handl_aicac_test_available_roles'] ) ) {
 			$out = array();
@@ -1274,13 +1328,97 @@ final class Policy {
 	}
 
 	/**
+	 * True when the posted plugin-rule map has as many rows as the Rules form
+	 * said it rendered. A mismatch means PHP truncated the POST (max_input_vars)
+	 * and the payload must not be written.
+	 *
+	 * @param mixed $posted_rules handl_aicac_rule array from POST.
+	 * @param mixed $expected     handl_aicac_rules_expected from POST.
+	 */
+	public static function posted_rules_match_expected( $posted_rules, $expected ): bool {
+		if ( is_string( $expected ) && is_numeric( $expected ) ) {
+			$expected = (int) $expected;
+		}
+		if ( ! is_int( $expected ) || $expected < 0 ) {
+			return false;
+		}
+		$arrived = is_array( $posted_rules ) ? count( $posted_rules ) : 0;
+		return $arrived === $expected;
+	}
+
+	/**
+	 * Apply posted Allow/Deny values onto a stored plugins map.
+	 * Keys absent from $posted stay as stored. An empty posted value drops
+	 * the explicit rule (back to Default).
+	 *
+	 * @param array<string,string> $base   Stored plugins map.
+	 * @param mixed                $posted Posted handl_aicac_rule map.
+	 * @return array<string,string>
+	 */
+	public static function merge_posted_plugin_rules( array $base, $posted ): array {
+		if ( ! is_array( $posted ) ) {
+			return $base;
+		}
+		$rules = $base;
+		foreach ( $posted as $basename => $rule ) {
+			$basename = sanitize_text_field( (string) $basename );
+			$rule     = sanitize_text_field( (string) $rule );
+			if ( '' === $basename ) {
+				continue;
+			}
+			if ( 'allow' === $rule || 'deny' === $rule ) {
+				$rules[ $basename ] = $rule;
+			} else {
+				unset( $rules[ $basename ] );
+			}
+		}
+		return $rules;
+	}
+
+	/**
+	 * Merge posted model-route rows onto a stored map. Keys absent from
+	 * $posted stay as stored. A posted row that sanitizes empty is removed.
+	 *
+	 * @param array<string,array<string,string>> $base
+	 * @param mixed                              $posted
+	 * @return array<string,array<string,string>>
+	 */
+	public static function merge_posted_model_force( array $base, $posted ): array {
+		$base = Model_Force::sanitize_force_map( $base );
+		if ( ! is_array( $posted ) ) {
+			return $base;
+		}
+		$sanitized = Model_Force::sanitize_force_map( $posted );
+		foreach ( $posted as $basename => $_row ) {
+			$basename = sanitize_text_field( (string) $basename );
+			if ( '' === $basename ) {
+				continue;
+			}
+			if ( isset( $sanitized[ $basename ] ) ) {
+				$base[ $basename ] = $sanitized[ $basename ];
+			} else {
+				unset( $base[ $basename ] );
+			}
+		}
+		return $base;
+	}
+
+	/**
 	 * @param array<string,mixed> $policy
 	 */
 	public static function save_policy( array $policy ): void {
 		// Snapshot + history run immediately before write (after sanitize) so
 		// change lines compare the live policy to the sanitized incoming shape.
+		// Remember caller keys so sanitizers that inject defaults cannot persist
+		// keys the writer never supplied (no-op save stays byte-identical).
+		$incoming_keys = array_fill_keys( array_keys( $policy ), true );
+		if ( isset( $incoming_keys['denied_abilities'] ) && ! isset( $incoming_keys['denied_tools'] ) ) {
+			$incoming_keys['denied_tools'] = true;
+		}
+
 		if ( ! empty( $policy['audit_only'] ) ) {
 			$policy['log_enabled'] = true;
+			$incoming_keys['log_enabled'] = true;
 		}
 
 		$policy['kill_switch_exceptions'] = self::get_kill_switch_exceptions( $policy );
@@ -1347,11 +1485,13 @@ final class Policy {
 
 		if ( 'set' === $weekly_write ) {
 			$policy['weekly_report_enabled'] = ! empty( $policy['weekly_report_enabled'] );
+			$incoming_keys['weekly_report_enabled'] = true;
 		} elseif ( 'omit' === $weekly_write ) {
 			unset( $policy['weekly_report_enabled'] );
 		} elseif ( $had_weekly_key ) {
 			// Non-Activity save: keep stored explicit choice, ignore derived get_policy value.
 			$policy['weekly_report_enabled'] = ! empty( $raw_before['weekly_report_enabled'] );
+			$incoming_keys['weekly_report_enabled'] = true;
 		} else {
 			// Key was never saved — leave it absent so staged default re-derives on read.
 			unset( $policy['weekly_report_enabled'] );
@@ -1372,6 +1512,12 @@ final class Policy {
 		}
 		// Site-wide pin removed: per-plugin replaces it. Never re-store legacy keys.
 		unset( $policy['model_force_enabled'], $policy['model_force_provider'], $policy['model_force_model'] );
+
+		foreach ( array_keys( $policy ) as $key ) {
+			if ( ! isset( $incoming_keys[ $key ] ) ) {
+				unset( $policy[ $key ] );
+			}
+		}
 
 		// AICAC-UNDO / AICAC-HISTORY: snapshot + who/when/what trail before overwrite.
 		Policy_Snapshots::capture_before_save( $policy );
