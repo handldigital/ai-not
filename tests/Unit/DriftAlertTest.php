@@ -160,10 +160,12 @@ final class DriftAlertTest extends TestCase {
 		$this->persist_policy( array( 'drift_alert_mode' => Drift::MODE_MODEL ) );
 
 		Policy::append_log_event( $this->ai_event( 'acme/acme.php', 'openai', 'gpt-4o-mini', 1_700_000_000 ) );
-		$this->assertSame( array(), self::$mails );
+		$this->assertCount( 1, self::$mails );
+		$this->assertStringContainsString( 'started using AI', self::$mails[0]['subject'] );
 
 		Policy::append_log_event( $this->ai_event( 'acme/acme.php', 'openai', 'gpt-4o', 1_700_000_100 ) );
-		$this->assertCount( 1, self::$mails );
+		$this->assertCount( 2, self::$mails );
+		$this->assertStringContainsString( 'gpt-4o', self::$mails[1]['subject'] );
 
 		$log = get_option( Plugin::LOG_OPTION_KEY, array() );
 		$this->assertIsArray( $log );

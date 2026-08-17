@@ -201,6 +201,7 @@ Yes. With WP-CLI available and this plugin active:
 * Activity keep period on the Activity tab (30, 90, 180, or 365 days, or forever): daily cleanup in batches, an optional CSV download before the first cleanup, and a Site Health line showing the period and last cleanup time.
 * Optional weekly rules backup email on the Rules tab, off by default: sends a JSON rules export once a week, stores only the latest backup on the site, and lets you download or compare it.
 * Insights daily trend lines for calls, estimated spend, and blocked calls over up to 30 days of saved Activity, with honest short-window labels and expandable per-plugin trends.
+* One email when a plugin that never used AI makes its first AI Client call. Snooze and Quiet hours still apply. This does not change Allow or Deny.
 
 = 1.5.0 =
 * Shared email layout for HandL alerts and reports: same header, intro, and footer on every message, with a plain-text and HTML part. Per-message wording inside the content block is unchanged.
