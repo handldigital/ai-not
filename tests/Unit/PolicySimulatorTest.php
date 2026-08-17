@@ -317,9 +317,9 @@ final class PolicySimulatorTest extends TestCase {
 		);
 
 		$this->assertMatchesRegularExpression(
-			'/<button type="submit" name="handl_aicac_action" value="save" class="button button-primary" data-aicac-action="save">/',
+			'/<button type="submit" name="handl_aicac_action" value="save" class="button button-primary" form="\' \. esc_attr\( \$rules_form_id \) \. \'" data-aicac-action="save">/',
 			$src,
-			'Save changes must be an in-form submit with value=save'
+			'Save changes must be form-associated with the Rules form (value=save)'
 		);
 		$this->assertMatchesRegularExpression(
 			'/<button type="submit" class="button button-secondary" name="handl_aicac_action" value="simulate_policy" id="handl-aicac-sim-run" data-aicac-action="simulate_policy">/',
