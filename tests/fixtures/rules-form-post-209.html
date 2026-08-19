@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<body>
+<!-- Post-#209 / post-#213 shape: pack form is a sibling; Save + nonce
+     + action hidden own #handl-aicac-rules-save via form= or containment. -->
+<form method="post" id="handl-aicac-rules-save">
+<input type="hidden" name="handl_aicac_nonce" id="handl_aicac_nonce" value="post209nonce" />
+<input type="hidden" name="handl_aicac_action" id="handl-aicac-action" value="" />
+</form>
+<form method="post">
+<input type="hidden" name="handl_aicac_nonce" value="packnonce" />
+<input type="hidden" name="handl_aicac_action" value="pack_preview" />
+</form>
+<p class="submit">
+<button type="submit" name="handl_aicac_action" value="save" class="button button-primary" form="handl-aicac-rules-save" data-aicac-action="save">Save changes</button>
+</p>
+</body>
+</html>

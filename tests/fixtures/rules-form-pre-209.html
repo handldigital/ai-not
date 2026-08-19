@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<body>
+<!-- Captures the 298fd4a..pre-#209 parsed-DOM bug: a nested pack
+     <form> closes #handl-aicac-rules-save, so Save is orphaned.
+     Nonce + action hidden stay inside (they render first). -->
+<form method="post" id="handl-aicac-rules-save">
+<input type="hidden" name="handl_aicac_nonce" id="handl_aicac_nonce" value="pre209nonce" />
+<input type="hidden" name="handl_aicac_action" id="handl-aicac-action" value="" />
+<form method="post">
+<input type="hidden" name="handl_aicac_action" value="pack_preview" />
+</form>
+<p class="submit">
+<button type="submit" name="handl_aicac_action" value="save" class="button button-primary" data-aicac-action="save">Save changes</button>
+</p>
+</form>
+</body>
+</html>
