@@ -1840,6 +1840,7 @@ final class Policy {
 		// AICAC-DRIFT: tag first-seen provider/model pairs; alerts flush after persist.
 		if ( ! $is_direct_http ) {
 			Drift::observe( $event, $policy, true );
+			Went_AI::observe( $event, $policy );
 		}
 
 		$log[] = $event;

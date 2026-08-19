@@ -257,6 +257,15 @@ final class Site_Health {
 			$lines[] = __( 'AI Client plugins: none detected. Your rules will apply after an AI Client plugin is installed.', 'handl-ai-connector-access-control' );
 		}
 
+		$went_ai = Went_AI::plugins_started_since( time() - Went_AI::WINDOW_SECONDS );
+		if ( ! empty( $went_ai ) ) {
+			$lines[] = sprintf(
+				/* translators: %s: comma-separated plugin basenames */
+				__( 'Started using AI in the last 30 days: %s.', 'handl-ai-connector-access-control' ),
+				implode( ', ', $went_ai )
+			);
+		}
+
 		if ( 'alert_delivery_failing' === $issue ) {
 			$channels = isset( $snapshot['failing_alert_channels'] ) && is_array( $snapshot['failing_alert_channels'] )
 				? $snapshot['failing_alert_channels']

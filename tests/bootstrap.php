@@ -645,6 +645,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-log-storage.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-log-retention.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-anomaly.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-drift.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-went-ai.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-analytics.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-email-template.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alert-health.php';
@@ -742,6 +743,9 @@ if ( ! function_exists( 'get_plugins' ) ) {
 	 * @return array<string,array<string,mixed>>
 	 */
 	function get_plugins(): array {
+		if ( isset( $GLOBALS['handl_aicac_test_plugins'] ) && is_array( $GLOBALS['handl_aicac_test_plugins'] ) ) {
+			return $GLOBALS['handl_aicac_test_plugins'];
+		}
 		return array();
 	}
 }
