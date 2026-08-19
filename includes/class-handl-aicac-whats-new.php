@@ -80,7 +80,7 @@ final class Whats_New {
 	public static function highlights_catalog(): array {
 		return array(
 			'1.6.0' => array(
-				__( 'The Rules tab saves again. On 1.3.0–1.5.0, Save changes did not persist. 1.6.0 also blocks a truncated save from erasing rules you did not submit.', 'handl-ai-connector-access-control' ),
+				__( 'The Rules tab saves again. In versions 1.3.0–1.5.0, Save changes did not persist. Version 1.6.0 also prevents incomplete saves from erasing rules that were not submitted.', 'handl-ai-connector-access-control' ),
 				__( 'Start from a policy pack on the Rules tab: preview Strict, Balanced, or Observe-first, download a JSON backup, then apply without replacing your existing per-plugin rules.', 'handl-ai-connector-access-control' ),
 				__( 'Choose how long to keep Activity: 30, 90, 180, or 365 days, or forever. Daily cleanup runs in batches, with an optional CSV download before the first cleanup.', 'handl-ai-connector-access-control' ),
 				__( 'See a Dashboard governance setup score (0–100) with links to the relevant screen. Setup guidance only, not a security or safety rating.', 'handl-ai-connector-access-control' ),
