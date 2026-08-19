@@ -19,7 +19,7 @@ if ( ! defined( 'HANDL_AICAC_DIR' ) ) {
 }
 
 if ( ! defined( 'HANDL_AICAC_VERSION' ) ) {
-	define( 'HANDL_AICAC_VERSION', '1.5.0' );
+	define( 'HANDL_AICAC_VERSION', '1.6.0' );
 }
 
 if ( ! defined( 'HOUR_IN_SECONDS' ) ) {
