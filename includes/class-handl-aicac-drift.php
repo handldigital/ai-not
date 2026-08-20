@@ -380,7 +380,7 @@ final class Drift {
 			return false;
 		}
 
-		$to = Alerts::resolve_email( $policy );
+		$to = Alert_Routing::resolve_email( $policy, 'drift' );
 		if ( '' === $to ) {
 			return false;
 		}

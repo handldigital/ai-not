@@ -495,7 +495,7 @@ final class Alerts {
 			return;
 		}
 
-		$to = self::resolve_email( $policy );
+		$to = Alert_Routing::resolve_email( $policy, 'shadow' );
 		if ( '' === $to ) {
 			return;
 		}
@@ -568,20 +568,42 @@ final class Alerts {
 			return;
 		}
 
-		$to  = self::resolve_email( $policy );
-		$url = self::resolve_webhook( $policy );
+		$to_deny   = self::resolve_email( $policy );
+		$to_shadow = Alert_Routing::resolve_email( $policy, 'shadow' );
+		$url       = self::resolve_webhook( $policy );
 		// Shadow is email-only; webhook still useful when denials are present.
-		if ( '' === $to && ( '' === $url || empty( $denials ) ) ) {
+		if ( '' === $to_deny && '' === $to_shadow && ( '' === $url || empty( $denials ) ) ) {
 			return;
 		}
 
 		$mail_ok = null;
 		$hook_ok = null;
 
-		if ( '' !== $to ) {
+		// Same inbox → one combined digest (upgrade parity when no routing).
+		if ( '' !== $to_deny && $to_deny === $to_shadow ) {
 			$subject = self::digest_subject( $denials, $shadows );
 			$body    = self::format_digest_body( $denials, $shadows );
-			$mail_ok = self::safe_wp_mail( $to, $subject, $body );
+			$mail_ok = self::safe_wp_mail( $to_deny, $subject, $body );
+		} else {
+			$deny_ok   = null;
+			$shadow_ok = null;
+			if ( '' !== $to_deny && ! empty( $denials ) ) {
+				$subject = self::digest_subject( $denials, array() );
+				$body    = self::format_digest_body( $denials, array() );
+				$deny_ok = self::safe_wp_mail( $to_deny, $subject, $body );
+			}
+			if ( '' !== $to_shadow && ! empty( $shadows ) ) {
+				$subject   = self::digest_subject( array(), $shadows );
+				$body      = self::format_digest_body( array(), $shadows );
+				$shadow_ok = self::safe_wp_mail( $to_shadow, $subject, $body );
+			}
+			// Clear when every attempted mail path succeeded (or nothing to mail).
+			$need_deny   = '' !== $to_deny && ! empty( $denials );
+			$need_shadow = '' !== $to_shadow && ! empty( $shadows );
+			if ( $need_deny || $need_shadow ) {
+				$mail_ok = ( ! $need_deny || true === $deny_ok )
+					&& ( ! $need_shadow || true === $shadow_ok );
+			}
 		}
 
 		if ( '' !== $url && ! empty( $denials ) ) {
@@ -746,7 +768,10 @@ final class Alerts {
 			);
 		}
 
-		$to = self::resolve_email( $policy );
+		// Test-email respects routing for typed channels (digest); others keep default.
+		$to = ( 'governance_digest' === $channel )
+			? Alert_Routing::resolve_email( $policy, 'digest' )
+			: self::resolve_email( $policy );
 		if ( '' === $to ) {
 			return array(
 				'ok'     => false,
@@ -1123,7 +1148,7 @@ final class Alerts {
 		}
 
 		$policy = Policy::get_policy();
-		$to     = self::resolve_email( is_array( $policy ) ? $policy : array() );
+		$to     = Alert_Routing::resolve_email( is_array( $policy ) ? $policy : array(), 'webhook-failure' );
 		if ( '' === $to ) {
 			return;
 		}

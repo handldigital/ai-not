@@ -162,7 +162,7 @@ final class Anomaly {
 		}
 
 		$now = null !== $now ? $now : time();
-		$to  = Alerts::resolve_email( $policy );
+		$to  = Alert_Routing::resolve_email( $policy, 'anomaly' );
 		if ( '' === $to ) {
 			return;
 		}
