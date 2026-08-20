@@ -137,7 +137,7 @@ final class SelftestTest extends TestCase {
 		$report = Selftest::run();
 		$this->assertFalse( $report['ok'] );
 		$this->assertSame( 'gate_unregistered', $report['issue'] );
-		$this->assertStringContainsString( 'filter is not hooked', $report['message'] );
+		$this->assertStringContainsString( 'AI blocking is unavailable', $report['message'] );
 	}
 
 	public function test_synthetic_rows_are_excluded_from_totals(): void {

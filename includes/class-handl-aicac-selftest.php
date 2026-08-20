@@ -62,12 +62,12 @@ final class Selftest {
 			'gate'            => array(
 				'id'    => 'gate',
 				'pass'  => false,
-				'label' => __( 'Gate invoked', 'handl-ai-connector-access-control' ),
+				'label' => __( 'AI blocking ran', 'handl-ai-connector-access-control' ),
 			),
 			'rule'            => array(
 				'id'    => 'rule',
 				'pass'  => false,
-				'label' => __( 'Temporary rule matched', 'handl-ai-connector-access-control' ),
+				'label' => __( 'Test rule was applied', 'handl-ai-connector-access-control' ),
 			),
 			'deny'            => array(
 				'id'    => 'deny',
@@ -87,7 +87,7 @@ final class Selftest {
 			'alerts'          => array(
 				'id'    => 'alerts',
 				'pass'  => false,
-				'label' => __( 'Alert path reachable (no mail sent)', 'handl-ai-connector-access-control' ),
+				'label' => __( 'Alerts are available (no email was sent)', 'handl-ai-connector-access-control' ),
 			),
 			'policy_restored' => array(
 				'id'    => 'policy_restored',
@@ -112,7 +112,7 @@ final class Selftest {
 			if ( ! self::gate_is_registered() ) {
 				$issue = 'gate_unregistered';
 				$tab   = 'dashboard';
-				$msg   = __( 'The blocking filter is not hooked. The plugin may not be fully loaded.', 'handl-ai-connector-access-control' );
+				$msg   = __( 'AI blocking is unavailable. Check that the plugin is active, then run the test again.', 'handl-ai-connector-access-control' );
 				return self::finish( $original, $links, $issue, $msg, $tab, false );
 			}
 			$links['gate']['pass'] = true;
@@ -156,7 +156,7 @@ final class Selftest {
 			if ( ! $links['alerts']['pass'] ) {
 				$issue = 'alerts_unreachable';
 				$tab   = 'dashboard';
-				$msg   = __( 'The alert path is missing. Check that the plugin is fully loaded.', 'handl-ai-connector-access-control' );
+				$msg   = __( 'Alerts are unavailable. Check that the plugin is active, then run the test again.', 'handl-ai-connector-access-control' );
 				return self::finish( $original, $links, $issue, $msg, $tab, false );
 			}
 		} catch ( \Throwable $e ) {
