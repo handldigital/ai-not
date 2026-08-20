@@ -35,6 +35,7 @@ delete_option( 'handl_aicac_forecast_warned' );
 delete_option( 'handl_aicac_anomaly_fired' );
 delete_option( 'handl_aicac_drift_seen' );
 delete_option( 'handl_aicac_drift_recent' );
+delete_option( 'handl_aicac_first_ai_call_at' );
 delete_option( 'handl_aicac_temp_allow_warned' );
 delete_option( 'handl_aicac_alert_snoozes' );
 delete_option( 'handl_aicac_keyscan_findings' );

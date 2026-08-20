@@ -204,6 +204,7 @@ Yes. With WP-CLI available and this plugin active:
 * Activity keep period on the Activity tab (30, 90, 180, or 365 days, or forever): daily cleanup in batches, an optional CSV download before the first cleanup, and a Site Health line showing the period and last cleanup time.
 * Optional weekly rules backup email on the Rules tab, off by default: sends a JSON rules export once a week, stores only the latest backup on the site, and lets you download or compare it.
 * Insights daily trend lines for calls, estimated spend, and blocked calls over up to 30 days of saved Activity, with honest short-window labels and expandable per-plugin trends.
+* One email when a plugin that never used AI makes its first AI Client call. Snooze and Quiet hours still apply. This does not change Allow or Deny.
 * Share-safe policy export via WP-CLI: `wp handl-aicac policy export --redacted` replaces alert email and webhook URLs with present/absent placeholders, strips rule notes, and omits the site URL. Regular export is unchanged. Import of a redacted file keeps live secrets.
 * Emergency break-glass via WP-CLI: temporarily allow all AI Client calls for a set number of minutes, then restore the previous policy automatically. Cancel early to restore now. Calls during the window are tagged in Activity.
 * Blocked calls now record the page context and the error returned to the calling plugin, so Activity shows what happened instead of only showing that the call was denied.
