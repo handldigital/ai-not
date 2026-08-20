@@ -762,6 +762,7 @@ if ( ! function_exists( 'check_admin_referer' ) ) {
 }
 
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-attribution.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-prompt-snapshot.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-shadow-ai.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-keyscan.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-temp-allow.php';
@@ -770,6 +771,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-new-plugin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quiet-hours.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-break-glass.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-selftest.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-simulator.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-checks.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-onboarding.php';

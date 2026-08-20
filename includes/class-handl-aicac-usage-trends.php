@@ -367,6 +367,10 @@ final class Usage_Trends {
 	 * @param array<string,mixed> $row
 	 */
 	public static function is_activity_row( array $row ): bool {
+		if ( class_exists( Selftest::class ) && Selftest::is_synthetic_row( $row ) ) {
+			return false;
+		}
+
 		$channel = isset( $row['channel'] ) ? (string) $row['channel'] : '';
 		if ( 'direct_http' === $channel
 			|| 'spend_threshold' === $channel
@@ -374,7 +378,8 @@ final class Usage_Trends {
 			|| 'drift' === $channel
 			|| 'alert_snooze' === $channel
 			|| 'anomaly' === $channel
-			|| 'forecast_warn' === $channel ) {
+			|| 'forecast_warn' === $channel
+			|| 'selftest' === $channel ) {
 			return false;
 		}
 

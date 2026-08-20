@@ -12,6 +12,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 final class Attribution {
+	/**
+	 * Reserved-caller override used by Selftest probes. Null = normal backtrace.
+	 *
+	 * @var string|null
+	 */
+	private static ?string $forced_plugin = null;
+
+	public static function force_plugin( ?string $basename ): void {
+		self::$forced_plugin = ( is_string( $basename ) && '' !== $basename ) ? $basename : null;
+	}
+
 	private static function starts_with( string $haystack, string $needle ): bool {
 		if ( '' === $needle ) {
 			return true;
@@ -35,6 +46,14 @@ final class Attribution {
 	 * - method: string ("plugin"|"mu-plugin"|"unknown")
 	 */
 	public static function resolve_from_backtrace( int $limit = 60 ): array {
+		if ( null !== self::$forced_plugin ) {
+			return array(
+				'plugin' => self::$forced_plugin,
+				'file'   => null,
+				'method' => 'selftest',
+			);
+		}
+
 		// Using an exception trace avoids debug_backtrace() (flagged by some sniffs as "debug").
 		$trace = ( new \Exception() )->getTrace();
 		if ( count( $trace ) > $limit ) {

@@ -91,6 +91,11 @@ final class Policy {
 			$snapshot
 		);
 
+		if ( class_exists( Selftest::class ) && Selftest::is_synthetic_plugin( is_string( $plugin ) ? $plugin : null ) ) {
+			$event['selftest'] = true;
+			$event['channel']  = Selftest::CHANNEL;
+		}
+
 		// AICAC-BREAKGLASS: tag every call that ran while the window was open.
 		if ( $bg_active ) {
 			$event['break_glass'] = true;
@@ -204,7 +209,7 @@ final class Policy {
 		$this->log_event( $event );
 
 		// Observability only: opt-in denial email / digest. Never changes $prevent.
-		if ( $prevent && empty( $policy['audit_only'] ) ) {
+		if ( $prevent && empty( $policy['audit_only'] ) && empty( $event['selftest'] ) ) {
 			Alerts::maybe_notify_denial( $event, $policy );
 		}
 
@@ -1817,6 +1822,7 @@ final class Policy {
 		}
 		$log = self::apply_log_retention( $log, $policy, $event_ts );
 
+		$is_selftest    = class_exists( Selftest::class ) && Selftest::is_synthetic_row( $event );
 		$is_direct_http = isset( $event['channel'] ) && 'direct_http' === (string) $event['channel'];
 		if ( $is_direct_http && self::collapse_direct_http_into_log( $log, $event ) ) {
 // Chatty-cluster collapse: no new pair in the retained window → no alert.
@@ -1838,7 +1844,7 @@ final class Policy {
 		}
 
 		// AICAC-DRIFT: tag first-seen provider/model pairs; alerts flush after persist.
-		if ( ! $is_direct_http ) {
+		if ( ! $is_direct_http && ! $is_selftest ) {
 			Drift::observe( $event, $policy, true );
 			Went_AI::observe( $event, $policy );
 		}
@@ -1848,7 +1854,7 @@ final class Policy {
 
 		update_option( Plugin::LOG_OPTION_KEY, $log, false );
 
-		if ( ! $is_direct_http ) {
+		if ( ! $is_direct_http && ! $is_selftest ) {
 			Drift::flush_deferred_alerts();
 		}
 
@@ -1858,7 +1864,7 @@ final class Policy {
 
 		// AICAC-ANOMALY: re-check after new retained rows (skip our own audit rows).
 		$channel = isset( $event['channel'] ) ? (string) $event['channel'] : '';
-		if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget' ), true ) ) {
+		if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget', 'selftest' ), true ) ) {
 			Anomaly::maybe_evaluate( $policy );
 		}
 	}
