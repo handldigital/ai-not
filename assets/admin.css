@@ -778,3 +778,8 @@
 	background: #d63638;
 }
 
+#handl-aicac-notices .notice:focus {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+}
+

@@ -251,8 +251,9 @@ final class Usage_Trends {
 	 *
 	 * @param list<array{status:string,calls:int|null,spend:float|null}> $weeks
 	 * @param 'calls'|'spend'                                            $metric
+	 * @param string                                                     $aria_label Accessible trend summary (required for a11y).
 	 */
-	public static function sparkline_svg( array $weeks, string $metric = 'calls', int $width = 120, int $height = 28 ): string {
+	public static function sparkline_svg( array $weeks, string $metric = 'calls', int $width = 120, int $height = 28, string $aria_label = '' ): string {
 		$points = array();
 		foreach ( $weeks as $w ) {
 			if ( 'data' !== ( $w['status'] ?? '' ) ) {
@@ -284,13 +285,77 @@ final class Usage_Trends {
 		}
 
 		$polyline = esc_attr( implode( ' ', $coords ) );
+		$label    = '' !== $aria_label ? $aria_label : self::sparkline_aria_label( $weeks, $metric, self::default_metric_label( $metric ) );
 
 		return sprintf(
-			'<svg class="handl-aicac-trend-spark" width="%1$d" height="%2$d" viewBox="0 0 %1$d %2$d" role="img" aria-hidden="true" focusable="false"><polyline fill="none" stroke="currentColor" stroke-width="1.5" points="%3$s" /></svg>',
+			'<svg class="handl-aicac-trend-spark" width="%1$d" height="%2$d" viewBox="0 0 %1$d %2$d" role="img" aria-label="%4$s" focusable="false"><polyline fill="none" stroke="currentColor" stroke-width="1.5" points="%3$s" /></svg>',
 			$width,
 			$height,
-			$polyline
+			$polyline,
+			esc_attr( $label )
 		);
+	}
+
+	/**
+	 * Accessible summary for a weekly sparkline (data weeks only).
+	 *
+	 * @param list<array{status:string,calls:int|null,spend:float|null}> $weeks
+	 * @param 'calls'|'spend'                                            $metric
+	 */
+	public static function sparkline_aria_label( array $weeks, string $metric, string $metric_label ): string {
+		$points = array();
+		foreach ( $weeks as $w ) {
+			if ( 'data' !== ( $w['status'] ?? '' ) ) {
+				continue;
+			}
+			$points[] = 'spend' === $metric ? (float) ( $w['spend'] ?? 0 ) : (float) ( $w['calls'] ?? 0 );
+		}
+		$n = count( $points );
+		if ( $n < 1 ) {
+			return $metric_label;
+		}
+
+		$first  = $points[0];
+		$latest = $points[ $n - 1 ];
+		$low    = min( $points );
+		$high   = max( $points );
+
+		return sprintf(
+			/* translators: 1: metric label, 2: week count, 3: first value, 4: latest value, 5: low, 6: high */
+			__( '%1$s over %2$d saved weeks. First: %3$s. Latest: %4$s. Low: %5$s. High: %6$s.', 'handl-ai-connector-access-control' ),
+			$metric_label,
+			$n,
+			self::format_metric_value( $metric, $first ),
+			self::format_metric_value( $metric, $latest ),
+			self::format_metric_value( $metric, $low ),
+			self::format_metric_value( $metric, $high )
+		);
+	}
+
+	/**
+	 * @param 'calls'|'spend' $metric
+	 */
+	public static function format_metric_value( string $metric, float $value ): string {
+		if ( 'spend' === $metric ) {
+			return Cost::format_usd( $value );
+		}
+
+		$rounded = (int) round( $value );
+
+		return function_exists( 'number_format_i18n' )
+			? number_format_i18n( $rounded )
+			: (string) $rounded;
+	}
+
+	/**
+	 * @param 'calls'|'spend' $metric
+	 */
+	public static function default_metric_label( string $metric ): string {
+		if ( 'spend' === $metric ) {
+			return __( 'Estimated spend per week', 'handl-ai-connector-access-control' );
+		}
+
+		return __( 'Calls per week', 'handl-ai-connector-access-control' );
 	}
 
 	/**

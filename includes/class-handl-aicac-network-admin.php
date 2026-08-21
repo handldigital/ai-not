@@ -186,11 +186,17 @@ final class Network_Admin {
 
 		if ( $page > 1 ) {
 			$prev = add_query_arg( 'paged', $page - 1, $base );
-			echo '<a class="prev-page button" href="' . esc_url( $prev ) . '">&lsaquo;</a> ';
+			echo '<a class="prev-page button" href="' . esc_url( $prev ) . '">';
+			echo '<span class="screen-reader-text">' . esc_html__( 'Previous page', 'handl-ai-connector-access-control' ) . '</span>';
+			echo '<span aria-hidden="true">&lsaquo;</span>';
+			echo '</a> ';
 		}
 		if ( $page < $total_pages ) {
 			$next = add_query_arg( 'paged', $page + 1, $base );
-			echo '<a class="next-page button" href="' . esc_url( $next ) . '">&rsaquo;</a>';
+			echo '<a class="next-page button" href="' . esc_url( $next ) . '">';
+			echo '<span class="screen-reader-text">' . esc_html__( 'Next page', 'handl-ai-connector-access-control' ) . '</span>';
+			echo '<span aria-hidden="true">&rsaquo;</span>';
+			echo '</a>';
 		}
 		echo '</div></div>';
 	}
