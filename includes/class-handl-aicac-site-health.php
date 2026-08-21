@@ -83,7 +83,12 @@ final class Site_Health {
 			$active = array_fill_keys( array_map( 'strval', $active_raw ), true );
 		}
 
-		$snapshot = self::build_snapshot( $policy, $installed, $active );
+		$log = get_option( Plugin::LOG_OPTION_KEY, array() );
+		if ( ! is_array( $log ) ) {
+			$log = array();
+		}
+
+		$snapshot = self::build_snapshot( $policy, $installed, $active, $log );
 
 		return self::format_site_health_result( $snapshot );
 	}
@@ -94,6 +99,7 @@ final class Site_Health {
 	 * @param array<string,mixed>               $policy
 	 * @param array<string,array<string,mixed>> $installed_plugins get_plugins()-shaped map.
 	 * @param array<string,bool>                $active_plugins    basename => true for active.
+	 * @param list<mixed>                       $log               Activity log (optional; for gap scan).
 	 * @return array{
 	 *   status:string,
 	 *   issue:string,
@@ -107,7 +113,7 @@ final class Site_Health {
 	 *   alerts_configured:bool
 	 * }
 	 */
-	public static function build_snapshot( array $policy, array $installed_plugins, array $active_plugins ): array {
+	public static function build_snapshot( array $policy, array $installed_plugins, array $active_plugins, array $log = array() ): array {
 		$kill_switch   = ! empty( $policy['kill_switch'] );
 		$exceptions    = Policy::get_kill_switch_exceptions( $policy );
 		$logging       = self::logging_active( $policy );
@@ -121,6 +127,7 @@ final class Site_Health {
 
 		$failing_alerts = Alert_Health::failing_channels( $policy );
 		$over_budget    = Budget::over_budget_list( $policy );
+		$gaps           = class_exists( Tamper::class ) ? Tamper::recent_gap_windows( $log ) : array();
 
 		if ( ! empty( $failing_alerts ) ) {
 			$issue = 'alert_delivery_failing';
@@ -134,6 +141,9 @@ final class Site_Health {
 		} elseif ( ! empty( $over_budget ) ) {
 			$issue = 'over_budget';
 			$tab   = 'rules';
+		} elseif ( ! empty( $gaps ) ) {
+			$issue = 'enforcement_interrupted';
+			$tab   = 'activity';
 		} elseif ( ! $has_ai_client ) {
 			$issue = 'no_ai_client_plugins';
 			$tab   = 'dashboard';
@@ -144,7 +154,12 @@ final class Site_Health {
 
 		if ( 'alert_delivery_failing' === $issue ) {
 			$status = 'critical';
-		} elseif ( 'kill_switch_zero_exceptions' === $issue || 'alerts_without_logging' === $issue || 'over_budget' === $issue ) {
+		} elseif (
+			'kill_switch_zero_exceptions' === $issue
+			|| 'alerts_without_logging' === $issue
+			|| 'over_budget' === $issue
+			|| 'enforcement_interrupted' === $issue
+		) {
 			$status = 'recommended';
 		} else {
 			$status = 'good';
@@ -164,6 +179,8 @@ final class Site_Health {
 			'failing_alert_channels'  => $failing_alerts,
 			'over_budget_count'       => count( $over_budget ),
 			'over_budget_plugins'     => $over_budget,
+			'enforcement_gap_count'   => count( $gaps ),
+			'enforcement_gaps'        => $gaps,
 		);
 	}
 
@@ -190,6 +207,8 @@ final class Site_Health {
 			$label = __( 'Alerts cannot run because activity logging and Learn mode are off', 'handl-ai-connector-access-control' );
 		} elseif ( 'over_budget' === $issue ) {
 			$label = __( 'One or more plugins reached their estimated budget', 'handl-ai-connector-access-control' );
+		} elseif ( 'enforcement_interrupted' === $issue ) {
+			$label = __( 'AI enforcement was interrupted in the last 30 days', 'handl-ai-connector-access-control' );
 		} elseif ( 'no_ai_client_plugins' === $issue ) {
 			$label = __( 'No AI Client plugins are installed', 'handl-ai-connector-access-control' );
 		} elseif ( 'observing' === $issue ) {
@@ -309,6 +328,27 @@ final class Site_Health {
 				),
 				$count
 			);
+		} elseif ( 'enforcement_interrupted' === $issue ) {
+			$count = (int) ( $snapshot['enforcement_gap_count'] ?? 0 );
+			$gaps  = isset( $snapshot['enforcement_gaps'] ) && is_array( $snapshot['enforcement_gaps'] )
+				? $snapshot['enforcement_gaps']
+				: array();
+			$lines[] = sprintf(
+				/* translators: %d: number of enforcement gap windows */
+				_n(
+					'AI enforcement was interrupted %d time in the last 30 days. Check Activity for enforcement_stopped / enforcement_resumed rows.',
+					'AI enforcement was interrupted %d times in the last 30 days. Check Activity for enforcement_stopped / enforcement_resumed rows.',
+					$count,
+					'handl-ai-connector-access-control'
+				),
+				$count
+			);
+			if ( ! empty( $gaps[0] ) && is_array( $gaps[0] ) && class_exists( Tamper::class ) ) {
+				$lines[] = Tamper::format_gap_window(
+					(int) ( $gaps[0]['from'] ?? 0 ),
+					(int) ( $gaps[0]['to'] ?? 0 )
+				) . '.';
+			}
 		}
 
 		$html = '';

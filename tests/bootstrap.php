@@ -791,6 +791,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-differentiator-messa
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-site-health.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-tamper.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rest.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
 require_once __DIR__ . '/stubs/namespace-filter-input.php';
