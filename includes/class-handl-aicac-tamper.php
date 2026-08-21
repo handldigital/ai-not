@@ -22,6 +22,9 @@ final class Tamper {
 	/** Option: unix timestamp when the plugin was last deactivated. */
 	public const DEACTIVATED_AT_OPTION = 'handl_aicac_deactivated_at';
 
+	/** Option: actor who deactivated (login or wp-cli); survives until reactivate. */
+	public const DEACTIVATED_BY_OPTION = 'handl_aicac_deactivated_by';
+
 	/**
 	 * Option: pending reactivation notice payload.
 	 *
@@ -89,6 +92,7 @@ final class Tamper {
 		$actor = self::resolve_actor();
 
 		update_option( self::DEACTIVATED_AT_OPTION, $now, false );
+		update_option( self::DEACTIVATED_BY_OPTION, $actor, false );
 
 		self::append_governance_event(
 			array(
@@ -121,6 +125,7 @@ final class Tamper {
 		$from = (int) $raw;
 		if ( $from <= 0 ) {
 			delete_option( self::DEACTIVATED_AT_OPTION );
+			delete_option( self::DEACTIVATED_BY_OPTION );
 			return;
 		}
 
@@ -129,14 +134,17 @@ final class Tamper {
 			$now = $from;
 		}
 
-		$actor = self::resolve_actor();
+		// Who turned enforcement off (persisted at deactivate) — not who is reactivating.
+		$stopped_by = sanitize_text_field( (string) get_option( self::DEACTIVATED_BY_OPTION, '' ) );
+		$resumed_by = self::resolve_actor();
 
 		self::append_governance_event(
 			array(
 				'ts'             => $now,
 				'decision'       => self::DECISION_RESUMED,
 				'channel'        => self::CHANNEL,
-				'actor'          => $actor,
+				'actor'          => $resumed_by,
+				'stopped_by'     => $stopped_by,
 				'deactivated_at' => $from,
 			),
 			$now
@@ -147,12 +155,13 @@ final class Tamper {
 			array(
 				'from'  => $from,
 				'to'    => $now,
-				'actor' => $actor,
+				'actor' => $stopped_by,
 			),
 			false
 		);
 
 		delete_option( self::DEACTIVATED_AT_OPTION );
+		delete_option( self::DEACTIVATED_BY_OPTION );
 	}
 
 	/**
@@ -391,7 +400,7 @@ final class Tamper {
 
 		$when = self::format_ts( $now );
 		$lines = array(
-			__( 'HandL AI Connector Access Control was deactivated. Deny rules, budgets, and alerts are no longer enforcing.', 'handl-ai-connector-access-control' ),
+			__( 'HandL AI Connector Access Control was deactivated. Deny rules and budgets are no longer enforced, and alerts will not be sent.', 'handl-ai-connector-access-control' ),
 			sprintf(
 				/* translators: %s: datetime */
 				__( 'Stopped at: %s', 'handl-ai-connector-access-control' ),

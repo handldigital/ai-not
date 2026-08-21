@@ -26,6 +26,7 @@ final class TamperTest extends TestCase {
 		delete_option( Plugin::OPTION_KEY );
 		delete_option( Plugin::LOG_OPTION_KEY );
 		delete_option( Tamper::DEACTIVATED_AT_OPTION );
+		delete_option( Tamper::DEACTIVATED_BY_OPTION );
 		delete_option( Tamper::NOTICE_OPTION );
 		unset( $GLOBALS['handl_aicac_test_actor'] );
 		update_option( 'admin_email', 'admin@example.com' );
@@ -45,6 +46,7 @@ final class TamperTest extends TestCase {
 		delete_option( Plugin::OPTION_KEY );
 		delete_option( Plugin::LOG_OPTION_KEY );
 		delete_option( Tamper::DEACTIVATED_AT_OPTION );
+		delete_option( Tamper::DEACTIVATED_BY_OPTION );
 		delete_option( Tamper::NOTICE_OPTION );
 		parent::tearDown();
 	}
@@ -75,6 +77,10 @@ final class TamperTest extends TestCase {
 		$this->assertSame( 'ops@example.com', self::$mails[0]['to'] );
 		$this->assertStringContainsString( 'deactivated', strtolower( self::$mails[0]['subject'] ) );
 		$this->assertStringContainsString( 'alice', self::$mails[0]['message'] );
+		$this->assertStringContainsString(
+			'Deny rules and budgets are no longer enforced, and alerts will not be sent.',
+			self::$mails[0]['message']
+		);
 	}
 
 	public function test_deactivate_records_wp_cli_actor(): void {
@@ -95,25 +101,31 @@ final class TamperTest extends TestCase {
 
 	public function test_reactivate_logs_gap_and_sets_notice(): void {
 		Policy::save_policy( array( 'log_enabled' => false ) );
-		$GLOBALS['handl_aicac_test_actor'] = 'bob';
+		$GLOBALS['handl_aicac_test_actor'] = 'alice';
 
 		Tamper::on_deactivate( 1_700_000_000 );
 		self::$mails = array();
 
+		// Different user reactivates — notice must still name the stopper.
+		$GLOBALS['handl_aicac_test_actor'] = 'bob';
 		Tamper::on_activate( 1_700_000_500 );
 
 		$this->assertFalse( get_option( Tamper::DEACTIVATED_AT_OPTION, false ) );
+		$this->assertFalse( get_option( Tamper::DEACTIVATED_BY_OPTION, false ) );
 
 		$notice = get_option( Tamper::NOTICE_OPTION );
 		$this->assertIsArray( $notice );
 		$this->assertSame( 1_700_000_000, (int) $notice['from'] );
 		$this->assertSame( 1_700_000_500, (int) $notice['to'] );
+		$this->assertSame( 'alice', $notice['actor'] );
 
 		$log = get_option( Plugin::LOG_OPTION_KEY );
 		$this->assertIsArray( $log );
 		$this->assertCount( 2, $log );
 		$this->assertSame( Tamper::DECISION_RESUMED, $log[1]['decision'] );
 		$this->assertSame( 1_700_000_000, (int) $log[1]['deactivated_at'] );
+		$this->assertSame( 'bob', $log[1]['actor'] );
+		$this->assertSame( 'alice', $log[1]['stopped_by'] );
 		$this->assertSame( array(), self::$mails );
 	}
 
