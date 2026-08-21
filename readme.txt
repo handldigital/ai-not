@@ -4,7 +4,7 @@ Tags: ai, governance, security, handl, ai client
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.5.0
+Stable tag: 1.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -193,6 +193,9 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = Unreleased =
+
+= 1.6.0 =
+* In versions 1.3.0–1.5.0, changes made on the Rules tab did not save. Version 1.6.0 saves Rules again and prevents an incomplete save from erasing rules that were not submitted.
 * Change history on the Rules tab records who changed rules or settings, when, and a secret-safe before-and-after summary. The recent trail is kept separately from Activity, always records Emergency stop changes, and appears in printable audit reports.
 * Dashboard governance setup score (0–100): a weighted checklist of local settings and saved Activity, with Complete, Needs setup, and Not applicable states linked to the relevant screen. Setup guidance only, not a security or safety rating.
 * Optional Rule notes on plugin rules, shown on Rules, plugin profiles, and applicable Activity entries. Notes are stored locally, included in rules exports, Activity CSV exports, and printable evidence, and preserved on historical Activity entries when a rule changes or is removed.
@@ -202,6 +205,9 @@ Yes. With WP-CLI available and this plugin active:
 * Optional weekly rules backup email on the Rules tab, off by default: sends a JSON rules export once a week, stores only the latest backup on the site, and lets you download or compare it.
 * Insights daily trend lines for calls, estimated spend, and blocked calls over up to 30 days of saved Activity, with honest short-window labels and expandable per-plugin trends.
 * One email when a plugin that never used AI makes its first AI Client call. Snooze and Quiet hours still apply. This does not change Allow or Deny.
+* Share-safe policy export via WP-CLI: `wp handl-aicac policy export --redacted` replaces alert email and webhook URLs with present/absent placeholders, strips rule notes, and omits the site URL. Regular export is unchanged. Import of a redacted file keeps live secrets.
+* Emergency break-glass via WP-CLI: temporarily allow all AI Client calls for a set number of minutes, then restore the previous policy automatically. Cancel early to restore now. Calls during the window are tagged in Activity.
+* Blocked calls now record the page context and the error returned to the calling plugin, so Activity shows what happened instead of only showing that the call was denied.
 
 = 1.5.0 =
 * Shared email layout for HandL alerts and reports: same header, intro, and footer on every message, with a plain-text and HTML part. Per-message wording inside the content block is unchanged.

@@ -79,6 +79,13 @@ final class Whats_New {
 	 */
 	public static function highlights_catalog(): array {
 		return array(
+			'1.6.0' => array(
+				__( 'The Rules tab saves again. In versions 1.3.0–1.5.0, Save changes did not persist. Version 1.6.0 also prevents incomplete saves from erasing rules that were not submitted.', 'handl-ai-connector-access-control' ),
+				__( 'Start from a policy pack on the Rules tab: preview Strict, Balanced, or Observe-first, download a JSON backup, then apply without replacing your existing per-plugin rules.', 'handl-ai-connector-access-control' ),
+				__( 'Choose how long to keep Activity: 30, 90, 180, or 365 days, or forever. Daily cleanup runs in batches, with an optional CSV download before the first cleanup.', 'handl-ai-connector-access-control' ),
+				__( 'See a Dashboard governance setup score (0–100) with links to the relevant screen. Setup guidance only, not a security or safety rating.', 'handl-ai-connector-access-control' ),
+				__( 'Open a temporary break-glass window from WP-CLI to allow all AI Client calls for a set number of minutes, then restore the previous policy automatically.', 'handl-ai-connector-access-control' ),
+			),
 			'1.5.0' => array(
 				__( 'Set per-plugin estimated monthly budgets on the Rules tab. Choose whether to block new calls or use Observe-only mode when a budget is reached. The Dashboard, email, and Site Health show when a plugin reaches its budget. Amounts are estimates, not bills.', 'handl-ai-connector-access-control' ),
 				__( 'Turn on an optional weekly governance digest: last 7 days of AI Client calls, estimated spend vs the previous 7 days, blocked calls, direct connections, and top plugins.', 'handl-ai-connector-access-control' ),
