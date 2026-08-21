@@ -197,6 +197,10 @@ final class Tamper {
 	/**
 	 * Gap windows from the activity log (last 30 days by default).
 	 *
+	 * Each completed stop/resume pair is one closed window. An open window is
+	 * emitted only for an `enforcement_stopped` row with no matching resume
+	 * (`deactivated_at` equals the stop `ts`).
+	 *
 	 * @param list<mixed> $log
 	 * @return list<array{from:int,to:int,actor:string}>
 	 */
@@ -206,7 +210,9 @@ final class Tamper {
 			$window_seconds = defined( 'DAY_IN_SECONDS' ) ? ( 30 * DAY_IN_SECONDS ) : ( 30 * 86400 );
 		}
 		$cutoff = $now - $window_seconds;
-		$out    = array();
+
+		$closed = array();
+		$resolved_from = array();
 
 		foreach ( $log as $row ) {
 			if ( ! is_array( $row ) ) {
@@ -215,36 +221,62 @@ final class Tamper {
 			if ( self::CHANNEL !== (string) ( $row['channel'] ?? '' ) ) {
 				continue;
 			}
-
-			$decision = (string) ( $row['decision'] ?? '' );
-			$actor    = sanitize_text_field( (string) ( $row['actor'] ?? '' ) );
-
-			if ( self::DECISION_RESUMED === $decision ) {
-				$to   = (int) ( $row['ts'] ?? 0 );
-				$from = (int) ( $row['deactivated_at'] ?? 0 );
-				if ( $to >= $cutoff || $from >= $cutoff ) {
-					$out[] = array(
-						'from'  => max( 0, $from ),
-						'to'    => max( 0, $to ),
-						'actor' => $actor,
-					);
-				}
+			if ( self::DECISION_RESUMED !== (string) ( $row['decision'] ?? '' ) ) {
 				continue;
 			}
 
-			if ( self::DECISION_STOPPED === $decision ) {
-				$from = (int) ( $row['ts'] ?? 0 );
-				if ( $from >= $cutoff ) {
-					$out[] = array(
-						'from'  => $from,
-						'to'    => 0,
-						'actor' => $actor,
-					);
-				}
+			$to   = (int) ( $row['ts'] ?? 0 );
+			$from = (int) ( $row['deactivated_at'] ?? 0 );
+			if ( $from <= 0 ) {
+				continue;
 			}
+
+			$resolved_from[ $from ] = true;
+
+			if ( $to < $cutoff && $from < $cutoff ) {
+				continue;
+			}
+
+			$actor = sanitize_text_field( (string) ( $row['stopped_by'] ?? '' ) );
+			if ( '' === $actor ) {
+				$actor = sanitize_text_field( (string) ( $row['actor'] ?? '' ) );
+			}
+
+			$closed[] = array(
+				'from'  => $from,
+				'to'    => max( 0, $to ),
+				'actor' => $actor,
+			);
 		}
 
-		return $out;
+		$open = array();
+		foreach ( $log as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			if ( self::CHANNEL !== (string) ( $row['channel'] ?? '' ) ) {
+				continue;
+			}
+			if ( self::DECISION_STOPPED !== (string) ( $row['decision'] ?? '' ) ) {
+				continue;
+			}
+
+			$from = (int) ( $row['ts'] ?? 0 );
+			if ( $from < $cutoff || $from <= 0 ) {
+				continue;
+			}
+			if ( isset( $resolved_from[ $from ] ) ) {
+				continue;
+			}
+
+			$open[] = array(
+				'from'  => $from,
+				'to'    => 0,
+				'actor' => sanitize_text_field( (string) ( $row['actor'] ?? '' ) ),
+			);
+		}
+
+		return array_merge( $closed, $open );
 	}
 
 	/**
