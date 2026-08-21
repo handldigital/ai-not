@@ -463,7 +463,7 @@ final class Budget {
 			return;
 		}
 
-		$to = Alerts::resolve_email( $policy );
+		$to = Alert_Routing::resolve_email( $policy, 'budget' );
 		if ( '' === $to ) {
 			return;
 		}

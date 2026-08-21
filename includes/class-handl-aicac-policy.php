@@ -1115,6 +1115,7 @@ final class Policy {
 		$policy['shadow_block_exceptions'] = Shadow_AI::get_block_exceptions( $policy );
 		$policy['alert_mode']        = Alerts::sanitize_mode( $policy['alert_mode'] ?? 'immediate' );
 		$policy['alert_email']       = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
+		$policy['alert_routing']     = Alert_Routing::sanitize_routing( $policy['alert_routing'] ?? array() );
 		$policy['alert_webhook_url'] = Alerts::sanitize_webhook_url( $policy['alert_webhook_url'] ?? '' );
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate( $policy['est_usd_input_per_m'] ?? Cost::DEFAULT_INPUT_PER_M, Cost::DEFAULT_INPUT_PER_M );
 		$policy['est_usd_output_per_m'] = Cost::sanitize_rate( $policy['est_usd_output_per_m'] ?? Cost::DEFAULT_OUTPUT_PER_M, Cost::DEFAULT_OUTPUT_PER_M );
@@ -1442,6 +1443,7 @@ final class Policy {
 		$policy['shadow_block_exceptions'] = Shadow_AI::get_block_exceptions( $policy );
 		$policy['alert_mode']        = Alerts::sanitize_mode( $policy['alert_mode'] ?? 'immediate' );
 		$policy['alert_email']       = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
+		$policy['alert_routing']     = Alert_Routing::sanitize_routing( $policy['alert_routing'] ?? array() );
 		$policy['alert_webhook_url'] = Alerts::sanitize_webhook_url( $policy['alert_webhook_url'] ?? '' );
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate( $policy['est_usd_input_per_m'] ?? Cost::DEFAULT_INPUT_PER_M, Cost::DEFAULT_INPUT_PER_M );
 		$policy['est_usd_output_per_m'] = Cost::sanitize_rate( $policy['est_usd_output_per_m'] ?? Cost::DEFAULT_OUTPUT_PER_M, Cost::DEFAULT_OUTPUT_PER_M );

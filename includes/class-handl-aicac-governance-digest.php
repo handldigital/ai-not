@@ -89,7 +89,7 @@ final class Governance_Digest {
 	 * @param array<string,mixed> $policy
 	 */
 	public static function resolve_email( array $policy ): string {
-		return Alerts::resolve_email( $policy );
+		return Alert_Routing::resolve_email( $policy, 'digest' );
 	}
 
 	public function cron_send(): void {

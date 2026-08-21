@@ -518,7 +518,7 @@ final class Temp_Allow {
 		if ( empty( $policy['alert_on_deny'] ) && empty( $policy['alert_on_shadow'] ) ) {
 			return false;
 		}
-		$to = Alerts::resolve_email( $policy );
+		$to = Alert_Routing::resolve_email( $policy, 'expiry' );
 		if ( '' === $to ) {
 			return false;
 		}
@@ -567,7 +567,7 @@ final class Temp_Allow {
 		if ( empty( $policy['alert_on_deny'] ) && empty( $policy['alert_on_shadow'] ) ) {
 			return;
 		}
-		$to = Alerts::resolve_email( $policy );
+		$to = Alert_Routing::resolve_email( $policy, 'expiry' );
 		if ( '' === $to ) {
 			return;
 		}
