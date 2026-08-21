@@ -159,10 +159,10 @@ final class TamperTest extends TestCase {
 	 * not an open "to now" gap plus a second closed gap.
 	 */
 	public function test_recent_gap_windows_pairs_stop_with_resume(): void {
-		$now   = 1_700_100_000;
-		$stop  = $now - 1000;
+		$now    = time();
+		$stop   = $now - 1000;
 		$resume = $now - 100;
-		$log   = array(
+		$log    = array(
 			array(
 				'ts'       => $stop,
 				'decision' => Tamper::DECISION_STOPPED,
@@ -204,6 +204,7 @@ final class TamperTest extends TestCase {
 		);
 		$this->assertSame( 1, $snapshot['enforcement_gap_count'] );
 		$this->assertSame( $resume, (int) $snapshot['enforcement_gaps'][0]['to'] );
+		$this->assertSame( 'enforcement_interrupted', $snapshot['issue'] );
 	}
 
 	public function test_recent_gap_windows_keeps_unpaired_stop_open(): void {
