@@ -336,8 +336,8 @@ final class Site_Health {
 			$lines[] = sprintf(
 				/* translators: %d: number of enforcement gap windows */
 				_n(
-					'AI enforcement was interrupted %d time in the last 30 days. Check Activity for enforcement_stopped / enforcement_resumed rows.',
-					'AI enforcement was interrupted %d times in the last 30 days. Check Activity for enforcement_stopped / enforcement_resumed rows.',
+					'AI enforcement was interrupted %d time in the last 30 days. Check Activity to see when enforcement stopped and resumed.',
+					'AI enforcement was interrupted %d times in the last 30 days. Check Activity to see when enforcement stopped and resumed.',
 					$count,
 					'handl-ai-connector-access-control'
 				),
