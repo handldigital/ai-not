@@ -47,7 +47,21 @@ final class Site_Health {
 			'test'  => array( $this, 'run_test' ),
 		);
 
+		$tests['direct'][ Selftest::SITE_HEALTH_SLUG ] = array(
+			'label' => __( 'AI blocking check', 'handl-ai-connector-access-control' ),
+			'test'  => array( $this, 'run_selftest' ),
+		);
+
 		return $tests;
+	}
+
+	/**
+	 * Site Health direct-test callback: live deny + allow probe (#218).
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function run_selftest(): array {
+		return Selftest::format_site_health_result( Selftest::run() );
 	}
 
 	/**

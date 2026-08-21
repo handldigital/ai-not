@@ -159,6 +159,9 @@ final class Alerts {
 	 * @param array<string,mixed> $policy Current policy.
 	 */
 	public static function maybe_notify_denial( array $event, array $policy ): void {
+		if ( class_exists( Selftest::class ) && Selftest::is_synthetic_row( $event ) ) {
+			return;
+		}
 		if ( empty( $policy['alert_on_deny'] ) ) {
 			return;
 		}

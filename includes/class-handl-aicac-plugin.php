@@ -60,6 +60,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quiet-hours.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-break-glass.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-selftest.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-simulator.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-checks.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-onboarding.php';
@@ -107,10 +108,12 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-audit.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-policy-apply.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-break-glass.php';
+			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-selftest.php';
 			CLI::register();
 			CLI_Audit::register();
 			CLI_Policy_Apply::register();
 			CLI_Break_Glass::register();
+			CLI_Selftest::register();
 		}
 	}
 

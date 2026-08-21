@@ -67,6 +67,9 @@ final class Analytics {
 			// F6 direct_http rows widen "known AI activity" for F5; they must not
 			// inflate AI Client spend/token aggregates or mint a second coverage %.
 			// Insights shows a separate one-line count for these observations.
+			if ( class_exists( Selftest::class ) && Selftest::is_synthetic_row( $row ) ) {
+				continue;
+			}
 			if ( isset( $row['channel'] ) && 'direct_http' === (string) $row['channel'] ) {
 				continue;
 			}
@@ -153,6 +156,9 @@ final class Analytics {
 				$max_ts = $hi;
 			}
 
+			if ( class_exists( Selftest::class ) && Selftest::is_synthetic_row( $row ) ) {
+				continue;
+			}
 			$is_direct = isset( $row['channel'] ) && 'direct_http' === (string) $row['channel'];
 			if ( $is_direct ) {
 				$c = isset( $row['count'] ) ? (int) $row['count'] : 1;
