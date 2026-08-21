@@ -137,7 +137,8 @@ final class TamperTest extends TestCase {
 				'decision'       => Tamper::DECISION_RESUMED,
 				'channel'        => Tamper::CHANNEL,
 				'deactivated_at' => $now - 1000,
-				'actor'          => 'alice',
+				'actor'          => 'bob',
+				'stopped_by'     => 'alice',
 			),
 			array(
 				'ts'       => $now - 50,
@@ -150,6 +151,77 @@ final class TamperTest extends TestCase {
 		$this->assertCount( 1, $gaps );
 		$this->assertSame( $now - 1000, $gaps[0]['from'] );
 		$this->assertSame( $now - 100, $gaps[0]['to'] );
+		$this->assertSame( 'alice', $gaps[0]['actor'] );
+	}
+
+	/**
+	 * QA fail regression: stop+resume in the same log must be one closed window,
+	 * not an open "to now" gap plus a second closed gap.
+	 */
+	public function test_recent_gap_windows_pairs_stop_with_resume(): void {
+		$now   = 1_700_100_000;
+		$stop  = $now - 1000;
+		$resume = $now - 100;
+		$log   = array(
+			array(
+				'ts'       => $stop,
+				'decision' => Tamper::DECISION_STOPPED,
+				'channel'  => Tamper::CHANNEL,
+				'actor'    => 'alice',
+			),
+			array(
+				'ts'             => $resume,
+				'decision'       => Tamper::DECISION_RESUMED,
+				'channel'        => Tamper::CHANNEL,
+				'deactivated_at' => $stop,
+				'actor'          => 'bob',
+				'stopped_by'     => 'alice',
+			),
+		);
+
+		$gaps = Tamper::recent_gap_windows( $log, $now );
+		$this->assertCount( 1, $gaps );
+		$this->assertSame( $stop, $gaps[0]['from'] );
+		$this->assertSame( $resume, $gaps[0]['to'] );
+		$this->assertSame( 'alice', $gaps[0]['actor'] );
+		$this->assertGreaterThan( 0, $gaps[0]['to'] );
+
+		$snapshot = Site_Health::build_snapshot(
+			array(
+				'kill_switch' => false,
+				'log_enabled' => true,
+				'audit_only'  => false,
+			),
+			array(
+				'ai/ai.php'            => array( 'Name' => 'AI' ),
+				'example/consumer.php' => array(
+					'Name'            => 'Example',
+					'RequiresPlugins' => 'ai',
+				),
+			),
+			array( 'ai/ai.php' => true ),
+			$log
+		);
+		$this->assertSame( 1, $snapshot['enforcement_gap_count'] );
+		$this->assertSame( $resume, (int) $snapshot['enforcement_gaps'][0]['to'] );
+	}
+
+	public function test_recent_gap_windows_keeps_unpaired_stop_open(): void {
+		$now  = 1_700_100_000;
+		$stop = $now - 500;
+		$log  = array(
+			array(
+				'ts'       => $stop,
+				'decision' => Tamper::DECISION_STOPPED,
+				'channel'  => Tamper::CHANNEL,
+				'actor'    => 'alice',
+			),
+		);
+
+		$gaps = Tamper::recent_gap_windows( $log, $now );
+		$this->assertCount( 1, $gaps );
+		$this->assertSame( $stop, $gaps[0]['from'] );
+		$this->assertSame( 0, $gaps[0]['to'] );
 	}
 
 	public function test_site_health_recommends_when_gap_in_log(): void {
