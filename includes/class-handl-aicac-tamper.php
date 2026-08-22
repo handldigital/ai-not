@@ -376,6 +376,21 @@ final class Tamper {
 	}
 
 	/**
+	 * Raw policy option for activation/deactivation hooks.
+	 *
+	 * Never call Policy::get_policy() from these hooks: WordPress may include this
+	 * plugin file only to run the activation callback, so Temp_Allow / Rule_Notes
+	 * and the rest of the boot stack are not loaded. get_policy() then fatals and
+	 * leaves the plugin inactive.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public static function policy_for_hooks(): array {
+		$raw = get_option( Plugin::OPTION_KEY );
+		return is_array( $raw ) ? $raw : array();
+	}
+
+	/**
 	 * Always-on log write (governance must not depend on Activity logging being enabled).
 	 *
 	 * @param array<string,mixed> $event
@@ -393,8 +408,8 @@ final class Tamper {
 		$log[] = $event;
 
 		if ( class_exists( Policy::class ) ) {
-			$policy = Policy::get_policy();
-			$log    = Policy::apply_log_retention( $log, $policy, $now );
+			// Retention only needs log_limit / log_max_age_days from the raw option.
+			$log = Policy::apply_log_retention( $log, self::policy_for_hooks(), $now );
 		} else {
 			$count = count( $log );
 			if ( $count > 200 ) {
@@ -409,10 +424,7 @@ final class Tamper {
 	 * @param string $actor Acting user or wp-cli.
 	 */
 	private static function send_deactivation_alert( string $actor, int $now ): void {
-		$policy = class_exists( Policy::class ) ? Policy::get_policy() : array();
-		if ( ! is_array( $policy ) ) {
-			$policy = array();
-		}
+		$policy = self::policy_for_hooks();
 
 		// No dedicated routing type yet — unknown type falls back to alert_email / admin_email.
 		$to = Alert_Routing::resolve_email( $policy, 'tamper' );
