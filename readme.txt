@@ -194,6 +194,8 @@ Yes. With WP-CLI available and this plugin active:
 
 = Unreleased =
 
+* Deactivating the plugin now writes an Activity row, sends one alert email, and stamps the enforcement gap; reactivating logs the resume, shows a dismissible admin notice with the gap window, and Site Health recommends when gaps appear in the last 30 days.
+
 = 1.6.0 =
 * In versions 1.3.0–1.5.0, changes made on the Rules tab did not save. Version 1.6.0 saves Rules again and prevents an incomplete save from erasing rules that were not submitted.
 * Change history on the Rules tab records who changed rules or settings, when, and a secret-safe before-and-after summary. The recent trail is kept separately from Activity, always records Emergency stop changes, and appears in printable audit reports.

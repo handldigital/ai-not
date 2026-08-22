@@ -1,0 +1,309 @@
+<?php
+/**
+ * AICAC-TAMPER (#222): deactivation dead-man's switch.
+ *
+ * @package HandL_AICAC
+ */
+
+declare(strict_types=1);
+
+namespace HandL\AICAC\Tests\Unit;
+
+use HandL\AICAC\Plugin;
+use HandL\AICAC\Policy;
+use HandL\AICAC\Site_Health;
+use HandL\AICAC\Tamper;
+use PHPUnit\Framework\TestCase;
+
+final class TamperTest extends TestCase {
+
+	/** @var list<array{to:string,subject:string,message:string}> */
+	private static array $mails = array();
+
+	protected function setUp(): void {
+		parent::setUp();
+		self::$mails = array();
+		delete_option( Plugin::OPTION_KEY );
+		delete_option( Plugin::LOG_OPTION_KEY );
+		delete_option( Tamper::DEACTIVATED_AT_OPTION );
+		delete_option( Tamper::DEACTIVATED_BY_OPTION );
+		delete_option( Tamper::NOTICE_OPTION );
+		unset( $GLOBALS['handl_aicac_test_actor'] );
+		update_option( 'admin_email', 'admin@example.com' );
+
+		$GLOBALS['handl_aicac_wp_mail'] = static function ( $to, $subject, $message ) {
+			self::$mails[] = array(
+				'to'      => (string) $to,
+				'subject' => (string) $subject,
+				'message' => (string) $message,
+			);
+			return true;
+		};
+	}
+
+	protected function tearDown(): void {
+		unset( $GLOBALS['handl_aicac_wp_mail'], $GLOBALS['handl_aicac_test_actor'] );
+		delete_option( Plugin::OPTION_KEY );
+		delete_option( Plugin::LOG_OPTION_KEY );
+		delete_option( Tamper::DEACTIVATED_AT_OPTION );
+		delete_option( Tamper::DEACTIVATED_BY_OPTION );
+		delete_option( Tamper::NOTICE_OPTION );
+		parent::tearDown();
+	}
+
+	public function test_deactivate_logs_and_emails_even_when_logging_off(): void {
+		Policy::save_policy(
+			array(
+				'log_enabled' => false,
+				'audit_only'  => false,
+				'alert_email' => 'ops@example.com',
+			)
+		);
+		$GLOBALS['handl_aicac_test_actor'] = 'alice';
+
+		Tamper::on_deactivate( 1_700_000_000 );
+
+		$this->assertSame( 1_700_000_000, (int) get_option( Tamper::DEACTIVATED_AT_OPTION ) );
+
+		$log = get_option( Plugin::LOG_OPTION_KEY );
+		$this->assertIsArray( $log );
+		$this->assertCount( 1, $log );
+		$this->assertSame( Tamper::DECISION_STOPPED, $log[0]['decision'] );
+		$this->assertSame( Tamper::CHANNEL, $log[0]['channel'] );
+		$this->assertSame( 'alice', $log[0]['actor'] );
+		$this->assertSame( 1_700_000_000, (int) $log[0]['ts'] );
+
+		$this->assertCount( 1, self::$mails );
+		$this->assertSame( 'ops@example.com', self::$mails[0]['to'] );
+		$this->assertStringContainsString( 'deactivated', strtolower( self::$mails[0]['subject'] ) );
+		$this->assertStringContainsString( 'alice', self::$mails[0]['message'] );
+		$this->assertStringContainsString(
+			'Deny rules and budgets are no longer enforced, and alerts will not be sent.',
+			self::$mails[0]['message']
+		);
+	}
+
+	public function test_deactivate_records_wp_cli_actor(): void {
+		Policy::save_policy( array( 'alert_email' => 'ops@example.com' ) );
+		$GLOBALS['handl_aicac_test_actor'] = 'wp-cli';
+
+		Tamper::on_deactivate( 1_700_000_100 );
+
+		$log = get_option( Plugin::LOG_OPTION_KEY );
+		$this->assertSame( 'wp-cli', $log[0]['actor'] );
+	}
+
+	public function test_activate_without_prior_deactivation_is_noop(): void {
+		Tamper::on_activate( 1_700_000_200 );
+		$this->assertFalse( get_option( Tamper::NOTICE_OPTION, false ) );
+		$this->assertSame( array(), get_option( Plugin::LOG_OPTION_KEY, array() ) );
+	}
+
+	public function test_reactivate_logs_gap_and_sets_notice(): void {
+		Policy::save_policy( array( 'log_enabled' => false ) );
+		$GLOBALS['handl_aicac_test_actor'] = 'alice';
+
+		Tamper::on_deactivate( 1_700_000_000 );
+		self::$mails = array();
+
+		// Different user reactivates — notice must still name the stopper.
+		$GLOBALS['handl_aicac_test_actor'] = 'bob';
+		Tamper::on_activate( 1_700_000_500 );
+
+		$this->assertFalse( get_option( Tamper::DEACTIVATED_AT_OPTION, false ) );
+		$this->assertFalse( get_option( Tamper::DEACTIVATED_BY_OPTION, false ) );
+
+		$notice = get_option( Tamper::NOTICE_OPTION );
+		$this->assertIsArray( $notice );
+		$this->assertSame( 1_700_000_000, (int) $notice['from'] );
+		$this->assertSame( 1_700_000_500, (int) $notice['to'] );
+		$this->assertSame( 'alice', $notice['actor'] );
+
+		$log = get_option( Plugin::LOG_OPTION_KEY );
+		$this->assertIsArray( $log );
+		$this->assertCount( 2, $log );
+		$this->assertSame( Tamper::DECISION_RESUMED, $log[1]['decision'] );
+		$this->assertSame( 1_700_000_000, (int) $log[1]['deactivated_at'] );
+		$this->assertSame( 'bob', $log[1]['actor'] );
+		$this->assertSame( 'alice', $log[1]['stopped_by'] );
+		$this->assertSame( array(), self::$mails );
+	}
+
+	public function test_recent_gap_windows_from_log(): void {
+		$now = 1_700_100_000;
+		$log = array(
+			array(
+				'ts'             => $now - 100,
+				'decision'       => Tamper::DECISION_RESUMED,
+				'channel'        => Tamper::CHANNEL,
+				'deactivated_at' => $now - 1000,
+				'actor'          => 'bob',
+				'stopped_by'     => 'alice',
+			),
+			array(
+				'ts'       => $now - 50,
+				'decision' => 'allow',
+				'channel'  => 'ai_client',
+			),
+		);
+
+		$gaps = Tamper::recent_gap_windows( $log, $now );
+		$this->assertCount( 1, $gaps );
+		$this->assertSame( $now - 1000, $gaps[0]['from'] );
+		$this->assertSame( $now - 100, $gaps[0]['to'] );
+		$this->assertSame( 'alice', $gaps[0]['actor'] );
+	}
+
+	/**
+	 * QA fail regression: stop+resume in the same log must be one closed window,
+	 * not an open "to now" gap plus a second closed gap.
+	 */
+	public function test_recent_gap_windows_pairs_stop_with_resume(): void {
+		$now    = time();
+		$stop   = $now - 1000;
+		$resume = $now - 100;
+		$log    = array(
+			array(
+				'ts'       => $stop,
+				'decision' => Tamper::DECISION_STOPPED,
+				'channel'  => Tamper::CHANNEL,
+				'actor'    => 'alice',
+			),
+			array(
+				'ts'             => $resume,
+				'decision'       => Tamper::DECISION_RESUMED,
+				'channel'        => Tamper::CHANNEL,
+				'deactivated_at' => $stop,
+				'actor'          => 'bob',
+				'stopped_by'     => 'alice',
+			),
+		);
+
+		$gaps = Tamper::recent_gap_windows( $log, $now );
+		$this->assertCount( 1, $gaps );
+		$this->assertSame( $stop, $gaps[0]['from'] );
+		$this->assertSame( $resume, $gaps[0]['to'] );
+		$this->assertSame( 'alice', $gaps[0]['actor'] );
+		$this->assertGreaterThan( 0, $gaps[0]['to'] );
+
+		$snapshot = Site_Health::build_snapshot(
+			array(
+				'kill_switch' => false,
+				'log_enabled' => true,
+				'audit_only'  => false,
+			),
+			array(
+				'ai/ai.php'            => array( 'Name' => 'AI' ),
+				'example/consumer.php' => array(
+					'Name'            => 'Example',
+					'RequiresPlugins' => 'ai',
+				),
+			),
+			array( 'ai/ai.php' => true ),
+			$log
+		);
+		$this->assertSame( 1, $snapshot['enforcement_gap_count'] );
+		$this->assertSame( $resume, (int) $snapshot['enforcement_gaps'][0]['to'] );
+		$this->assertSame( 'enforcement_interrupted', $snapshot['issue'] );
+	}
+
+	public function test_recent_gap_windows_keeps_unpaired_stop_open(): void {
+		$now  = 1_700_100_000;
+		$stop = $now - 500;
+		$log  = array(
+			array(
+				'ts'       => $stop,
+				'decision' => Tamper::DECISION_STOPPED,
+				'channel'  => Tamper::CHANNEL,
+				'actor'    => 'alice',
+			),
+		);
+
+		$gaps = Tamper::recent_gap_windows( $log, $now );
+		$this->assertCount( 1, $gaps );
+		$this->assertSame( $stop, $gaps[0]['from'] );
+		$this->assertSame( 0, $gaps[0]['to'] );
+	}
+
+	public function test_site_health_recommends_when_gap_in_log(): void {
+		$now = time();
+		$log = array(
+			array(
+				'ts'             => $now - 60,
+				'decision'       => Tamper::DECISION_RESUMED,
+				'channel'        => Tamper::CHANNEL,
+				'deactivated_at' => $now - 3600,
+				'actor'          => 'alice',
+			),
+		);
+
+		$snapshot = Site_Health::build_snapshot(
+			array(
+				'kill_switch' => false,
+				'log_enabled' => true,
+				'audit_only'  => false,
+			),
+			array(
+				'ai/ai.php'            => array( 'Name' => 'AI' ),
+				'example/consumer.php' => array(
+					'Name'            => 'Example',
+					'RequiresPlugins' => 'ai',
+				),
+			),
+			array( 'ai/ai.php' => true ),
+			$log
+		);
+
+		$this->assertSame( 'recommended', $snapshot['status'] );
+		$this->assertSame( 'enforcement_interrupted', $snapshot['issue'] );
+		$this->assertSame( 1, $snapshot['enforcement_gap_count'] );
+	}
+
+	public function test_format_gap_window_includes_bounds(): void {
+		$text = Tamper::format_gap_window( 1_700_000_000, 1_700_000_500 );
+		$this->assertStringContainsString( 'Enforcement was off from', $text );
+	}
+
+	/**
+	 * Activation/deactivation hooks must not call Policy::get_policy().
+	 *
+	 * Real WP activation includes this file without plugins_loaded, so Temp_Allow
+	 * is missing and get_policy() fatals — leaving the plugin inactive (#222 QA).
+	 */
+	public function test_tamper_hooks_never_call_policy_get_policy(): void {
+		$src = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-tamper.php' );
+		$code = (string) preg_replace( '!/\*.*?\*/!s', '', $src );
+		$code = (string) preg_replace( '!//.*$!m', '', $code );
+		$this->assertStringNotContainsString( 'Policy::get_policy(', $code );
+		$this->assertStringContainsString( 'policy_for_hooks', $code );
+	}
+
+	public function test_reactivate_applies_raw_log_limit_without_get_policy(): void {
+		Policy::save_policy(
+			array(
+				'log_enabled' => false,
+				'log_limit'   => 20,
+			)
+		);
+
+		$existing = array();
+		for ( $i = 0; $i < 25; $i++ ) {
+			$existing[] = array(
+				'ts'       => 1_700_000_000 + $i,
+				'decision' => 'allow',
+				'channel'  => 'test',
+			);
+		}
+		update_option( Plugin::LOG_OPTION_KEY, $existing, false );
+		update_option( Tamper::DEACTIVATED_AT_OPTION, 1_700_000_050, false );
+		update_option( Tamper::DEACTIVATED_BY_OPTION, 'alice', false );
+
+		Tamper::on_activate( 1_700_000_100 );
+
+		$log = get_option( Plugin::LOG_OPTION_KEY );
+		$this->assertIsArray( $log );
+		$this->assertCount( 20, $log );
+		$this->assertSame( Tamper::DECISION_RESUMED, $log[19]['decision'] );
+		$this->assertFalse( get_option( Tamper::DEACTIVATED_AT_OPTION, false ) );
+	}
+}
