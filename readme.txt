@@ -193,6 +193,7 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = Unreleased =
+* Alert emails can include signed links to allow a plugin for 24 hours, snooze alerts for 7 days, or open that plugin’s rule. The link only works after you log in and confirm.
 
 = 1.6.0 =
 * In versions 1.3.0–1.5.0, changes made on the Rules tab did not save. Version 1.6.0 saves Rules again and prevents an incomplete save from erasing rules that were not submitted.

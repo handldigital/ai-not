@@ -653,6 +653,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-webhook-delivery-log
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alerts.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alert-routing.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alert-snooze.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-inbox-actions.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-weekly-report.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-monthly-report.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-governance-digest.php';
@@ -759,6 +760,64 @@ if ( ! function_exists( 'check_admin_referer' ) ) {
 	function check_admin_referer( $action = -1, $query_arg = '_wpnonce' ): bool {
 		unset( $action, $query_arg );
 		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_salt' ) ) {
+	/**
+	 * @param string $scheme Scheme.
+	 */
+	function wp_salt( $scheme = 'auth' ): string {
+		return 'handl-aicac-test-salt-' . (string) $scheme;
+	}
+}
+
+if ( ! function_exists( 'wp_generate_password' ) ) {
+	/**
+	 * @param int  $length Length.
+	 * @param bool $special_chars Special.
+	 * @param bool $extra_special_chars Extra.
+	 */
+	function wp_generate_password( $length = 12, $special_chars = true, $extra_special_chars = false ): string {
+		unset( $special_chars, $extra_special_chars );
+		$length = max( 1, (int) $length );
+		return substr( bin2hex( random_bytes( (int) ceil( $length / 2 ) ) ), 0, $length );
+	}
+}
+
+if ( ! function_exists( 'wp_create_nonce' ) ) {
+	/**
+	 * @param string $action Action.
+	 */
+	function wp_create_nonce( $action = -1 ): string {
+		return 'test-nonce-' . md5( (string) $action );
+	}
+}
+
+if ( ! function_exists( 'wp_verify_nonce' ) ) {
+	/**
+	 * @param string $nonce Nonce.
+	 * @param string $action Action.
+	 */
+	function wp_verify_nonce( $nonce, $action = -1 ) {
+		unset( $nonce, $action );
+		return 1;
+	}
+}
+
+if ( ! function_exists( 'is_user_logged_in' ) ) {
+	function is_user_logged_in(): bool {
+		return get_current_user_id() > 0;
+	}
+}
+
+if ( ! function_exists( 'wp_unslash' ) ) {
+	/**
+	 * @param mixed $value Value.
+	 * @return mixed
+	 */
+	function wp_unslash( $value ) {
+		return $value;
 	}
 }
 
