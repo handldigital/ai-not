@@ -465,7 +465,16 @@ final class Alerts {
 
 			// record_send only on true; false/Throwable → queue so the denial is not silently lost
 			// and does not burn a rate slot (Frink live: pre_wp_mail → false still rate_count++ on 488b0df).
-			$mail_ok = self::safe_wp_mail( $to, $subject, $body );
+			$mail_ok = Inbox_Actions::with_mail(
+				array(
+					'plugin'    => (string) ( $summary['plugin'] ?? '' ),
+					'kind'      => 'denial',
+					'recipient' => $to,
+				),
+				static function () use ( $to, $subject, $body ) {
+					return self::safe_wp_mail( $to, $subject, $body );
+				}
+			);
 		}
 
 		if ( '' !== $url ) {
@@ -516,7 +525,16 @@ final class Alerts {
 		$body .= "\n" . __( 'This alert was sent by HandL AI Connector Access Control, not by the plugin that made the request. The request was not blocked. Review it under Settings → HandL AI Connector Access Control → Activity.', 'handl-ai-connector-access-control' ) . "\n";
 		$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=log' ) . "\n";
 
-		$mail_ok = self::safe_wp_mail( $to, $subject, $body );
+		$mail_ok = Inbox_Actions::with_mail(
+			array(
+				'plugin'    => (string) ( $summary['plugin'] ?? '' ),
+				'kind'      => 'shadow',
+				'recipient' => $to,
+			),
+			static function () use ( $to, $subject, $body ) {
+				return self::safe_wp_mail( $to, $subject, $body );
+			}
+		);
 		if ( true === $mail_ok ) {
 			self::record_send();
 			return;
