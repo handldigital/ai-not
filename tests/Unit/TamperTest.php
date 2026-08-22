@@ -263,4 +263,47 @@ final class TamperTest extends TestCase {
 		$text = Tamper::format_gap_window( 1_700_000_000, 1_700_000_500 );
 		$this->assertStringContainsString( 'Enforcement was off from', $text );
 	}
+
+	/**
+	 * Activation/deactivation hooks must not call Policy::get_policy().
+	 *
+	 * Real WP activation includes this file without plugins_loaded, so Temp_Allow
+	 * is missing and get_policy() fatals — leaving the plugin inactive (#222 QA).
+	 */
+	public function test_tamper_hooks_never_call_policy_get_policy(): void {
+		$src = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-tamper.php' );
+		$code = (string) preg_replace( '!/\*.*?\*/!s', '', $src );
+		$code = (string) preg_replace( '!//.*$!m', '', $code );
+		$this->assertStringNotContainsString( 'Policy::get_policy(', $code );
+		$this->assertStringContainsString( 'policy_for_hooks', $code );
+	}
+
+	public function test_reactivate_applies_raw_log_limit_without_get_policy(): void {
+		Policy::save_policy(
+			array(
+				'log_enabled' => false,
+				'log_limit'   => 20,
+			)
+		);
+
+		$existing = array();
+		for ( $i = 0; $i < 25; $i++ ) {
+			$existing[] = array(
+				'ts'       => 1_700_000_000 + $i,
+				'decision' => 'allow',
+				'channel'  => 'test',
+			);
+		}
+		update_option( Plugin::LOG_OPTION_KEY, $existing, false );
+		update_option( Tamper::DEACTIVATED_AT_OPTION, 1_700_000_050, false );
+		update_option( Tamper::DEACTIVATED_BY_OPTION, 'alice', false );
+
+		Tamper::on_activate( 1_700_000_100 );
+
+		$log = get_option( Plugin::LOG_OPTION_KEY );
+		$this->assertIsArray( $log );
+		$this->assertCount( 20, $log );
+		$this->assertSame( Tamper::DECISION_RESUMED, $log[19]['decision'] );
+		$this->assertFalse( get_option( Tamper::DEACTIVATED_AT_OPTION, false ) );
+	}
 }
