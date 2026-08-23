@@ -194,6 +194,8 @@ Yes. With WP-CLI available and this plugin active:
 
 = Unreleased =
 
+* Uninstall now keeps plugin data by default (rules, activity, alerts). Deleting the plugin used to remove that data. To wipe it, run `wp handl-aicac uninstall set purge` before deleting the plugin.
+
 = 1.6.0 =
 * In versions 1.3.0–1.5.0, changes made on the Rules tab did not save. Version 1.6.0 saves Rules again and prevents an incomplete save from erasing rules that were not submitted.
 * Change history on the Rules tab records who changed rules or settings, when, and a secret-safe before-and-after summary. The recent trail is kept separately from Activity, always records Emergency stop changes, and appears in printable audit reports.

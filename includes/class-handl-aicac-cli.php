@@ -28,9 +28,19 @@ if ( ! defined( 'ABSPATH' ) ) {
  *     # Clear a family rule (inherit plugin AI access)
  *     $ wp aicac rule set acme-plugin/acme-plugin.php image inherit
  *
+ *     # Show whether uninstall keeps or removes plugin data
+ *     $ wp handl-aicac uninstall get
+ *
+ *     # Remove plugin data the next time the plugin is deleted
+ *     $ wp handl-aicac uninstall set purge
+ *
  * @when after_wp_load
  */
 final class CLI {
+
+	public const UNINSTALL_OPTION_KEY = 'handl_aicac_uninstall_policy';
+	public const UNINSTALL_KEEP       = 'keep';
+	public const UNINSTALL_PURGE      = 'purge';
 
 	/**
 	 * Register WP-CLI commands when WP-CLI is available.
@@ -43,6 +53,8 @@ final class CLI {
 			return;
 		}
 		\WP_CLI::add_command( 'aicac rule', self::class );
+		\WP_CLI::add_command( 'handl-aicac uninstall get', array( self::class, 'cmd_uninstall_get' ) );
+		\WP_CLI::add_command( 'handl-aicac uninstall set', array( self::class, 'cmd_uninstall_set' ) );
 	}
 
 	/**
@@ -216,5 +228,82 @@ final class CLI {
 			return sprintf( 'Cleared %s family rule for %s (inherit).', $family, $plugin );
 		}
 		return sprintf( 'Set %s family rule for %s to %s.', $family, $plugin, $rule );
+	}
+
+	/**
+	 * Stored uninstall policy for this site. Missing or unknown = keep.
+	 *
+	 * @return 'keep'|'purge'
+	 */
+	public static function get_uninstall_policy(): string {
+		$raw = get_option( self::UNINSTALL_OPTION_KEY, self::UNINSTALL_KEEP );
+		return ( self::UNINSTALL_PURGE === $raw ) ? self::UNINSTALL_PURGE : self::UNINSTALL_KEEP;
+	}
+
+	/**
+	 * Persist keep or purge. Does not uninstall.
+	 *
+	 * @return string|null Error message, or null when saved.
+	 */
+	public static function set_uninstall_policy( string $mode ): ?string {
+		$mode = sanitize_text_field( $mode );
+		if ( ! in_array( $mode, array( self::UNINSTALL_KEEP, self::UNINSTALL_PURGE ), true ) ) {
+			return 'Use keep or purge.';
+		}
+		update_option( self::UNINSTALL_OPTION_KEY, $mode, false );
+		return null;
+	}
+
+	/**
+	 * Plain status line for get/set.
+	 */
+	public static function uninstall_status_message( string $mode ): string {
+		if ( self::UNINSTALL_PURGE === $mode ) {
+			return 'Uninstall will remove all plugin data.';
+		}
+		return 'Uninstall will keep plugin data.';
+	}
+
+	/**
+	 * Print the stored uninstall policy.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp handl-aicac uninstall get
+	 *
+	 * @param array<int,string>    $args
+	 * @param array<string,string> $assoc_args
+	 */
+	public static function cmd_uninstall_get( $args, $assoc_args ): void {
+		unset( $args, $assoc_args );
+		$mode = self::get_uninstall_policy();
+		\WP_CLI::log( $mode );
+		\WP_CLI::success( self::uninstall_status_message( $mode ) );
+	}
+
+	/**
+	 * Choose keep or purge for the next plugin delete.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <policy>
+	 * : keep (default) or purge.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp handl-aicac uninstall set keep
+	 *     wp handl-aicac uninstall set purge
+	 *
+	 * @param array<int,string>    $args       keep or purge.
+	 * @param array<string,string> $assoc_args Unused.
+	 */
+	public static function cmd_uninstall_set( $args, $assoc_args ): void {
+		unset( $assoc_args );
+		$mode  = isset( $args[0] ) ? (string) $args[0] : '';
+		$error = self::set_uninstall_policy( $mode );
+		if ( null !== $error ) {
+			\WP_CLI::error( $error );
+		}
+		\WP_CLI::success( self::uninstall_status_message( self::get_uninstall_policy() ) );
 	}
 }
