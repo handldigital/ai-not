@@ -152,6 +152,26 @@ final class UsageTrendsTest extends TestCase {
 		$this->assertTrue( $empty_inside );
 	}
 
+	public function test_sparkline_exposes_aria_label_and_hides_nothing(): void {
+		$weeks = array(
+			array( 'status' => 'gap', 'calls' => null, 'spend' => null ),
+			array( 'status' => 'data', 'calls' => 5, 'spend' => 1.5 ),
+			array( 'status' => 'data', 'calls' => 7, 'spend' => 0.004 ),
+		);
+		$svg = Usage_Trends::sparkline_svg( $weeks, 'calls' );
+		$this->assertStringContainsString( '<svg', $svg );
+		$this->assertStringContainsString( 'role="img"', $svg );
+		$this->assertStringContainsString( 'aria-label=', $svg );
+		$this->assertStringNotContainsString( 'aria-hidden', $svg );
+		$this->assertSame( '', Usage_Trends::sparkline_svg( array( array( 'status' => 'data', 'calls' => 1, 'spend' => 1.0 ) ), 'calls' ) );
+
+		$aria = Usage_Trends::sparkline_aria_label( $weeks, 'spend', 'Estimated spend' );
+		$this->assertStringContainsString( 'Estimated spend over 2 saved weeks', $aria );
+		$this->assertStringContainsString( 'First: $', $aria );
+		$this->assertStringContainsString( '<$0.01', $aria );
+		$this->assertSame( '<$0.01', Usage_Trends::format_metric_value( 'spend', 0.004 ) );
+	}
+
 	public function test_delta_pct_helpers(): void {
 		$this->assertEqualsWithDelta( 40.0, (float) Usage_Trends::delta_pct( 7, 5 ), 0.0001 );
 		$this->assertNull( Usage_Trends::delta_pct( 5, 0 ) );
