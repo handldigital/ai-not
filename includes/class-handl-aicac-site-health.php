@@ -225,7 +225,7 @@ final class Site_Health {
 		} elseif ( 'enforcement_interrupted' === $issue ) {
 			$label = __( 'AI enforcement was interrupted in the last 30 days', 'handl-ai-connector-access-control' );
 		} elseif ( 'hardened_stub_drift' === $issue ) {
-			$label = __( 'Hardened mode stub is missing or out of date', 'handl-ai-connector-access-control' );
+			$label = __( 'Hardened mode needs attention', 'handl-ai-connector-access-control' );
 		} elseif ( 'no_ai_client_plugins' === $issue ) {
 			$label = __( 'No AI Client plugins are installed', 'handl-ai-connector-access-control' );
 		} elseif ( 'observing' === $issue ) {
@@ -368,7 +368,15 @@ final class Site_Health {
 				) . '.';
 			}
 		} elseif ( 'hardened_stub_drift' === $issue ) {
-			$lines[] = __( 'Hardened mode is on, but the must-use stub is missing or its version does not match this plugin. Re-run `wp handl-aicac hardened enable` to refresh the stub.', 'handl-ai-connector-access-control' );
+			$mode_key = (string) ( $snapshot['hardened_mode'] ?? Mu_Guard::MODE_FAIL_CLOSED );
+			if ( Mu_Guard::MODE_WATCH !== $mode_key ) {
+				$mode_key = Mu_Guard::MODE_FAIL_CLOSED;
+			}
+			$lines[] = sprintf(
+				/* translators: %s: fail_closed or watch (CLI mode key) */
+				__( 'Run `wp handl-aicac hardened enable --mode=%s` to restore it.', 'handl-ai-connector-access-control' ),
+				$mode_key
+			);
 		}
 
 		$html = '';
@@ -380,14 +388,14 @@ final class Site_Health {
 	}
 
 	/**
-	 * Hardened mode + stub version line for Site Health.
+	 * Hardened mode + protection-file version line for Site Health (Krusty copy).
 	 *
 	 * @param array<string,mixed> $snapshot
 	 */
 	private static function hardened_description_line( array $snapshot ): string {
 		$mode = (string) ( $snapshot['hardened_mode'] ?? '' );
 		if ( '' === $mode ) {
-			return __( 'Hardened mode: off (must-use stub not installed).', 'handl-ai-connector-access-control' );
+			return __( 'Hardened mode: Off.', 'handl-ai-connector-access-control' );
 		}
 
 		$present = ! empty( $snapshot['hardened_stub_present'] );
@@ -395,31 +403,42 @@ final class Site_Health {
 		$version = isset( $snapshot['hardened_stub_version'] ) && is_string( $snapshot['hardened_stub_version'] )
 			? $snapshot['hardened_stub_version']
 			: '-';
+		$phrase  = self::hardened_mode_phrase( $mode );
 
 		if ( $present && $current ) {
 			return sprintf(
-				/* translators: 1: fail_closed or watch, 2: stub version */
-				__( 'Hardened mode: on (%1$s). Must-use stub present, version %2$s (current).', 'handl-ai-connector-access-control' ),
-				$mode,
+				/* translators: 1: human mode phrase, 2: protection file version */
+				__( 'Hardened mode: On — %1$s. Protection file version %2$s is current.', 'handl-ai-connector-access-control' ),
+				$phrase,
 				$version
 			);
 		}
 
 		if ( $present ) {
 			return sprintf(
-				/* translators: 1: fail_closed or watch, 2: stub version on disk, 3: expected version */
-				__( 'Hardened mode: on (%1$s). Must-use stub present, version %2$s (expected %3$s — refresh recommended).', 'handl-ai-connector-access-control' ),
-				$mode,
+				/* translators: 1: human mode phrase, 2: version on disk, 3: expected version */
+				__( 'Hardened mode: On — %1$s. Protection file version %2$s is out of date (expected %3$s).', 'handl-ai-connector-access-control' ),
+				$phrase,
 				$version,
 				Mu_Guard::STUB_VERSION
 			);
 		}
 
 		return sprintf(
-			/* translators: %s: fail_closed or watch */
-			__( 'Hardened mode: on (%s). Must-use stub missing — re-enable to install it.', 'handl-ai-connector-access-control' ),
-			$mode
+			/* translators: %s: human mode phrase */
+			__( 'Hardened mode: On — %s. The protection file is missing.', 'handl-ai-connector-access-control' ),
+			$phrase
 		);
+	}
+
+	/**
+	 * Site Health mode phrase (not the raw CLI key).
+	 */
+	private static function hardened_mode_phrase( string $mode ): string {
+		if ( Mu_Guard::MODE_WATCH === $mode ) {
+			return __( 'Allow, log, and alert on AI Client calls while this plugin is inactive', 'handl-ai-connector-access-control' );
+		}
+		return __( 'Block AI Client calls while this plugin is inactive', 'handl-ai-connector-access-control' );
 	}
 
 	/**
