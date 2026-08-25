@@ -81,6 +81,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-site-health.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-tamper.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-mu-guard.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rest.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
 
@@ -102,6 +103,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 		Network_Admin::instance()->init();
 		Site_Health::instance()->init();
 		Tamper::instance()->init();
+		Mu_Guard::instance()->init();
 		Rest::instance()->init();
 		Dashboard_Widget::instance()->init();
 
@@ -111,11 +113,13 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-policy-apply.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-break-glass.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-selftest.php';
+			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-hardened.php';
 			CLI::register();
 			CLI_Audit::register();
 			CLI_Policy_Apply::register();
 			CLI_Break_Glass::register();
 			CLI_Selftest::register();
+			CLI_Hardened::register();
 		}
 	}
 

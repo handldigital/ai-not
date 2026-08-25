@@ -128,6 +128,13 @@ final class Site_Health {
 		$failing_alerts = Alert_Health::failing_channels( $policy );
 		$over_budget    = Budget::over_budget_list( $policy );
 		$gaps           = class_exists( Tamper::class ) ? Tamper::recent_gap_windows( $log ) : array();
+		$hardened       = class_exists( Mu_Guard::class ) ? Mu_Guard::status() : array(
+			'mode'         => '',
+			'enabled'      => false,
+			'stub_present' => false,
+			'stub_current' => false,
+			'stub_version' => null,
+		);
 
 		if ( ! empty( $failing_alerts ) ) {
 			$issue = 'alert_delivery_failing';
@@ -141,6 +148,9 @@ final class Site_Health {
 		} elseif ( ! empty( $over_budget ) ) {
 			$issue = 'over_budget';
 			$tab   = 'rules';
+		} elseif ( ! empty( $hardened['enabled'] ) && ( empty( $hardened['stub_present'] ) || empty( $hardened['stub_current'] ) ) ) {
+			$issue = 'hardened_stub_drift';
+			$tab   = 'dashboard';
 		} elseif ( ! empty( $gaps ) ) {
 			$issue = 'enforcement_interrupted';
 			$tab   = 'activity';
@@ -159,6 +169,7 @@ final class Site_Health {
 			|| 'alerts_without_logging' === $issue
 			|| 'over_budget' === $issue
 			|| 'enforcement_interrupted' === $issue
+			|| 'hardened_stub_drift' === $issue
 		) {
 			$status = 'recommended';
 		} else {
@@ -181,6 +192,10 @@ final class Site_Health {
 			'over_budget_plugins'     => $over_budget,
 			'enforcement_gap_count'   => count( $gaps ),
 			'enforcement_gaps'        => $gaps,
+			'hardened_mode'           => (string) ( $hardened['mode'] ?? '' ),
+			'hardened_stub_present'   => ! empty( $hardened['stub_present'] ),
+			'hardened_stub_current'   => ! empty( $hardened['stub_current'] ),
+			'hardened_stub_version'   => $hardened['stub_version'] ?? null,
 		);
 	}
 
@@ -209,6 +224,8 @@ final class Site_Health {
 			$label = __( 'One or more plugins reached their estimated budget', 'handl-ai-connector-access-control' );
 		} elseif ( 'enforcement_interrupted' === $issue ) {
 			$label = __( 'AI enforcement was interrupted in the last 30 days', 'handl-ai-connector-access-control' );
+		} elseif ( 'hardened_stub_drift' === $issue ) {
+			$label = __( 'Hardened mode stub is missing or out of date', 'handl-ai-connector-access-control' );
 		} elseif ( 'no_ai_client_plugins' === $issue ) {
 			$label = __( 'No AI Client plugins are installed', 'handl-ai-connector-access-control' );
 		} elseif ( 'observing' === $issue ) {
@@ -272,6 +289,7 @@ final class Site_Health {
 		}
 
 		$lines[] = self::retention_description_line();
+		$lines[] = self::hardened_description_line( $snapshot );
 
 		$lines[] = sprintf(
 			/* translators: %d: count of explicit deny rules */
@@ -349,6 +367,8 @@ final class Site_Health {
 					(int) ( $gaps[0]['to'] ?? 0 )
 				) . '.';
 			}
+		} elseif ( 'hardened_stub_drift' === $issue ) {
+			$lines[] = __( 'Hardened mode is on, but the must-use stub is missing or its version does not match this plugin. Re-run `wp handl-aicac hardened enable` to refresh the stub.', 'handl-ai-connector-access-control' );
 		}
 
 		$html = '';
@@ -357,6 +377,49 @@ final class Site_Health {
 		}
 
 		return $html;
+	}
+
+	/**
+	 * Hardened mode + stub version line for Site Health.
+	 *
+	 * @param array<string,mixed> $snapshot
+	 */
+	private static function hardened_description_line( array $snapshot ): string {
+		$mode = (string) ( $snapshot['hardened_mode'] ?? '' );
+		if ( '' === $mode ) {
+			return __( 'Hardened mode: off (must-use stub not installed).', 'handl-ai-connector-access-control' );
+		}
+
+		$present = ! empty( $snapshot['hardened_stub_present'] );
+		$current = ! empty( $snapshot['hardened_stub_current'] );
+		$version = isset( $snapshot['hardened_stub_version'] ) && is_string( $snapshot['hardened_stub_version'] )
+			? $snapshot['hardened_stub_version']
+			: '-';
+
+		if ( $present && $current ) {
+			return sprintf(
+				/* translators: 1: fail_closed or watch, 2: stub version */
+				__( 'Hardened mode: on (%1$s). Must-use stub present, version %2$s (current).', 'handl-ai-connector-access-control' ),
+				$mode,
+				$version
+			);
+		}
+
+		if ( $present ) {
+			return sprintf(
+				/* translators: 1: fail_closed or watch, 2: stub version on disk, 3: expected version */
+				__( 'Hardened mode: on (%1$s). Must-use stub present, version %2$s (expected %3$s — refresh recommended).', 'handl-ai-connector-access-control' ),
+				$mode,
+				$version,
+				Mu_Guard::STUB_VERSION
+			);
+		}
+
+		return sprintf(
+			/* translators: %s: fail_closed or watch */
+			__( 'Hardened mode: on (%s). Must-use stub missing — re-enable to install it.', 'handl-ai-connector-access-control' ),
+			$mode
+		);
 	}
 
 	/**

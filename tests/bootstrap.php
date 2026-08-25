@@ -504,6 +504,21 @@ if ( ! function_exists( 'wp_clear_scheduled_hook' ) ) {
 	}
 }
 
+if ( ! function_exists( 'add_filter' ) ) {
+	/**
+	 * Minimal stand-in so mu-stub templates can load in unit tests.
+	 *
+	 * @param string   $hook
+	 * @param callable $callback
+	 * @param int      $priority
+	 * @param int      $accepted_args
+	 */
+	function add_filter( $hook, $callback, $priority = 10, $accepted_args = 1 ): bool {
+		unset( $hook, $callback, $priority, $accepted_args );
+		return true;
+	}
+}
+
 if ( ! function_exists( 'apply_filters' ) ) {
 	/**
 	 * @param string $hook Hook name.
@@ -792,6 +807,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-site-health.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-tamper.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-mu-guard.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rest.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
 require_once __DIR__ . '/stubs/namespace-filter-input.php';
