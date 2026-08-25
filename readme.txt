@@ -195,6 +195,7 @@ Yes. With WP-CLI available and this plugin active:
 = Unreleased =
 
 * Uninstall now keeps plugin data by default (rules, activity, alerts). Deleting the plugin used to remove that data. To wipe it, run `wp handl-aicac uninstall set purge` before deleting the plugin.
+* Deactivating the plugin now writes an Activity row, sends one alert email, and stamps the enforcement gap; reactivating logs the resume, shows a dismissible admin notice with the gap window, and Site Health recommends when gaps appear in the last 30 days.
 
 = 1.6.0 =
 * In versions 1.3.0–1.5.0, changes made on the Rules tab did not save. Version 1.6.0 saves Rules again and prevents an incomplete save from erasing rules that were not submitted.

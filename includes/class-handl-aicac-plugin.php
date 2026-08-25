@@ -80,6 +80,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-whats-new.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-site-health.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-tamper.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rest.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
 
@@ -100,6 +101,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 		Whats_New::instance()->init();
 		Network_Admin::instance()->init();
 		Site_Health::instance()->init();
+		Tamper::instance()->init();
 		Rest::instance()->init();
 		Dashboard_Widget::instance()->init();
 

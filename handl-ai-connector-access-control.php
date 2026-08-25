@@ -31,8 +31,18 @@ register_activation_hook(
 	static function (): void {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-onboarding.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-whats-new.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-tamper.php';
 		\HandL\AICAC\Onboarding::ensure_initialized();
 		\HandL\AICAC\Whats_New::ensure_seen_version_seeded();
+		\HandL\AICAC\Tamper::on_activate();
+	}
+);
+
+register_deactivation_hook(
+	__FILE__,
+	static function (): void {
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-tamper.php';
+		\HandL\AICAC\Tamper::on_deactivate();
 	}
 );
 
