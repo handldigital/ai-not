@@ -77,8 +77,9 @@ final class Email_Template {
 	public static function compose( string $content_block, ?string $intro = null ): array {
 		$content_block = self::normalize_content( $content_block );
 		$intro         = null !== $intro ? trim( (string) $intro ) : self::default_intro();
-		$text          = self::build_text( $content_block, $intro );
-		$html          = self::build_html( $content_block, $intro );
+		$actions       = class_exists( Inbox_Actions::class ) ? Inbox_Actions::email_footer_lines() : array();
+		$text          = self::build_text( $content_block, $intro, $actions );
+		$html          = self::build_html( $content_block, $intro, $actions );
 
 		return array(
 			'text' => $text,
@@ -154,7 +155,10 @@ final class Email_Template {
 		return $content;
 	}
 
-	private static function build_text( string $content, string $intro ): string {
+	/**
+	 * @param list<string> $actions
+	 */
+	private static function build_text( string $content, string $intro, array $actions = array() ): string {
 		$lines   = array();
 		$lines[] = self::product_name();
 		$lines[] = sprintf(
@@ -177,12 +181,21 @@ final class Email_Template {
 		foreach ( self::footer_lines() as $footer_line ) {
 			$lines[] = $footer_line;
 		}
+		if ( ! empty( $actions ) ) {
+			$lines[] = '';
+			foreach ( $actions as $action_line ) {
+				$lines[] = $action_line;
+			}
+		}
 		$lines[] = '';
 
 		return implode( "\n", $lines );
 	}
 
-	private static function build_html( string $content, string $intro ): string {
+	/**
+	 * @param list<string> $actions
+	 */
+	private static function build_html( string $content, string $intro, array $actions = array() ): string {
 		$esc = static function ( string $s ): string {
 			return htmlspecialchars( $s, ENT_QUOTES, 'UTF-8' );
 		};
@@ -199,7 +212,10 @@ final class Email_Template {
 		// Preserve content newlines; content may already include plain URLs.
 		$content_html = nl2br( $esc( rtrim( $content, "\n" ) ), false );
 		$footer_bits  = array();
-		foreach ( self::footer_lines() as $line ) {
+		foreach ( array_merge( self::footer_lines(), $actions ) as $line ) {
+			if ( '' === $line ) {
+				continue;
+			}
 			if ( 0 === strpos( $line, 'http://' ) || 0 === strpos( $line, 'https://' ) ) {
 				$url           = $esc( $line );
 				$footer_bits[] = '<p><a href="' . $url . '">' . $url . '</a></p>';
