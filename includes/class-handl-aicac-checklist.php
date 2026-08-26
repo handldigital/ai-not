@@ -165,7 +165,7 @@ final class Checklist {
 		$done       = $applicable && 0 === $waiting;
 
 		if ( ! $applicable ) {
-			$detail = __( 'Not applicable until a plugin uses AI.', 'handl-ai-connector-access-control' );
+			$detail = __( 'No plugin has used AI yet.', 'handl-ai-connector-access-control' );
 		} elseif ( $done ) {
 			$detail = __( 'Every plugin that used AI has an Allow or Deny rule.', 'handl-ai-connector-access-control' );
 		} else {

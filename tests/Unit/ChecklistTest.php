@@ -35,6 +35,7 @@ final class ChecklistTest extends TestCase {
 		$this->assertFalse( $out['dismissed'] );
 		$this->assertFalse( $out['all_applicable_done'] );
 		$this->assertFalse( $by['plugins']['applicable'] );
+		$this->assertSame( 'No plugin has used AI yet.', $by['plugins']['detail'] );
 		$this->assertFalse( $by['pack']['done'] );
 		$this->assertFalse( $by['alert_email']['done'] );
 		$this->assertFalse( $by['simulator']['done'] );

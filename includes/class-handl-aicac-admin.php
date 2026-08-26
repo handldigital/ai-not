@@ -1794,7 +1794,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<div class="postbox handl-aicac-tile handl-aicac-tile--checklist">';
 		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Getting started', 'handl-ai-connector-access-control' ) . '</h2></div>';
 		echo '<div class="inside">';
-		echo '<p class="description">' . esc_html__( 'Each item checks off when the setting is saved. This list hides when everything is done, or when you hide it. It comes back if a setting is turned off.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Items are marked done automatically as you finish them. The list hides when everything is done and returns if a completed item changes. If you hide it yourself, it stays hidden.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<ul class="handl-aicac-checklist">';
 		foreach ( $report['items'] as $item ) {
 			if ( ! is_array( $item ) ) {

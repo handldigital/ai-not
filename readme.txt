@@ -198,7 +198,7 @@ Yes. With WP-CLI available and this plugin active:
 * Uninstall now keeps plugin data by default (rules, activity, alerts). Deleting the plugin used to remove that data. To wipe it, run `wp handl-aicac uninstall set purge` before deleting the plugin.
 * Deactivating the plugin now writes an Activity row, sends one alert email, and stamps the enforcement gap; reactivating logs the resume, shows a dismissible admin notice with the gap window, and Site Health recommends when gaps appear in the last 30 days.
 * Optional Hardened mode (`wp handl-aicac hardened`) installs a must-use stub so AI Client calls stay blocked or watched while the main plugin is deactivated.
-* Dashboard Getting started list after Quick setup: plugins that used AI, a starter policy pack, alert email, the policy tester, and the weekly digest. Items check off from saved settings, hide when done or dismissed, and return if a setting is turned off.
+* A Getting started list now appears on the Dashboard after Quick setup. It tracks plugins that used AI, a starter policy pack, alert email, policy tester, and weekly digest. The list hides when complete or dismissed. If it hides after completion, it returns when a setting is turned off.
 
 = 1.6.0 =
 * In versions 1.3.0–1.5.0, changes made on the Rules tab did not save. Version 1.6.0 saves Rules again and prevents an incomplete save from erasing rules that were not submitted.
