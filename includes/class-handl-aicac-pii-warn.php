@@ -442,10 +442,25 @@ final class Pii_Warn {
 
 		return sprintf(
 			/* translators: 1: site name, 2: plugin label */
-			__( '[%1$s] HandL: possible PII in AI payload from %2$s', 'handl-ai-connector-access-control' ),
+			__( '[%1$s] Possible personal information sent to AI by %2$s', 'handl-ai-connector-access-control' ),
 			$site,
 			$label
 		);
+	}
+
+	/**
+	 * Reader-facing label for a stored pattern key (keys stay email|phone|card|national_id).
+	 */
+	public static function pattern_label( string $pattern ): string {
+		$map = array(
+			self::PATTERN_EMAIL       => __( 'Email address', 'handl-ai-connector-access-control' ),
+			self::PATTERN_PHONE       => __( 'Phone number', 'handl-ai-connector-access-control' ),
+			self::PATTERN_CARD        => __( 'Payment card number', 'handl-ai-connector-access-control' ),
+			self::PATTERN_NATIONAL_ID => __( 'U.S. Social Security number', 'handl-ai-connector-access-control' ),
+		);
+		$pattern = sanitize_key( $pattern );
+
+		return $map[ $pattern ] ?? $pattern;
 	}
 
 	/**
@@ -453,24 +468,22 @@ final class Pii_Warn {
 	 */
 	public static function build_body( string $plugin, array $types, string $mode ): string {
 		$lines   = array();
-		$lines[] = __( 'HandL AI Connector Access Control — outbound PII pattern match', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'HandL AI Connector Access Control found possible personal information in a request sent to an AI provider.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = sprintf(
 			/* translators: %s: plugin basename or label */
 			__( 'Plugin: %s', 'handl-ai-connector-access-control' ),
 			self::plugin_label( $plugin )
 		);
-		$lines[] = sprintf(
-			/* translators: %s: warn|deny */
-			__( 'Mode: %s', 'handl-ai-connector-access-control' ),
-			self::sanitize_mode( $mode )
-		);
-		$lines[] = __( 'Matched pattern types (counts only — matched text is never stored or emailed):', 'handl-ai-connector-access-control' );
+		if ( self::MODE_WARN === self::sanitize_mode( $mode ) ) {
+			$lines[] = __( 'Result: Allowed and logged', 'handl-ai-connector-access-control' );
+		}
+		$lines[] = __( 'Possible information found (counts only; HandL does not save or email the matching text):', 'handl-ai-connector-access-control' );
 		foreach ( self::sanitize_match_types( $types ) as $pat => $count ) {
-			$lines[] = sprintf( '- %s: %d', $pat, (int) $count );
+			$lines[] = sprintf( '- %s: %d', self::pattern_label( $pat ), (int) $count );
 		}
 		$lines[] = '';
-		$lines[] = __( 'The outbound call was allowed (warn mode). Switch the plugin to deny in policy to block matches.', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'To block future requests like this, set this plugin’s personal information policy to Deny.', 'handl-ai-connector-access-control' );
 
 		return implode( "\n", $lines );
 	}

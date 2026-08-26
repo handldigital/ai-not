@@ -186,11 +186,20 @@ final class PiiWarnTest extends TestCase {
 		$hit = Pii_Warn::maybe_alert( $event, $policy );
 		$this->assertTrue( $hit['alerted'] );
 		$this->assertCount( 1, self::$mails );
-		$body = self::$mails[0]['message'];
-		$this->assertStringContainsString( 'email: 2', $body );
-		$this->assertStringContainsString( 'card: 1', $body );
+		$body    = self::$mails[0]['message'];
+		$subject = self::$mails[0]['subject'];
+		$this->assertStringContainsString( 'Possible personal information sent to AI by', $subject );
+		$this->assertStringContainsString( 'found possible personal information in a request sent to an AI provider.', $body );
+		$this->assertStringContainsString( 'Result: Allowed and logged', $body );
+		$this->assertStringContainsString( 'Possible information found (counts only; HandL does not save or email the matching text):', $body );
+		$this->assertStringContainsString( 'Email address: 2', $body );
+		$this->assertStringContainsString( 'Payment card number: 1', $body );
+		$this->assertStringContainsString( 'To block future requests like this, set this plugin’s personal information policy to Deny.', $body );
+		$this->assertStringNotContainsString( 'Mode: warn', $body );
+		$this->assertStringNotContainsString( 'national_id', $body );
 		$this->assertStringNotContainsString( 'user@', $body );
 		$this->assertStringNotContainsString( '4111', $body );
+		$this->assertSame( 'Personal information detected', \HandL\AICAC\Policy_Simulator::reason_label( 'pii' ) );
 	}
 
 	public function test_append_log_event_fires_warn_alert_without_leaking(): void {
