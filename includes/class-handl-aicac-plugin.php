@@ -54,6 +54,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-governance-digest.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-model-force.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-shadow-ai.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-canary.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-keyscan.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-temp-allow.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rule-notes.php';
@@ -76,7 +77,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-audit-evidence.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-analytics.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin-profile.php';
-require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-differentiator-messaging.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-whats-new.php';
@@ -100,6 +101,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 		Log_Retention::instance()->init();
 		Model_Force::instance()->init();
 		Shadow_AI::instance()->init();
+		Canary::instance()->init();
 		Keyscan::instance()->init();
 		Admin::instance()->init();
 		Whats_New::instance()->init();

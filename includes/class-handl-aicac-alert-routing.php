@@ -3,7 +3,7 @@
  * AICAC-NOTIFY-ROUTING: per-alert-type email recipients (#194).
  *
  * Shared resolve path for budget, drift, anomaly, shadow, expiry, digest,
- * and webhook-failure mail. Empty / missing routing falls back to the single
+ * webhook-failure, and canary mail. Empty / missing routing falls back to the single
  * alert_email (or admin_email) so upgrades change nothing.
  *
  * @package HandL_AICAC
@@ -33,6 +33,7 @@ final class Alert_Routing {
 		'expiry',
 		'digest',
 		'webhook-failure',
+		'canary',
 	);
 
 	/**
