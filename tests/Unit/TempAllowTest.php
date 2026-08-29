@@ -210,7 +210,7 @@ final class TempAllowTest extends TestCase {
 		$this->assertCount( 1, self::$mails );
 		$this->assertStringContainsString( 'expires within 24 hours', self::$mails[0]['subject'] );
 		$this->assertStringContainsString( 'Expires:', self::$mails[0]['message'] );
-		$this->assertStringContainsString( 'handl_aicac_tab=rules', self::$mails[0]['message'] );
+		$this->assertStringContainsString( 'page=handl-aicac-rules', self::$mails[0]['message'] );
 
 		// Second sweep: no second mail.
 		$second = Temp_Allow::sweep_expired( $policy, $now + 60 );

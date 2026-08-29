@@ -307,7 +307,7 @@ final class Governance_Coverage {
 			$tab = 'dashboard';
 		}
 		$url = function_exists( 'admin_url' )
-			? (string) admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=' . $tab )
+			? (string) Admin::screen_url( $tab )
 			: '';
 		$anchor = isset( $check['anchor'] ) ? (string) $check['anchor'] : '';
 		if ( '' !== $url && '' !== $anchor && preg_match( '/^[a-z0-9\-]+$/', $anchor ) ) {

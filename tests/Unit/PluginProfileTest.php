@@ -162,7 +162,7 @@ final class PluginProfileTest extends TestCase {
 		$this->assertStringContainsString( 'handl-aicac-rule-', $source );
 		$this->assertStringContainsString( 'Download this plugin’s activity as CSV', $source );
 		// Activity action must be a GET form submit (not a lone <a>) so it leaves the profile screen.
-		$this->assertStringContainsString( 'handl_aicac_tab" value="activity"', $source );
+		$this->assertStringContainsString( "SCREEN_SLUGS['activity']", $source );
 		$this->assertMatchesRegularExpression(
 			'/View this plugin in Activity.*?<\/button>/s',
 			$source
@@ -171,7 +171,7 @@ final class PluginProfileTest extends TestCase {
 
 	public function test_activity_url_filters_plugin_and_leaves_profile_args(): void {
 		$url = Plugin_Profile::activity_url( 'woocommerce/woocommerce.php' );
-		$this->assertStringContainsString( 'handl_aicac_tab=activity', $url );
+		$this->assertStringContainsString( 'page=handl-aicac-activity', $url );
 		$this->assertStringContainsString( 'handl_aicac_log_plugin=', $url );
 		$this->assertStringContainsString( 'woocommerce', $url );
 		$this->assertStringNotContainsString( 'handl_aicac_plugin=', $url );

@@ -6,7 +6,7 @@
  * a section inside the Rules form:
  *
  *   php tests/bin/check-rules-form-ownership.php --html-file path.html
- *   php tests/bin/check-rules-form-ownership.php --url 'https://handl-sandbox/wp-admin/options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules'
+ *   php tests/bin/check-rules-form-ownership.php --url 'https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-rules'
  *
  * Cookie auth for --url: pass a Cookie header via --cookie 'name=value'.
  * Exits 1 and names the element + actual form owner on failure.

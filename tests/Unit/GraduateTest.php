@@ -144,7 +144,7 @@ final class GraduateTest extends TestCase {
 			)
 		);
 
-		$this->assertStringContainsString( 'handl_aicac_tab=rules', $url );
+		$this->assertStringContainsString( 'page=handl-aicac-rules', $url );
 		$this->assertStringContainsString( 'handl_aicac_graduate=1', $url );
 		$this->assertStringContainsString( 'handl_aicac_focus_plugin=', $url );
 		$this->assertStringContainsString( 'handl_aicac_graduate_family=text', $url );

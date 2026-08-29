@@ -437,10 +437,10 @@ final class Weekly_Report {
 		$lines[] = __( 'Sent by HandL AI Access using your site’s email setup, such as PHP mail or an SMTP plugin.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = __( 'Manage or turn off weekly reports:', 'handl-ai-connector-access-control' );
-		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' );
+		$lines[] = Admin::screen_url( 'activity' );
 		$lines[] = '';
 		$lines[] = __( 'Open Dashboard:', 'handl-ai-connector-access-control' );
-		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=dashboard' );
+		$lines[] = Admin::screen_url( 'dashboard' );
 
 		return implode( "\n", $lines ) . "\n";
 	}

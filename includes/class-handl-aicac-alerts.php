@@ -461,7 +461,7 @@ final class Alerts {
 			$body  = __( 'HandL AI Access blocked an AI Client prompt.', 'handl-ai-connector-access-control' ) . "\n\n";
 			$body .= self::format_summary_lines( $summary );
 			$body .= "\n" . __( 'This alert came from HandL AI Access, not the plugin that made the call. Review your rules under Settings → HandL AI Access.', 'handl-ai-connector-access-control' ) . "\n";
-			$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=log' ) . "\n";
+			$body .= Admin::screen_url( 'activity' ) . "\n";
 
 			// record_send only on true; false/Throwable → queue so the denial is not silently lost
 			// and does not burn a rate slot (Frink live: pre_wp_mail → false still rate_count++ on 488b0df).
@@ -523,7 +523,7 @@ final class Alerts {
 		$body  = __( 'HandL AI Connector Access Control detected a direct connection to a known AI provider outside the AI Client. This request was observed, not blocked.', 'handl-ai-connector-access-control' ) . "\n\n";
 		$body .= self::format_summary_lines( $summary );
 		$body .= "\n" . __( 'This alert was sent by HandL AI Connector Access Control, not by the plugin that made the request. The request was not blocked. Review it under Settings → HandL AI Connector Access Control → Activity.', 'handl-ai-connector-access-control' ) . "\n";
-		$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=log' ) . "\n";
+		$body .= Admin::screen_url( 'activity' ) . "\n";
 
 		$mail_ok = Inbox_Actions::with_mail(
 			array(
@@ -734,7 +734,7 @@ final class Alerts {
 		}
 
 		$body .= __( 'This summary was sent by HandL AI Connector Access Control. Review activity and alert settings under Settings → HandL AI Connector Access Control.', 'handl-ai-connector-access-control' ) . "\n";
-		$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' ) . "\n";
+		$body .= Admin::screen_url( 'activity' ) . "\n";
 
 		return $body;
 	}
@@ -900,7 +900,7 @@ final class Alerts {
 		$lines[] = __( 'This message contains no prompt text, user identity, or call details. It only confirms that WordPress accepted the test for sending to the saved recipient, or the site admin email. Inbox delivery is not guaranteed.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = __( 'Manage email settings:', 'handl-ai-connector-access-control' );
-		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' );
+		$lines[] = Admin::screen_url( 'activity' );
 
 		return implode( "\n", $lines ) . "\n";
 	}
@@ -1205,7 +1205,7 @@ final class Alerts {
 		}
 		$lines[] = '';
 		$lines[] = __( 'Check the Webhook URL under Settings → HandL AI Connector Access Control → Activity. The delivery log there lists recent attempts.', 'handl-ai-connector-access-control' );
-		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' );
+		$lines[] = Admin::screen_url( 'activity' );
 
 		$body = implode( "\n", $lines );
 		$ok   = self::safe_wp_mail( $to, $subject, $body );

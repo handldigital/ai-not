@@ -116,7 +116,7 @@ final class DashboardWidgetTest extends TestCase {
 
 		$this->assertStringContainsString( 'Emergency stop is on. All AI Client calls are blocked except listed plugins.', $html );
 		$this->assertStringContainsString( 'Review policy', $html );
-		$this->assertStringContainsString( 'handl_aicac_tab=rules', $html );
+		$this->assertStringContainsString( 'page=handl-aicac-rules', $html );
 		$this->assertStringContainsString( 'Enforce', $html );
 	}
 

@@ -101,9 +101,14 @@ final class AdminAuthzCoverageTest extends TestCase {
 	 */
 	public function test_options_page_registered_with_manage_options(): void {
 		$this->assertMatchesRegularExpression(
+			'/add_menu_page\s*\([\s\S]*?[\'"]manage_options[\'"]/',
+			$this->source,
+			'add_menu_page must register manage_options capability'
+		);
+		$this->assertMatchesRegularExpression(
 			'/add_options_page\s*\([\s\S]*?[\'"]manage_options[\'"]/',
 			$this->source,
-			'add_options_page must register manage_options capability'
+			'Legacy add_options_page must still register manage_options for redirects'
 		);
 	}
 

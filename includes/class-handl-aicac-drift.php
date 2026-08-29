@@ -510,7 +510,7 @@ final class Drift {
 		$lines[] = self::activity_url_for_plugin( $plugin );
 		$lines[] = '';
 		$lines[] = __( 'Manage provider or model change alerts:', 'handl-ai-connector-access-control' );
-		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' );
+		$lines[] = Admin::screen_url( 'activity' );
 
 		return implode( "\n", $lines ) . "\n";
 	}
@@ -593,13 +593,8 @@ final class Drift {
 	}
 
 	private static function activity_url_for_plugin( string $plugin ): string {
-		return add_query_arg(
-			array(
-				'page'                 => 'handl-ai-connector-access-control',
-				'handl_aicac_tab'      => 'activity',
-				'handl_aicac_plugin'   => $plugin,
-			),
-			admin_url( 'options-general.php' )
-		);
+		return Admin::screen_url( 'activity', array(
+					'handl_aicac_plugin'   => $plugin,
+				) );
 	}
 }

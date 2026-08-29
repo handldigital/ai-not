@@ -189,7 +189,7 @@ final class InboxActionsTest extends TestCase {
 
 	public function test_open_rule_url_points_at_rules_tab(): void {
 		$url = Inbox_Actions::rules_url( 'noisy/plugin.php' );
-		$this->assertStringContainsString( 'handl_aicac_tab=rules', $url );
+		$this->assertStringContainsString( 'page=handl-aicac-rules', $url );
 		$this->assertStringContainsString( 'plugin=noisy', $url );
 	}
 

@@ -660,13 +660,13 @@ final class Model_Force {
 		if ( $compat['compatible'] && ! in_array( $status, array( 'route_mismatch', 'clone_incompatible', 'apply_failed' ), true ) ) {
 			// Still surface a quiet experimental banner on our own settings screen only.
 			$screen     = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-			$on_our_page = $screen && isset( $screen->id ) && false !== strpos( (string) $screen->id, 'handl-ai-connector-access-control' );
+			$on_our_page = $screen && isset( $screen->id ) && false !== strpos( (string) $screen->id, 'handl-aicac' );
 			if ( ! $on_our_page ) {
 				return;
 			}
 			echo '<div class="notice notice-warning"><p><strong>' . esc_html__( 'Model routing by plugin is configured (experimental).', 'handl-ai-connector-access-control' ) . '</strong> ';
 			echo esc_html__( 'Routes follow the detected plugin. Detection is best-effort, and model routing is not a spend guarantee. This experimental feature relies on unsupported AI Client behavior.', 'handl-ai-connector-access-control' );
-			echo ' <a href="' . esc_url( admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules' ) ) . '">' . esc_html__( 'Review model routing', 'handl-ai-connector-access-control' ) . '</a></p></div>';
+			echo ' <a href="' . esc_url( Admin::screen_url( 'protections' ) ) . '">' . esc_html__( 'Review model routing', 'handl-ai-connector-access-control' ) . '</a></p></div>';
 			return;
 		}
 
@@ -699,6 +699,6 @@ final class Model_Force {
 			echo esc_html__( 'The experimental route could not be applied. Calls will continue using the model chosen by the calling plugin until you fix or remove the routing settings.', 'handl-ai-connector-access-control' );
 		}
 
-		echo ' <a href="' . esc_url( admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules' ) ) . '">' . esc_html__( 'Open settings', 'handl-ai-connector-access-control' ) . '</a></p></div>';
+		echo ' <a href="' . esc_url( Admin::screen_url( 'protections' ) ) . '">' . esc_html__( 'Open settings', 'handl-ai-connector-access-control' ) . '</a></p></div>';
 	}
 }

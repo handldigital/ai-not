@@ -560,7 +560,7 @@ final class Budget {
 		$lines[] = __( 'Amounts are estimates from logged token usage and your rates. They are not a bill.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = __( 'Manage estimated budgets:', 'handl-ai-connector-access-control' );
-		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules' );
+		$lines[] = Admin::screen_url( 'rules' );
 
 		return implode( "\n", $lines ) . "\n";
 	}

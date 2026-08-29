@@ -24,11 +24,11 @@ final class RulesSaveFormAssociationTest extends TestCase {
 	private function rules_form_body( string $src ): string {
 		$this->assertTrue(
 			(bool) preg_match(
-				'/echo \'<form method="post" id="\' \. esc_attr\( \$rules_form_id \) \. \'">\';(?P<body>[\s\S]*?)echo \'<\/form>\';\s*\$this->render_rules_transfer_section\(/',
+				'/echo \'<form method="post" id="\' \. esc_attr\( \$rules_form_id \) \. \'">\';(?P<body>[\s\S]*?)echo \'<\/form>\';\s*echo \'<\/div>\'; \/\/ \.handl-aicac-tab-panel/',
 				$src,
 				$m
 			),
-			'Rules form must open, then close immediately before the transfer section'
+			'Rules form must open, then close at the end of the Rules screen'
 		);
 		return $m['body'];
 	}
@@ -52,15 +52,18 @@ final class RulesSaveFormAssociationTest extends TestCase {
 	}
 
 	/**
-	 * Nested-form sections render before the Rules form opens so their </form>
-	 * cannot close it. Visual order on the tab stays packs → presets → restore
-	 * → history → checks → settings.
+	 * Nested-form sections live on Policy Tools, not inside the Rules form.
 	 */
 	public function test_nested_form_sections_are_siblings_before_rules_form(): void {
 		$src = $this->admin_source();
 
 		$open = strpos( $src, 'echo \'<form method="post" id="\' . esc_attr( $rules_form_id ) . \'">\';' );
 		$this->assertNotFalse( $open, 'Rules form open must exist' );
+		$close = strpos( $src, "echo '</form>';", $open );
+		$this->assertNotFalse( $close, 'Rules form close must exist' );
+
+		$tools = strpos( $src, 'function render_policy_tools_screen(' );
+		$this->assertNotFalse( $tools, 'Policy Tools screen must exist' );
 
 		foreach ( array(
 			'$this->render_policy_packs_section(',
@@ -68,13 +71,13 @@ final class RulesSaveFormAssociationTest extends TestCase {
 			'$this->render_policy_restore_section(',
 			'$this->render_policy_change_history_section(',
 			'$this->render_policy_checks_section(',
+			'$this->render_rules_transfer_section(',
 		) as $call ) {
-			$pos = strpos( $src, $call );
-			$this->assertNotFalse( $pos, $call . ' must exist' );
-			$this->assertLessThan(
-				$open,
-				$pos,
-				$call . ' must render before the Rules form opens'
+			$pos = strpos( $src, $call, $tools );
+			$this->assertNotFalse( $pos, $call . ' must be called from Policy Tools' );
+			$this->assertFalse(
+				$pos > $open && $pos < $close,
+				$call . ' must not be called inside the Rules form'
 			);
 		}
 	}
@@ -178,10 +181,10 @@ final class RulesSaveFormAssociationTest extends TestCase {
 
 		$this->assertTrue(
 			(bool) preg_match(
-				'/id="\' \. esc_attr\( \$bulk_form_id \)[\s\S]*?value="bulk_plugin_rules"[\s\S]*?<\/form>[\s\S]*?id="handl-aicac-renew-form"[\s\S]*?value="renew_temp_allow"[\s\S]*?<\/form>[\s\S]*?id="handl-aicac-snooze-form"[\s\S]*?value="snooze_alerts"[\s\S]*?<\/form>[\s\S]*?id="handl-aicac-cancel-snooze-form"[\s\S]*?value="cancel_alert_snooze"[\s\S]*?<\/form>[\s\S]*?render_policy_packs_section/',
+				'/id="\' \. esc_attr\( \$bulk_form_id \)[\s\S]*?value="bulk_plugin_rules"[\s\S]*?<\/form>[\s\S]*?id="handl-aicac-renew-form"[\s\S]*?value="renew_temp_allow"[\s\S]*?<\/form>[\s\S]*?id="handl-aicac-snooze-form"[\s\S]*?value="snooze_alerts"[\s\S]*?<\/form>[\s\S]*?id="handl-aicac-cancel-snooze-form"[\s\S]*?value="cancel_alert_snooze"[\s\S]*?<\/form>[\s\S]*?echo \'<form method="post" id="\' \. esc_attr\( \$rules_form_id \)/',
 				$src
 			),
-			'Bulk, renew, and snooze shells must close before packs (and the Rules form) open'
+			'Bulk, renew, and snooze shells must close before the Rules form opens'
 		);
 
 		$this->assertMatchesRegularExpression(

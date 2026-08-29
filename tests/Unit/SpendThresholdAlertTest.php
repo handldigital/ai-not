@@ -73,7 +73,7 @@ final class SpendThresholdAlertTest extends TestCase {
 		$this->assertStringContainsString( 'Current estimated spend:', $mail['message'] );
 		$this->assertStringContainsString( 'Saved activity period:', $mail['message'] );
 		$this->assertStringContainsString( 'This estimate is based on logged token usage and configured rates. It is not a bill', $mail['message'] );
-		$this->assertStringContainsString( 'handl_aicac_tab=activity', $mail['message'] );
+		$this->assertStringContainsString( 'page=handl-aicac-activity', $mail['message'] );
 
 		// Second evaluate within 24h → no duplicate.
 		Spend_Threshold::maybe_evaluate( $policy );
@@ -137,7 +137,7 @@ final class SpendThresholdAlertTest extends TestCase {
 	public function test_body_and_subject_helpers_include_estimate_disclaimer(): void {
 		$body = Spend_Threshold::build_body( 'site', null, 10.0, 12.0, 'Aug 1 to Aug 10, 2026' );
 		$this->assertStringContainsString( 'This estimate is based on logged token usage and configured rates. It is not a bill', $body );
-		$this->assertStringContainsString( 'handl_aicac_tab=activity', $body );
+		$this->assertStringContainsString( 'page=handl-aicac-activity', $body );
 		$subject = Spend_Threshold::build_subject( 'site', null, 10.0, 12.0 );
 		$this->assertStringContainsString( 'estimated spend alert', strtolower( $subject ) );
 	}

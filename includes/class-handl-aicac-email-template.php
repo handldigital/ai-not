@@ -48,7 +48,7 @@ final class Email_Template {
 	 * Settings deep link (no recipient address).
 	 */
 	public static function settings_url(): string {
-		return admin_url( 'options-general.php?page=handl-ai-connector-access-control' );
+		return Admin::screen_url( 'dashboard' );
 	}
 
 	/**

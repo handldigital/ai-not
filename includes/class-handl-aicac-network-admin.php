@@ -405,7 +405,7 @@ final class Network_Admin {
 	}
 
 	public static function activity_admin_url( int $blog_id ): string {
-		$path = 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity';
+		$path = 'admin.php?page=' . Admin::SCREEN_SLUGS['activity'];
 		if ( function_exists( 'get_admin_url' ) ) {
 			return (string) get_admin_url( $blog_id, $path );
 		}

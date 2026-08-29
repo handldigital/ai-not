@@ -173,8 +173,6 @@ final class Graduate {
 		}
 
 		$args = array(
-			'page'                     => 'handl-ai-connector-access-control',
-			'handl_aicac_tab'          => 'rules',
 			'handl_aicac_focus_plugin' => $plugin,
 			'handl_aicac_graduate'     => '1',
 		);
@@ -194,7 +192,7 @@ final class Graduate {
 			$args['handl_aicac_graduate_model'] = $model;
 		}
 
-		return add_query_arg( $args, admin_url( 'options-general.php' ) )
+		return Admin::screen_url( 'rules', $args )
 			. '#handl-aicac-rule-' . rawurlencode( md5( $plugin ) );
 	}
 

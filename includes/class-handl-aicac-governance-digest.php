@@ -361,10 +361,10 @@ final class Governance_Digest {
 		$lines[] = __( 'Amounts are estimates from logged token usage and your rates. They are not a bill.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = __( 'Turn off or change this digest:', 'handl-ai-connector-access-control' );
-		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' );
+		$lines[] = Admin::screen_url( 'activity' );
 		$lines[] = '';
 		$lines[] = __( 'Open Dashboard:', 'handl-ai-connector-access-control' );
-		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=dashboard' );
+		$lines[] = Admin::screen_url( 'dashboard' );
 
 		return implode( "\n", $lines ) . "\n";
 	}

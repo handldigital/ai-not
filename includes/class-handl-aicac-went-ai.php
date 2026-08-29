@@ -334,14 +334,9 @@ final class Went_AI {
 		$lines[] = __( 'This plugin had no earlier AI Client calls. This alert is sent once. It does not change Allow or Deny rules.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = __( 'View this plugin’s activity:', 'handl-ai-connector-access-control' );
-		$lines[] = add_query_arg(
-			array(
-				'page'               => 'handl-ai-connector-access-control',
-				'handl_aicac_tab'    => 'activity',
-				'handl_aicac_plugin' => $plugin,
-			),
-			admin_url( 'options-general.php' )
-		);
+		$lines[] = Admin::screen_url( 'activity', array(
+					'handl_aicac_plugin' => $plugin,
+				) );
 
 		return implode( "\n", $lines ) . "\n";
 	}
