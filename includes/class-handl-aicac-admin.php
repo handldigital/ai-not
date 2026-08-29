@@ -177,6 +177,7 @@ final class Admin {
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		add_action( 'admin_print_footer_scripts', array( $this, 'print_menu_keyboard_script' ) );
 		add_action( 'admin_init', array( $this, 'maybe_handle_file_downloads' ) );
 		add_action( 'admin_init', array( $this, 'maybe_redirect_legacy_settings_url' ) );
 	}
@@ -205,6 +206,34 @@ final class Admin {
 			array(),
 			HANDL_AICAC_VERSION
 		);
+	}
+
+	/**
+	 * Enter on an AI Access Control submenu item follows that item's href.
+	 *
+	 * WP core leaves submenu <li> / off-screen flyout nodes in the tab order
+	 * without activating their child <a>; native Enter then no-ops and the
+	 * current Dashboard URL is unchanged.
+	 */
+	public function print_menu_keyboard_script(): void {
+		echo '<script id="handl-aicac-menu-keyboard">';
+		echo '(function(){';
+		echo 'var root=document.getElementById("toplevel_page_handl-aicac");';
+		echo 'if(!root){return;}';
+		echo 'root.addEventListener("keydown",function(event){';
+		echo 'if(event.key!=="Enter"||event.metaKey||event.ctrlKey||event.altKey||event.shiftKey){return;}';
+		echo 'var t=event.target;';
+		echo 'if(!t||!root.contains(t)){return;}';
+		echo 'if(t.closest&&t.closest("input,textarea,select,button")){return;}';
+		echo 'var link=t.closest?t.closest(".wp-submenu a"):null;';
+		echo 'if(!link){var item=t.closest?t.closest(".wp-submenu li"):null;';
+		echo 'if(item&&!item.classList.contains("wp-submenu-head")){link=item.querySelector("a");}}';
+		echo 'if(!link||!link.href){return;}';
+		echo 'event.preventDefault();';
+		echo 'window.location.assign(link.href);';
+		echo '},true);';
+		echo '})();';
+		echo '</script>' . "\n";
 	}
 
 	public function register_menu(): void {

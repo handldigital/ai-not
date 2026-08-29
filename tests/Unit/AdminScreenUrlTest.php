@@ -141,4 +141,21 @@ final class AdminScreenUrlTest extends TestCase {
 		}
 		$this->assertStringContainsString( 'maybe_redirect_legacy_settings_url', $src );
 	}
+
+	public function test_submenu_slugs_are_unique(): void {
+		$slugs = array_values( Admin::SCREEN_SLUGS );
+		$this->assertSame( $slugs, array_values( array_unique( $slugs ) ) );
+	}
+
+	public function test_menu_keyboard_script_assigns_focused_submenu_href(): void {
+		$src = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php' );
+		$this->assertStringContainsString( 'admin_print_footer_scripts', $src );
+		$this->assertStringContainsString( 'print_menu_keyboard_script', $src );
+		$this->assertStringContainsString( 'handl-aicac-menu-keyboard', $src );
+		$this->assertStringContainsString( 'toplevel_page_handl-aicac', $src );
+		$this->assertStringContainsString( 'event.key!=="Enter"', $src );
+		$this->assertStringContainsString( '.wp-submenu a', $src );
+		$this->assertStringContainsString( 'window.location.assign(link.href)', $src );
+		$this->assertStringContainsString( ',true)', $src );
+	}
 }
