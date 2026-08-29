@@ -154,6 +154,33 @@ final class MuGuardTest extends TestCase {
 		$this->assertSame( 'recommended', $snap['status'] );
 		$this->assertSame( Mu_Guard::MODE_FAIL_CLOSED, $snap['hardened_mode'] );
 		$this->assertFalse( $snap['hardened_stub_present'] );
+
+		$hardened_row = Site_Health::format_hardened_site_health_result(
+			array(
+				'mode'         => Mu_Guard::MODE_FAIL_CLOSED,
+				'enabled'      => true,
+				'stub_present' => false,
+				'stub_current' => false,
+				'stub_version' => null,
+			)
+		);
+		$this->assertSame( 'recommended', $hardened_row['status'] );
+		$this->assertSame( 'Hardened mode needs attention', $hardened_row['label'] );
+		$this->assertSame( Site_Health::HARDENED_TEST_SLUG, $hardened_row['test'] );
+		$this->assertStringContainsString( 'protection file is missing', strtolower( strip_tags( $hardened_row['description'] ) ) );
+	}
+
+	public function test_site_health_registers_hardened_row(): void {
+		$tests = Site_Health::instance()->register_tests( array() );
+		$this->assertArrayHasKey( Site_Health::HARDENED_TEST_SLUG, $tests['direct'] );
+	}
+
+	public function test_hardened_site_health_row_reports_current_stub(): void {
+		Mu_Guard::enable( Mu_Guard::MODE_FAIL_CLOSED, $this->mu_dir );
+		$row = Site_Health::format_hardened_site_health_result( Mu_Guard::status( $this->mu_dir ) );
+		$this->assertSame( 'good', $row['status'] );
+		$this->assertStringContainsString( 'Hardened mode: On', $row['label'] );
+		$this->assertStringContainsString( 'Protection file version', $row['label'] );
 	}
 
 	public function test_status_reports_open_tamper_gap(): void {

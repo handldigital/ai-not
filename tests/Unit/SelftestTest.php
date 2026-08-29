@@ -209,5 +209,6 @@ final class SelftestTest extends TestCase {
 		$tests = Site_Health::instance()->register_tests( array() );
 		$this->assertArrayHasKey( Selftest::SITE_HEALTH_SLUG, $tests['direct'] );
 		$this->assertArrayHasKey( Site_Health::TEST_SLUG, $tests['direct'] );
+		$this->assertArrayHasKey( Site_Health::HARDENED_TEST_SLUG, $tests['direct'] );
 	}
 }

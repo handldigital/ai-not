@@ -16,6 +16,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class Site_Health {
 	public const TEST_SLUG = 'handl_aicac_access_control';
 
+	public const HARDENED_TEST_SLUG = 'handl_aicac_hardened_guard';
+
 	private static ?Site_Health $instance = null;
 
 	public static function instance(): Site_Health {
@@ -52,7 +54,29 @@ final class Site_Health {
 			'test'  => array( $this, 'run_selftest' ),
 		);
 
+		$tests['direct'][ self::HARDENED_TEST_SLUG ] = array(
+			'label' => __( 'Hardened mode: Off.', 'handl-ai-connector-access-control' ),
+			'test'  => array( $this, 'run_hardened_test' ),
+		);
+
 		return $tests;
+	}
+
+	/**
+	 * Site Health direct-test callback: hardened mode + protection-file version.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function run_hardened_test(): array {
+		$hardened = class_exists( Mu_Guard::class ) ? Mu_Guard::status() : array(
+			'mode'         => '',
+			'enabled'      => false,
+			'stub_present' => false,
+			'stub_current' => false,
+			'stub_version' => null,
+		);
+
+		return self::format_hardened_site_health_result( $hardened );
 	}
 
 	/**
@@ -254,6 +278,63 @@ final class Site_Health {
 			'description' => $description,
 			'actions'     => $actions,
 			'test'        => self::TEST_SLUG,
+		);
+	}
+
+	/**
+	 * Dedicated Site Health row for hardened mode / protection file (#226).
+	 *
+	 * @param array<string,mixed> $hardened Mu_Guard::status() shape.
+	 * @return array<string,mixed>
+	 */
+	public static function format_hardened_site_health_result( array $hardened ): array {
+		$snapshot = array(
+			'hardened_mode'         => (string) ( $hardened['mode'] ?? '' ),
+			'hardened_stub_present' => ! empty( $hardened['stub_present'] ),
+			'hardened_stub_current' => ! empty( $hardened['stub_current'] ),
+			'hardened_stub_version' => $hardened['stub_version'] ?? null,
+		);
+
+		$drift = ! empty( $hardened['enabled'] ) && ( empty( $hardened['stub_present'] ) || empty( $hardened['stub_current'] ) );
+		$line  = self::hardened_description_line( $snapshot );
+		$label = $drift
+			? __( 'Hardened mode needs attention', 'handl-ai-connector-access-control' )
+			: $line;
+
+		$description = '<p>' . esc_html( $line ) . '</p>';
+		if ( $drift ) {
+			$mode_key = (string) ( $snapshot['hardened_mode'] ?? Mu_Guard::MODE_FAIL_CLOSED );
+			if ( Mu_Guard::MODE_WATCH !== $mode_key ) {
+				$mode_key = Mu_Guard::MODE_FAIL_CLOSED;
+			}
+			$description .= '<p>' . esc_html(
+				sprintf(
+					/* translators: %s: fail_closed or watch (CLI mode key) */
+					__( 'Run `wp handl-aicac hardened enable --mode=%s` to restore it.', 'handl-ai-connector-access-control' ),
+					$mode_key
+				)
+			) . '</p>';
+		}
+
+		$actions = '';
+		if ( $drift ) {
+			$actions = sprintf(
+				'<a href="%s">%s</a>',
+				esc_url( self::settings_url( 'dashboard' ) ),
+				esc_html( __( 'Open HandL AI Connector Access Control settings', 'handl-ai-connector-access-control' ) )
+			);
+		}
+
+		return array(
+			'label'       => $label,
+			'status'      => $drift ? 'recommended' : 'good',
+			'badge'       => array(
+				'label' => __( 'Security', 'handl-ai-connector-access-control' ),
+				'color' => 'blue',
+			),
+			'description' => $description,
+			'actions'     => $actions,
+			'test'        => self::HARDENED_TEST_SLUG,
 		);
 	}
 
