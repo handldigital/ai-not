@@ -211,7 +211,7 @@ final class Checklist {
 			'label'      => __( 'Choose a starter policy pack', 'handl-ai-connector-access-control' ),
 			'detail'     => $done
 				? __( 'A starter pack is applied.', 'handl-ai-connector-access-control' )
-				: __( 'Apply Strict, Balanced, or Observe-first on Policy Tools.', 'handl-ai-connector-access-control' ),
+				: __( 'Apply Strict, Balanced, or Observe-first in Policy Tools.', 'handl-ai-connector-access-control' ),
 			'applicable' => true,
 			'done'       => $done,
 			'tab'        => 'policy-tools',
@@ -231,7 +231,7 @@ final class Checklist {
 			'label'      => __( 'Save an alert email', 'handl-ai-connector-access-control' ),
 			'detail'     => $done
 				? __( 'Alert email is saved.', 'handl-ai-connector-access-control' )
-				: __( 'Save an alert email on Alerts & Settings.', 'handl-ai-connector-access-control' ),
+				: __( 'Save an alert email in Alerts & Settings.', 'handl-ai-connector-access-control' ),
 			'applicable' => true,
 			'done'       => $done,
 			'tab'        => 'alerts',
@@ -250,7 +250,7 @@ final class Checklist {
 			'label'      => __( 'Try the policy tester', 'handl-ai-connector-access-control' ),
 			'detail'     => $done
 				? __( 'You have run the policy tester.', 'handl-ai-connector-access-control' )
-				: __( 'Run Test this policy on Policy Tools.', 'handl-ai-connector-access-control' ),
+				: __( 'Run Test this policy in Policy Tools.', 'handl-ai-connector-access-control' ),
 			'applicable' => true,
 			'done'       => $done,
 			'tab'        => 'policy-tools',
@@ -269,7 +269,7 @@ final class Checklist {
 			'label'      => __( 'Turn on the weekly digest', 'handl-ai-connector-access-control' ),
 			'detail'     => $done
 				? __( 'Weekly digest is on.', 'handl-ai-connector-access-control' )
-				: __( 'Turn on the weekly governance digest on Alerts & Settings.', 'handl-ai-connector-access-control' ),
+				: __( 'Turn on the weekly governance digest in Alerts & Settings.', 'handl-ai-connector-access-control' ),
 			'applicable' => true,
 			'done'       => $done,
 			'tab'        => 'alerts',

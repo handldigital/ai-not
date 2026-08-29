@@ -46,10 +46,10 @@ final class ChecklistTest extends TestCase {
 		$this->assertSame( 'Save an alert email', $by['alert_email']['label'] );
 		$this->assertSame( 'Try the policy tester', $by['simulator']['label'] );
 		$this->assertSame( 'Turn on the weekly digest', $by['digest']['label'] );
-		$this->assertSame( 'Apply Strict, Balanced, or Observe-first on Policy Tools.', $by['pack']['detail'] );
-		$this->assertSame( 'Save an alert email on Alerts & Settings.', $by['alert_email']['detail'] );
-		$this->assertSame( 'Run Test this policy on Policy Tools.', $by['simulator']['detail'] );
-		$this->assertSame( 'Turn on the weekly governance digest on Alerts & Settings.', $by['digest']['detail'] );
+		$this->assertSame( 'Apply Strict, Balanced, or Observe-first in Policy Tools.', $by['pack']['detail'] );
+		$this->assertSame( 'Save an alert email in Alerts & Settings.', $by['alert_email']['detail'] );
+		$this->assertSame( 'Run Test this policy in Policy Tools.', $by['simulator']['detail'] );
+		$this->assertSame( 'Turn on the weekly governance digest in Alerts & Settings.', $by['digest']['detail'] );
 	}
 
 	public function test_item_urls_target_post_ia_screens(): void {
