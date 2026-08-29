@@ -196,6 +196,21 @@ final class Policy {
 			}
 		}
 
+		// AICAC-PII-WARN (#230): opt-in payload screen — off by default (zero work).
+		// Only after an allow from rules; deny-mode PII can escalate allow → block.
+		// Redacts prompt_preview before log so the control never stores matched text.
+		if ( ! $prevent ) {
+			$pii = Pii_Warn::apply_to_event( $event, $policy, $builder );
+			if ( ! empty( $pii['prevent'] ) ) {
+				$event['would_decision'] = 'deny';
+				$event['denial_reason']  = 'pii';
+				if ( empty( $policy['audit_only'] ) ) {
+					$prevent           = true;
+					$event['decision'] = 'deny';
+				}
+			}
+		}
+
 		// AICAC-BLOCKED-UX Phase 1: capture request context + caller-facing error on real denies.
 		if ( $prevent ) {
 			$event['request_context'] = self::detect_request_context();
@@ -1087,6 +1102,9 @@ final class Policy {
 		$policy['kill_switch_exceptions'] = self::get_kill_switch_exceptions( $policy );
 		// AICAC-HOURS: optional weekly quiet-hours / maintenance windows (empty = off).
 		$policy['quiet_hours'] = Quiet_Hours::sanitize_windows( $policy['quiet_hours'] ?? array() );
+		// AICAC-PII-WARN: per-plugin off|warn|deny (absent = off) + filterable patterns.
+		$policy['pii_screen']   = Pii_Warn::sanitize_plugin_modes( $policy['pii_screen'] ?? array() );
+		$policy['pii_patterns'] = Pii_Warn::sanitize_patterns( $policy['pii_patterns'] ?? null );
 		// Optional role gate (AICAC-ROLE): off by default = all roles may initiate AI.
 		$policy['role_gate_enabled'] = (bool) ( $policy['role_gate_enabled'] ?? false );
 		$policy['allowed_roles']     = self::sanitize_allowed_roles( $policy['allowed_roles'] ?? array() );
@@ -1429,6 +1447,8 @@ final class Policy {
 
 		$policy['kill_switch_exceptions'] = self::get_kill_switch_exceptions( $policy );
 		$policy['quiet_hours']            = Quiet_Hours::sanitize_windows( $policy['quiet_hours'] ?? array() );
+		$policy['pii_screen']             = Pii_Warn::sanitize_plugin_modes( $policy['pii_screen'] ?? array() );
+		$policy['pii_patterns']           = Pii_Warn::sanitize_patterns( $policy['pii_patterns'] ?? null );
 		$policy['role_gate_enabled']      = ! empty( $policy['role_gate_enabled'] );
 		$policy['allowed_roles']          = self::sanitize_allowed_roles( $policy['allowed_roles'] ?? array() );
 		$policy['operations']             = self::sanitize_operations( $policy['operations'] ?? array() );
@@ -1860,13 +1880,18 @@ final class Policy {
 			Drift::flush_deferred_alerts();
 		}
 
+		// AICAC-PII-WARN: warn-mode alert after retain (snooze + quiet hours).
+		if ( ! $is_direct_http && ! $is_selftest && isset( $event['pii_match'] ) ) {
+			Pii_Warn::maybe_alert( $event, $policy );
+		}
+
 		if ( $shadow_alert_eligible ) {
 			Alerts::maybe_notify_shadow( $event, $policy );
 		}
 
 		// AICAC-ANOMALY: re-check after new retained rows (skip our own audit rows).
 		$channel = isset( $event['channel'] ) ? (string) $event['channel'] : '';
-		if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget', 'selftest' ), true ) ) {
+		if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget', 'selftest', 'pii' ), true ) ) {
 			Anomaly::maybe_evaluate( $policy );
 		}
 	}
