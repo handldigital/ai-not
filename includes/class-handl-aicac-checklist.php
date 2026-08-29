@@ -129,11 +129,11 @@ final class Checklist {
 	 */
 	public static function item_url( array $item ): string {
 		$tab = isset( $item['tab'] ) ? sanitize_key( (string) $item['tab'] ) : 'dashboard';
-		if ( ! in_array( $tab, array( 'dashboard', 'rules', 'activity', 'insights' ), true ) ) {
+		if ( ! in_array( $tab, array( 'dashboard', 'rules', 'activity', 'insights', 'protections', 'policy-tools', 'alerts' ), true ) ) {
 			$tab = 'dashboard';
 		}
 		$url = function_exists( 'admin_url' )
-			? (string) admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=' . $tab )
+			? (string) Admin::screen_url( $tab )
 			: '';
 		$anchor = isset( $item['anchor'] ) ? (string) $item['anchor'] : '';
 		if ( '' !== $url && '' !== $anchor && preg_match( '/^[a-z0-9\-]+$/', $anchor ) ) {
@@ -211,10 +211,10 @@ final class Checklist {
 			'label'      => __( 'Choose a starter policy pack', 'handl-ai-connector-access-control' ),
 			'detail'     => $done
 				? __( 'A starter pack is applied.', 'handl-ai-connector-access-control' )
-				: __( 'Apply Strict, Balanced, or Observe-first on the Rules tab.', 'handl-ai-connector-access-control' ),
+				: __( 'Apply Strict, Balanced, or Observe-first on Policy Tools.', 'handl-ai-connector-access-control' ),
 			'applicable' => true,
 			'done'       => $done,
-			'tab'        => 'rules',
+			'tab'        => 'policy-tools',
 			'anchor'     => 'handl-aicac-packs',
 		);
 	}
@@ -231,10 +231,10 @@ final class Checklist {
 			'label'      => __( 'Save an alert email', 'handl-ai-connector-access-control' ),
 			'detail'     => $done
 				? __( 'Alert email is saved.', 'handl-ai-connector-access-control' )
-				: __( 'Save an alert email on the Activity tab.', 'handl-ai-connector-access-control' ),
+				: __( 'Save an alert email on Alerts & Settings.', 'handl-ai-connector-access-control' ),
 			'applicable' => true,
 			'done'       => $done,
-			'tab'        => 'activity',
+			'tab'        => 'alerts',
 			'anchor'     => 'handl-aicac-alert-email',
 		);
 	}
@@ -250,10 +250,10 @@ final class Checklist {
 			'label'      => __( 'Try the policy tester', 'handl-ai-connector-access-control' ),
 			'detail'     => $done
 				? __( 'You have run the policy tester.', 'handl-ai-connector-access-control' )
-				: __( 'Run Test this policy on the Rules tab.', 'handl-ai-connector-access-control' ),
+				: __( 'Run Test this policy on Policy Tools.', 'handl-ai-connector-access-control' ),
 			'applicable' => true,
 			'done'       => $done,
-			'tab'        => 'rules',
+			'tab'        => 'policy-tools',
 			'anchor'     => 'handl-aicac-sim-panel',
 		);
 	}
@@ -269,10 +269,10 @@ final class Checklist {
 			'label'      => __( 'Turn on the weekly digest', 'handl-ai-connector-access-control' ),
 			'detail'     => $done
 				? __( 'Weekly digest is on.', 'handl-ai-connector-access-control' )
-				: __( 'Turn on the weekly governance digest on the Activity tab.', 'handl-ai-connector-access-control' ),
+				: __( 'Turn on the weekly governance digest on Alerts & Settings.', 'handl-ai-connector-access-control' ),
 			'applicable' => true,
 			'done'       => $done,
-			'tab'        => 'activity',
+			'tab'        => 'alerts',
 			'anchor'     => 'handl-aicac-governance-digest',
 		);
 	}

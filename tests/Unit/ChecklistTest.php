@@ -18,6 +18,7 @@ use PHPUnit\Framework\TestCase;
 final class ChecklistTest extends TestCase {
 
 	protected function setUp(): void {
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php';
 		$GLOBALS['handl_aicac_test_options'] = array();
 		unset( $GLOBALS['handl_aicac_test_filters'] );
 		parent::setUp();
@@ -45,6 +46,39 @@ final class ChecklistTest extends TestCase {
 		$this->assertSame( 'Save an alert email', $by['alert_email']['label'] );
 		$this->assertSame( 'Try the policy tester', $by['simulator']['label'] );
 		$this->assertSame( 'Turn on the weekly digest', $by['digest']['label'] );
+		$this->assertSame( 'Apply Strict, Balanced, or Observe-first on Policy Tools.', $by['pack']['detail'] );
+		$this->assertSame( 'Save an alert email on Alerts & Settings.', $by['alert_email']['detail'] );
+		$this->assertSame( 'Run Test this policy on Policy Tools.', $by['simulator']['detail'] );
+		$this->assertSame( 'Turn on the weekly governance digest on Alerts & Settings.', $by['digest']['detail'] );
+	}
+
+	public function test_item_urls_target_post_ia_screens(): void {
+		$by = $this->by_id( Checklist::compute( $this->base_policy(), array() )['items'] );
+		$this->assertSame( 'rules', $by['plugins']['tab'] );
+		$this->assertSame( 'policy-tools', $by['pack']['tab'] );
+		$this->assertSame( 'alerts', $by['alert_email']['tab'] );
+		$this->assertSame( 'policy-tools', $by['simulator']['tab'] );
+		$this->assertSame( 'alerts', $by['digest']['tab'] );
+		$this->assertSame(
+			'https://example.test/wp-admin/admin.php?page=handl-aicac-rules',
+			Checklist::item_url( $by['plugins'] )
+		);
+		$this->assertSame(
+			'https://example.test/wp-admin/admin.php?page=handl-aicac-policy-tools#handl-aicac-packs',
+			Checklist::item_url( $by['pack'] )
+		);
+		$this->assertSame(
+			'https://example.test/wp-admin/admin.php?page=handl-aicac-alerts#handl-aicac-alert-email',
+			Checklist::item_url( $by['alert_email'] )
+		);
+		$this->assertSame(
+			'https://example.test/wp-admin/admin.php?page=handl-aicac-policy-tools#handl-aicac-sim-panel',
+			Checklist::item_url( $by['simulator'] )
+		);
+		$this->assertSame(
+			'https://example.test/wp-admin/admin.php?page=handl-aicac-alerts#handl-aicac-governance-digest',
+			Checklist::item_url( $by['digest'] )
+		);
 	}
 
 	public function test_complete_config_hides_panel_and_regresses_when_email_cleared(): void {
