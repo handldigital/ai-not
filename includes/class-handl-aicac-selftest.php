@@ -201,7 +201,7 @@ final class Selftest {
 		if ( ! $ok ) {
 			$actions = sprintf(
 				'<a href="%s">%s</a>',
-				esc_url( admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=' . $tab ) ),
+				esc_url( Admin::screen_url( $tab ) ),
 				esc_html( __( 'Open HandL AI Connector Access Control settings', 'handl-ai-connector-access-control' ) )
 			);
 		}

@@ -551,7 +551,7 @@ final class Temp_Allow {
 		) . "\n\n";
 		$body .= __( 'This plugin’s temporary Allow rule expires within 24 hours. After it expires, the plugin will follow the site default policy.', 'handl-ai-connector-access-control' ) . "\n\n";
 		$body .= __( 'Open the Rules tab to select Renew 7 days or choose a new expiry:', 'handl-ai-connector-access-control' ) . "\n";
-		$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules' ) . "\n";
+		$body .= Admin::screen_url( 'rules' ) . "\n";
 
 		// Delivery failures record into alert-health (#123) via safe_wp_mail.
 		Alerts::safe_wp_mail( $to, $subject, $body );
@@ -598,7 +598,7 @@ final class Temp_Allow {
 		) . "\n\n";
 		$body .= __( 'The temporary Allow rule was removed. The plugin now follows the site default.', 'handl-ai-connector-access-control' ) . "\n\n";
 		$body .= __( 'Manage rules:', 'handl-ai-connector-access-control' ) . "\n";
-		$body .= admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules' ) . "\n";
+		$body .= Admin::screen_url( 'rules' ) . "\n";
 
 		Alerts::safe_wp_mail( $to, $subject, $body );
 	}

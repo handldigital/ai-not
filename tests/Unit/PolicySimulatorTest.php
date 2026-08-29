@@ -304,10 +304,10 @@ final class PolicySimulatorTest extends TestCase {
 
 		$this->assertTrue(
 			(bool) preg_match(
-				'/echo \'<form method="post" id="\' \. esc_attr\( \$rules_form_id \)[\s\S]*?render_policy_simulator_panel\([\s\S]*?echo \'<\/form>\';/',
+				'/\$sim_form_id = \'handl-aicac-simulate\';[\s\S]*?render_policy_simulator_panel\([\s\S]*?echo \'<\/form>\';/',
 				$src
 			),
-			'Rules form must wrap the policy simulator panel before closing'
+			'Policy Tools must wrap the policy simulator panel in its own form'
 		);
 
 		$this->assertDoesNotMatchRegularExpression(
@@ -331,9 +331,14 @@ final class PolicySimulatorTest extends TestCase {
 			$src,
 			'Early handl_aicac_action hidden must exist so Save survives max_input_vars truncation'
 		);
-		$this->assertTrue(
-			strpos( $src, 'render_policy_simulator_panel' ) < strpos( $src, 'handl-aicac-rules-matrix' ),
-			'Simulator panel must render before the plugin matrix (max_input_vars)'
+		$sim_call   = strpos( $src, '$this->render_policy_simulator_panel(' );
+		$rules_open = strpos( $src, 'echo \'<form method="post" id="\' . esc_attr( $rules_form_id ) . \'">\';' );
+		$rules_close = strpos( $src, "echo '</form>';", (int) $rules_open );
+		$this->assertNotFalse( $sim_call );
+		$this->assertNotFalse( $rules_open );
+		$this->assertFalse(
+			$sim_call > $rules_open && $sim_call < $rules_close,
+			'Simulator must not live inside the Rules form (max_input_vars / nested-form class)'
 		);
 		$this->assertStringNotContainsString(
 			'name="handl_aicac_action" value="simulate_policy" form="',

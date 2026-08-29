@@ -410,7 +410,7 @@ final class New_Plugin {
 	public static function review_rules_url( string $plugin_basename ): string {
 		$proposal = Graduate::proposal_from_plugin( $plugin_basename );
 		if ( null === $proposal ) {
-			return admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=rules' );
+			return Admin::screen_url( 'rules' );
 		}
 		return Graduate::rules_url( $proposal );
 	}

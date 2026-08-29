@@ -336,13 +336,12 @@ final class Anomaly {
 	 * Activity tab URL filtered to a plugin basename.
 	 */
 	public static function activity_url_for_plugin( string $plugin_basename ): string {
-		$args = array(
-			'page'                 => 'handl-ai-connector-access-control',
-			'handl_aicac_tab'      => 'activity',
-			'handl_aicac_log_plugin' => $plugin_basename,
+		return Admin::screen_url(
+			'activity',
+			array(
+				'handl_aicac_log_plugin' => $plugin_basename,
+			)
 		);
-
-		return admin_url( 'options-general.php?' . http_build_query( $args ) );
 	}
 
 	/**
@@ -535,7 +534,7 @@ final class Anomaly {
 		$lines[] = self::activity_url_for_plugin( $plugin );
 		$lines[] = '';
 		$lines[] = __( 'Manage usage spike alerts:', 'handl-ai-connector-access-control' );
-		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' );
+		$lines[] = Admin::screen_url( 'activity' );
 
 		return implode( "\n", $lines ) . "\n";
 	}

@@ -203,13 +203,11 @@ final class Inbox_Actions {
 
 	public static function rules_url( string $plugin ): string {
 		$plugin = Plugin_Profile::sanitize_plugin( $plugin );
-		return add_query_arg(
+		return Admin::screen_url(
+			'rules',
 			array(
-				'page'            => 'handl-ai-connector-access-control',
-				'handl_aicac_tab' => 'rules',
-				'plugin'          => $plugin,
-			),
-			admin_url( 'options-general.php' )
+				'plugin' => $plugin,
+			)
 		);
 	}
 

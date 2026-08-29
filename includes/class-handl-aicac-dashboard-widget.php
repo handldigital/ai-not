@@ -206,20 +206,8 @@ final class Dashboard_Widget {
 			? __( 'Observe', 'handl-ai-connector-access-control' )
 			: __( 'Enforce', 'handl-ai-connector-access-control' );
 
-		$rules_url = add_query_arg(
-			array(
-				'page'            => 'handl-ai-connector-access-control',
-				'handl_aicac_tab' => 'rules',
-			),
-			admin_url( 'options-general.php' )
-		);
-		$activity_url = add_query_arg(
-			array(
-				'page'            => 'handl-ai-connector-access-control',
-				'handl_aicac_tab' => 'activity',
-			),
-			admin_url( 'options-general.php' )
-		);
+		$rules_url = Admin::screen_url( 'rules' );
+		$activity_url = Admin::screen_url( 'activity' );
 
 		echo '<div class="handl-aicac-dash-widget">';
 

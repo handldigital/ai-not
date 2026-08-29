@@ -324,7 +324,7 @@ final class Spend_Forecast {
 		$lines[] = __( 'This projection uses logged token usage and your rate table. It is an estimate, not a bill, and does not block AI Client calls.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = __( 'Open the Dashboard:', 'handl-ai-connector-access-control' );
-		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=dashboard' );
+		$lines[] = Admin::screen_url( 'dashboard' );
 
 		return implode( "\n", $lines ) . "\n";
 	}

@@ -485,8 +485,6 @@ final class Site_Health {
 			$tab = 'dashboard';
 		}
 
-		return admin_url(
-			'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=' . rawurlencode( $tab )
-		);
+		return Admin::screen_url( $tab );
 	}
 }

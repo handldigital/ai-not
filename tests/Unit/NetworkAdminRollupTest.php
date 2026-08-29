@@ -58,7 +58,7 @@ final class NetworkAdminRollupTest extends TestCase {
 		$row = Network_Admin::summarize_site_data(
 			7,
 			'https://example.test/site-a',
-			'https://example.test/site-a/wp-admin/options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity',
+			'https://example.test/site-a/wp-admin/admin.php?page=handl-aicac-activity',
 			$policy,
 			$log,
 			true
@@ -73,7 +73,7 @@ final class NetworkAdminRollupTest extends TestCase {
 		$this->assertSame( 1, $row['denial_count'] );
 		$this->assertSame( 200, $row['last_activity_ts'] );
 		$this->assertTrue( $row['ai_disabled'] );
-		$this->assertStringContainsString( 'handl_aicac_tab=activity', $row['activity_url'] );
+		$this->assertStringContainsString( 'page=handl-aicac-activity', $row['activity_url'] );
 	}
 
 	public function test_summarize_logging_only_without_learn(): void {
@@ -159,7 +159,7 @@ final class NetworkAdminRollupTest extends TestCase {
 		$this->assertMatchesRegularExpression( '/SITES_PER_PAGE\s*=\s*50/', $src );
 		$this->assertMatchesRegularExpression( '/switch_to_blog\s*\(/', $src );
 		$this->assertMatchesRegularExpression( '/restore_current_blog\s*\(/', $src );
-		$this->assertMatchesRegularExpression( '/handl_aicac_tab=activity/', $src );
+		$this->assertMatchesRegularExpression( '/SCREEN_SLUGS\[.activity.\]/', $src );
 		$this->assertMatchesRegularExpression( '/AI disabled/', $src );
 
 		// AC5: read-only — no policy mutation entry points on this screen.

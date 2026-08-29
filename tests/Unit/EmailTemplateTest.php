@@ -52,7 +52,7 @@ final class EmailTemplateTest extends TestCase {
 		$this->assertStringContainsString( 'Site:', $parts['text'] );
 		$this->assertStringContainsString( Email_Template::site_name(), $parts['text'] );
 		$this->assertStringContainsString( Email_Template::default_intro(), $parts['text'] );
-		$this->assertStringContainsString( 'options-general.php?page=handl-ai-connector-access-control', $parts['text'] );
+		$this->assertStringContainsString( 'admin.php?page=handl-aicac', $parts['text'] );
 		$this->assertStringNotContainsString( 'admin@example.com', $parts['text'] );
 		$this->assertStringNotContainsString( 'admin@example.com', $parts['html'] );
 		$this->assertStringContainsString( '<html', $parts['html'] );
