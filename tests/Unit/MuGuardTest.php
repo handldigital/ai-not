@@ -128,7 +128,8 @@ final class MuGuardTest extends TestCase {
 
 	public function test_site_health_flags_missing_stub_when_hardened_on(): void {
 		update_option( Mu_Guard::MODE_OPTION, Mu_Guard::MODE_FAIL_CLOSED, false );
-		// No stub written → drift.
+		// No stub written in the isolated mu-dir → drift. Do not read the
+		// live WPMU_PLUGIN_DIR (a leftover sandbox stub would mask this).
 
 		$snap = Site_Health::build_snapshot(
 			array(
@@ -142,7 +143,9 @@ final class MuGuardTest extends TestCase {
 			),
 			array(
 				'ai-plugin/ai.php' => true,
-			)
+			),
+			array(),
+			$this->mu_dir
 		);
 
 		// has_ai_client detection may or may not treat ai-plugin as AI Client;

@@ -18,6 +18,15 @@ if ( ! defined( 'HANDL_AICAC_DIR' ) ) {
 	define( 'HANDL_AICAC_DIR', dirname( __DIR__ ) );
 }
 
+if ( ! defined( 'WPMU_PLUGIN_DIR' ) ) {
+	$handl_aicac_phpunit_mu = sys_get_temp_dir() . '/handl-aicac-phpunit-mu-plugins';
+	if ( ! is_dir( $handl_aicac_phpunit_mu ) && ! mkdir( $handl_aicac_phpunit_mu, 0755, true ) && ! is_dir( $handl_aicac_phpunit_mu ) ) {
+		fwrite( STDERR, "Could not create PHPUnit mu-plugins dir: {$handl_aicac_phpunit_mu}\n" );
+	} else {
+		define( 'WPMU_PLUGIN_DIR', $handl_aicac_phpunit_mu );
+	}
+}
+
 if ( ! defined( 'HANDL_AICAC_VERSION' ) ) {
 	define( 'HANDL_AICAC_VERSION', '1.6.0' );
 }

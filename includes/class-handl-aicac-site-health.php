@@ -100,6 +100,7 @@ final class Site_Health {
 	 * @param array<string,array<string,mixed>> $installed_plugins get_plugins()-shaped map.
 	 * @param array<string,bool>                $active_plugins    basename => true for active.
 	 * @param list<mixed>                       $log               Activity log (optional; for gap scan).
+	 * @param string|null                       $mu_dir            Override WPMU_PLUGIN_DIR for hardened stub checks.
 	 * @return array{
 	 *   status:string,
 	 *   issue:string,
@@ -113,7 +114,7 @@ final class Site_Health {
 	 *   alerts_configured:bool
 	 * }
 	 */
-	public static function build_snapshot( array $policy, array $installed_plugins, array $active_plugins, array $log = array() ): array {
+	public static function build_snapshot( array $policy, array $installed_plugins, array $active_plugins, array $log = array(), ?string $mu_dir = null ): array {
 		$kill_switch   = ! empty( $policy['kill_switch'] );
 		$exceptions    = Policy::get_kill_switch_exceptions( $policy );
 		$logging       = self::logging_active( $policy );
@@ -128,7 +129,7 @@ final class Site_Health {
 		$failing_alerts = Alert_Health::failing_channels( $policy );
 		$over_budget    = Budget::over_budget_list( $policy );
 		$gaps           = class_exists( Tamper::class ) ? Tamper::recent_gap_windows( $log ) : array();
-		$hardened       = class_exists( Mu_Guard::class ) ? Mu_Guard::status() : array(
+		$hardened       = class_exists( Mu_Guard::class ) ? Mu_Guard::status( $mu_dir ) : array(
 			'mode'         => '',
 			'enabled'      => false,
 			'stub_present' => false,
