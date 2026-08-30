@@ -136,7 +136,7 @@ final class SpendForecastTest extends TestCase {
 		$this->assertStringContainsString( 'estimated-spend forecast', strtolower( self::$mails[0]['subject'] ) );
 		$this->assertStringContainsString( 'Estimated month-end (current pace):', self::$mails[0]['message'] );
 		$this->assertStringContainsString( 'estimated-spend forecast warning', self::$mails[0]['message'] );
-		$this->assertStringContainsString( 'handl_aicac_tab=dashboard', self::$mails[0]['message'] );
+		$this->assertStringContainsString( 'page=handl-aicac', self::$mails[0]['message'] );
 
 		Spend_Forecast::maybe_evaluate( $policy, $now );
 		$this->assertCount( 1, self::$mails );

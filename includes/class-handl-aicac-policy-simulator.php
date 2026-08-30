@@ -104,6 +104,7 @@ final class Policy_Simulator {
 			'unknown_operation' => __( 'Unknown operation rule', 'handl-ai-connector-access-control' ),
 			'tool_armed'        => __( 'Blocked tool rule', 'handl-ai-connector-access-control' ),
 			'ability_armed'     => __( 'Blocked tool rule', 'handl-ai-connector-access-control' ),
+			'pii'               => __( 'Personal information detected', 'handl-ai-connector-access-control' ),
 		);
 		if ( isset( $map[ $reason ] ) ) {
 			return $map[ $reason ];

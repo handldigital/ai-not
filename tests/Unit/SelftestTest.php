@@ -202,12 +202,13 @@ final class SelftestTest extends TestCase {
 		$this->assertSame( 'critical', $fail['status'] );
 		$this->assertSame( 'AI blocking did not work', $fail['label'] );
 		$this->assertStringContainsString( 'Learn mode is on.', $fail['description'] );
-		$this->assertStringContainsString( 'handl_aicac_tab=activity', $fail['actions'] );
+		$this->assertStringContainsString( 'page=handl-aicac-activity', $fail['actions'] );
 	}
 
 	public function test_site_health_registers_selftest(): void {
 		$tests = Site_Health::instance()->register_tests( array() );
 		$this->assertArrayHasKey( Selftest::SITE_HEALTH_SLUG, $tests['direct'] );
 		$this->assertArrayHasKey( Site_Health::TEST_SLUG, $tests['direct'] );
+		$this->assertArrayHasKey( Site_Health::HARDENED_TEST_SLUG, $tests['direct'] );
 	}
 }

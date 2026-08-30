@@ -328,7 +328,7 @@ final class Monthly_Report {
 		$lines[] = __( 'The printable report is attached as an HTML file. Open it in a browser, then use Print → Save as PDF. Estimated spend is an estimate, not a bill. Prompt text and user names are not included.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = __( 'Manage this schedule:', 'handl-ai-connector-access-control' );
-		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' );
+		$lines[] = Admin::screen_url( 'activity' );
 
 		return implode( "\n", $lines ) . "\n";
 	}
@@ -349,7 +349,7 @@ final class Monthly_Report {
 		$lines[] = __( 'No report file is attached because no activity was retained for this period. The monthly email schedule is still on.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = __( 'Manage this schedule:', 'handl-ai-connector-access-control' );
-		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' );
+		$lines[] = Admin::screen_url( 'activity' );
 
 		return implode( "\n", $lines ) . "\n";
 	}

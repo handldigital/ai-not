@@ -64,6 +64,8 @@ function handl_aicac_uninstall_legacy_option_keys(): array {
  * Delete every plugin-prefixed option, transient, cron hook, and legacy key.
  */
 function handl_aicac_uninstall_purge(): void {
+	handl_aicac_uninstall_remove_mu_guard_stub();
+
 	if ( isset( $GLOBALS['handl_aicac_test_options'] ) && is_array( $GLOBALS['handl_aicac_test_options'] ) ) {
 		foreach ( array_keys( $GLOBALS['handl_aicac_test_options'] ) as $key ) {
 			if ( 0 === strpos( (string) $key, 'handl_aicac_' ) ) {
@@ -118,10 +120,32 @@ function handl_aicac_uninstall_purge(): void {
  * Honor the stored policy for the current site. Missing option = keep.
  */
 function handl_aicac_run_uninstall(): void {
+	// Always remove the hardened mu-plugin stub so an orphaned fail-closed
+	// guard cannot outlive the plugin without an admin toggle path.
+	handl_aicac_uninstall_remove_mu_guard_stub();
+
 	if ( 'purge' !== handl_aicac_uninstall_policy() ) {
 		return;
 	}
 	handl_aicac_uninstall_purge();
+}
+
+/**
+ * Remove wp-content/mu-plugins/handl-aicac-guard.php when present.
+ */
+function handl_aicac_uninstall_remove_mu_guard_stub(): void {
+	$dir = defined( 'WPMU_PLUGIN_DIR' ) ? (string) WPMU_PLUGIN_DIR : '';
+	if ( '' === $dir && defined( 'WP_CONTENT_DIR' ) ) {
+		$dir = rtrim( (string) WP_CONTENT_DIR, '/\\' ) . '/mu-plugins';
+	}
+	if ( '' === $dir ) {
+		return;
+	}
+	$path = rtrim( $dir, '/\\' ) . '/handl-aicac-guard.php';
+	if ( is_file( $path ) ) {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- uninstall cleanup.
+		@unlink( $path );
+	}
 }
 
 /**

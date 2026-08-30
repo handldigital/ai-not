@@ -281,13 +281,7 @@ final class Whats_New {
 			);
 		}
 
-		return add_query_arg(
-			array(
-				'page'            => 'handl-ai-connector-access-control',
-				'handl_aicac_tab' => 'whats-new',
-			),
-			admin_url( 'options-general.php' )
-		);
+		return Admin::screen_url( 'whats-new' );
 	}
 
 	public function maybe_render_notice(): void {
@@ -355,7 +349,7 @@ final class Whats_New {
 
 		$back = ( self::is_network_active() && is_network_admin() )
 			? network_admin_url( 'settings.php?page=handl-aicac-network' )
-			: admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=dashboard' );
+			: Admin::screen_url( 'dashboard' );
 		$back_label = ( self::is_network_active() && is_network_admin() )
 			? __( 'Back to network overview', 'handl-ai-connector-access-control' )
 			: __( 'Back to Dashboard', 'handl-ai-connector-access-control' );

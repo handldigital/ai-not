@@ -57,14 +57,9 @@ final class Plugin_Profile {
 			return '';
 		}
 
-		return add_query_arg(
-			array(
-				'page'               => 'handl-ai-connector-access-control',
-				'handl_aicac_tab'    => 'profile',
-				'handl_aicac_plugin' => $plugin,
-			),
-			admin_url( 'options-general.php' )
-		);
+		return Admin::screen_url( 'profile', array(
+					'handl_aicac_plugin' => $plugin,
+				) );
 	}
 
 	/**
@@ -73,23 +68,12 @@ final class Plugin_Profile {
 	public static function rules_url( string $plugin ): string {
 		$plugin = self::sanitize_plugin( $plugin );
 		if ( '' === $plugin ) {
-			return add_query_arg(
-				array(
-					'page'            => 'handl-ai-connector-access-control',
-					'handl_aicac_tab' => 'rules',
-				),
-				admin_url( 'options-general.php' )
-			);
+			return Admin::screen_url( 'rules' );
 		}
 
-		return add_query_arg(
-			array(
-				'page'                      => 'handl-ai-connector-access-control',
-				'handl_aicac_tab'           => 'rules',
-				'handl_aicac_focus_plugin'  => $plugin,
-			),
-			admin_url( 'options-general.php' )
-		) . '#handl-aicac-rule-' . rawurlencode( md5( $plugin ) );
+		return Admin::screen_url( 'rules', array(
+					'handl_aicac_focus_plugin'  => $plugin,
+				) ) . '#handl-aicac-rule-' . rawurlencode( md5( $plugin ) );
 	}
 
 	/**
@@ -101,15 +85,12 @@ final class Plugin_Profile {
 	 */
 	public static function activity_url( string $plugin ): string {
 		$plugin = self::sanitize_plugin( $plugin );
-		$args   = array(
-			'page'            => 'handl-ai-connector-access-control',
-			'handl_aicac_tab' => 'activity',
-		);
+		$args = array();
 		if ( '' !== $plugin ) {
 			$args['handl_aicac_log_plugin'] = $plugin;
 		}
 
-		return add_query_arg( $args, admin_url( 'options-general.php' ) ) . '#handl-aicac-log-wrap';
+		return Admin::screen_url( 'activity', $args ) . '#handl-aicac-log-wrap';
 	}
 
 	/**

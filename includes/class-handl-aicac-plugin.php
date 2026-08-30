@@ -61,6 +61,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-new-plugin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quiet-hours.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-break-glass.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-pii-warn.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-selftest.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-simulator.php';
@@ -83,6 +84,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-site-health.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-tamper.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-mu-guard.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rest.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
 
@@ -105,6 +107,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 		Network_Admin::instance()->init();
 		Site_Health::instance()->init();
 		Tamper::instance()->init();
+		Mu_Guard::instance()->init();
 		Rest::instance()->init();
 		Dashboard_Widget::instance()->init();
 
@@ -114,12 +117,14 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-policy-apply.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-break-glass.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-selftest.php';
+			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-hardened.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-siem.php';
 			CLI::register();
 			CLI_Audit::register();
 			CLI_Policy_Apply::register();
 			CLI_Break_Glass::register();
 			CLI_Selftest::register();
+			CLI_Hardened::register();
 			CLI_Siem::register();
 		}
 	}

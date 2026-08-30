@@ -350,7 +350,7 @@ final class Spend_Threshold {
 		$lines[] = __( 'This estimate is based on logged token usage and configured rates. It is not a bill and does not block AI Client calls.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = __( 'Manage estimated spend alerts:', 'handl-ai-connector-access-control' );
-		$lines[] = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=activity' );
+		$lines[] = Admin::screen_url( 'activity' );
 
 		return implode( "\n", $lines ) . "\n";
 	}

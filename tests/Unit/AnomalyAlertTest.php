@@ -179,7 +179,7 @@ final class AnomalyAlertTest extends TestCase {
 
 	public function test_activity_url_includes_plugin_filter(): void {
 		$url = Anomaly::activity_url_for_plugin( 'foo/bar.php' );
-		$this->assertStringContainsString( 'handl_aicac_tab=activity', $url );
+		$this->assertStringContainsString( 'page=handl-aicac-activity', $url );
 		$this->assertStringContainsString( 'handl_aicac_log_plugin', $url );
 		$this->assertStringContainsString( 'foo', $url );
 	}

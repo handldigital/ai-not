@@ -18,6 +18,15 @@ if ( ! defined( 'HANDL_AICAC_DIR' ) ) {
 	define( 'HANDL_AICAC_DIR', dirname( __DIR__ ) );
 }
 
+if ( ! defined( 'WPMU_PLUGIN_DIR' ) ) {
+	$handl_aicac_phpunit_mu = sys_get_temp_dir() . '/handl-aicac-phpunit-mu-plugins';
+	if ( ! is_dir( $handl_aicac_phpunit_mu ) && ! mkdir( $handl_aicac_phpunit_mu, 0755, true ) && ! is_dir( $handl_aicac_phpunit_mu ) ) {
+		fwrite( STDERR, "Could not create PHPUnit mu-plugins dir: {$handl_aicac_phpunit_mu}\n" );
+	} else {
+		define( 'WPMU_PLUGIN_DIR', $handl_aicac_phpunit_mu );
+	}
+}
+
 if ( ! defined( 'HANDL_AICAC_VERSION' ) ) {
 	define( 'HANDL_AICAC_VERSION', '1.6.0' );
 }
@@ -504,6 +513,21 @@ if ( ! function_exists( 'wp_clear_scheduled_hook' ) ) {
 	}
 }
 
+if ( ! function_exists( 'add_filter' ) ) {
+	/**
+	 * Minimal stand-in so mu-stub templates can load in unit tests.
+	 *
+	 * @param string   $hook
+	 * @param callable $callback
+	 * @param int      $priority
+	 * @param int      $accepted_args
+	 */
+	function add_filter( $hook, $callback, $priority = 10, $accepted_args = 1 ): bool {
+		unset( $hook, $callback, $priority, $accepted_args );
+		return true;
+	}
+}
+
 if ( ! function_exists( 'apply_filters' ) ) {
 	/**
 	 * @param string $hook Hook name.
@@ -831,6 +855,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rule-notes.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-new-plugin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quiet-hours.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-break-glass.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-pii-warn.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-selftest.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-simulator.php';
@@ -852,6 +877,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-site-health.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-tamper.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-mu-guard.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rest.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
 require_once __DIR__ . '/stubs/namespace-filter-input.php';

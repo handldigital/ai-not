@@ -205,7 +205,7 @@ final class SiteHealthTest extends TestCase {
 		);
 
 		$this->assertSame( 'recommended', $result['status'] );
-		$this->assertStringContainsString( 'handl_aicac_tab=activity', $result['actions'] );
+		$this->assertStringContainsString( 'page=handl-aicac-activity', $result['actions'] );
 		$this->assertSame( Site_Health::TEST_SLUG, $result['test'] );
 	}
 }

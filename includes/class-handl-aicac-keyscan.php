@@ -116,7 +116,7 @@ final class Keyscan {
 	public function run_site_health_test(): array {
 		$findings = self::active_findings();
 		$count    = count( $findings );
-		$url      = admin_url( 'options-general.php?page=handl-ai-connector-access-control&handl_aicac_tab=dashboard' );
+		$url      = Admin::screen_url( 'dashboard' );
 
 		if ( $count > 0 ) {
 			return array(

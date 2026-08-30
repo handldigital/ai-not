@@ -159,7 +159,7 @@ final class NewPluginTest extends TestCase {
 
 	public function test_review_rules_url_reuses_graduate_focus(): void {
 		$url = New_Plugin::review_rules_url( 'akismet/akismet.php' );
-		$this->assertStringContainsString( 'handl_aicac_tab=rules', $url );
+		$this->assertStringContainsString( 'page=handl-aicac-rules', $url );
 		$this->assertStringContainsString( 'handl_aicac_focus_plugin=', $url );
 		$this->assertStringContainsString( 'handl_aicac_graduate=1', $url );
 		$this->assertStringContainsString( '#handl-aicac-rule-', $url );
