@@ -193,6 +193,7 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = Unreleased =
+* Optional retry-storm detector collapses rapid deny loops from the same plugin into one Activity row and one hourly alert (`wp handl-aicac retry-storm`). On by default at a 30-second window and threshold of 5; turn off to restore per-deny rows and emails.
 * Alert emails can include signed links to allow a plugin for 24 hours, snooze alerts for 7 days, or open that plugin’s rule. The link only works after you log in and confirm.
 
 * Uninstall now keeps plugin data by default (rules, activity, alerts). Deleting the plugin used to remove that data. To wipe it, run `wp handl-aicac uninstall set purge` before deleting the plugin.
