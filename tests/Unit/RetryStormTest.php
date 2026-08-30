@@ -97,7 +97,7 @@ final class RetryStormTest extends TestCase {
 			array_filter(
 				self::$mails,
 				static function ( array $m ) {
-					return false !== strpos( $m['subject'], 'retrying after a deny' );
+					return false !== strpos( $m['subject'], 'keeps retrying a blocked AI request' );
 				}
 			)
 		);
@@ -107,7 +107,7 @@ final class RetryStormTest extends TestCase {
 			array_filter(
 				self::$mails,
 				static function ( array $m ) {
-					return false === strpos( $m['subject'], 'retrying after a deny' );
+					return false === strpos( $m['subject'], 'keeps retrying a blocked AI request' );
 				}
 			)
 		);
@@ -183,7 +183,7 @@ final class RetryStormTest extends TestCase {
 			array_filter(
 				self::$mails,
 				static function ( array $m ) {
-					return false !== strpos( $m['subject'], 'retrying after a deny' );
+					return false !== strpos( $m['subject'], 'keeps retrying a blocked AI request' );
 				}
 			)
 		);

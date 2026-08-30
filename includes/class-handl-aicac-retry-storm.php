@@ -312,13 +312,13 @@ final class Retry_Storm {
 
 		$subject = sprintf(
 			/* translators: 1: site name, 2: plugin name */
-			__( '[%1$s] HandL: %2$s is retrying after a deny', 'handl-ai-connector-access-control' ),
+			__( '[%1$s] HandL: %2$s keeps retrying a blocked AI request', 'handl-ai-connector-access-control' ),
 			$site,
 			$label
 		);
 
 		$lines   = array();
-		$lines[] = __( 'HandL AI Connector Access Control retry-storm alert', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'HandL AI Access alert', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = sprintf(
 			/* translators: %s: plugin display name or basename */
@@ -326,11 +326,12 @@ final class Retry_Storm {
 			$label
 		);
 		$lines[] = sprintf(
-			/* translators: %s: operation family key */
-			__( 'Operation family: %s', 'handl-ai-connector-access-control' ),
+			/* translators: %s: capability / request-type key */
+			__( 'Request type: %s', 'handl-ai-connector-access-control' ),
 			$family
 		);
-		$lines[] = __( 'This plugin is retrying the same blocked call. Further denies in the window are collapsed into one Activity row.', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'HandL blocked this AI request, but the plugin kept trying again.', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'To reduce repeat emails and Activity clutter, HandL groups these retries into one Activity entry for a short time.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = sprintf(
 			/* translators: %s: site home URL */
