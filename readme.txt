@@ -193,13 +193,12 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = Unreleased =
-* Rules matrix paginates (25/50/100 per page) with plugin name search, so large sites no longer post every plugin row on Save.
-
 * Alert emails can include signed links to allow a plugin for 24 hours, snooze alerts for 7 days, or open that plugin’s rule. The link only works after you log in and confirm.
 
 * Uninstall now keeps plugin data by default (rules, activity, alerts). Deleting the plugin used to remove that data. To wipe it, run `wp handl-aicac uninstall set purge` before deleting the plugin.
 * Deactivating the plugin now writes an Activity row, sends one alert email, and stamps the enforcement gap; reactivating logs the resume, shows a dismissible admin notice with the gap window, and Site Health recommends when gaps appear in the last 30 days.
 * Optional Hardened mode (`wp handl-aicac hardened`) installs a must-use stub so AI Client calls stay blocked or watched while the main plugin is deactivated.
+* Rules matrix paginates (25/50/100 per page) with plugin name search, so large sites no longer post every plugin row on Save.
 
 = 1.6.0 =
 * In versions 1.3.0–1.5.0, changes made on the Rules tab did not save. Version 1.6.0 saves Rules again and prevents an incomplete save from erasing rules that were not submitted.
