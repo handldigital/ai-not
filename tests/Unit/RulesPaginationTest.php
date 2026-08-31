@@ -95,6 +95,10 @@ final class RulesPaginationTest extends TestCase {
 		$this->assertStringContainsString( 'handl-aicac-rules-search', $src );
 		$this->assertStringContainsString( 'collect_visible_rule_plugins', $src );
 		$this->assertStringContainsString( "name=\"handl_aicac_s\"", $src );
+		$this->assertStringContainsString( 'rules_allowed_per_page', $src );
+		$this->assertSame( 13, Admin::RULES_MATRIX_FIELDS_PER_ROW );
+		$this->assertSame( array( 25, 50 ), Admin::rules_allowed_per_page( 1000 ) );
+		$this->assertSame( array( 25, 50, 100 ), Admin::rules_allowed_per_page( 4000 ) );
 		// Must not touch Activity log renderers in this lane.
 		$this->assertDoesNotMatchRegularExpression(
 			'/function\s+render_log_tab\s*\([^)]*\)\s*:\s*void\s*\{[^}]{0,200}Pager::/',

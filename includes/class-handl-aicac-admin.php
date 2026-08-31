@@ -36,6 +36,23 @@ final class Admin {
 	);
 
 	/**
+	 * Named form controls per Rules matrix plugin row on the rules save form.
+	 *
+	 * Counted against the row renderer: rule, expire_preset, expire_date,
+	 * rule_note, five operation-family selects, model_force provider + model,
+	 * plugin_budgets amount + mode. Bulk/snooze/renew controls use other forms.
+	 */
+	public const RULES_MATRIX_FIELDS_PER_ROW = 13;
+
+	/**
+	 * Non-row inputs on the Rules save form (nonce, referer, tab/filters, pager
+	 * args, action slot, expected sentinel, submit). Cushion above the literal
+	 * ~11 so a future chrome field does not re-enable a dead 100 option on
+	 * default PHP max_input_vars=1000.
+	 */
+	public const RULES_MATRIX_FIXED_INPUT_VARS = 16;
+
+	/**
 	 * @var array{decision:string,operation:string,provider:string,model:string,plugin:string}
 	 */
 	private array $log_filters = array(
@@ -429,9 +446,18 @@ final class Admin {
 			$plugin_rules_search = self::sanitize_rules_search( wp_unslash( (string) $_REQUEST['handl_aicac_s'] ) );
 		}
 
-		$plugin_rules_per_page = Pager::DEFAULT_PER_PAGE;
+		$rules_per_page_allowed = self::rules_allowed_per_page();
+		$plugin_rules_per_page  = Pager::DEFAULT_PER_PAGE;
 		if ( isset( $_REQUEST[ Pager::PER_PAGE_ARG ] ) ) {
-			$plugin_rules_per_page = Pager::sanitize_per_page( wp_unslash( (string) $_REQUEST[ Pager::PER_PAGE_ARG ] ) );
+			$plugin_rules_per_page = Pager::sanitize_per_page(
+				wp_unslash( (string) $_REQUEST[ Pager::PER_PAGE_ARG ] ),
+				$rules_per_page_allowed
+			);
+		} else {
+			$plugin_rules_per_page = Pager::sanitize_per_page(
+				Pager::DEFAULT_PER_PAGE,
+				$rules_per_page_allowed
+			);
 		}
 
 		$plugin_rules_page_raw = 1;
@@ -698,7 +724,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 			echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__( 'This change would make one or more policy checks fail. Review the list below and select “Save anyway” if you still want to apply it.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $this->rules_save_truncated ) {
-			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Rules were not saved. The form sent fewer plugin rows than this page expected (max_input_vars truncation). Nothing was changed. Stay on a smaller page size, or raise max_input_vars.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Rules were not saved because the page was too large for your server to process. Nothing was changed. Choose a smaller page size or increase the PHP max_input_vars setting.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $saved ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Saved.', 'handl-ai-connector-access-control' ) . '</p></div>';
@@ -1665,6 +1691,23 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	}
 
 	/**
+	 * Per-page sizes the Rules selector may offer under the current PHP budget.
+	 *
+	 * @return list<int>
+	 */
+	public static function rules_allowed_per_page( ?int $max_input_vars = null ): array {
+		if ( null === $max_input_vars ) {
+			$raw = ini_get( 'max_input_vars' );
+			$max_input_vars = ( is_numeric( $raw ) && (int) $raw > 0 ) ? (int) $raw : 1000;
+		}
+		return Pager::sizes_within_input_budget(
+			$max_input_vars,
+			self::RULES_MATRIX_FIXED_INPUT_VARS,
+			self::RULES_MATRIX_FIELDS_PER_ROW
+		);
+	}
+
+	/**
 	 * Case-insensitive match on display name or plugin basename.
 	 */
 	public static function plugin_matches_rules_search( string $name, string $basename, string $search ): bool {
@@ -1816,7 +1859,13 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 		echo '</select>';
 
-		Pager::render_per_page_select( $base_url, $rules_per_page, $rules_query, 'handl-aicac-rules-per-page' );
+		Pager::render_per_page_select(
+			$base_url,
+			$rules_per_page,
+			$rules_query,
+			'handl-aicac-rules-per-page',
+			self::rules_allowed_per_page()
+		);
 
 		$search_base = Pager::url(
 			$base_url,

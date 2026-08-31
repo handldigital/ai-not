@@ -23,6 +23,27 @@ final class PagerTest extends TestCase {
 		$this->assertSame( 100, Pager::sanitize_per_page( '100' ) );
 	}
 
+	public function test_sizes_within_input_budget_hides_oversize_options(): void {
+		// Default PHP (1000): 100 rows × 13 fields exceeds the budget → 25/50 only.
+		$this->assertSame(
+			array( 25, 50 ),
+			Pager::sizes_within_input_budget( 1000, 16, 13 )
+		);
+		// Raised limit: all three nominal sizes fit.
+		$this->assertSame(
+			array( 25, 50, 100 ),
+			Pager::sizes_within_input_budget( 4000, 16, 13 )
+		);
+	}
+
+	public function test_sanitize_per_page_clamps_to_allowed_subset(): void {
+		$allowed = array( 25, 50 );
+		$this->assertSame( 50, Pager::sanitize_per_page( 100, $allowed ) );
+		$this->assertSame( 50, Pager::sanitize_per_page( 50, $allowed ) );
+		$this->assertSame( 25, Pager::sanitize_per_page( 25, $allowed ) );
+		$this->assertSame( 25, Pager::sanitize_per_page( null, $allowed ) );
+	}
+
 	public function test_total_pages_and_offset(): void {
 		$this->assertSame( 1, Pager::total_pages( 0, 25 ) );
 		$this->assertSame( 1, Pager::total_pages( 25, 25 ) );
