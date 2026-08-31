@@ -241,7 +241,7 @@ final class Pager {
 		$per_page = self::sanitize_per_page( $per_page );
 
 		echo '<label for="' . esc_attr( $id ) . '" class="screen-reader-text">';
-		echo esc_html__( 'Plugins per page', 'handl-ai-connector-access-control' );
+		echo esc_html__( 'Rows per page', 'handl-ai-connector-access-control' );
 		echo '</label>';
 		echo '<select id="' . esc_attr( $id ) . '" class="handl-aicac-per-page" onchange="if (this.selectedOptions.length) { window.location = this.selectedOptions[0].getAttribute(\'data-url\'); }">';
 		foreach ( self::ALLOWED_PER_PAGE as $size ) {

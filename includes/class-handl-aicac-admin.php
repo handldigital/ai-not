@@ -424,6 +424,21 @@ final class Admin {
 			$plugin_access_filter = 'all';
 		}
 
+		$plugin_rules_search = '';
+		if ( isset( $_REQUEST['handl_aicac_s'] ) ) {
+			$plugin_rules_search = self::sanitize_rules_search( wp_unslash( (string) $_REQUEST['handl_aicac_s'] ) );
+		}
+
+		$plugin_rules_per_page = Pager::DEFAULT_PER_PAGE;
+		if ( isset( $_REQUEST[ Pager::PER_PAGE_ARG ] ) ) {
+			$plugin_rules_per_page = Pager::sanitize_per_page( wp_unslash( (string) $_REQUEST[ Pager::PER_PAGE_ARG ] ) );
+		}
+
+		$plugin_rules_page_raw = 1;
+		if ( isset( $_REQUEST[ Pager::PAGE_ARG ] ) ) {
+			$plugin_rules_page_raw = wp_unslash( (string) $_REQUEST[ Pager::PAGE_ARG ] );
+		}
+
 		$this->log_filters = $this->parse_log_filters();
 
 		if ( isset( $_POST['handl_aicac_action'] ) ) {
@@ -683,7 +698,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 			echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__( 'This change would make one or more policy checks fail. Review the list below and select “Save anyway” if you still want to apply it.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $this->rules_save_truncated ) {
-			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Rules were not saved. The form sent more plugin rows than PHP will accept (max_input_vars). Nothing was changed. Filter the plugin list so fewer rows are shown, or raise max_input_vars.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Rules were not saved. The form sent fewer plugin rows than this page expected (max_input_vars truncation). Nothing was changed. Stay on a smaller page size, or raise max_input_vars.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $saved ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Saved.', 'handl-ai-connector-access-control' ) . '</p></div>';
@@ -1003,14 +1018,29 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		$rules_form_id = 'handl-aicac-rules-save';
 		$bulk_form_id  = 'handl-aicac-bulk-rules';
 		$default_rule  = ( ( $policy['default'] ?? 'allow' ) === 'deny' ) ? 'deny' : 'allow';
-		$rules_expected = 0;
-		foreach ( $plugins as $basename => $data ) {
-			$rule    = $policy['plugins'][ $basename ] ?? '';
-			$enabled = isset( $active[ $basename ] );
-			if ( $this->plugin_rule_row_is_visible( (string) $rule, $enabled, $plugin_status_filter, $plugin_access_filter, $default_rule ) ) {
-				++$rules_expected;
-			}
-		}
+
+		$visible_plugins = $this->collect_visible_rule_plugins(
+			$plugins,
+			$active,
+			$policy,
+			$plugin_status_filter,
+			$plugin_access_filter,
+			$plugin_rules_search,
+			$default_rule
+		);
+		$rules_total     = count( $visible_plugins );
+		$rules_per_page  = $plugin_rules_per_page;
+		$rules_pages     = Pager::total_pages( $rules_total, $rules_per_page );
+		$rules_page      = Pager::sanitize_page( $plugin_rules_page_raw, $rules_pages );
+		$page_plugins    = Pager::slice( $visible_plugins, $rules_page, $rules_per_page );
+		$rules_expected  = count( $page_plugins );
+		$rules_base_url  = self::screen_url( 'rules' );
+		$rules_query     = $this->rules_list_query_args(
+			$plugin_status_filter,
+			$plugin_access_filter,
+			$plugin_rules_search,
+			$rules_per_page
+		);
 
 		// Bulk shell first — must not nest inside the rules form.
 		echo '<form method="post" id="' . esc_attr( $bulk_form_id ) . '" class="handl-aicac-rules-save-form">';
@@ -1019,6 +1049,9 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
 		echo '<input type="hidden" name="handl_aicac_status" value="' . esc_attr( $plugin_status_filter ) . '" />';
 		echo '<input type="hidden" name="handl_aicac_access" value="' . esc_attr( $plugin_access_filter ) . '" />';
+		echo '<input type="hidden" name="handl_aicac_s" value="' . esc_attr( $plugin_rules_search ) . '" />';
+		echo '<input type="hidden" name="' . esc_attr( Pager::PAGE_ARG ) . '" value="' . esc_attr( (string) $rules_page ) . '" />';
+		echo '<input type="hidden" name="' . esc_attr( Pager::PER_PAGE_ARG ) . '" value="' . esc_attr( (string) $rules_per_page ) . '" />';
 		echo '</form>';
 
 		// Renew shell — associated via form= on Renew buttons (no nested forms).
@@ -1047,6 +1080,9 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
 		echo '<input type="hidden" name="handl_aicac_status" value="' . esc_attr( $plugin_status_filter ) . '" />';
 		echo '<input type="hidden" name="handl_aicac_access" value="' . esc_attr( $plugin_access_filter ) . '" />';
+		echo '<input type="hidden" name="handl_aicac_s" value="' . esc_attr( $plugin_rules_search ) . '" />';
+		echo '<input type="hidden" name="' . esc_attr( Pager::PAGE_ARG ) . '" value="' . esc_attr( (string) $rules_page ) . '" />';
+		echo '<input type="hidden" name="' . esc_attr( Pager::PER_PAGE_ARG ) . '" value="' . esc_attr( (string) $rules_per_page ) . '" />';
 		// Early action slot: Save is after the matrix and can be truncated by
 		// max_input_vars. Click/submit handlers copy data-aicac-action here first.
 		echo '<input type="hidden" name="handl_aicac_action" id="handl-aicac-action" value="" />';
@@ -1138,7 +1174,14 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo ' ' . esc_html__( 'Model routes follow the detected plugin. Calls with no detected plugin may run without a route, so model routing is not a spend guarantee.', 'handl-ai-connector-access-control' );
 			echo '</p></div>';
 		}
-		$this->render_plugin_rules_filters( $plugin_status_filter, $plugin_access_filter );
+		$this->render_plugin_rules_filters(
+			$plugin_status_filter,
+			$plugin_access_filter,
+			$plugin_rules_search,
+			$rules_per_page,
+			$rules_base_url,
+			$rules_query
+		);
 
 		echo '<div class="tablenav top handl-aicac-bulk-nav">';
 		echo '<div class="alignleft actions bulkactions">';
@@ -1150,6 +1193,16 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '</select> ';
 		echo '<input type="submit" class="button action" form="' . esc_attr( $bulk_form_id ) . '" value="' . esc_attr__( 'Apply', 'handl-ai-connector-access-control' ) . '" />';
 		echo '</div>';
+		Pager::render_tablenav_pages(
+			array(
+				'base_url'   => $rules_base_url,
+				'total'      => $rules_total,
+				'page'       => $rules_page,
+				'per_page'   => $rules_per_page,
+				'query_args' => $rules_query,
+				'which'      => 'top',
+			)
+		);
 		echo '<br class="clear" />';
 		echo '</div>';
 
@@ -1174,14 +1227,21 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$plugin_budgets = Budget::sanitize_plugin_budgets( $policy['plugin_budgets'] ?? array() );
 		$plugin_budget_modes = Budget::sanitize_plugin_budget_modes( $policy['plugin_budget_modes'] ?? array() );
 
-		foreach ( $plugins as $basename => $data ) {
+		if ( 0 === $rules_expected ) {
+			echo '<tr><td colspan="12">';
+			if ( '' !== $plugin_rules_search ) {
+				echo esc_html__( 'No plugins match this search.', 'handl-ai-connector-access-control' );
+			} else {
+				echo esc_html__( 'No plugins match these filters.', 'handl-ai-connector-access-control' );
+			}
+			echo '</td></tr>';
+		}
+
+		foreach ( $page_plugins as $basename => $data ) {
 			$name    = isset( $data['Name'] ) ? (string) $data['Name'] : $basename;
 			$rule    = $policy['plugins'][ $basename ] ?? '';
 			$enabled = isset( $active[ $basename ] );
 			$default_rule = ( ( $policy['default'] ?? 'allow' ) === 'deny' ) ? 'deny' : 'allow';
-			if ( ! $this->plugin_rule_row_is_visible( (string) $rule, $enabled, $plugin_status_filter, $plugin_access_filter, $default_rule ) ) {
-				continue;
-			}
 
 			$plugin_ops = isset( $operations[ $basename ] ) && is_array( $operations[ $basename ] )
 				? $operations[ $basename ]
@@ -1350,6 +1410,20 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		echo '</tbody>';
 		echo '</table>';
+
+		echo '<div class="tablenav bottom handl-aicac-bulk-nav">';
+		Pager::render_tablenav_pages(
+			array(
+				'base_url'   => $rules_base_url,
+				'total'      => $rules_total,
+				'page'       => $rules_page,
+				'per_page'   => $rules_per_page,
+				'query_args' => $rules_query,
+				'which'      => 'bottom',
+			)
+		);
+		echo '<br class="clear" />';
+		echo '</div>';
 
 		echo '<script>';
 		echo '(function(){var all=document.getElementById("handl-aicac-bulk-select-all");if(!all)return;';
@@ -1577,12 +1651,101 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		return true;
 	}
 
-	private function render_plugin_rules_filters( string $plugin_status_filter, string $plugin_access_filter ): void {
-		$base_url = self::redirect_url( array(
-				'page'            => 'handl-ai-connector-access-control',
-				'handl_aicac_tab' => 'rules',
-			) );
+	/**
+	 * Trim + length-cap Rules search (plugin name or basename).
+	 *
+	 * @param mixed $raw
+	 */
+	public static function sanitize_rules_search( $raw ): string {
+		$s = sanitize_text_field( (string) $raw );
+		if ( strlen( $s ) > 100 ) {
+			$s = substr( $s, 0, 100 );
+		}
+		return $s;
+	}
 
+	/**
+	 * Case-insensitive match on display name or plugin basename.
+	 */
+	public static function plugin_matches_rules_search( string $name, string $basename, string $search ): bool {
+		$search = self::sanitize_rules_search( $search );
+		if ( '' === $search ) {
+			return true;
+		}
+		$needle = function_exists( 'mb_strtolower' ) ? mb_strtolower( $search ) : strtolower( $search );
+		$hay_name = function_exists( 'mb_strtolower' ) ? mb_strtolower( $name ) : strtolower( $name );
+		$hay_base = function_exists( 'mb_strtolower' ) ? mb_strtolower( $basename ) : strtolower( $basename );
+		return false !== strpos( $hay_name, $needle ) || false !== strpos( $hay_base, $needle );
+	}
+
+	/**
+	 * Visible Rules rows after status/access/search filters (before paging).
+	 *
+	 * @param array<string,array<string,mixed>> $plugins
+	 * @param array<string,int|string>          $active
+	 * @param array<string,mixed>               $policy
+	 * @return array<string,array<string,mixed>>
+	 */
+	private function collect_visible_rule_plugins(
+		array $plugins,
+		array $active,
+		array $policy,
+		string $status_filter,
+		string $access_filter,
+		string $search,
+		string $default_rule
+	): array {
+		$out = array();
+		foreach ( $plugins as $basename => $data ) {
+			$rule    = $policy['plugins'][ $basename ] ?? '';
+			$enabled = isset( $active[ $basename ] );
+			if ( ! $this->plugin_rule_row_is_visible( (string) $rule, $enabled, $status_filter, $access_filter, $default_rule ) ) {
+				continue;
+			}
+			$name = isset( $data['Name'] ) ? (string) $data['Name'] : (string) $basename;
+			if ( ! self::plugin_matches_rules_search( $name, (string) $basename, $search ) ) {
+				continue;
+			}
+			$out[ (string) $basename ] = $data;
+		}
+		return $out;
+	}
+
+	/**
+	 * Query args preserved across Rules filter/pager links (page omitted — callers set it).
+	 *
+	 * @return array<string, scalar>
+	 */
+	private function rules_list_query_args(
+		string $status_filter,
+		string $access_filter,
+		string $search,
+		int $per_page
+	): array {
+		$args = array(
+			'handl_aicac_status' => $status_filter,
+			'handl_aicac_access' => $access_filter,
+		);
+		if ( '' !== $search ) {
+			$args['handl_aicac_s'] = $search;
+		}
+		if ( Pager::DEFAULT_PER_PAGE !== $per_page ) {
+			$args[ Pager::PER_PAGE_ARG ] = $per_page;
+		}
+		return $args;
+	}
+
+	/**
+	 * @param array<string, scalar> $rules_query
+	 */
+	private function render_plugin_rules_filters(
+		string $plugin_status_filter,
+		string $plugin_access_filter,
+		string $plugin_rules_search,
+		int $rules_per_page,
+		string $base_url,
+		array $rules_query
+	): void {
 		$status_views = array(
 			'all'      => __( 'All', 'handl-ai-connector-access-control' ),
 			'active'   => __( 'Active', 'handl-ai-connector-access-control' ),
@@ -1598,12 +1761,15 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			}
 			++$view_index;
 
-			$view_url = add_query_arg(
+			$view_args = $rules_query;
+			$view_args['handl_aicac_status'] = $status_key;
+			$view_url = Pager::url(
+				$base_url,
+				$view_args,
 				array(
-					'handl_aicac_status' => $status_key,
-					'handl_aicac_access' => $plugin_access_filter,
-				),
-				$base_url
+					Pager::PAGE_ARG     => 1,
+					Pager::PER_PAGE_ARG => $rules_per_page,
+				)
 			);
 
 			$is_current = $plugin_status_filter === $status_key;
@@ -1630,12 +1796,15 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<label for="handl-aicac-access-filter" class="screen-reader-text">' . esc_html__( 'Filter by AI access', 'handl-ai-connector-access-control' ) . '</label>';
 		echo '<select id="handl-aicac-access-filter" onchange="if (this.selectedOptions.length) { window.location = this.selectedOptions[0].getAttribute(\'data-url\'); }">';
 		foreach ( $access_options as $access_key => $access_label ) {
-			$access_url = add_query_arg(
+			$access_args = $rules_query;
+			$access_args['handl_aicac_access'] = $access_key;
+			$access_url = Pager::url(
+				$base_url,
+				$access_args,
 				array(
-					'handl_aicac_status' => $plugin_status_filter,
-					'handl_aicac_access' => $access_key,
-				),
-				$base_url
+					Pager::PAGE_ARG     => 1,
+					Pager::PER_PAGE_ARG => $rules_per_page,
+				)
 			);
 			printf(
 				'<option value="%1$s" data-url="%2$s"%3$s>%4$s</option>',
@@ -1646,6 +1815,45 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			);
 		}
 		echo '</select>';
+
+		Pager::render_per_page_select( $base_url, $rules_per_page, $rules_query, 'handl-aicac-rules-per-page' );
+
+		$search_base = Pager::url(
+			$base_url,
+			array(
+				'handl_aicac_status' => $plugin_status_filter,
+				'handl_aicac_access' => $plugin_access_filter,
+			),
+			array(
+				Pager::PAGE_ARG     => 1,
+				Pager::PER_PAGE_ARG => $rules_per_page,
+			)
+		);
+		echo '<label for="handl-aicac-rules-search" class="screen-reader-text">' . esc_html__( 'Search plugins', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<input type="search" id="handl-aicac-rules-search" class="handl-aicac-rules-search" value="' . esc_attr( $plugin_rules_search ) . '" placeholder="' . esc_attr__( 'Search plugins…', 'handl-ai-connector-access-control' ) . '" />';
+		echo '<button type="button" class="button" id="handl-aicac-rules-search-go">' . esc_html__( 'Search', 'handl-ai-connector-access-control' ) . '</button>';
+		if ( '' !== $plugin_rules_search ) {
+			$clear_url = Pager::url(
+				$base_url,
+				array(
+					'handl_aicac_status' => $plugin_status_filter,
+					'handl_aicac_access' => $plugin_access_filter,
+				),
+				array(
+					Pager::PAGE_ARG     => 1,
+					Pager::PER_PAGE_ARG => $rules_per_page,
+				)
+			);
+			echo ' <a class="button" href="' . esc_url( $clear_url ) . '">' . esc_html__( 'Clear', 'handl-ai-connector-access-control' ) . '</a>';
+		}
+		echo '<script>';
+		echo '(function(){var input=document.getElementById("handl-aicac-rules-search");var go=document.getElementById("handl-aicac-rules-search-go");';
+		echo 'if(!input||!go)return;var base=' . wp_json_encode( $search_base ) . ';';
+		echo 'function run(){var q=(input.value||"").trim();var url=base;if(q){url+=(url.indexOf("?")>=0?"&":"?")+"handl_aicac_s="+encodeURIComponent(q);}window.location=url;}';
+		echo 'go.addEventListener("click",run);input.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();run();}});';
+		echo '})();';
+		echo '</script>';
+
 		echo '</div>';
 		echo '<br class="clear" />';
 		echo '</div>';
