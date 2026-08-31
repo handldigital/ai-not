@@ -61,6 +61,33 @@ final class PagerTest extends TestCase {
 		$this->assertSame( 3, Pager::sanitize_page( '3', 5 ) );
 	}
 
+	public function test_url_preserves_page_greater_than_one(): void {
+		$base = 'https://example.test/wp-admin/admin.php?page=handl-aicac-rules';
+		$page2 = Pager::url(
+			$base,
+			array( 'handl_aicac_plugin_q' => 'utm' ),
+			array(
+				Pager::PAGE_ARG     => 2,
+				Pager::PER_PAGE_ARG => 25,
+			)
+		);
+		$this->assertStringContainsString( 'handl_aicac_paged=2', $page2 );
+		$this->assertStringContainsString( 'handl_aicac_plugin_q=utm', $page2 );
+		// Default per_page is omitted from the URL.
+		$this->assertStringNotContainsString( 'handl_aicac_per_page=', $page2 );
+
+		$page1 = Pager::url(
+			$base,
+			array(),
+			array(
+				Pager::PAGE_ARG     => 1,
+				Pager::PER_PAGE_ARG => 50,
+			)
+		);
+		$this->assertStringNotContainsString( 'handl_aicac_paged=', $page1 );
+		$this->assertStringContainsString( 'handl_aicac_per_page=50', $page1 );
+	}
+
 	public function test_slice_preserves_keys_for_assoc_maps(): void {
 		$items = array(
 			'a/a.php' => array( 'Name' => 'A' ),

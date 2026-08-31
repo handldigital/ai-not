@@ -165,9 +165,14 @@ final class Pager {
 	public static function url( string $base_url, array $query_args, array $overrides = array() ): string {
 		$args = array_merge( $query_args, $overrides );
 
-		$page = isset( $args[ self::PAGE_ARG ] )
-			? self::sanitize_page( $args[ self::PAGE_ARG ] )
+		// URL builders must NOT clamp against total_pages — sanitize_page() defaults
+		// to total_pages=1, which would strip every page>1 from the href.
+		$page = isset( $args[ self::PAGE_ARG ] ) && is_numeric( $args[ self::PAGE_ARG ] )
+			? (int) $args[ self::PAGE_ARG ]
 			: 1;
+		if ( $page < 1 ) {
+			$page = 1;
+		}
 		$per_page = isset( $args[ self::PER_PAGE_ARG ] )
 			? self::sanitize_per_page( $args[ self::PER_PAGE_ARG ] )
 			: self::DEFAULT_PER_PAGE;
