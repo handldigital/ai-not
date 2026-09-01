@@ -224,7 +224,9 @@ final class Policy {
 		$this->log_event( $event );
 
 		// Observability only: opt-in denial email / digest. Never changes $prevent.
-		if ( $prevent && empty( $policy['audit_only'] ) && empty( $event['selftest'] ) ) {
+		// AICAC-RETRY-STORM: suppress per-deny mail once the window is collapsing.
+		if ( $prevent && empty( $policy['audit_only'] ) && empty( $event['selftest'] )
+			&& ! Retry_Storm::should_suppress_deny_alert( $event, $policy ) ) {
 			Alerts::maybe_notify_denial( $event, $policy );
 		}
 
@@ -1152,6 +1154,7 @@ final class Policy {
 		$policy['anomaly_floor_calls']   = Anomaly::sanitize_floor_calls( $policy['anomaly_floor_calls'] ?? Anomaly::DEFAULT_FLOOR_CALLS );
 		$policy['anomaly_floor_spend']   = Anomaly::sanitize_floor_spend( $policy['anomaly_floor_spend'] ?? Anomaly::DEFAULT_FLOOR_SPEND );
 		$policy['drift_alert_mode']      = Drift::sanitize_mode( $policy['drift_alert_mode'] ?? Drift::MODE_PROVIDER );
+		$policy = Retry_Storm::normalize_policy( $policy );
 		// AICAC-SIEM: opt-in syslog / file export (off by default).
 		$policy = Siem::normalize_policy( $policy );
 		$policy['monthly_report_enabled'] = (bool) ( $policy['monthly_report_enabled'] ?? false );
@@ -1484,6 +1487,7 @@ final class Policy {
 		$policy['anomaly_floor_calls']   = Anomaly::sanitize_floor_calls( $policy['anomaly_floor_calls'] ?? Anomaly::DEFAULT_FLOOR_CALLS );
 		$policy['anomaly_floor_spend']   = Anomaly::sanitize_floor_spend( $policy['anomaly_floor_spend'] ?? Anomaly::DEFAULT_FLOOR_SPEND );
 		$policy['drift_alert_mode']      = Drift::sanitize_mode( $policy['drift_alert_mode'] ?? Drift::MODE_PROVIDER );
+		$policy = Retry_Storm::normalize_policy( $policy );
 		$policy                          = Siem::normalize_policy( $policy );
 		$policy['monthly_report_enabled'] = ! empty( $policy['monthly_report_enabled'] );
 		$policy['governance_digest_enabled']     = ! empty( $policy['governance_digest_enabled'] );
@@ -1881,6 +1885,24 @@ final class Policy {
 			Went_AI::observe( $event, $policy );
 		}
 
+		// AICAC-RETRY-STORM: collapse deny floods after threshold (observability only).
+		$retry_storm_action = 'skip';
+		if ( ! $is_direct_http && ! $is_selftest ) {
+			$retry_storm_action = Retry_Storm::process_deny( $log, $event, $policy );
+		}
+		if ( 'collapse' === $retry_storm_action ) {
+			$log = self::apply_log_retention( $log, $policy, $event_ts );
+			update_option( Plugin::LOG_OPTION_KEY, $log, false );
+			if ( ! $is_direct_http && ! $is_selftest ) {
+				Drift::flush_deferred_alerts();
+			}
+			$channel = isset( $event['channel'] ) ? (string) $event['channel'] : '';
+			if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget', 'selftest', 'pii' ), true ) ) {
+				Anomaly::maybe_evaluate( $policy );
+			}
+			return;
+		}
+
 		$log[] = $event;
 		$log   = self::apply_log_retention( $log, $policy, $event_ts );
 
@@ -1888,6 +1910,10 @@ final class Policy {
 
 		if ( ! $is_direct_http && ! $is_selftest ) {
 			Drift::flush_deferred_alerts();
+		}
+
+		if ( 'threshold' === $retry_storm_action ) {
+			Retry_Storm::maybe_alert( $event, $policy );
 		}
 
 		// AICAC-PII-WARN: warn-mode alert after retain (snooze + quiet hours).

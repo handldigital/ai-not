@@ -670,6 +670,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-log-retention.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-anomaly.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-drift.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-went-ai.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-retry-storm.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-siem.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-analytics.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-email-template.php';
