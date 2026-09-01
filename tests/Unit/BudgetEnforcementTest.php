@@ -146,7 +146,7 @@ final class BudgetEnforcementTest extends TestCase {
 		$soft = Budget::soft_warn_thresholds( $policy );
 		$this->assertSame( 8.0, $soft[ $plugin ] );
 
-		Spend_Threshold::maybe_evaluate( $policy );
+		Spend_Threshold::maybe_evaluate( $policy, $ts );
 		$this->assertCount( 1, self::$mails );
 		$this->assertStringContainsString( 'estimated spend alert', strtolower( self::$mails[0]['subject'] ) );
 

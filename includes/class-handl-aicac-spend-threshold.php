@@ -102,8 +102,9 @@ final class Spend_Threshold {
 	 * Logging off mid-window stops further evaluation (AC).
 	 *
 	 * @param array<string,mixed>|null $policy Optional preloaded policy.
+	 * @param int|null                 $now    Optional clock for budget-period evaluation (tests).
 	 */
-	public static function maybe_evaluate( ?array $policy = null ): void {
+	public static function maybe_evaluate( ?array $policy = null, ?int $now = null ): void {
 		$policy = is_array( $policy ) ? $policy : Policy::get_policy();
 		if ( empty( $policy['log_enabled'] ) && empty( $policy['audit_only'] ) ) {
 			return;
@@ -153,7 +154,7 @@ final class Spend_Threshold {
 
 		// AICAC-BUDGET-B: auto 80% of budget via period accumulator when no explicit plugin threshold.
 		foreach ( Budget::soft_warn_thresholds( $policy ) as $basename => $threshold ) {
-			$status       = Budget::status( $policy, $basename );
+			$status       = Budget::status( $policy, $basename, $now );
 			$plugin_total = (float) $status['spend'];
 			if ( $plugin_total < $threshold ) {
 				self::clear_fire_key( 'plugin:' . $basename );
