@@ -79,6 +79,15 @@ final class Shadow_AI {
 	 * @return false|array|\WP_Error
 	 */
 	public static function handle_http_request( $preempt, $args, $url ) {
+		if ( class_exists( Canary::class ) ) {
+			$canary_args = is_array( $args ) ? $args : array();
+			$canary_url  = is_string( $url ) ? $url : '';
+			$tripped     = Canary::intercept( $canary_args, $canary_url );
+			if ( null !== $tripped ) {
+				return $tripped;
+			}
+		}
+
 		unset( $args );
 
 		if ( ! is_string( $url ) || '' === $url ) {

@@ -848,6 +848,7 @@ if ( ! function_exists( 'wp_unslash' ) ) {
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-attribution.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-prompt-snapshot.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-shadow-ai.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-canary.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-keyscan.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-temp-allow.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rule-notes.php';
