@@ -37,6 +37,21 @@
 	vertical-align: middle;
 }
 
+.handl-aicac-table-filters .tablenav .alignleft.actions .handl-aicac-rules-search {
+	margin: 0 6px 0 0;
+	max-width: 14em;
+	vertical-align: middle;
+}
+
+.handl-aicac-table-filters .tablenav .alignleft.actions .handl-aicac-per-page {
+	margin-right: 8px;
+}
+
+.handl-aicac-bulk-nav .tablenav-pages {
+	float: right;
+	margin: 0;
+}
+
 .handl-aicac-table-filters + .handl-aicac-log-meta,
 .handl-aicac-table-filters + .widefat {
 	margin-top: 0;

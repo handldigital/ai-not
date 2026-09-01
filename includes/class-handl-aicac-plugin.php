@@ -82,6 +82,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin-profile.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-differentiator-messaging.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-pager.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-whats-new.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
