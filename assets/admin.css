@@ -623,6 +623,31 @@
 	margin-bottom: 0;
 }
 
+.handl-aicac-dashboard .handl-aicac-tile--checklist {
+	margin: 0 0 16px;
+}
+
+.handl-aicac-checklist {
+	margin: 0 0 12px;
+	padding-left: 1.2em;
+}
+
+.handl-aicac-checklist li {
+	margin: 0 0 8px;
+}
+
+.handl-aicac-checklist li.is-done {
+	color: #1e1e1e;
+}
+
+.handl-aicac-checklist li.is-todo strong {
+	color: #996800;
+}
+
+.handl-aicac-checklist li.is-na {
+	color: #646970;
+}
+
 /* Tables fill their card; numeric columns right-aligned */
 .handl-aicac-dashboard .handl-aicac-tile-table {
 	width: 100%;

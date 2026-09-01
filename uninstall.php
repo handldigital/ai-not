@@ -66,6 +66,10 @@ function handl_aicac_uninstall_legacy_option_keys(): array {
 function handl_aicac_uninstall_purge(): void {
 	handl_aicac_uninstall_remove_mu_guard_stub();
 
+	// Canary honeytoken is stored under a provider-looking option name, not
+	// the handl_aicac_ prefix. Read the registry before prefixed options go.
+	handl_aicac_uninstall_purge_canary_plant();
+
 	if ( isset( $GLOBALS['handl_aicac_test_options'] ) && is_array( $GLOBALS['handl_aicac_test_options'] ) ) {
 		foreach ( array_keys( $GLOBALS['handl_aicac_test_options'] ) as $key ) {
 			if ( 0 === strpos( (string) $key, 'handl_aicac_' ) ) {
@@ -114,6 +118,21 @@ function handl_aicac_uninstall_purge(): void {
 	if ( function_exists( 'delete_metadata' ) ) {
 		delete_metadata( 'user', 0, 'handl_aicac_whats_new_dismissed', '', true );
 	}
+}
+
+/**
+ * Delete the planted decoy option named in the canary registry.
+ */
+function handl_aicac_uninstall_purge_canary_plant(): void {
+	$reg = function_exists( 'get_option' ) ? get_option( 'handl_aicac_canary', null ) : null;
+	if ( ! is_array( $reg ) ) {
+		return;
+	}
+	$option = isset( $reg['option'] ) ? (string) $reg['option'] : '';
+	if ( '' === $option || 0 === strpos( $option, 'handl_aicac_' ) ) {
+		return;
+	}
+	delete_option( $option );
 }
 
 /**
