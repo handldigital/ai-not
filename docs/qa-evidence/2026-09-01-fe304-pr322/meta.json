@@ -1,0 +1,8 @@
+{
+  "sha": "2f7bcaa",
+  "buildProof": "local prod build + preview at 2f7bcaa",
+  "capturedAt": "2026-09-01T19:59:09.044Z",
+  "headline": "What a $99 fix report looks like",
+  "scoresText": "BEFORE THE FIX\n\n42\n\nLeak Finder score\n\nAFTER THE FIX\n\n78\n\nLeak Finder score",
+  "samplePageUrl": "http://127.0.0.1:8822/sample-fix-report"
+}
