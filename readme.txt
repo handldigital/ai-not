@@ -193,6 +193,7 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = Unreleased =
+* Optional SIEM export (off by default): send deny, shadow-deny, tamper, budget, and policy restore events as CEF or JSON lines to local syslog and/or a rotating file under uploads. Configure with `wp handl-aicac siem set|status|test`.
 * Alert emails can include signed links to allow a plugin for 24 hours, snooze alerts for 7 days, or open that plugin’s rule. The link only works after you log in and confirm.
 
 * Uninstall now keeps plugin data by default (rules, activity, alerts). Deleting the plugin used to remove that data. To wipe it, run `wp handl-aicac uninstall set purge` before deleting the plugin.

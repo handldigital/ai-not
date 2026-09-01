@@ -1152,6 +1152,8 @@ final class Policy {
 		$policy['anomaly_floor_calls']   = Anomaly::sanitize_floor_calls( $policy['anomaly_floor_calls'] ?? Anomaly::DEFAULT_FLOOR_CALLS );
 		$policy['anomaly_floor_spend']   = Anomaly::sanitize_floor_spend( $policy['anomaly_floor_spend'] ?? Anomaly::DEFAULT_FLOOR_SPEND );
 		$policy['drift_alert_mode']      = Drift::sanitize_mode( $policy['drift_alert_mode'] ?? Drift::MODE_PROVIDER );
+		// AICAC-SIEM: opt-in syslog / file export (off by default).
+		$policy = Siem::normalize_policy( $policy );
 		$policy['monthly_report_enabled'] = (bool) ( $policy['monthly_report_enabled'] ?? false );
 		$policy['governance_digest_enabled']     = (bool) ( $policy['governance_digest_enabled'] ?? false );
 		$policy['governance_digest_always_send'] = (bool) ( $policy['governance_digest_always_send'] ?? false );
@@ -1482,6 +1484,7 @@ final class Policy {
 		$policy['anomaly_floor_calls']   = Anomaly::sanitize_floor_calls( $policy['anomaly_floor_calls'] ?? Anomaly::DEFAULT_FLOOR_CALLS );
 		$policy['anomaly_floor_spend']   = Anomaly::sanitize_floor_spend( $policy['anomaly_floor_spend'] ?? Anomaly::DEFAULT_FLOOR_SPEND );
 		$policy['drift_alert_mode']      = Drift::sanitize_mode( $policy['drift_alert_mode'] ?? Drift::MODE_PROVIDER );
+		$policy                          = Siem::normalize_policy( $policy );
 		$policy['monthly_report_enabled'] = ! empty( $policy['monthly_report_enabled'] );
 		$policy['governance_digest_enabled']     = ! empty( $policy['governance_digest_enabled'] );
 		$policy['governance_digest_always_send'] = ! empty( $policy['governance_digest_always_send'] );
@@ -1827,6 +1830,13 @@ final class Policy {
 	 */
 	public static function append_log_event( array $event ): void {
 		$policy = self::get_policy();
+
+		// AICAC-SIEM: export at funnel entry (independent of activity-log retention).
+		$is_selftest_early = class_exists( Selftest::class ) && Selftest::is_synthetic_row( $event );
+		if ( ! $is_selftest_early && class_exists( Siem::class ) && Siem::is_enabled( $policy ) ) {
+			Siem::observe( $event, $policy );
+		}
+
 		if ( empty( $policy['log_enabled'] ) && empty( $policy['audit_only'] ) ) {
 			return;
 		}

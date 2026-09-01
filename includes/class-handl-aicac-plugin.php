@@ -42,6 +42,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-anomaly.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-drift.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-went-ai.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-siem.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-email-template.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alert-health.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-webhook-delivery-log.php';
@@ -120,12 +121,14 @@ final class Plugin {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-break-glass.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-selftest.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-hardened.php';
+			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-siem.php';
 			CLI::register();
 			CLI_Audit::register();
 			CLI_Policy_Apply::register();
 			CLI_Break_Glass::register();
 			CLI_Selftest::register();
 			CLI_Hardened::register();
+			CLI_Siem::register();
 		}
 	}
 
