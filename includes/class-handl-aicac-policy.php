@@ -61,7 +61,7 @@ final class Policy {
 			? array_values( array_map( 'strval', $armed_raw ) )
 			: array();
 
-		$now_ts     = time();
+		$now_ts     = Clock::now();
 		$bg_active  = Break_Glass::is_active( $now_ts );
 		$would_eval = self::evaluate( $policy, $plugin, $operation, $armed, $family, $now_ts );
 		$eval       = ! empty( $policy['audit_only'] )
@@ -1281,9 +1281,9 @@ final class Policy {
 	 * @return list<array<string,mixed>|mixed>
 	 */
 	public static function apply_log_retention( array $log, array $policy, ?int $now = null ): array {
-		$now = null === $now ? time() : $now;
+		$now = null === $now ? Clock::now() : $now;
 		if ( $now <= 0 ) {
-			$now = time();
+			$now = Clock::now();
 		}
 
 		$max_age = self::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
@@ -1852,9 +1852,9 @@ final class Policy {
 
 		// Prune first so collapse keys and FIFO count reflect the retained window.
 		// Active shadow-AI clusters have a recent `ts` and are not dropped by TTL.
-		$event_ts = isset( $event['ts'] ) ? (int) $event['ts'] : time();
+		$event_ts = isset( $event['ts'] ) ? (int) $event['ts'] : Clock::now();
 		if ( $event_ts <= 0 ) {
-			$event_ts = time();
+			$event_ts = Clock::now();
 		}
 		$log = self::apply_log_retention( $log, $policy, $event_ts );
 
@@ -1985,9 +1985,9 @@ final class Policy {
 		$host   = isset( $event['host'] ) ? (string) $event['host'] : '';
 		$plugin = ( isset( $event['plugin'] ) && is_string( $event['plugin'] ) ) ? (string) $event['plugin'] : '';
 		$file   = ( isset( $event['file'] ) && is_string( $event['file'] ) ) ? (string) $event['file'] : '';
-		$now    = isset( $event['ts'] ) ? (int) $event['ts'] : time();
+		$now    = isset( $event['ts'] ) ? (int) $event['ts'] : Clock::now();
 		if ( $now <= 0 ) {
-			$now = time();
+			$now = Clock::now();
 		}
 
 		$incoming = isset( $event['count'] ) ? (int) $event['count'] : 1;
