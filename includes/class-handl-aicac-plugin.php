@@ -27,6 +27,7 @@ final class Plugin {
 	public function init(): void {
 		self::migrate_legacy_options();
 
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-clock.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-attribution.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-prompt-snapshot.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-operations.php';

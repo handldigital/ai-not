@@ -170,7 +170,7 @@ final class CLI_Policy_Apply {
 	public static function export_current( bool $redacted ): array {
 		$policy  = Policy::get_policy();
 		$version = defined( 'HANDL_AICAC_VERSION' ) ? (string) HANDL_AICAC_VERSION : '0';
-		$export  = Policy_Transfer::build_export( $policy, $version, gmdate( 'c' ), $redacted );
+		$export  = Policy_Transfer::build_export( $policy, $version, gmdate( 'c', Clock::now() ), $redacted );
 		return array(
 			'export'   => $export,
 			'json'     => Policy_Transfer::encode_export( $export ),

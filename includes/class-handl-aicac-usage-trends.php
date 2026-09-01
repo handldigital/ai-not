@@ -54,7 +54,7 @@ final class Usage_Trends {
 	 * }|null
 	 */
 	public static function compute( array $log, array $policy, array $plugins = array(), ?int $now = null ): ?array {
-		$now = null !== $now ? $now : time();
+		$now = null !== $now ? $now : Clock::now();
 		$tz  = self::timezone();
 
 		$week_defs = self::week_windows( $now, self::WEEK_COUNT, $tz );

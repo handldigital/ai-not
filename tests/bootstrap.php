@@ -43,6 +43,24 @@ if ( ! defined( 'WEEK_IN_SECONDS' ) ) {
 	define( 'WEEK_IN_SECONDS', 604800 );
 }
 
+if ( ! defined( 'HANDL_AICAC_PHPUNIT' ) ) {
+	define( 'HANDL_AICAC_PHPUNIT', true );
+}
+
+if ( ! function_exists( 'handl_aicac_now' ) ) {
+	/**
+	 * PHPUnit-only wall clock; HANDL_AICAC_TEST_NOW env shifts "now" for expiry guards.
+	 */
+	function handl_aicac_now(): int {
+		$override = getenv( 'HANDL_AICAC_TEST_NOW' );
+		if ( false !== $override && '' !== $override ) {
+			return (int) $override;
+		}
+
+		return time();
+	}
+}
+
 if ( ! defined( 'ENT_QUOTES' ) ) {
 	// PHP already defines ENT_QUOTES; keep guard for completeness.
 }
@@ -655,6 +673,7 @@ if ( ! function_exists( 'wp_remote_retrieve_response_code' ) ) {
 	}
 }
 
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-clock.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-operations.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cost.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-model-force.php';

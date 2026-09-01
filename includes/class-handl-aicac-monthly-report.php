@@ -55,7 +55,7 @@ final class Monthly_Report {
 		if ( $want ) {
 			if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 				$delay = defined( 'DAY_IN_SECONDS' ) ? (int) DAY_IN_SECONDS : 86400;
-				wp_schedule_event( time() + $delay, 'daily', self::CRON_HOOK );
+				wp_schedule_event( Clock::now() + $delay, 'daily', self::CRON_HOOK );
 			}
 			return;
 		}
@@ -88,7 +88,7 @@ final class Monthly_Report {
 	 * Cron entry — uses wall clock.
 	 */
 	public function cron_send(): void {
-		self::send_if_due( Policy::get_policy(), null, time() );
+		self::send_if_due( Policy::get_policy(), null, Clock::now() );
 	}
 
 	/**
@@ -100,7 +100,7 @@ final class Monthly_Report {
 	 * @return array{sent:bool,status:string,period_ym:string}
 	 */
 	public static function send_if_due( array $policy, ?array $plugins = null, ?int $now = null ): array {
-		$now = null !== $now ? $now : time();
+		$now = null !== $now ? $now : Clock::now();
 		$tz  = self::timezone();
 		$dt  = ( new \DateTimeImmutable( '@' . $now ) )->setTimezone( $tz );
 		$period_ym = $dt->format( 'Y-m' );

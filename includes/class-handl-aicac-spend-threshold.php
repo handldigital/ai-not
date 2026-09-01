@@ -102,8 +102,10 @@ final class Spend_Threshold {
 	 * Logging off mid-window stops further evaluation (AC).
 	 *
 	 * @param array<string,mixed>|null $policy Optional preloaded policy.
+	 * @param int|null                 $now    Optional clock (tests).
 	 */
-	public static function maybe_evaluate( ?array $policy = null ): void {
+	public static function maybe_evaluate( ?array $policy = null, ?int $now = null ): void {
+		$now    = null !== $now ? $now : Clock::now();
 		$policy = is_array( $policy ) ? $policy : Policy::get_policy();
 		if ( empty( $policy['log_enabled'] ) && empty( $policy['audit_only'] ) ) {
 			return;
@@ -128,7 +130,8 @@ final class Spend_Threshold {
 				null,
 				$site_threshold,
 				(float) $spend['site'],
-				(string) $spend['window_label']
+				(string) $spend['window_label'],
+				$now
 			);
 		}
 
@@ -147,13 +150,14 @@ final class Spend_Threshold {
 				$basename,
 				$threshold,
 				$plugin_total,
-				(string) $spend['window_label']
+				(string) $spend['window_label'],
+				$now
 			);
 		}
 
 		// AICAC-BUDGET-B: auto 80% of budget via period accumulator when no explicit plugin threshold.
 		foreach ( Budget::soft_warn_thresholds( $policy ) as $basename => $threshold ) {
-			$status       = Budget::status( $policy, $basename );
+			$status       = Budget::status( $policy, $basename, $now );
 			$plugin_total = (float) $status['spend'];
 			if ( $plugin_total < $threshold ) {
 				self::clear_fire_key( 'plugin:' . $basename );
@@ -171,7 +175,8 @@ final class Spend_Threshold {
 				$basename,
 				$threshold,
 				$plugin_total,
-				$period_label
+				$period_label,
+				$now
 			);
 		}
 
@@ -258,15 +263,17 @@ final class Spend_Threshold {
 		?string $plugin_basename,
 		float $threshold,
 		float $current_total,
-		string $window_label
+		string $window_label,
+		?int $now = null
 	): void {
+		$now = null !== $now ? $now : Clock::now();
 		// AICAC-SNOOZE: per-plugin spend alerts only (site-level not snoozable).
 		if ( 'plugin' === $scope && Alert_Snooze::should_suppress( (string) $plugin_basename, 'spend' ) ) {
 			return;
 		}
 
 		$key = 'site' === $scope ? 'site' : ( 'plugin:' . (string) $plugin_basename );
-		if ( self::is_deduped( $key, $threshold ) ) {
+		if ( self::is_deduped( $key, $threshold, $now ) ) {
 			return;
 		}
 
@@ -278,8 +285,8 @@ final class Spend_Threshold {
 			return;
 		}
 
-		self::record_fire( $key, $threshold );
-		self::append_audit_row( $scope, $plugin_basename, $threshold, $current_total, $window_label );
+		self::record_fire( $key, $threshold, $now );
+		self::append_audit_row( $scope, $plugin_basename, $threshold, $current_total, $window_label, $now );
 	}
 
 	/**
@@ -388,7 +395,8 @@ final class Spend_Threshold {
 		return $basename;
 	}
 
-	private static function is_deduped( string $key, float $threshold ): bool {
+	private static function is_deduped( string $key, float $threshold, ?int $now = null ): bool {
+		$now = null !== $now ? $now : Clock::now();
 		$state = get_option( self::FIRED_OPTION_KEY, array() );
 		if ( ! is_array( $state ) || ! isset( $state[ $key ] ) || ! is_array( $state[ $key ] ) ) {
 			return false;
@@ -404,16 +412,17 @@ final class Spend_Threshold {
 			return false;
 		}
 		// Rolling 24h dedupe for same key+threshold.
-		return ( time() - $at ) < self::DEDUPE_SECONDS;
+		return ( $now - $at ) < self::DEDUPE_SECONDS;
 	}
 
-	private static function record_fire( string $key, float $threshold ): void {
+	private static function record_fire( string $key, float $threshold, ?int $now = null ): void {
+		$now = null !== $now ? $now : Clock::now();
 		$state = get_option( self::FIRED_OPTION_KEY, array() );
 		if ( ! is_array( $state ) ) {
 			$state = array();
 		}
 		$state[ $key ] = array(
-			'at'        => time(),
+			'at'        => $now,
 			'threshold' => $threshold,
 		);
 		update_option( self::FIRED_OPTION_KEY, $state, false );
@@ -436,10 +445,12 @@ final class Spend_Threshold {
 		?string $plugin_basename,
 		float $threshold,
 		float $current_total,
-		string $window_label
+		string $window_label,
+		?int $now = null
 	): void {
+		$now = null !== $now ? $now : Clock::now();
 		$event = array(
-			'ts'           => time(),
+			'ts'           => $now,
 			'decision'     => 'spend_alert',
 			'channel'      => 'spend_threshold',
 			'threshold'    => $threshold,

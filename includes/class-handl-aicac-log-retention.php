@@ -51,7 +51,7 @@ final class Log_Retention {
 	}
 
 	public function cron_prune(): void {
-		self::run_prune_batch( null, time() );
+		self::run_prune_batch( null, Clock::now() );
 	}
 
 	/**
@@ -64,7 +64,7 @@ final class Log_Retention {
 			if ( function_exists( 'wp_next_scheduled' ) && function_exists( 'wp_schedule_event' ) ) {
 				if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 					$delay = defined( 'DAY_IN_SECONDS' ) ? (int) DAY_IN_SECONDS : 86400;
-					wp_schedule_event( time() + $delay, 'daily', self::CRON_HOOK );
+					wp_schedule_event( Clock::now() + $delay, 'daily', self::CRON_HOOK );
 				}
 			}
 			return;
@@ -122,7 +122,7 @@ final class Log_Retention {
 	 * @param array<string,mixed> $saved
 	 */
 	public static function after_settings_saved( array $previous, array $saved, ?int $now = null ): void {
-		$now = null !== $now ? $now : time();
+		$now = null !== $now ? $now : Clock::now();
 		self::maybe_schedule( $saved );
 
 		$prev_days = Policy::sanitize_log_max_age_days( $previous['log_max_age_days'] ?? null );
@@ -171,9 +171,9 @@ final class Log_Retention {
 	 * @return list<array<string,mixed>>
 	 */
 	public static function rows_past_retention( array $log, int $max_age_days, ?int $now = null ): array {
-		$now = null !== $now ? $now : time();
+		$now = null !== $now ? $now : Clock::now();
 		if ( $now <= 0 ) {
-			$now = time();
+			$now = Clock::now();
 		}
 		$max_age_days = (int) $max_age_days;
 		if ( $max_age_days < 1 ) {
@@ -201,7 +201,7 @@ final class Log_Retention {
 	 * @return array{ok:bool,status:string,removed:int,remaining:int}
 	 */
 	public static function run_prune_batch( ?array $policy = null, ?int $now = null ): array {
-		$now    = null !== $now ? $now : time();
+		$now    = null !== $now ? $now : Clock::now();
 		$policy = null !== $policy ? $policy : Policy::get_policy();
 		$days   = Policy::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
 
