@@ -4,7 +4,7 @@
 |---|---|
 | FE issue | https://github.com/handldigital/handlwp.com-frontend/issues/304 |
 | FE PR | https://github.com/handldigital/handlwp.com-frontend/pull/322 |
-| App SHA | `2f7bcaa` |
+| App SHA | `8477cdd` |
 | Capture | Local `vite build` + preview at exact HEAD |
 
 Public host: `handldigital/ai-not` branch `qa-evidence` (private-repo release/raw URLs 404 unauth).
