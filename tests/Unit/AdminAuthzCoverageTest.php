@@ -29,6 +29,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 	private const APPROVED_DISPATCH_ACTIONS = array(
 		'bulk_plugin_rules',
 		'cancel_alert_snooze',
+		'checklist_dismiss',
 		'compare_latest_backup',
 		'compare_rules_preview',
 		'download_latest_backup',
@@ -253,6 +254,10 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array(
 				'action'       => 'onboard_reopen',
 				'nonce_action' => 'handl_aicac_onboard',
+			),
+			array(
+				'action'       => 'checklist_dismiss',
+				'nonce_action' => 'handl_aicac_checklist',
 			),
 			array(
 				'action'       => 'preset_preview',
@@ -501,6 +506,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'handle_onboard_step',
 				'handle_onboard_test_email',
 				'handle_onboard_reopen',
+				'handle_checklist_dismiss',
 				'handle_policy_restore_preview',
 				'handle_policy_restore_confirm',
 				'handle_policy_check_add',

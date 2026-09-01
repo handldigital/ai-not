@@ -43,6 +43,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-drift.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-went-ai.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-retry-storm.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-siem.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-email-template.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alert-health.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-webhook-delivery-log.php';
@@ -55,6 +56,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-governance-digest.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-model-force.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-shadow-ai.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-canary.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-keyscan.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-temp-allow.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rule-notes.php';
@@ -67,6 +69,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-simulator.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-checks.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-onboarding.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-checklist.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-leads.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-transfer.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-presets.php';
@@ -77,7 +80,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-audit-evidence.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-analytics.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin-profile.php';
-require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-differentiator-messaging.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-whats-new.php';
@@ -101,6 +104,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 		Log_Retention::instance()->init();
 		Model_Force::instance()->init();
 		Shadow_AI::instance()->init();
+		Canary::instance()->init();
 		Keyscan::instance()->init();
 		Admin::instance()->init();
 		Whats_New::instance()->init();
@@ -119,6 +123,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-selftest.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-hardened.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-retry-storm.php';
+			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-siem.php';
 			CLI::register();
 			CLI_Audit::register();
 			CLI_Policy_Apply::register();
@@ -126,6 +131,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 			CLI_Selftest::register();
 			CLI_Hardened::register();
 			CLI_Retry_Storm::register();
+			CLI_Siem::register();
 		}
 	}
 

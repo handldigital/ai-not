@@ -601,6 +601,10 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_onboard', 'handl_aicac_nonce' );
 				$this->handle_onboard_reopen();
 			}
+			if ( 'checklist_dismiss' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_checklist', 'handl_aicac_nonce' );
+				$this->handle_checklist_dismiss();
+			}
 		}
 
 		$saved       = false;
@@ -1775,6 +1779,69 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	}
 
 	/**
+	 * AICAC-CHECKLIST (#190): dismissible post-wizard getting-started panel.
+	 *
+	 * @param array<string,mixed> $policy
+	 * @param array<int,mixed>    $log
+	 */
+	private function render_getting_started_checklist( array $policy, array $log ): void {
+		$force = isset( $_GET['handl_aicac_onboard'] ) && '1' === (string) $_GET['handl_aicac_onboard'];
+		if ( ! Checklist::should_render( $policy, $log, null, $force ) ) {
+			return;
+		}
+		$report = Checklist::compute( $policy, $log );
+
+		echo '<div class="postbox handl-aicac-tile handl-aicac-tile--checklist">';
+		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Getting started', 'handl-ai-connector-access-control' ) . '</h2></div>';
+		echo '<div class="inside">';
+		echo '<p class="description">' . esc_html__( 'Items are marked done automatically as you finish them. The list hides when everything is done and returns if a completed item changes. If you hide it yourself, it stays hidden.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<ul class="handl-aicac-checklist">';
+		foreach ( $report['items'] as $item ) {
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+			$applicable = ! empty( $item['applicable'] );
+			$done       = ! empty( $item['done'] );
+			$label      = isset( $item['label'] ) ? (string) $item['label'] : '';
+			$detail     = isset( $item['detail'] ) ? (string) $item['detail'] : '';
+			$url        = Checklist::item_url( $item );
+			if ( ! $applicable ) {
+				$status = __( 'Not applicable', 'handl-ai-connector-access-control' );
+				$class  = 'is-na';
+			} elseif ( $done ) {
+				$status = __( 'Done', 'handl-ai-connector-access-control' );
+				$class  = 'is-done';
+			} else {
+				$status = __( 'Needs setup', 'handl-ai-connector-access-control' );
+				$class  = 'is-todo';
+			}
+			echo '<li class="' . esc_attr( $class ) . '">';
+			echo '<strong>' . esc_html( $status ) . ':</strong> ';
+			echo esc_html( $label );
+			if ( '' !== $detail ) {
+				echo ' — <span class="description" style="display:inline;">' . esc_html( $detail ) . '</span>';
+			}
+			if ( $applicable && ! $done && '' !== $url ) {
+				echo ' <a href="' . esc_url( $url ) . '">' . esc_html__( 'Open this setting', 'handl-ai-connector-access-control' ) . '</a>';
+			}
+			echo '</li>';
+		}
+		echo '</ul>';
+		echo '<form method="post">';
+		wp_nonce_field( 'handl_aicac_checklist', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="checklist_dismiss" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="dashboard" />';
+		submit_button(
+			__( 'Hide this list', 'handl-ai-connector-access-control' ),
+			'secondary',
+			'submit',
+			false
+		);
+		echo '</form>';
+		echo '</div></div>';
+	}
+
+	/**
 	 * @param array<string,mixed> $policy
 	 * @param array<string,mixed> $state
 	 */
@@ -1974,6 +2041,12 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$state['step']   = 1;
 		Onboarding::save_state( $state );
 		$this->redirect_onboard_dashboard( array( 'handl_aicac_onboard' => '1' ) );
+	}
+
+	private function handle_checklist_dismiss(): void {
+		$this->require_admin_mutation( 'handl_aicac_checklist' );
+		Checklist::dismiss();
+		$this->redirect_onboard_dashboard();
 	}
 
 	private function handle_onboard_step(): void {
@@ -2465,6 +2538,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		// AICAC-ONBOARD: first-run wizard + review reminder (Dashboard only).
 		$this->render_onboarding_dashboard_section( $policy );
+		// AICAC-CHECKLIST (#190): post-wizard getting-started panel.
+		$this->render_getting_started_checklist( $policy, $log );
 		// AICAC-NEWPLUGIN: plugins awaiting first AI access decision.
 		$this->render_new_plugin_dashboard_line( $policy, $plugins );
 		// AICAC-RULE-TEST: open failures after an override.
@@ -4253,7 +4328,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		// AICAC-DIGEST (#120): weekly governance digest (off by default; 7-day Activity window).
 		$digest_on     = ! empty( $policy['governance_digest_enabled'] );
 		$digest_always = ! empty( $policy['governance_digest_always_send'] );
-		echo '<tr>';
+		echo '<tr id="handl-aicac-governance-digest">';
 		echo '<th scope="row">' . esc_html__( 'Weekly governance digest', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<td>';
 		echo '<label><input type="checkbox" name="handl_aicac_governance_digest_enabled" value="1" ' . checked( $digest_on, true, false ) . ' /> ';
@@ -4880,6 +4955,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 
 		$this->sim_result = $result;
+		Checklist::mark_simulator_tried();
 	}
 
 	/**
