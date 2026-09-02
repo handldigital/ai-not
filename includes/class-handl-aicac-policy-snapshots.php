@@ -440,6 +440,7 @@ final class Policy_Snapshots {
 			'new_plugin_interim',
 			'plugins',
 			'plugin_expires',
+			'review_due_days',
 			'operations',
 			'denied_tools',
 			'model_force_plugins',
@@ -840,8 +841,8 @@ final class Policy_Snapshots {
 				break;
 
 			case 'plugin_expires':
-				$a = self::normalize( 'plugin_expires', $before );
-				$b = self::normalize( 'plugin_expires', $after );
+				$a = self::normalize( $key, $before );
+				$b = self::normalize( $key, $after );
 				$ids = array_unique( array_merge( array_keys( $a ), array_keys( $b ) ) );
 				sort( $ids, SORT_STRING );
 				foreach ( $ids as $id ) {
@@ -1146,6 +1147,8 @@ final class Policy_Snapshots {
 				$map = Temp_Allow::sanitize_plugin_expires( $raw );
 				ksort( $map, SORT_STRING );
 				return $map;
+			case 'review_due_days':
+				return Review_Due::sanitize_days( $raw );
 			case 'quiet_hours':
 				return Quiet_Hours::sanitize_windows( $raw );
 			case 'est_usd_input_per_m':
@@ -1206,6 +1209,7 @@ final class Policy_Snapshots {
 			'new_plugin_interim'                => __( 'New plugin interim mode', 'handl-ai-connector-access-control' ),
 			'plugins'                           => __( 'Per-plugin rules', 'handl-ai-connector-access-control' ),
 			'plugin_expires'                    => __( 'Temporary Allow expiry', 'handl-ai-connector-access-control' ),
+			'review_due_days'                   => __( 'Rule review window', 'handl-ai-connector-access-control' ),
 			'operations'                        => __( 'Capability-family rules', 'handl-ai-connector-access-control' ),
 			'denied_tools'                      => __( 'Blocked AI tools', 'handl-ai-connector-access-control' ),
 			'model_force_plugins'               => __( 'Model routes', 'handl-ai-connector-access-control' ),

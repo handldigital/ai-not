@@ -1536,6 +1536,15 @@ final class Policy {
 			? ! empty( $policy['weekly_report_enabled'] )
 			: true;
 
+		if ( ! isset( $incoming_keys['review_due_days'] ) ) {
+			if ( is_array( $raw_before ) && array_key_exists( 'review_due_days', $raw_before ) ) {
+				$policy['review_due_days']        = Review_Due::sanitize_days( $raw_before['review_due_days'] );
+				$incoming_keys['review_due_days'] = true;
+			}
+		} else {
+			$policy['review_due_days'] = Review_Due::sanitize_days( $policy['review_due_days'] ?? Review_Due::DEFAULT_DAYS );
+		}
+
 		$policy['model_force_plugins']               = Model_Force::sanitize_force_map( $policy['model_force_plugins'] ?? array() );
 		$policy['model_force_unattributed']          = Model_Force::sanitize_unattributed_mode( $policy['model_force_unattributed'] ?? 'none' );
 		$policy['model_force_unattributed_provider'] = Model_Force::sanitize_id( $policy['model_force_unattributed_provider'] ?? '' );
@@ -1557,6 +1566,7 @@ final class Policy {
 		Policy_Snapshots::capture_before_save( $policy );
 
 		update_option( Plugin::OPTION_KEY, $policy, false );
+		Review_Due::stamp_on_rule_changes( $policy, is_array( $raw_before ) ? $raw_before : array() );
 		Alerts::maybe_schedule( $policy );
 		Temp_Allow::maybe_schedule( $policy );
 		// maybe_schedule needs preference + log/learn from this save; not the stripped store shape.
