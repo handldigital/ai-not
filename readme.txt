@@ -202,6 +202,7 @@ Yes. With WP-CLI available and this plugin active:
 * Optional Hardened mode (`wp handl-aicac hardened`) installs a must-use stub so AI Client calls stay blocked or watched while the main plugin is deactivated.
 * Rules matrix paginates (25/50/100 per page) with plugin name search, so large sites no longer post every plugin row on Save.
 * A Getting started list now appears on the Dashboard after Quick setup. It tracks plugins that used AI, a starter policy pack, alert email, policy tester, and weekly digest. The list hides when complete or dismissed. If it hides after completion, it returns when a setting is turned off.
+* Rules tab review inbox: confirm a plugin rule is still correct (does not change Allow or Deny). Overdue and uninstalled-plugin rules are listed, with counts on the Dashboard, Site Health, and printable audit report.
 
 = 1.6.0 =
 * In versions 1.3.0–1.5.0, changes made on the Rules tab did not save. Version 1.6.0 saves Rules again and prevents an incomplete save from erasing rules that were not submitted.
