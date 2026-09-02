@@ -252,7 +252,7 @@ final class Review_Due {
 
 		return sprintf(
 			/* translators: 1: confirmed count, 2: total explicit rules, 3: window days */
-			__( '%1$d of %2$d rules confirmed within %3$d days.', 'handl-ai-connector-access-control' ),
+			__( '%1$d of %2$d rules reviewed within %3$d days.', 'handl-ai-connector-access-control' ),
 			$confirmed,
 			$total,
 			$days

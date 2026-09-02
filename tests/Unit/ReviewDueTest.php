@@ -150,7 +150,7 @@ final class ReviewDueTest extends TestCase {
 		$snap = Review_Due::snapshot( $policy, $installed, $now );
 		$this->assertSame( 2, $snap['confirmed'] );
 		$line = Review_Due::evidence_line( $snap );
-		$this->assertSame( '2 of 2 rules confirmed within 90 days.', $line );
+		$this->assertSame( '2 of 2 rules reviewed within 90 days.', $line );
 
 		$data = Audit_Evidence::build_report_data( $policy, array(), '7d', $now, $installed );
 		$this->assertSame( $line, $data['review_due_line'] ?? null );

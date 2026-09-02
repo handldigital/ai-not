@@ -753,7 +753,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Temporary allow renewed for 7 more days.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $review_confirmed_ok ) {
-			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Marked as still correct. Allow and deny were not changed.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Review date updated. Allow and Deny were not changed.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $review_window_ok ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Review window saved.', 'handl-ai-connector-access-control' ) . '</p></div>';
@@ -6805,7 +6805,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		echo '<div class="handl-aicac-review-due-box" style="margin:0 0 1.5em;padding:12px 14px;border:1px solid #c3c4c7;background:#fff;">';
 		echo '<h2 style="margin:0 0 8px;">' . esc_html__( 'Rules due for review', 'handl-ai-connector-access-control' ) . '</h2>';
-		echo '<p class="description" style="margin:0 0 10px;">' . esc_html__( 'Confirm a rule is still right. This does not change Allow or Deny.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description" style="margin:0 0 10px;">' . esc_html__( 'Confirm that each rule is still correct. This does not change Allow or Deny.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		echo '<p style="margin:0 0 12px;">';
 		echo '<label for="handl-aicac-review-due-days">' . esc_html__( 'Review window', 'handl-ai-connector-access-control' ) . '</label> ';
@@ -6824,7 +6824,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '</p>';
 
 		if ( empty( $snap['rows'] ) ) {
-			echo '<p class="description" style="margin:0;">' . esc_html__( 'Nothing is due.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description" style="margin:0;">' . esc_html__( 'Nothing needs review.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '</div>';
 			return;
 		}
@@ -6834,7 +6834,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<td class="check-column"><span class="screen-reader-text">' . esc_html__( 'Select', 'handl-ai-connector-access-control' ) . '</span></td>';
 		echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Access', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Last confirmed', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Last reviewed', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Status', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th></th>';
 		echo '</tr></thead><tbody>';
@@ -6846,9 +6846,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			$ts       = (int) $row['last_reviewed'];
 			$when     = $ts > 0
 				? ( function_exists( 'wp_date' ) ? wp_date( 'Y-m-d', $ts ) : gmdate( 'Y-m-d', $ts ) )
-				: __( 'Never confirmed', 'handl-ai-connector-access-control' );
+				: __( 'Never reviewed', 'handl-ai-connector-access-control' );
 			$status   = ! empty( $row['orphaned'] )
-				? __( 'Orphaned — plugin not installed', 'handl-ai-connector-access-control' )
+				? __( 'Plugin is not installed', 'handl-ai-connector-access-control' )
 				: __( 'Due', 'handl-ai-connector-access-control' );
 
 			echo '<tr>';
