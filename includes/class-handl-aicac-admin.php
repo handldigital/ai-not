@@ -1542,6 +1542,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		submit_button( __( 'Save changes', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
 		echo '</p>';
 		echo '</form>';
+
+		Access_Request::render_inbox_section( $plugins );
+
 		echo '</div>';
 	}
 

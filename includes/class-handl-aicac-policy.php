@@ -230,6 +230,11 @@ final class Policy {
 			Alerts::maybe_notify_denial( $event, $policy );
 		}
 
+		// AICAC-REQUEST (#232): stash blocked-UX notice for edit-level admin users.
+		if ( $prevent && empty( $policy['audit_only'] ) && empty( $event['selftest'] ) ) {
+			Access_Request::note_deny( $event );
+		}
+
 		return $prevent;
 	}
 
