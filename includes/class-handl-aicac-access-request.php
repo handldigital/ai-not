@@ -134,7 +134,7 @@ final class Access_Request {
 		echo '<input type="hidden" name="action" value="' . esc_attr( self::SUBMIT_HOOK ) . '" />';
 		echo '<input type="hidden" name="handl_aicac_plugin" value="' . esc_attr( $plugin ) . '" />';
 		echo '<input type="hidden" name="_wpnonce" value="' . esc_attr( $nonce ) . '" />';
-		echo '<p><label for="handl-aicac-access-reason">' . esc_html__( 'Optional reason (one line)', 'handl-ai-connector-access-control' ) . '</label><br />';
+		echo '<p><label for="handl-aicac-access-reason">' . esc_html__( 'Why do you need access? (optional)', 'handl-ai-connector-access-control' ) . '</label><br />';
 		echo '<input type="text" class="regular-text" id="handl-aicac-access-reason" name="handl_aicac_reason" maxlength="200" value="" /></p>';
 		echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Request AI access', 'handl-ai-connector-access-control' ) . '</button></p>';
 		echo '</form>';
@@ -154,7 +154,7 @@ final class Access_Request {
 		$pending = self::pending_rows();
 		echo '<div class="handl-aicac-access-request-inbox" style="margin:1.5em 0;">';
 		echo '<h2>' . esc_html__( 'AI access requests', 'handl-ai-connector-access-control' ) . '</h2>';
-		echo '<p class="description">' . esc_html__( 'When an editor hits a blocked AI call, they can ask for temporary access. Approve allows the plugin for 24 hours. Deny closes the request.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'When an editor’s AI request is blocked, they can ask for temporary access. Approving allows the plugin for 24 hours. Denying closes the request.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( empty( $pending ) ) {
 			echo '<p>' . esc_html__( 'No pending requests.', 'handl-ai-connector-access-control' ) . '</p>';
@@ -195,7 +195,7 @@ final class Access_Request {
 			echo '<input type="hidden" name="handl_aicac_request_id" value="' . esc_attr( (string) $row['id'] ) . '" />';
 			echo '<input type="hidden" name="handl_aicac_decision" value="approve" />';
 			echo '<input type="hidden" name="_wpnonce" value="' . esc_attr( $nonce ) . '" />';
-			echo '<button type="submit" class="button button-primary">' . esc_html__( 'Approve 24h', 'handl-ai-connector-access-control' ) . '</button>';
+			echo '<button type="submit" class="button button-primary">' . esc_html__( 'Approve for 24 hours', 'handl-ai-connector-access-control' ) . '</button>';
 			echo '</form>';
 			echo '<form method="post" action="' . esc_url( $action ) . '" style="display:inline-block;margin:0 0.35em 0.35em 0;">';
 			echo '<input type="hidden" name="action" value="' . esc_attr( self::DECIDE_HOOK ) . '" />';
@@ -244,7 +244,7 @@ final class Access_Request {
 
 		$message = ! empty( $result['emailed'] )
 			? __( 'Your request was sent to the site owner.', 'handl-ai-connector-access-control' )
-			: __( 'Your request was recorded. The site owner was already notified for this plugin.', 'handl-ai-connector-access-control' );
+			: __( 'Your request was recorded, but no new email was sent to the site owner.', 'handl-ai-connector-access-control' );
 
 		if ( function_exists( 'wp_safe_redirect' ) ) {
 			wp_safe_redirect(
@@ -548,7 +548,7 @@ final class Access_Request {
 		if ( '' !== $reason ) {
 			$body .= __( 'Reason:', 'handl-ai-connector-access-control' ) . ' ' . $reason . "\n";
 		}
-		$body .= "\n" . __( 'Approve allows this plugin for 24 hours. Deny closes the request. You must log in and confirm before anything changes.', 'handl-ai-connector-access-control' ) . "\n";
+		$body .= "\n" . __( 'Approving allows this plugin for 24 hours. Denying closes the request. You must log in and confirm before anything changes.', 'handl-ai-connector-access-control' ) . "\n";
 		$body .= Admin::screen_url( 'protections' ) . "\n";
 
 		return (bool) Inbox_Actions::with_mail(

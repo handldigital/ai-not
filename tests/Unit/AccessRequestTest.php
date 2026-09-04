@@ -132,7 +132,7 @@ final class AccessRequestTest extends TestCase {
 		$this->assertTrue( $first['ok'] );
 		$this->assertTrue( $first['emailed'] );
 		$this->assertCount( 1, self::$mails );
-		$this->assertStringContainsString( 'Approve — allow this plugin for 24 hours:', self::$mails[0]['message'] );
+		$this->assertStringContainsString( 'Approve access for 24 hours:', self::$mails[0]['message'] );
 		$this->assertStringContainsString( 'Deny this access request:', self::$mails[0]['message'] );
 		$this->assertStringContainsString( 'admin-post.php', self::$mails[0]['message'] );
 
@@ -230,7 +230,7 @@ final class AccessRequestTest extends TestCase {
 				return Email_Template::compose( "Body\n" );
 			}
 		);
-		$this->assertStringContainsString( 'Approve — allow this plugin for 24 hours:', $parts['text'] );
+		$this->assertStringContainsString( 'Approve access for 24 hours:', $parts['text'] );
 		$this->assertStringContainsString( 'Deny this access request:', $parts['text'] );
 		$this->assertStringNotContainsString( 'Snooze these alerts for 7 days:', $parts['text'] );
 	}

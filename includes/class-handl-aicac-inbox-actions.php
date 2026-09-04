@@ -89,7 +89,7 @@ final class Inbox_Actions {
 
 		$lines = array();
 		if ( 'access_request' === $kind ) {
-			$lines[] = __( 'Approve — allow this plugin for 24 hours:', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'Approve access for 24 hours:', 'handl-ai-connector-access-control' );
 			$lines[] = self::mint_url( self::ACT_ACCESS_APPROVE, $plugin, $recipient, $now );
 			$lines[] = '';
 			$lines[] = __( 'Deny this access request:', 'handl-ai-connector-access-control' );
