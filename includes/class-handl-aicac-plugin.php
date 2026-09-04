@@ -51,6 +51,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alert-routing.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alert-snooze.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-inbox-actions.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-access-request.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-weekly-report.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-monthly-report.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-governance-digest.php';
@@ -98,6 +99,7 @@ final class Plugin {
 		New_Plugin::instance()->init();
 		Alerts::instance()->init();
 		Inbox_Actions::instance()->init();
+		Access_Request::instance()->init();
 		Weekly_Report::instance()->init();
 		Monthly_Report::instance()->init();
 		Governance_Digest::instance()->init();
