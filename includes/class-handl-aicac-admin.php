@@ -197,13 +197,21 @@ final class Admin {
 		add_action( 'admin_print_footer_scripts', array( $this, 'print_menu_keyboard_script' ) );
 		add_action( 'admin_init', array( $this, 'maybe_handle_file_downloads' ) );
 		add_action( 'admin_init', array( $this, 'maybe_redirect_legacy_settings_url' ) );
+		add_action( 'admin_init', array( Caps::class, 'ensure_registered' ) );
 	}
 
 	/**
 	 * Shared capability gate (single current_user_can for authz inventory).
 	 */
 	private function user_can_manage_options(): bool {
-		return current_user_can( 'manage_options' );
+		return Caps::user_can_manage();
+	}
+
+	/**
+	 * Open plugin screens (manage or auditor view).
+	 */
+	private function user_can_view_screens(): bool {
+		return Caps::user_can_view();
 	}
 
 	public function enqueue_assets( string $hook_suffix ): void {
@@ -223,6 +231,25 @@ final class Admin {
 			array(),
 			HANDL_AICAC_VERSION
 		);
+
+		if ( Caps::is_read_only() ) {
+			wp_enqueue_script(
+				'handl-aicac-read-only',
+				HANDL_AICAC_URL . 'assets/admin-read-only.js',
+				array(),
+				HANDL_AICAC_VERSION,
+				true
+			);
+			wp_add_inline_script(
+				'handl-aicac-read-only',
+				'window.handlAicacReadOnly=' . wp_json_encode(
+					array(
+						'exportActions' => Caps::READ_EXPORT_ACTIONS,
+					)
+				) . ';',
+				'before'
+			);
+		}
 	}
 
 	/**
@@ -254,7 +281,7 @@ final class Admin {
 	}
 
 	public function register_menu(): void {
-		$cap      = 'manage_options';
+		$cap      = Caps::VIEW;
 		$callback = array( $this, 'render_page' );
 		$title    = __( 'AI Access Control', 'handl-ai-connector-access-control' );
 
@@ -322,7 +349,7 @@ final class Admin {
 		if ( 'GET' !== $method ) {
 			return;
 		}
-		if ( ! $this->user_can_manage_options() ) {
+		if ( ! $this->user_can_view_screens() ) {
 			return;
 		}
 		$this->redirect_legacy_get();
@@ -349,8 +376,12 @@ final class Admin {
 			return;
 		}
 
-		if ( ! $this->user_can_manage_options() ) {
+		if ( ! $this->user_can_view_screens() ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'handl-ai-connector-access-control' ) );
+		}
+
+		if ( ! $this->user_can_manage_options() && ! Caps::is_read_export_action( $posted_action ) ) {
+			wp_die( esc_html__( 'You do not have permission to change AI Access Control settings.', 'handl-ai-connector-access-control' ) );
 		}
 
 		if ( 'export_log' === $posted_action ) {
@@ -395,14 +426,14 @@ final class Admin {
 	 * @param string $nonce_action Same action string as the dispatch check_admin_referer.
 	 */
 	private function require_admin_mutation( string $nonce_action ): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! Caps::user_can_manage() ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'handl-ai-connector-access-control' ) );
 		}
 		check_admin_referer( $nonce_action, 'handl_aicac_nonce' );
 	}
 
 	public function render_page(): void {
-		if ( ! $this->user_can_manage_options() ) {
+		if ( ! $this->user_can_view_screens() ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'handl-ai-connector-access-control' ) );
 		}
 
@@ -469,6 +500,13 @@ final class Admin {
 
 		if ( isset( $_POST['handl_aicac_action'] ) ) {
 			$posted_action = sanitize_key( wp_unslash( (string) $_POST['handl_aicac_action'] ) );
+			if ( ! $this->user_can_manage_options() && ! Caps::is_read_export_action( $posted_action ) ) {
+				wp_die( esc_html__( 'You do not have permission to change AI Access Control settings.', 'handl-ai-connector-access-control' ) );
+			}
+			if ( 'save_auditor_roles' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_save_auditor_roles', 'handl_aicac_nonce' );
+				$this->handle_save_auditor_roles();
+			}
 			if ( 'quick_rule' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_quick_rule', 'handl_aicac_nonce' );
 				$this->handle_quick_rule_redirect( $this->log_filters );
@@ -684,6 +722,7 @@ final class Admin {
 		$checks_saved_ok      = isset( $_GET['handl_aicac_checks_saved'] ) && '1' === (string) $_GET['handl_aicac_checks_saved'];
 		$policy_backup_saved  = isset( $_GET['handl_aicac_policy_backup_saved'] ) && '1' === (string) $_GET['handl_aicac_policy_backup_saved'];
 		$prune_export_skipped = isset( $_GET['handl_aicac_prune_export_skipped'] ) && '1' === (string) $_GET['handl_aicac_prune_export_skipped'];
+		$auditor_roles_saved  = isset( $_GET['handl_aicac_auditor_saved'] ) && '1' === (string) $_GET['handl_aicac_auditor_saved'];
 
 
 		if ( isset( $_POST['handl_aicac_action'] ) && 'save' === $_POST['handl_aicac_action'] ) {
@@ -712,15 +751,21 @@ final class Admin {
 
 		$icon_src = add_query_arg( 'ver', HANDL_AICAC_VERSION, HANDL_AICAC_URL . 'assets/icon-128x128.png' );
 
-		echo '<div class="wrap">';
+		echo '<div class="wrap' . ( Caps::is_read_only() ? ' handl-aicac-read-only' : '' ) . '">';
 		echo '<h1 style="display:flex;align-items:center;gap:12px;">';
 		echo '<img src="' . esc_url( $icon_src ) . '" alt="" width="40" height="40" style="border-radius:8px;" loading="lazy" decoding="async" />';
 		echo esc_html__( 'HandL AI Access', 'handl-ai-connector-access-control' );
 		echo '</h1>';
+		if ( Caps::is_read_only() ) {
+			echo '<div class="notice notice-info"><p>' . esc_html__( 'You can review AI Access Control screens. Saving rules, alerts, or other changes needs a full administrator.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
 echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be driving estimated spend, and block a plugin with one click. The default is Allow.', 'handl-ai-connector-access-control' );
 		echo ' ' . esc_html( Differentiator_Messaging::page_subtitle_addition() ) . '</p>';
 
 		echo '<div id="handl-aicac-notices" role="status" aria-live="polite">';
+		if ( $auditor_roles_saved ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Access roles updated.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
 		if ( $checks_saved_ok ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Policy check list updated.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
@@ -1650,7 +1695,83 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '</form>';
 		}
 
+		$this->render_auditor_role_matrix();
+
 		echo '</div>';
+	}
+
+	/**
+	 * Settings matrix: which roles hold view vs manage (AICAC-AUDITOR-ROLE).
+	 */
+	private function render_auditor_role_matrix(): void {
+		$matrix = Caps::role_access_matrix();
+		if ( empty( $matrix ) ) {
+			return;
+		}
+
+		echo '<div class="handl-aicac-auditor-matrix" style="margin-top:2em;max-width:36em;">';
+		echo '<h2>' . esc_html__( 'Who can open AI Access Control', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<p class="description">' . esc_html__( 'View lets a role open Rules, Activity, Insights, and Site Health details without changing settings. Manage is the normal administrator capability.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		$can_edit = $this->user_can_manage_options();
+		if ( $can_edit ) {
+			echo '<form method="post">';
+			wp_nonce_field( 'handl_aicac_save_auditor_roles', 'handl_aicac_nonce' );
+			echo '<input type="hidden" name="handl_aicac_action" value="save_auditor_roles" />';
+			echo '<input type="hidden" name="handl_aicac_tab" value="alerts" />';
+		}
+
+		echo '<table class="widefat striped"><thead><tr>';
+		echo '<th scope="col">' . esc_html__( 'Role', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'View', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Manage', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '</tr></thead><tbody>';
+
+		foreach ( $matrix as $row ) {
+			echo '<tr>';
+			echo '<th scope="row">' . esc_html( (string) $row['name'] ) . '</th>';
+			echo '<td>';
+			if ( $can_edit && empty( $row['manage'] ) ) {
+				echo '<label><input type="checkbox" name="handl_aicac_view_roles[]" value="' . esc_attr( (string) $row['key'] ) . '"' . checked( ! empty( $row['view'] ), true, false ) . ' /> ';
+				echo esc_html__( 'View only', 'handl-ai-connector-access-control' ) . '</label>';
+			} else {
+				echo ! empty( $row['view'] ) ? esc_html__( 'Yes', 'handl-ai-connector-access-control' ) : esc_html__( 'No', 'handl-ai-connector-access-control' );
+			}
+			echo '</td><td>';
+			echo ! empty( $row['manage'] ) ? esc_html__( 'Yes', 'handl-ai-connector-access-control' ) : esc_html__( 'No', 'handl-ai-connector-access-control' );
+			echo '</td></tr>';
+		}
+		echo '</tbody></table>';
+
+		if ( $can_edit ) {
+			submit_button( __( 'Save access roles', 'handl-ai-connector-access-control' ) );
+			echo '</form>';
+		}
+		echo '</div>';
+	}
+
+	/**
+	 * Persist auditor view role checkboxes.
+	 */
+	private function handle_save_auditor_roles(): void {
+		$this->require_admin_mutation( 'handl_aicac_save_auditor_roles' );
+		$raw = isset( $_POST['handl_aicac_view_roles'] ) ? wp_unslash( $_POST['handl_aicac_view_roles'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$keys = array();
+		if ( is_array( $raw ) ) {
+			foreach ( $raw as $key ) {
+				$keys[] = sanitize_key( (string) $key );
+			}
+		}
+		Caps::apply_view_roles( $keys );
+		$redirect = self::redirect_url(
+			array(
+				'page'                      => 'handl-ai-connector-access-control',
+				'handl_aicac_tab'           => 'alerts',
+				'handl_aicac_auditor_saved' => '1',
+			)
+		);
+		wp_safe_redirect( $redirect );
+		exit;
 	}
 
 	/**
