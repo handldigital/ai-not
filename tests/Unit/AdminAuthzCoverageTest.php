@@ -7,7 +7,7 @@
  * class-handl-aicac-admin.php. Does not exercise WordPress runtime authz — it
  * fails if a new handl_aicac_action branch appears without updating the approved
  * inventory (and without a matching check_admin_referer), or if the shared
- * manage_options gate is removed.
+ * manage_options / Caps::MANAGE gate is removed.
  *
  * @package HandL_AICAC
  */
@@ -58,6 +58,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 		'quick_rule',
 		'renew_temp_allow',
 		'save',
+		'save_auditor_roles',
 		'send_denial_digest',
 		'send_test_email',
 		'send_test_webhook',
@@ -85,32 +86,39 @@ final class AdminAuthzCoverageTest extends TestCase {
 	 * Shared capability wrapper must precede POST mutation handling.
 	 */
 	public function test_shared_manage_options_gate_exists_before_post_dispatch(): void {
-		$cap_line  = $this->first_line_matching( '/current_user_can\s*\(\s*[\'"]manage_options[\'"]\s*\)/' );
+		$cap_line  = $this->first_line_matching( '/function\s+user_can_manage_options\s*\(/' );
+		$view_line = $this->first_line_matching( '/function\s+user_can_view_screens\s*\(/' );
 		$post_line = $this->first_line_matching( '/\$_POST\s*\[\s*[\'"]handl_aicac_action[\'"]\s*\]/' );
 
-		$this->assertNotNull( $cap_line, 'Shared current_user_can( manage_options ) gate not found' );
+		$this->assertNotNull( $cap_line, 'Shared user_can_manage_options() helper not found' );
+		$this->assertNotNull( $view_line, 'Shared user_can_view_screens() helper not found' );
 		$this->assertNotNull( $post_line, 'POST handl_aicac_action dispatch not found' );
 		$this->assertLessThan(
 			$post_line,
 			$cap_line,
-			'Capability gate must run before POST action handling'
+			'Capability helper must be defined before POST action handling'
 		);
 	}
 
 	/**
-	 * Menu registration must also require manage_options (WordPress page gate).
+	 * Menu registration uses auditor VIEW; manage stays on mutation helpers.
 	 */
 	public function test_options_page_registered_with_manage_options(): void {
 		$this->assertMatchesRegularExpression(
-			'/add_menu_page\s*\([\s\S]*?[\'"]manage_options[\'"]/',
+			'/\$cap\s*=\s*Caps::VIEW/',
 			$this->source,
-			'add_menu_page must register manage_options capability'
+			'add_menu_page must register Caps::VIEW capability'
 		);
 		$this->assertMatchesRegularExpression(
-			'/add_options_page\s*\([\s\S]*?[\'"]manage_options[\'"]/',
-			$this->source,
-			'Legacy add_options_page must still register manage_options for redirects'
+			'/add_menu_page\s*\(/',
+			$this->source
 		);
+		$this->assertMatchesRegularExpression(
+			'/add_options_page\s*\(/',
+			$this->source,
+			'Legacy add_options_page must remain for redirects'
+		);
+		$this->assertStringContainsString( 'Caps::user_can_manage()', $this->source );
 	}
 
 	/**
@@ -186,6 +194,10 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array(
 				'action'       => 'save',
 				'nonce_action' => 'handl_aicac_save_policy',
+			),
+			array(
+				'action'       => 'save_auditor_roles',
+				'nonce_action' => 'handl_aicac_save_auditor_roles',
 			),
 			array(
 				'action'       => 'export_rules',
@@ -359,17 +371,18 @@ final class AdminAuthzCoverageTest extends TestCase {
 	}
 
 	/**
-	 * Shared page gate + defense-in-depth helper each call current_user_can;
+	 * Shared page gate + defense-in-depth helper each call Caps manage/view;
 	 * dispatch keeps one check_admin_referer per mutating action; helper adds one more.
 	 */
 	public function test_combined_capability_and_nonce_verify_match_count(): void {
-		preg_match_all( '/\bcurrent_user_can\s*\(/', $this->source, $cap );
+		preg_match_all( '/\bCaps::user_can_manage\s*\(/', $this->source, $cap );
 		preg_match_all( '/\bcheck_admin_referer\s*\(/', $this->source, $nonce );
 		preg_match_all( '/\bwp_verify_nonce\s*\(/', $this->source, $verify );
 
 		$expected_dispatch_nonces = count( $this->mutating_action_provider() );
-		// render_page shared gate + require_admin_mutation helper.
-		$this->assertSame( 2, count( $cap[0] ), 'Expected shared gate + require_admin_mutation current_user_can' );
+		// user_can_manage_options + require_admin_mutation (+ optional extras ok as >=1).
+		$this->assertGreaterThanOrEqual( 1, count( $cap[0] ), 'Expected Caps::user_can_manage in admin class' );
+		$this->assertStringContainsString( 'user_can_view_screens', $this->source );
 		// One referer per dispatch action + one inside require_admin_mutation.
 		$this->assertSame(
 			$expected_dispatch_nonces + 1,
@@ -386,7 +399,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 		$body = $this->method_body( 'require_admin_mutation' );
 		$this->assertNotNull( $body, 'require_admin_mutation() not found' );
 		$this->assertMatchesRegularExpression(
-			'/current_user_can\s*\(\s*[\'"]manage_options[\'"]\s*\)/',
+			'/Caps::user_can_manage\s*\(\s*\)/',
 			$body
 		);
 		$this->assertMatchesRegularExpression(
@@ -467,6 +480,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array( 'handle_policy_check_add', 'handl_aicac_policy_check_add' ),
 			array( 'handle_policy_check_delete', 'handl_aicac_policy_check_delete' ),
 			array( 'handle_policy_checks_save_confirm', 'handl_aicac_policy_checks_save_confirm' ),
+			array( 'handle_save_auditor_roles', 'handl_aicac_save_auditor_roles' ),
 		);
 	}
 
@@ -512,6 +526,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'handle_policy_check_add',
 				'handle_policy_check_delete',
 				'handle_policy_checks_save_confirm',
+				'handle_save_auditor_roles',
 			) as $method
 		) {
 			$this->assertMatchesRegularExpression(

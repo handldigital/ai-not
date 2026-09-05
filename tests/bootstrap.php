@@ -377,14 +377,30 @@ if ( ! function_exists( 'add_action' ) ) {
 	}
 }
 
+if ( ! function_exists( 'translate_user_role' ) ) {
+	/**
+	 * @param string $name Role display name.
+	 */
+	function translate_user_role( $name ): string {
+		return (string) $name;
+	}
+}
+
 if ( ! function_exists( 'current_user_can' ) ) {
 	/**
-	 * Capability stub for REST permission_callback tests.
+	 * Capability stub for REST / auditor permission tests.
 	 *
 	 * @param string $capability Capability slug.
 	 */
 	function current_user_can( $capability ): bool {
-		unset( $capability );
+		if ( isset( $GLOBALS['handl_aicac_test_caps'] ) && is_array( $GLOBALS['handl_aicac_test_caps'] ) ) {
+			$map = $GLOBALS['handl_aicac_test_caps'];
+			$key = (string) $capability;
+			if ( array_key_exists( $key, $map ) ) {
+				return (bool) $map[ $key ];
+			}
+			return false;
+		}
 		if ( array_key_exists( 'handl_aicac_test_current_user_can', $GLOBALS ) ) {
 			return (bool) $GLOBALS['handl_aicac_test_current_user_can'];
 		}
@@ -877,7 +893,9 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin-profile.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-differentiator-messaging.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-pager.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-caps.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-network-admin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-site-health.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-tamper.php';

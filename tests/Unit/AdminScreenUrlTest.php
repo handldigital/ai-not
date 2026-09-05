@@ -135,7 +135,7 @@ final class AdminScreenUrlTest extends TestCase {
 		$src = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php' );
 		$this->assertStringContainsString( 'add_menu_page(', $src );
 		$this->assertStringContainsString( 'dashicons-shield-alt', $src );
-		$this->assertStringContainsString( "\$cap      = 'manage_options';", $src );
+		$this->assertStringContainsString( 'Caps::VIEW', $src );
 		foreach ( array( 'Protections', 'Policy Tools', 'Alerts & Settings' ) as $label ) {
 			$this->assertStringContainsString( $label, $src );
 		}
