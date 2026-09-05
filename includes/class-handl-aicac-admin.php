@@ -757,7 +757,7 @@ final class Admin {
 		echo esc_html__( 'HandL AI Access', 'handl-ai-connector-access-control' );
 		echo '</h1>';
 		if ( Caps::is_read_only() ) {
-			echo '<div class="notice notice-info"><p>' . esc_html__( 'You can review AI Access Control screens. Saving rules, alerts, or other changes needs a full administrator.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<div class="notice notice-info"><p>' . esc_html__( 'You have read-only access. You can view and export data, but only an administrator can save changes.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be driving estimated spend, and block a plugin with one click. The default is Allow.', 'handl-ai-connector-access-control' );
 		echo ' ' . esc_html( Differentiator_Messaging::page_subtitle_addition() ) . '</p>';
@@ -1710,8 +1710,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 
 		echo '<div class="handl-aicac-auditor-matrix" style="margin-top:2em;max-width:36em;">';
-		echo '<h2>' . esc_html__( 'Who can open AI Access Control', 'handl-ai-connector-access-control' ) . '</h2>';
-		echo '<p class="description">' . esc_html__( 'View lets a role open Rules, Activity, Insights, and Site Health details without changing settings. Manage is the normal administrator capability.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<h2>' . esc_html__( 'Role access', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<p class="description">' . esc_html__( 'Choose which roles can view AI Access Control. View-only users can open Rules, Activity, Insights, and Site Health details, but cannot save changes.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		$can_edit = $this->user_can_manage_options();
 		if ( $can_edit ) {
@@ -1723,8 +1723,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		echo '<table class="widefat striped"><thead><tr>';
 		echo '<th scope="col">' . esc_html__( 'Role', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th scope="col">' . esc_html__( 'View', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th scope="col">' . esc_html__( 'Manage', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Can view', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Can manage', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead><tbody>';
 
 		foreach ( $matrix as $row ) {
@@ -1733,7 +1733,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '<td>';
 			if ( $can_edit && empty( $row['manage'] ) ) {
 				echo '<label><input type="checkbox" name="handl_aicac_view_roles[]" value="' . esc_attr( (string) $row['key'] ) . '"' . checked( ! empty( $row['view'] ), true, false ) . ' /> ';
-				echo esc_html__( 'View only', 'handl-ai-connector-access-control' ) . '</label>';
+				echo esc_html__( 'Allow view-only access', 'handl-ai-connector-access-control' ) . '</label>';
 			} else {
 				echo ! empty( $row['view'] ) ? esc_html__( 'Yes', 'handl-ai-connector-access-control' ) : esc_html__( 'No', 'handl-ai-connector-access-control' );
 			}
