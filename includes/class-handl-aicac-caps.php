@@ -23,7 +23,12 @@ final class Caps {
 	public const MANAGE = 'manage_options';
 
 	/** Core Site Health screen capability — granted with VIEW for auditors. */
-	public const SITE_HEALTH = 'view_site_health_tests';
+	public const SITE_HEALTH = 'view_site_health_checks';
+
+	/**
+	 * Mistaken slug from early #183 builds (tests ≠ checks). Stripped on apply.
+	 */
+	private const SITE_HEALTH_LEGACY_TYPO = 'view_site_health_tests';
 
 	/**
 	 * POST actions that only stream downloads (no policy mutation).
@@ -128,15 +133,21 @@ final class Caps {
 
 			$must_view = isset( $wanted[ $role_key ] ) || self::role_has_cap( $role, self::MANAGE );
 			$has_view  = self::role_has_cap( $role, self::VIEW );
+			$is_manage = self::role_has_cap( $role, self::MANAGE );
 
-			if ( $must_view && ! $has_view ) {
-				self::role_add_cap( $role, self::VIEW );
-				if ( ! self::role_has_cap( $role, self::MANAGE ) ) {
+			if ( $must_view ) {
+				if ( ! $has_view ) {
+					self::role_add_cap( $role, self::VIEW );
+				}
+				if ( ! $is_manage ) {
 					self::role_add_cap( $role, self::SITE_HEALTH );
 				}
-			} elseif ( ! $must_view && $has_view && ! self::role_has_cap( $role, self::MANAGE ) ) {
+				// Drop the early-build typo so role stores only the WP core cap.
+				self::role_remove_cap( $role, self::SITE_HEALTH_LEGACY_TYPO );
+			} elseif ( $has_view && ! $is_manage ) {
 				self::role_remove_cap( $role, self::VIEW );
 				self::role_remove_cap( $role, self::SITE_HEALTH );
+				self::role_remove_cap( $role, self::SITE_HEALTH_LEGACY_TYPO );
 			}
 		}
 	}

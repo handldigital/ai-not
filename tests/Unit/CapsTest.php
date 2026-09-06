@@ -115,6 +115,26 @@ final class CapsTest extends TestCase {
 		$this->assertTrue( empty( $author->capabilities[ Caps::SITE_HEALTH ] ) );
 	}
 
+	public function test_apply_view_roles_adds_site_health_when_view_already_present(): void {
+		$editor = (object) array(
+			'name'         => 'Editor',
+			'capabilities' => array(
+				Caps::VIEW                   => true,
+				'view_site_health_tests'     => true, // legacy typo from early #183.
+			),
+		);
+		$GLOBALS['handl_aicac_test_roles'] = array(
+			'editor' => $editor,
+		);
+
+		Caps::apply_view_roles( array( 'editor' ) );
+
+		$this->assertTrue( ! empty( $editor->capabilities[ Caps::VIEW ] ) );
+		$this->assertTrue( ! empty( $editor->capabilities[ Caps::SITE_HEALTH ] ) );
+		$this->assertSame( 'view_site_health_checks', Caps::SITE_HEALTH );
+		$this->assertTrue( empty( $editor->capabilities['view_site_health_tests'] ) );
+	}
+
 	public function test_role_access_matrix_lists_view_and_manage(): void {
 		$admin = (object) array(
 			'name'         => 'Administrator',

@@ -1,5 +1,6 @@
 /**
  * Read-only auditor UI: hide mutating controls; leave plain export forms usable.
+ * Controls may sit outside <form> and use the HTML form="" attribute (Rules matrix).
  */
 (function () {
 	'use strict';
@@ -9,32 +10,55 @@
 	if (!wrap) {
 		return;
 	}
+
+	function formAction(form) {
+		var actionInput = form.querySelector(
+			'input[name="handl_aicac_action"], button[name="handl_aicac_action"]'
+		);
+		if (actionInput && actionInput.value) {
+			return String(actionInput.value);
+		}
+		return '';
+	}
+
+	var exportFormIds = {};
 	var forms = wrap.querySelectorAll('form');
 	for (var i = 0; i < forms.length; i++) {
 		var form = forms[i];
-		var actionInput = form.querySelector('input[name="handl_aicac_action"], button[name="handl_aicac_action"]');
-		var action = '';
-		if (actionInput && actionInput.value) {
-			action = String(actionInput.value);
-		}
-		var isExport = allowed.indexOf(action) !== -1;
-		if (isExport) {
-			form.classList.add('handl-aicac-read-ok');
+		if (allowed.indexOf(formAction(form)) === -1) {
 			continue;
 		}
-		var controls = form.querySelectorAll('button, input[type="submit"], input[type="button"]');
-		for (var c = 0; c < controls.length; c++) {
-			controls[c].disabled = true;
-			controls[c].setAttribute('aria-disabled', 'true');
-			controls[c].style.display = 'none';
+		form.classList.add('handl-aicac-read-ok');
+		if (form.id) {
+			exportFormIds[form.id] = true;
 		}
-		var fields = form.querySelectorAll('input, select, textarea');
-		for (var f = 0; f < fields.length; f++) {
-			var el = fields[f];
-			if (el.type === 'hidden') {
-				continue;
-			}
-			el.disabled = true;
+	}
+
+	function isExportControl(el) {
+		if (el.closest && el.closest('form.handl-aicac-read-ok')) {
+			return true;
+		}
+		var formId = el.getAttribute('form');
+		return !!(formId && exportFormIds[formId]);
+	}
+
+	var controls = wrap.querySelectorAll('button, input, select, textarea');
+	for (var c = 0; c < controls.length; c++) {
+		var el = controls[c];
+		if (el.type === 'hidden') {
+			continue;
+		}
+		if (isExportControl(el)) {
+			continue;
+		}
+		el.disabled = true;
+		if (
+			el.tagName === 'BUTTON' ||
+			el.type === 'submit' ||
+			el.type === 'button'
+		) {
+			el.setAttribute('aria-disabled', 'true');
+			el.style.display = 'none';
 		}
 	}
 })();

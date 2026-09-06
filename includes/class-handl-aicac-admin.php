@@ -215,13 +215,7 @@ final class Admin {
 	}
 
 	public function enqueue_assets( string $hook_suffix ): void {
-		$ours = (
-			0 === strpos( $hook_suffix, 'toplevel_page_handl-aicac' )
-			|| 0 === strpos( $hook_suffix, 'handl-aicac_page_' )
-			|| 'settings_page_handl-ai-connector-access-control' === $hook_suffix
-			|| 'admin_page_handl-ai-connector-access-control' === $hook_suffix
-		);
-		if ( ! $ours ) {
+		if ( ! self::is_plugin_admin_hook( $hook_suffix ) ) {
 			return;
 		}
 
@@ -250,6 +244,35 @@ final class Admin {
 				'before'
 			);
 		}
+	}
+
+	/**
+	 * Whether admin_enqueue_scripts should load plugin assets for this screen.
+	 *
+	 * WP prefixes custom top-level submenu hooks with sanitize_title( menu title ),
+	 * e.g. ai-access-control_page_handl-aicac-rules — not handl-aicac_page_*.
+	 */
+	public static function is_plugin_admin_hook( string $hook_suffix ): bool {
+		if (
+			'settings_page_handl-ai-connector-access-control' === $hook_suffix
+			|| 'admin_page_handl-ai-connector-access-control' === $hook_suffix
+		) {
+			return true;
+		}
+		if ( 0 === strpos( $hook_suffix, 'toplevel_page_handl-aicac' ) ) {
+			return true;
+		}
+		// Title-sanitized parent prefix + our screen slug, or legacy handl-aicac_page_*.
+		if ( false !== strpos( $hook_suffix, '_page_handl-aicac' ) ) {
+			return true;
+		}
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( (string) $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen id.
+		if ( '' === $page ) {
+			return false;
+		}
+		return self::MENU_SLUG === $page
+			|| self::LEGACY_PAGE_SLUG === $page
+			|| in_array( $page, self::SCREEN_SLUGS, true );
 	}
 
 	/**
