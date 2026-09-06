@@ -1,0 +1,34 @@
+{
+  "httpStatus": 202,
+  "body": {
+    "id": "d3a4848a-6195-49b3-a910-b625abbec621",
+    "status": "ready",
+    "ready": 2,
+    "total": 3,
+    "failed": 1,
+    "domains": [
+      {
+        "domain": "handlwp.com",
+        "url": "https://handlwp.com/",
+        "status": "ready",
+        "cached": true
+      },
+      {
+        "domain": "handldigital.com",
+        "url": "https://handldigital.com/",
+        "status": "ready",
+        "cached": true
+      },
+      {
+        "domain": "not-a-real-host.invalid",
+        "url": "https://not-a-real-host.invalid/",
+        "status": "error",
+        "cached": false
+      }
+    ],
+    "message": "Bulk scan queued. Poll GET /report/bulk?id=\u2026 until ready."
+  },
+  "email": "haktan+agency-leak-check-canary2@handldigital.com",
+  "turnstile": "XXXX.DUMMY.TOKEN.www.example.com",
+  "note": "Sanctioned canary always-pass dummy token against canary API secret."
+}

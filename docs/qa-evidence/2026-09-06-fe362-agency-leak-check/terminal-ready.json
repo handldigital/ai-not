@@ -1,0 +1,51 @@
+{
+    "id": "d3a4848a-6195-49b3-a910-b625abbec621",
+    "status": "ready",
+    "ready": 2,
+    "total": 3,
+    "failed": 1,
+    "domains": [
+        {
+            "domain": "handldigital.com",
+            "url": "https://handldigital.com/",
+            "status": "ready",
+            "score": 72,
+            "topIssues": [
+                "Lead form completed (evidence-based)",
+                "Largest Contentful Paint (mobile lab)",
+                "Thank-you / success state after submit"
+            ],
+            "leakCount": 10,
+            "pageUrl": "https://d1jxhsdbe7723g.cloudfront.net/leak-report/gr62ZkDGU66R3gPQ3L_9eg",
+            "reportUrl": "https://71mug1tole.execute-api.us-east-1.amazonaws.com/canary/r/gr62ZkDGU66R3gPQ3L_9eg",
+            "error": null
+        },
+        {
+            "domain": "handlwp.com",
+            "url": "https://handlwp.com/",
+            "status": "ready",
+            "score": 72,
+            "topIssues": [
+                "Lead form completed (evidence-based)",
+                "Largest Contentful Paint (mobile lab)",
+                "Thank-you / success state after submit"
+            ],
+            "leakCount": 10,
+            "pageUrl": "https://d1jxhsdbe7723g.cloudfront.net/leak-report/aUQbbbwTPpPHt99dVQwLvg",
+            "reportUrl": "https://71mug1tole.execute-api.us-east-1.amazonaws.com/canary/r/aUQbbbwTPpPHt99dVQwLvg",
+            "error": null
+        },
+        {
+            "domain": "not-a-real-host.invalid",
+            "url": "https://not-a-real-host.invalid/",
+            "status": "error",
+            "score": null,
+            "topIssues": [],
+            "leakCount": null,
+            "pageUrl": null,
+            "reportUrl": null,
+            "error": "Could not reach host"
+        }
+    ],
+    "reportUrl": "https://d1jxhsdbe7723g.cloudfront.net/leak-report/bulk/d3a4848a-6195-49b3-a910-b625abbec621"
+}
