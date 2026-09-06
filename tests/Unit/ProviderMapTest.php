@@ -161,7 +161,7 @@ final class ProviderMapTest extends TestCase {
 		$this->assertNotNull( $out );
 		$this->assertSame( $now - ( 14 * 86400 ), $out['window']['knowledge_start_ts'] );
 		$this->assertNotNull( $out['window']['gap_label'] );
-		$this->assertStringContainsString( 'No data kept', (string) $out['window']['gap_label'] );
+		$this->assertStringContainsString( 'Older activity is not available', (string) $out['window']['gap_label'] );
 	}
 
 	public function test_share_pct_helpers(): void {

@@ -3596,7 +3596,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		echo '<div class="handl-aicac-insights-provider-map" style="margin:1.5em 0;">';
 		echo '<h3>' . esc_html__( 'Who talks to whom', 'handl-ai-connector-access-control' ) . '</h3>';
-		echo '<p class="description">' . esc_html__( 'Plugins, providers, and models from the saved log in the current retention window. Estimated spend share uses only providers with a saved rate. Providers without a rate show Spend unknown. Estimate only, not a bill.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'See which plugins used each AI provider and model in your saved log. Spend percentages include only providers with saved rates. Providers without one show Spend unknown. Estimates are not bills.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( ! empty( $map['window']['gap_label'] ) ) {
 			echo '<p class="description handl-aicac-provider-map-gap">' . esc_html( (string) $map['window']['gap_label'] ) . '</p>';
@@ -3608,7 +3608,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<th scope="col">' . esc_html__( 'Provider', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th scope="col">' . esc_html__( 'Model', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th scope="col" class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th scope="col" class="column-num">' . esc_html__( 'Estimated spend share', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-num">' . esc_html__( 'Estimated spend (share)', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead><tbody>';
 
 		foreach ( $map['plugins'] as $plugin_row ) {
@@ -3673,7 +3673,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		);
 		if ( (int) $totals['unknown_spend_providers'] > 0 || (int) $totals['unknown_spend_calls'] > 0 ) {
 			echo ' ';
-			echo esc_html__( 'Spend share percentages exclude providers without a saved rate (shown as Spend unknown).', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'Spend percentages exclude providers without saved rates. Those rows show Spend unknown.', 'handl-ai-connector-access-control' );
 		}
 		echo '</p>';
 		echo '</div>';

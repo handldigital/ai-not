@@ -419,7 +419,7 @@ final class Provider_Map {
 		}
 
 		// Retention truncates older history — same plain-language pattern as weekly trends.
-		return __( 'Older days: No data kept (outside the saved log window).', 'handl-ai-connector-access-control' );
+		return __( 'Older activity is not available outside the saved log window.', 'handl-ai-connector-access-control' );
 	}
 
 	/**
