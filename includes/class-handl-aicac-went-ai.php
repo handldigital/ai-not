@@ -120,9 +120,9 @@ final class Went_AI {
 			return $empty;
 		}
 
-		$ts = isset( $event['ts'] ) ? (int) $event['ts'] : time();
+		$ts = isset( $event['ts'] ) ? (int) $event['ts'] : Clock::now();
 		if ( $ts <= 0 ) {
-			$ts = time();
+			$ts = Clock::now();
 		}
 
 		$provider = isset( $event['provider'] ) ? sanitize_text_field( (string) $event['provider'] ) : '';

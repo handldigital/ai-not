@@ -94,7 +94,7 @@ final class Leads {
 			return null;
 		}
 
-		$ts = null === $consented_at ? time() : max( 0, $consented_at );
+		$ts = null === $consented_at ? Clock::now() : max( 0, $consented_at );
 
 		return array(
 			'email'          => $email,

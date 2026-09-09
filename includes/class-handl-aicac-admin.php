@@ -52,6 +52,9 @@ final class Admin {
 	 */
 	public const RULES_MATRIX_FIXED_INPUT_VARS = 16;
 
+	/** Default Activity log rows per page (read-only table; not max_input_vars gated). */
+	public const ACTIVITY_DEFAULT_PER_PAGE = 50;
+
 	/**
 	 * @var array{decision:string,operation:string,provider:string,model:string,plugin:string}
 	 */
@@ -602,6 +605,14 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_renew_temp_allow', 'handl_aicac_nonce' );
 				$this->handle_renew_temp_allow();
 			}
+			if ( 'confirm_review_due' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_confirm_review_due', 'handl_aicac_nonce' );
+				$this->handle_confirm_review_due();
+			}
+			if ( 'save_review_due_window' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_save_review_due_window', 'handl_aicac_nonce' );
+				$this->handle_save_review_due_window();
+			}
 			if ( 'snooze_alerts' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_snooze_alerts', 'handl_aicac_nonce' );
 				$this->handle_snooze_alerts();
@@ -668,6 +679,8 @@ final class Admin {
 		$show_compare_preview = isset( $_GET['handl_aicac_compare_preview'] ) && '1' === (string) $_GET['handl_aicac_compare_preview'];
 		$compare_err = isset( $_GET['handl_aicac_compare_error'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_compare_error'] ) ) : '';
 		$renewed_ok = isset( $_GET['handl_aicac_renewed'] ) && '1' === (string) $_GET['handl_aicac_renewed'];
+		$review_confirmed_ok = isset( $_GET['handl_aicac_review_confirmed'] ) && '1' === (string) $_GET['handl_aicac_review_confirmed'];
+		$review_window_ok    = isset( $_GET['handl_aicac_review_window'] ) && '1' === (string) $_GET['handl_aicac_review_window'];
 		$snoozed_ok = isset( $_GET['handl_aicac_snoozed'] ) && '1' === (string) $_GET['handl_aicac_snoozed'];
 		$snooze_cancelled_ok = isset( $_GET['handl_aicac_snooze_cancelled'] ) && '1' === (string) $_GET['handl_aicac_snooze_cancelled'];
 		$show_preset_preview = isset( $_GET['handl_aicac_preset_preview'] ) && '1' === (string) $_GET['handl_aicac_preset_preview'];
@@ -741,6 +754,12 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		}
 		if ( $renewed_ok ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Temporary allow renewed for 7 more days.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		if ( $review_confirmed_ok ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Review date updated. Allow and Deny were not changed.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		if ( $review_window_ok ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Review window saved.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
 		if ( $snoozed_ok ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Alert emails and webhooks are muted for this plugin. Rules still apply, and activity is still logged.', 'handl-ai-connector-access-control' ) . '</p></div>';
@@ -1102,6 +1121,19 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		echo '<input type="hidden" name="handl_aicac_action" value="cancel_alert_snooze" />';
 		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
 		echo '</form>';
+
+		echo '<form method="post" id="handl-aicac-review-confirm" class="handl-aicac-rules-save-form">';
+		wp_nonce_field( 'handl_aicac_confirm_review_due', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="confirm_review_due" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		echo '</form>';
+		echo '<form method="post" id="handl-aicac-review-window" class="handl-aicac-rules-save-form">';
+		wp_nonce_field( 'handl_aicac_save_review_due_window', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="save_review_due_window" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		echo '</form>';
+
+		$this->render_review_due_section( $policy, $plugins );
 
 		// Visible Rules form — do NOT use handl-aicac-rules-save-form (that class is
 		// display:none for empty shells that only exist for form= association).
@@ -1715,6 +1747,15 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	}
 
 	/**
+	 * Per-page sizes offered on the Activity log table.
+	 *
+	 * @return list<int>
+	 */
+	public static function activity_allowed_per_page(): array {
+		return Pager::ALLOWED_PER_PAGE;
+	}
+
+	/**
 	 * Case-insensitive match on display name or plugin basename.
 	 */
 	public static function plugin_matches_rules_search( string $name, string $basename, string $search ): bool {
@@ -1780,6 +1821,41 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			$args['handl_aicac_s'] = $search;
 		}
 		if ( Pager::DEFAULT_PER_PAGE !== $per_page ) {
+			$args[ Pager::PER_PAGE_ARG ] = $per_page;
+		}
+		return $args;
+	}
+
+	/**
+	 * Filtered Activity rows, newest first (before paging).
+	 *
+	 * @param array<int,mixed> $log
+	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $filters
+	 * @return list<array<string,mixed>>
+	 */
+	private function collect_filtered_log_rows( array $log, array $filters ): array {
+		$rows = array();
+		foreach ( array_reverse( $log ) as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			if ( ! $this->log_row_matches_filters( $row, $filters ) ) {
+				continue;
+			}
+			$rows[] = $row;
+		}
+		return $rows;
+	}
+
+	/**
+	 * Query args preserved across Activity filter/pager links (page omitted).
+	 *
+	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $filters
+	 * @return array<string, scalar>
+	 */
+	private function activity_list_query_args( array $filters, int $per_page ): array {
+		$args = $this->log_filters_to_query_args( $filters );
+		if ( self::ACTIVITY_DEFAULT_PER_PAGE !== $per_page ) {
 			$args[ Pager::PER_PAGE_ARG ] = $per_page;
 		}
 		return $args;
@@ -2802,6 +2878,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$this->render_getting_started_checklist( $policy, $log );
 		// AICAC-NEWPLUGIN: plugins awaiting first AI access decision.
 		$this->render_new_plugin_dashboard_line( $policy, $plugins );
+		// AICAC-REVIEW-DUE: stale / orphaned explicit rules.
+		$this->render_review_due_dashboard_line( $policy, $plugins );
 		// AICAC-RULE-TEST: open failures after an override.
 		$this->render_policy_checks_dashboard_line( $plugins );
 		// AICAC-SNOOZE: active per-plugin alert mutes.
@@ -3775,7 +3853,35 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 
 		echo '<h2>' . esc_html__( 'Recent calls', 'handl-ai-connector-access-control' ) . '</h2>';
-		$this->render_log_filters( $log_filters, $filter_options, $plugins );
+
+		$activity_per_page_allowed = self::activity_allowed_per_page();
+		$activity_per_page         = Pager::sanitize_per_page(
+			isset( $_REQUEST[ Pager::PER_PAGE_ARG ] )
+				? wp_unslash( (string) $_REQUEST[ Pager::PER_PAGE_ARG ] )
+				: self::ACTIVITY_DEFAULT_PER_PAGE,
+			$activity_per_page_allowed
+		);
+		$activity_page_raw = 1;
+		if ( isset( $_REQUEST[ Pager::PAGE_ARG ] ) ) {
+			$activity_page_raw = wp_unslash( (string) $_REQUEST[ Pager::PAGE_ARG ] );
+		}
+
+		$matching_rows   = $this->collect_filtered_log_rows( $log, $log_filters );
+		$matching_count  = count( $matching_rows );
+		$activity_pages  = Pager::total_pages( $matching_count, $activity_per_page );
+		$activity_page   = Pager::sanitize_page( $activity_page_raw, $activity_pages );
+		$rows_to_show    = Pager::slice( $matching_rows, $activity_page, $activity_per_page );
+		$activity_base   = self::screen_url( 'activity' );
+		$activity_query  = $this->activity_list_query_args( $log_filters, $activity_per_page );
+
+		$this->render_log_filters(
+			$log_filters,
+			$filter_options,
+			$plugins,
+			$activity_per_page,
+			$activity_base,
+			$activity_query
+		);
 
 		echo '<form method="post" style="margin:0 0 1em;display:inline-block;">';
 		wp_nonce_field( 'handl_aicac_export_audit_report', 'handl_aicac_nonce' );
@@ -3820,23 +3926,31 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo ' <span class="description">' . esc_html__( 'Downloads all saved activity matching your current filters, not just the rows shown here.', 'handl-ai-connector-access-control' ) . '</span>';
 		echo '</form>';
 
-		$log_newest_first = array_reverse( $log );
-		$matching_count   = 0;
-		$rows_to_show     = array();
-		foreach ( $log_newest_first as $row ) {
-			if ( ! is_array( $row ) ) {
-				continue;
-			}
-			if ( ! $this->log_row_matches_filters( $row, $log_filters ) ) {
-				continue;
-			}
-			++$matching_count;
-			if ( count( $rows_to_show ) < 50 ) {
-				$rows_to_show[] = $row;
-			}
-		}
-
 		$retention_phrase = $this->retention_mode_phrase( $policy );
+
+		echo '<div class="tablenav top handl-aicac-activity-nav">';
+		echo '<div class="alignleft actions">';
+		Pager::render_per_page_select(
+			$activity_base,
+			$activity_per_page,
+			$activity_query,
+			'handl-aicac-activity-per-page',
+			$activity_per_page_allowed
+		);
+		echo '</div>';
+		Pager::render_tablenav_pages(
+			array(
+				'base_url'   => $activity_base,
+				'total'      => $matching_count,
+				'page'       => $activity_page,
+				'per_page'   => $activity_per_page,
+				'query_args' => $activity_query,
+				'which'      => 'top',
+			)
+		);
+		echo '<br class="clear" />';
+		echo '</div>';
+
 		echo '<p class="handl-aicac-log-meta">';
 		if ( $this->log_filters_active( $log_filters ) ) {
 			printf(
@@ -3850,11 +3964,12 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			);
 		} else {
 			printf(
-				/* translators: 1: stored entry count, 2: retention limit, 3: rows shown in table, 4: retention mode phrase */
-				esc_html__( 'Showing the newest %3$d rows. The log currently keeps %1$d of %2$d entries (%4$s).', 'handl-ai-connector-access-control' ),
+				/* translators: 1: entries shown, 2: total visible entries, 3: stored entry count, 4: retention limit, 5: retention mode phrase */
+				esc_html__( 'Showing %1$d of %2$d entries, newest first. The log currently keeps %3$d of %4$d entries (%5$s).', 'handl-ai-connector-access-control' ),
+				count( $rows_to_show ),
+				$matching_count,
 				(int) $stored_count,
 				(int) $log_limit_policy,
-				count( $rows_to_show ),
 				$retention_phrase
 			);
 		}
@@ -3894,6 +4009,20 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 
 		echo '</tbody></table>';
+
+		echo '<div class="tablenav bottom handl-aicac-activity-nav">';
+		Pager::render_tablenav_pages(
+			array(
+				'base_url'   => $activity_base,
+				'total'      => $matching_count,
+				'page'       => $activity_page,
+				'per_page'   => $activity_per_page,
+				'query_args' => $activity_query,
+				'which'      => 'bottom',
+			)
+		);
+		echo '<br class="clear" />';
+		echo '</div>';
 		echo '</div>';
 	}
 
@@ -4046,14 +4175,17 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $filters
 	 * @param array{decision:array<string,string>,operation:array<string,string>,provider:array<string,string>,model:array<string,string>,plugin:array<string,string>} $filter_options
 	 * @param array<string,array<string,mixed>> $plugins
+	 * @param array<string, scalar> $activity_query
 	 */
-	private function render_log_filters( array $filters, array $filter_options, array $plugins ): void {
+	private function render_log_filters(
+		array $filters,
+		array $filter_options,
+		array $plugins,
+		int $activity_per_page,
+		string $base_url,
+		array $activity_query
+	): void {
 		unset( $plugins );
-
-		$base_url = self::redirect_url( array(
-				'page'            => 'handl-ai-connector-access-control',
-				'handl_aicac_tab' => 'activity',
-			) );
 
 		$decision_views = array(
 			''         => __( 'All', 'handl-ai-connector-access-control' ),
@@ -4074,9 +4206,16 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			}
 			++$view_index;
 
-			$view_filters           = $other_filters;
+			$view_filters             = $other_filters;
 			$view_filters['decision'] = $decision_key;
-			$view_url               = add_query_arg( $this->log_filters_to_query_args( $view_filters ), $base_url );
+			$view_url                 = Pager::url(
+				$base_url,
+				$this->activity_list_query_args( $view_filters, $activity_per_page ),
+				array(
+					Pager::PAGE_ARG     => 1,
+					Pager::PER_PAGE_ARG => $activity_per_page,
+				)
+			);
 
 			$is_current = $filters['decision'] === $decision_key;
 			printf(
@@ -4089,8 +4228,11 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '</ul>';
 
 		echo '<form method="get">';
-		echo '<input type="hidden" name="page" value="handl-ai-connector-access-control" />';
+		echo '<input type="hidden" name="page" value="' . esc_attr( self::SCREEN_SLUGS['activity'] ) . '" />';
 		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
+		if ( self::ACTIVITY_DEFAULT_PER_PAGE !== $activity_per_page ) {
+			echo '<input type="hidden" name="' . esc_attr( Pager::PER_PAGE_ARG ) . '" value="' . esc_attr( (string) $activity_per_page ) . '" />';
+		}
 		if ( '' !== $filters['decision'] ) {
 			echo '<input type="hidden" name="handl_aicac_log_decision" value="' . esc_attr( $filters['decision'] ) . '" />';
 		}
@@ -4130,7 +4272,15 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		);
 		submit_button( __( 'Filter', 'handl-ai-connector-access-control' ), '', 'filter_action', false );
 		if ( $this->log_filters_active( $filters ) ) {
-			echo ' <a class="button" href="' . esc_url( $base_url ) . '">' . esc_html__( 'Clear filters', 'handl-ai-connector-access-control' ) . '</a>';
+			$clear_url = Pager::url(
+				$base_url,
+				array(),
+				array(
+					Pager::PAGE_ARG     => 1,
+					Pager::PER_PAGE_ARG => $activity_per_page,
+				)
+			);
+			echo ' <a class="button" href="' . esc_url( $clear_url ) . '">' . esc_html__( 'Clear filters', 'handl-ai-connector-access-control' ) . '</a>';
 		}
 		echo '</div>';
 		echo '<br class="clear" />';
@@ -4896,6 +5046,76 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				'handl_aicac_renewed' => '1',
 			) );
 		wp_safe_redirect( $redirect );
+		exit;
+	}
+
+	/**
+	 * AICAC-REVIEW-DUE: stamp last_reviewed. Does not change allow/deny.
+	 */
+	private function handle_confirm_review_due(): void {
+		$this->require_admin_mutation( 'handl_aicac_confirm_review_due' );
+
+		$single = isset( $_POST['handl_aicac_confirm_plugin'] )
+			? Plugin_Profile::sanitize_plugin( wp_unslash( (string) $_POST['handl_aicac_confirm_plugin'] ) )
+			: '';
+		$posted = filter_input( INPUT_POST, 'handl_aicac_review_plugins', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		$names  = array();
+		if ( '' !== $single ) {
+			$names[] = $single;
+		} elseif ( is_array( $posted ) ) {
+			foreach ( $posted as $basename ) {
+				$clean = Plugin_Profile::sanitize_plugin( (string) $basename );
+				if ( '' !== $clean ) {
+					$names[] = $clean;
+				}
+			}
+		}
+		if ( empty( $names ) ) {
+			return;
+		}
+
+		$stored = get_option( Plugin::OPTION_KEY );
+		if ( ! is_array( $stored ) ) {
+			$stored = array();
+		}
+		Review_Due::confirm( $stored, $names );
+
+		wp_safe_redirect(
+			self::redirect_url(
+				array(
+					'page'                         => 'handl-ai-connector-access-control',
+					'handl_aicac_tab'              => 'rules',
+					'handl_aicac_review_confirmed' => '1',
+				)
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * AICAC-REVIEW-DUE: 30/90/180/off window.
+	 */
+	private function handle_save_review_due_window(): void {
+		$this->require_admin_mutation( 'handl_aicac_save_review_due_window' );
+
+		$stored = get_option( Plugin::OPTION_KEY );
+		if ( ! is_array( $stored ) ) {
+			$stored = array();
+		}
+		$stored['review_due_days'] = Review_Due::sanitize_days(
+			filter_input( INPUT_POST, 'handl_aicac_review_due_days', FILTER_UNSAFE_RAW )
+		);
+		Policy::save_policy( $stored );
+
+		wp_safe_redirect(
+			self::redirect_url(
+				array(
+					'page'                      => 'handl-ai-connector-access-control',
+					'handl_aicac_tab'           => 'rules',
+					'handl_aicac_review_window' => '1',
+				)
+			)
+		);
 		exit;
 	}
 
@@ -6660,6 +6880,111 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo ' <span class="description">(' . esc_html( $basename ) . ')</span></li>';
 		}
 		echo '</ul></div>';
+	}
+
+	/**
+	 * Dashboard line: stale or orphaned explicit rules.
+	 *
+	 * @param array<string,mixed>               $policy
+	 * @param array<string,array<string,mixed>> $plugins
+	 */
+	private function render_review_due_dashboard_line( array $policy, array $plugins ): void {
+		$snap  = Review_Due::snapshot( $policy, $plugins );
+		$count = Review_Due::inbox_count( $snap );
+		if ( $count <= 0 ) {
+			return;
+		}
+
+		$url = self::screen_url( 'rules' );
+		echo '<div class="notice notice-warning inline handl-aicac-review-due" style="margin:12px 0;padding:8px 12px;">';
+		echo '<p style="margin:0;"><a href="' . esc_url( $url ) . '">';
+		echo esc_html(
+			sprintf(
+				/* translators: %d: number of rules due for review */
+				_n(
+					'%d rule needs review',
+					'%d rules need review',
+					$count,
+					'handl-ai-connector-access-control'
+				),
+				$count
+			)
+		);
+		echo '</a></p></div>';
+	}
+
+	/**
+	 * Rules-tab inbox: stale and orphaned explicit rules.
+	 *
+	 * Sibling of the Rules form (no nesting). Buttons use form=.
+	 *
+	 * @param array<string,mixed>               $policy
+	 * @param array<string,array<string,mixed>> $plugins
+	 */
+	private function render_review_due_section( array $policy, array $plugins ): void {
+		$snap = Review_Due::snapshot( $policy, $plugins );
+		$days = (int) $snap['days'];
+
+		echo '<div class="handl-aicac-review-due-box" style="margin:0 0 1.5em;padding:12px 14px;border:1px solid #c3c4c7;background:#fff;">';
+		echo '<h2 style="margin:0 0 8px;">' . esc_html__( 'Rules due for review', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<p class="description" style="margin:0 0 10px;">' . esc_html__( 'Confirm that each rule is still correct. This does not change Allow or Deny.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		echo '<p style="margin:0 0 12px;">';
+		echo '<label for="handl-aicac-review-due-days">' . esc_html__( 'Review window', 'handl-ai-connector-access-control' ) . '</label> ';
+		echo '<select id="handl-aicac-review-due-days" name="handl_aicac_review_due_days" form="handl-aicac-review-window">';
+		$options = array(
+			90  => __( '90 days', 'handl-ai-connector-access-control' ),
+			30  => __( '30 days', 'handl-ai-connector-access-control' ),
+			180 => __( '180 days', 'handl-ai-connector-access-control' ),
+			0   => __( 'Off', 'handl-ai-connector-access-control' ),
+		);
+		foreach ( $options as $value => $label ) {
+			echo '<option value="' . esc_attr( (string) $value ) . '"' . selected( $days, $value, false ) . '>' . esc_html( $label ) . '</option>';
+		}
+		echo '</select> ';
+		echo '<button type="submit" class="button" form="handl-aicac-review-window">' . esc_html__( 'Save window', 'handl-ai-connector-access-control' ) . '</button>';
+		echo '</p>';
+
+		if ( empty( $snap['rows'] ) ) {
+			echo '<p class="description" style="margin:0;">' . esc_html__( 'Nothing needs review.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '</div>';
+			return;
+		}
+
+		echo '<table class="widefat striped" style="margin:0 0 10px;">';
+		echo '<thead><tr>';
+		echo '<td class="check-column"><span class="screen-reader-text">' . esc_html__( 'Select', 'handl-ai-connector-access-control' ) . '</span></td>';
+		echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Access', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Last reviewed', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Status', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th></th>';
+		echo '</tr></thead><tbody>';
+		foreach ( $snap['rows'] as $row ) {
+			$basename = (string) $row['basename'];
+			$label    = isset( $plugins[ $basename ]['Name'] ) ? (string) $plugins[ $basename ]['Name'] : $basename;
+			$rule     = (string) $row['rule'];
+			$rule_lbl = 'deny' === $rule ? __( 'Deny', 'handl-ai-connector-access-control' ) : __( 'Allow', 'handl-ai-connector-access-control' );
+			$ts       = (int) $row['last_reviewed'];
+			$when     = $ts > 0
+				? ( function_exists( 'wp_date' ) ? wp_date( 'Y-m-d', $ts ) : gmdate( 'Y-m-d', $ts ) )
+				: __( 'Never reviewed', 'handl-ai-connector-access-control' );
+			$status   = ! empty( $row['orphaned'] )
+				? __( 'Plugin is not installed', 'handl-ai-connector-access-control' )
+				: __( 'Due', 'handl-ai-connector-access-control' );
+
+			echo '<tr>';
+			echo '<th class="check-column"><input type="checkbox" name="handl_aicac_review_plugins[]" value="' . esc_attr( $basename ) . '" form="handl-aicac-review-confirm" /></th>';
+			echo '<td>' . esc_html( $label ) . '<br /><code>' . esc_html( $basename ) . '</code></td>';
+			echo '<td>' . esc_html( $rule_lbl ) . '</td>';
+			echo '<td>' . esc_html( $when ) . '</td>';
+			echo '<td>' . esc_html( $status ) . '</td>';
+			echo '<td><button type="submit" class="button button-small" name="handl_aicac_confirm_plugin" value="' . esc_attr( $basename ) . '" form="handl-aicac-review-confirm">' . esc_html__( 'Still correct', 'handl-ai-connector-access-control' ) . '</button></td>';
+			echo '</tr>';
+		}
+		echo '</tbody></table>';
+		echo '<p style="margin:0;"><button type="submit" class="button" form="handl-aicac-review-confirm">' . esc_html__( 'Confirm selected', 'handl-ai-connector-access-control' ) . '</button></p>';
+		echo '</div>';
 	}
 
 

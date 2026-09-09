@@ -56,7 +56,7 @@ final class Governance_Digest {
 
 		if ( $want ) {
 			if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
-				wp_schedule_event( time() + WEEK_IN_SECONDS, 'weekly', self::CRON_HOOK );
+				wp_schedule_event( Clock::now() + WEEK_IN_SECONDS, 'weekly', self::CRON_HOOK );
 			}
 			return;
 		}
@@ -93,7 +93,7 @@ final class Governance_Digest {
 	}
 
 	public function cron_send(): void {
-		self::send_if_due( Policy::get_policy(), null, time() );
+		self::send_if_due( Policy::get_policy(), null, Clock::now() );
 	}
 
 	/**
@@ -104,7 +104,7 @@ final class Governance_Digest {
 	 * @return array{sent:bool,status:string,week_id:string}
 	 */
 	public static function send_if_due( array $policy, ?array $plugins = null, ?int $now = null ): array {
-		$now     = null !== $now ? (int) $now : time();
+		$now     = null !== $now ? (int) $now : Clock::now();
 		$week_id = self::week_id( $now );
 		$base    = array(
 			'sent'    => false,
@@ -380,7 +380,7 @@ final class Governance_Digest {
 	}
 
 	public static function week_id( ?int $now = null, ?\DateTimeZone $tz = null ): string {
-		$now = null !== $now ? (int) $now : time();
+		$now = null !== $now ? (int) $now : Clock::now();
 		$tz  = null !== $tz ? $tz : Quiet_Hours::timezone();
 
 		return ( new \DateTimeImmutable( '@' . $now ) )->setTimezone( $tz )->format( 'o-\WW' );

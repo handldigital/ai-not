@@ -90,7 +90,7 @@ final class Alert_Health {
 		if ( '' === $channel ) {
 			return;
 		}
-		$now   = null !== $now ? $now : time();
+		$now   = null !== $now ? $now : Clock::now();
 		$state = self::get_state();
 		$row   = $state[ $channel ];
 		$row['last_success_at']      = $now;
@@ -104,7 +104,7 @@ final class Alert_Health {
 		if ( '' === $channel ) {
 			return;
 		}
-		$now    = null !== $now ? $now : time();
+		$now    = null !== $now ? $now : Clock::now();
 		$reason = sanitize_text_field( $reason );
 		if ( strlen( $reason ) > 200 ) {
 			$reason = substr( $reason, 0, 200 );
