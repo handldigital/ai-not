@@ -60,6 +60,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-keyscan.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-temp-allow.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rule-notes.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-review-due.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-new-plugin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quiet-hours.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-break-glass.php';
