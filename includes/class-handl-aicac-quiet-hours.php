@@ -141,9 +141,9 @@ final class Quiet_Hours {
 			return null;
 		}
 
-		$now = null !== $now ? $now : time();
+		$now = null !== $now ? $now : Clock::now();
 		if ( $now <= 0 ) {
-			$now = time();
+			$now = Clock::now();
 		}
 		$tz = self::timezone( $tz );
 

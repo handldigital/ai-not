@@ -39,9 +39,9 @@ final class Budget {
 	 * Calendar-month period id in site timezone (e.g. 2026-08).
 	 */
 	public static function period_id( ?int $ts = null, ?\DateTimeZone $tz = null ): string {
-		$ts = null !== $ts ? (int) $ts : time();
+		$ts = null !== $ts ? (int) $ts : Clock::now();
 		if ( $ts <= 0 ) {
-			$ts = time();
+			$ts = Clock::now();
 		}
 		$tz = Quiet_Hours::timezone( $tz );
 		return ( new \DateTimeImmutable( '@' . $ts ) )->setTimezone( $tz )->format( 'Y-m' );
@@ -621,7 +621,7 @@ final class Budget {
 		$state[ $plugin ] = array(
 			'period' => $period,
 			'budget' => $budget,
-			'at'     => time(),
+			'at'     => Clock::now(),
 		);
 		update_option( self::FIRED_OPTION_KEY, $state, false );
 	}
@@ -647,7 +647,7 @@ final class Budget {
 	): void {
 		Policy::append_log_event(
 			array(
-				'ts'       => time(),
+				'ts'       => Clock::now(),
 				'decision' => 'budget_alert',
 				'channel'  => 'budget',
 				'plugin'   => $plugin,
@@ -687,7 +687,7 @@ final class Budget {
 			return;
 		}
 
-		$ts = isset( $after['ts'] ) ? (int) $after['ts'] : time();
+		$ts = isset( $after['ts'] ) ? (int) $after['ts'] : Clock::now();
 		self::add_estimated_spend( $plugin, $delta, $ts );
 	}
 

@@ -114,7 +114,7 @@ final class Alert_Snooze {
 		if ( '' === $plugin ) {
 			return false;
 		}
-		$now = null !== $now ? (int) $now : time();
+		$now = null !== $now ? (int) $now : Clock::now();
 		self::purge_expired( $now );
 
 		$map = self::get_map();
@@ -133,7 +133,7 @@ final class Alert_Snooze {
 		if ( '' === $plugin ) {
 			return null;
 		}
-		$now = null !== $now ? (int) $now : time();
+		$now = null !== $now ? (int) $now : Clock::now();
 		self::purge_expired( $now );
 		$map = self::get_map();
 		if ( ! isset( $map[ $plugin ] ) ) {
@@ -154,7 +154,7 @@ final class Alert_Snooze {
 		if ( '' === $plugin || '' === $preset ) {
 			return false;
 		}
-		$now      = null !== $now ? (int) $now : time();
+		$now      = null !== $now ? (int) $now : Clock::now();
 		$duration = self::PRESETS[ $preset ];
 		$until    = $now + $duration;
 
@@ -200,7 +200,7 @@ final class Alert_Snooze {
 		if ( '' === $plugin ) {
 			return $empty;
 		}
-		$now = null !== $now ? (int) $now : time();
+		$now = null !== $now ? (int) $now : Clock::now();
 		$map = self::get_map();
 		if ( ! isset( $map[ $plugin ] ) ) {
 			return $empty;
@@ -275,7 +275,7 @@ final class Alert_Snooze {
 	 * @return list<array{plugin:string,until:int,suppressed:int}>
 	 */
 	public static function active_list( ?int $now = null ): array {
-		$now = null !== $now ? (int) $now : time();
+		$now = null !== $now ? (int) $now : Clock::now();
 		self::purge_expired( $now );
 		$list = array();
 		foreach ( self::get_map() as $plugin => $row ) {
@@ -305,7 +305,7 @@ final class Alert_Snooze {
 	 * @return list<array{plugin:string,suppressed:int}>
 	 */
 	public static function purge_expired( ?int $now = null ): array {
-		$now     = null !== $now ? (int) $now : time();
+		$now     = null !== $now ? (int) $now : Clock::now();
 		$map     = self::get_map();
 		$changed = false;
 		$ended   = array();
@@ -348,7 +348,7 @@ final class Alert_Snooze {
 		if ( null === $until ) {
 			return '';
 		}
-		$now  = null !== $now ? (int) $now : time();
+		$now  = null !== $now ? (int) $now : Clock::now();
 		$left = max( 0, $until - $now );
 
 		if ( $left < HOUR_IN_SECONDS ) {
@@ -395,7 +395,7 @@ final class Alert_Snooze {
 	private static function append_audit( string $plugin, string $decision, array $extra = array() ): void {
 		$event = array_merge(
 			array(
-				'ts'       => time(),
+				'ts'       => Clock::now(),
 				'plugin'   => $plugin,
 				'decision' => $decision,
 				'channel'  => 'alert_snooze',

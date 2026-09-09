@@ -39,7 +39,7 @@ final class Daily_Trends {
 	 * }|null
 	 */
 	public static function compute( array $log, array $policy, array $plugins = array(), ?int $now = null ): ?array {
-		$now = null !== $now ? $now : time();
+		$now = null !== $now ? $now : Clock::now();
 		$tz  = self::timezone();
 
 		$day_defs = self::day_windows( $now, self::DAY_COUNT, $tz, Usage_Trends::knowledge_start_ts( $log, $policy, $now ) );
