@@ -44,7 +44,7 @@ final class Policy_Backup {
 	}
 
 	public function cron_send(): void {
-		self::send_if_due( Policy::get_policy(), time() );
+		self::send_if_due( Policy::get_policy(), Clock::now() );
 	}
 
 	/**
@@ -64,7 +64,7 @@ final class Policy_Backup {
 			if ( function_exists( 'wp_next_scheduled' ) && function_exists( 'wp_schedule_event' ) ) {
 				if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 					$delay = defined( 'WEEK_IN_SECONDS' ) ? (int) WEEK_IN_SECONDS : 604800;
-					wp_schedule_event( time() + $delay, 'weekly', self::CRON_HOOK );
+					wp_schedule_event( Clock::now() + $delay, 'weekly', self::CRON_HOOK );
 				}
 			}
 			return;
@@ -135,7 +135,7 @@ final class Policy_Backup {
 	 * @return array{ok:bool,status:string,json?:string,subject?:string}
 	 */
 	public static function send_if_due( array $policy, ?int $now = null ): array {
-		$now = null !== $now ? $now : time();
+		$now = null !== $now ? $now : Clock::now();
 		if ( ! self::is_enabled( $policy ) ) {
 			return array(
 				'ok'     => true,
@@ -209,7 +209,7 @@ final class Policy_Backup {
 	 * @return array{ok:bool,status:string,json?:string}
 	 */
 	public static function send_now( array $policy, ?int $now = null ): array {
-		$now = null !== $now ? $now : time();
+		$now = null !== $now ? $now : Clock::now();
 		// Bypass week gate by clearing sent marker for this call path only after success overwrite.
 		$version = defined( 'HANDL_AICAC_VERSION' ) ? (string) HANDL_AICAC_VERSION : '';
 		$exported_at = gmdate( 'c', $now );

@@ -74,7 +74,7 @@ final class Temp_Allow {
 		if ( ! empty( $expires ) ) {
 			if ( function_exists( 'wp_next_scheduled' ) && function_exists( 'wp_schedule_event' ) ) {
 				if ( ! \wp_next_scheduled( self::CRON_HOOK ) ) {
-					\wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', self::CRON_HOOK );
+					\wp_schedule_event( Clock::now() + HOUR_IN_SECONDS, 'hourly', self::CRON_HOOK );
 				}
 			}
 			return;
@@ -166,9 +166,9 @@ final class Temp_Allow {
 	 * @param int|null            $now Injectable clock (unix seconds).
 	 */
 	public static function is_expired( array $policy, string $plugin_basename, ?int $now = null ): bool {
-		$now = null === $now ? time() : $now;
+		$now = null === $now ? Clock::now() : $now;
 		if ( $now <= 0 ) {
-			$now = time();
+			$now = Clock::now();
 		}
 		$ts = self::expires_at( $policy, $plugin_basename );
 		if ( null === $ts ) {
@@ -192,7 +192,7 @@ final class Temp_Allow {
 	 * @param int|null $now
 	 */
 	public static function resolve_posted_expiry( $preset, $custom_date, ?int $now = null ): ?int {
-		$now    = null === $now ? time() : $now;
+		$now    = null === $now ? Clock::now() : $now;
 		$preset = sanitize_key( (string) $preset );
 		if ( '' === $preset || 'never' === $preset ) {
 			return null;
@@ -239,7 +239,7 @@ final class Temp_Allow {
 	 * @param int|null            $now
 	 */
 	public static function remaining_label( array $policy, string $plugin_basename, ?int $now = null ): string {
-		$now = null === $now ? time() : $now;
+		$now = null === $now ? Clock::now() : $now;
 		$ts  = self::expires_at( $policy, $plugin_basename );
 		if ( null === $ts ) {
 			return '';
@@ -283,7 +283,7 @@ final class Temp_Allow {
 	 * @return ''|'24h'|'7d'|'30d'|'custom'
 	 */
 	public static function preset_for_stored( array $policy, string $plugin_basename, ?int $now = null ): string {
-		$now = null === $now ? time() : $now;
+		$now = null === $now ? Clock::now() : $now;
 		$ts  = self::expires_at( $policy, $plugin_basename );
 		if ( null === $ts ) {
 			return '';
@@ -316,9 +316,9 @@ final class Temp_Allow {
 		if ( '' === $plugin_basename ) {
 			return false;
 		}
-		$now = null === $now ? time() : $now;
+		$now = null === $now ? Clock::now() : $now;
 		if ( $now <= 0 ) {
-			$now = time();
+			$now = Clock::now();
 		}
 
 		$plugins = isset( $policy['plugins'] ) && is_array( $policy['plugins'] )
@@ -398,9 +398,9 @@ final class Temp_Allow {
 	 * @return list<string> basenames warned this run
 	 */
 	public static function sweep_expiry_warnings( array $policy, ?int $now = null ): array {
-		$now = null === $now ? time() : $now;
+		$now = null === $now ? Clock::now() : $now;
 		if ( $now <= 0 ) {
-			$now = time();
+			$now = Clock::now();
 		}
 
 		$plugins = isset( $policy['plugins'] ) && is_array( $policy['plugins'] )
@@ -452,9 +452,9 @@ final class Temp_Allow {
 	 * @return array{removed:list<string>,warned:list<string>,policy:array<string,mixed>}
 	 */
 	public static function sweep_expired( array $policy, ?int $now = null ): array {
-		$now = null === $now ? time() : $now;
+		$now = null === $now ? Clock::now() : $now;
 		if ( $now <= 0 ) {
-			$now = time();
+			$now = Clock::now();
 		}
 
 		// AICAC-EXPIRY-WARN before expiry removals (still-active rules only).

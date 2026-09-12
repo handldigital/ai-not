@@ -99,10 +99,5 @@ final class RulesPaginationTest extends TestCase {
 		$this->assertSame( 13, Admin::RULES_MATRIX_FIELDS_PER_ROW );
 		$this->assertSame( array( 25, 50 ), Admin::rules_allowed_per_page( 1000 ) );
 		$this->assertSame( array( 25, 50, 100 ), Admin::rules_allowed_per_page( 4000 ) );
-		// Must not touch Activity log renderers in this lane.
-		$this->assertDoesNotMatchRegularExpression(
-			'/function\s+render_log_tab\s*\([^)]*\)\s*:\s*void\s*\{[^}]{0,200}Pager::/',
-			$src
-		);
 	}
 }

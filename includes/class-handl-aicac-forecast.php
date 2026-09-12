@@ -46,7 +46,7 @@ final class Spend_Forecast {
 	 * }|null
 	 */
 	public static function compute( array $log, array $policy, ?int $now = null ): ?array {
-		$now = null !== $now ? $now : time();
+		$now = null !== $now ? $now : Clock::now();
 		$tz  = self::timezone();
 
 		$now_dt         = ( new \DateTimeImmutable( '@' . $now ) )->setTimezone( $tz );
@@ -159,7 +159,7 @@ final class Spend_Forecast {
 			return;
 		}
 
-		$now      = null !== $now ? $now : time();
+		$now      = null !== $now ? $now : Clock::now();
 		$forecast = self::compute( Policy::get_retained_log(), $policy, $now );
 		if ( null === $forecast || empty( $forecast['warnings'] ) ) {
 			return;
@@ -390,7 +390,7 @@ final class Spend_Forecast {
 	 */
 	private static function append_audit_row( array $warn, array $forecast ): void {
 		$event = array(
-			'ts'           => time(),
+			'ts'           => Clock::now(),
 			'decision'     => 'forecast_warn',
 			'channel'      => 'forecast_warn',
 			'threshold'    => (float) $warn['threshold'],
