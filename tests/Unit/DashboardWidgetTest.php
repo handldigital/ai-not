@@ -23,7 +23,7 @@ final class DashboardWidgetTest extends TestCase {
 		unset( $GLOBALS['handl_aicac_test_added_actions'] );
 	}
 
-	public function test_register_hooks_dashboard_setup_only_for_manage_options(): void {
+	public function test_register_hooks_dashboard_setup_only_for_view_capability(): void {
 		$widget = Dashboard_Widget::instance();
 		$widget->init();
 		$this->assertContains( 'wp_dashboard_setup', $GLOBALS['handl_aicac_test_added_actions'] ?? array() );

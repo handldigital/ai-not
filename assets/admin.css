@@ -823,3 +823,12 @@
 	outline-offset: 2px;
 }
 
+.handl-aicac-read-only form:not(.handl-aicac-read-ok) .button-primary,
+.handl-aicac-read-only form:not(.handl-aicac-read-ok) input[type="submit"] {
+	display: none;
+}
+
+.handl-aicac-auditor-matrix table {
+	margin-top: 0.75em;
+}
+
