@@ -27,6 +27,7 @@ final class Plugin {
 	public function init(): void {
 		self::migrate_legacy_options();
 
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-clock.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-attribution.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-prompt-snapshot.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-operations.php';
@@ -61,6 +62,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-keyscan.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-temp-allow.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rule-notes.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-review-due.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-new-plugin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quiet-hours.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-break-glass.php';

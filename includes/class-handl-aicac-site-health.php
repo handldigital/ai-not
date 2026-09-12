@@ -384,6 +384,12 @@ final class Site_Health {
 			$deny_n
 		);
 
+		$installed = function_exists( 'get_plugins' ) ? get_plugins() : array();
+		if ( ! is_array( $installed ) ) {
+			$installed = array();
+		}
+		$lines[] = Review_Due::evidence_line( Review_Due::snapshot( Policy::get_policy(), $installed ) );
+
 		if ( $has_ai ) {
 			$lines[] = __( 'AI Client plugins: detected on this site.', 'handl-ai-connector-access-control' );
 		} else {

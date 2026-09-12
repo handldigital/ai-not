@@ -60,6 +60,7 @@ final class Audit_Evidence {
 			'family_counts'     => $family_counts,
 			'thresholds'        => $thresholds,
 			'change_history'    => self::change_history_snapshot(),
+			'review_due_line'   => Review_Due::evidence_line( Review_Due::snapshot( $policy, $plugins, $now ) ),
 			'csv_export_note'   => __( 'For row-level activity, use Download CSV on the Activity tab (same retained log and filters).', 'handl-ai-connector-access-control' ),
 		);
 	}
@@ -179,6 +180,7 @@ th{background:#f0f0f1;}
 <?php self::render_kv_row( __( 'Block direct AI connections', 'handl-ai-connector-access-control' ), (string) ( $policy['shadow_block_label'] ?? '' ) ); ?>
 <?php self::render_kv_row( __( 'User role restrictions', 'handl-ai-connector-access-control' ), (string) ( $policy['role_gate_label'] ?? '' ) ); ?>
 <?php self::render_kv_row( __( 'Unknown AI operations', 'handl-ai-connector-access-control' ), (string) ( $policy['unknown_operation_label'] ?? '' ) ); ?>
+<?php self::render_kv_row( __( 'Rule review', 'handl-ai-connector-access-control' ), (string) ( $data['review_due_line'] ?? '' ) ); ?>
 </tbody>
 </table>
 </div>

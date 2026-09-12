@@ -161,7 +161,7 @@ final class Anomaly {
 			return;
 		}
 
-		$now = null !== $now ? $now : time();
+		$now = null !== $now ? $now : Clock::now();
 		$to  = Alert_Routing::resolve_email( $policy, 'anomaly' );
 		if ( '' === $to ) {
 			return;
@@ -635,7 +635,7 @@ final class Anomaly {
 	): void {
 		Policy::append_log_event(
 			array(
-				'ts'         => time(),
+				'ts'         => Clock::now(),
 				'decision'   => 'anomaly_alert',
 				'channel'    => 'anomaly',
 				'plugin'     => $plugin,

@@ -202,6 +202,7 @@ Yes. With WP-CLI available and this plugin active:
 * Optional Hardened mode (`wp handl-aicac hardened`) installs a must-use stub so AI Client calls stay blocked or watched while the main plugin is deactivated.
 * Rules matrix paginates (25/50/100 per page) with plugin name search, so large sites no longer post every plugin row on Save.
 * A Getting started list now appears on the Dashboard after Quick setup. It tracks plugins that used AI, a starter policy pack, alert email, policy tester, and weekly digest. The list hides when complete or dismissed. If it hides after completion, it returns when a setting is turned off.
+* The Rules tab now lists plugin rules that need review or belong to plugins that are no longer installed. Marking a rule as still correct does not change Allow or Deny. Review counts also appear on the Dashboard, in Site Health, and in the printable audit report.
 * Insights now includes a Who talks to whom map: plugins, providers, and models from the saved log, with call counts and estimated-spend share. Providers without a saved rate show Spend unknown.
 
 = 1.6.0 =
