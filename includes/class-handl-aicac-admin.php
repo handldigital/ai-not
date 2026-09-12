@@ -3410,6 +3410,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$daily_trends = Daily_Trends::compute( $log, $policy, $plugins );
 		$this->render_insights_daily_trends( $daily_trends );
 		$this->render_insights_trends( $log, $policy, $plugins );
+		$this->render_insights_provider_map( $log, $policy, $plugins );
 
 		$dimensions = array(
 			'plugin'    => __( 'Plugins', 'handl-ai-connector-access-control' ),
@@ -3654,6 +3655,104 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			}
 		}
 		echo esc_html( implode( '; ', $parts ) );
+		echo '</p>';
+		echo '</div>';
+	}
+
+	/**
+	 * AICAC-PROVIDER-MAP (#158): plugin → provider → model traffic + spend share.
+	 *
+	 * @param array<int,mixed>                  $log
+	 * @param array<string,mixed>               $policy
+	 * @param array<string,array<string,mixed>> $plugins
+	 */
+	private function render_insights_provider_map( array $log, array $policy, array $plugins ): void {
+		$map = Provider_Map::compute( $log, $policy, $plugins );
+		if ( null === $map ) {
+			return;
+		}
+
+		echo '<div class="handl-aicac-insights-provider-map" style="margin:1.5em 0;">';
+		echo '<h3>' . esc_html__( 'Who talks to whom', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<p class="description">' . esc_html__( 'See which plugins used each AI provider and model in your saved log. Spend percentages include only providers with saved rates. Providers without one show Spend unknown. Estimates are not bills.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		if ( ! empty( $map['window']['gap_label'] ) ) {
+			echo '<p class="description handl-aicac-provider-map-gap">' . esc_html( (string) $map['window']['gap_label'] ) . '</p>';
+		}
+
+		echo '<table class="widefat striped handl-aicac-provider-map-table">';
+		echo '<thead><tr>';
+		echo '<th scope="col">' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Provider', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Model', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-num">' . esc_html__( 'Estimated spend (share)', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '</tr></thead><tbody>';
+
+		foreach ( $map['plugins'] as $plugin_row ) {
+			$plugin_label = (string) $plugin_row['label'];
+			$plugin_key   = (string) $plugin_row['plugin'];
+			$profile_url  = ( Analytics::UNKNOWN_KEY !== $plugin_key ) ? Plugin_Profile::profile_url( $plugin_key ) : '';
+
+			foreach ( $plugin_row['providers'] as $provider_row ) {
+				$provider_id  = (string) $provider_row['provider'];
+				$provider_url = Provider_Map::activity_url_for_provider( $provider_id );
+				$models       = $provider_row['models'];
+				if ( empty( $models ) ) {
+					continue;
+				}
+				$first = true;
+				foreach ( $models as $model_row ) {
+					echo '<tr>';
+					echo '<td>';
+					if ( $first ) {
+						if ( '' !== $profile_url ) {
+							echo '<a href="' . esc_url( $profile_url ) . '">' . esc_html( $plugin_label ) . '</a>';
+						} else {
+							echo esc_html( $plugin_label );
+						}
+					} else {
+						echo '<span class="screen-reader-text">' . esc_html( $plugin_label ) . '</span>';
+					}
+					echo '</td>';
+					echo '<td>';
+					if ( $first ) {
+						echo '<a href="' . esc_url( $provider_url ) . '">' . esc_html( (string) $provider_row['label'] ) . '</a>';
+					} else {
+						echo '<span class="screen-reader-text">' . esc_html( (string) $provider_row['label'] ) . '</span>';
+					}
+					echo '</td>';
+					echo '<td>' . esc_html( (string) $model_row['label'] ) . '</td>';
+					echo '<td class="column-num">' . esc_html( number_format_i18n( (int) $model_row['calls'] ) ) . '</td>';
+					echo '<td class="column-num">' . esc_html(
+						Provider_Map::format_spend_cell(
+							(string) $model_row['spend_status'],
+							isset( $model_row['known_spend'] ) ? ( null === $model_row['known_spend'] ? null : (float) $model_row['known_spend'] ) : null,
+							isset( $model_row['spend_share_pct'] ) ? ( null === $model_row['spend_share_pct'] ? null : (float) $model_row['spend_share_pct'] ) : null
+						)
+					) . '</td>';
+					echo '</tr>';
+					$first = false;
+				}
+			}
+		}
+
+		echo '</tbody></table>';
+
+		$totals = $map['totals'];
+		echo '<p class="description handl-aicac-provider-map-footnote">';
+		echo esc_html(
+			sprintf(
+				/* translators: 1: call count, 2: dollar amount of known spend */
+				__( 'Totals in this window: %1$s calls. Known estimated spend: %2$s.', 'handl-ai-connector-access-control' ),
+				number_format_i18n( (int) $totals['calls'] ),
+				Cost::format_usd( (float) $totals['known_spend'] )
+			)
+		);
+		if ( (int) $totals['unknown_spend_providers'] > 0 || (int) $totals['unknown_spend_calls'] > 0 ) {
+			echo ' ';
+			echo esc_html__( 'Spend percentages exclude providers without saved rates. Those rows show Spend unknown.', 'handl-ai-connector-access-control' );
+		}
 		echo '</p>';
 		echo '</div>';
 	}
