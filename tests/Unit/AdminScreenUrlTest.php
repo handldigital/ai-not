@@ -135,7 +135,7 @@ final class AdminScreenUrlTest extends TestCase {
 		$src = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php' );
 		$this->assertStringContainsString( 'add_menu_page(', $src );
 		$this->assertStringContainsString( 'dashicons-shield-alt', $src );
-		$this->assertStringContainsString( "\$cap      = 'manage_options';", $src );
+		$this->assertStringContainsString( 'Caps::VIEW', $src );
 		foreach ( array( 'Protections', 'Policy Tools', 'Alerts & Settings' ) as $label ) {
 			$this->assertStringContainsString( $label, $src );
 		}
@@ -145,6 +145,17 @@ final class AdminScreenUrlTest extends TestCase {
 	public function test_submenu_slugs_are_unique(): void {
 		$slugs = array_values( Admin::SCREEN_SLUGS );
 		$this->assertSame( $slugs, array_values( array_unique( $slugs ) ) );
+	}
+
+	public function test_is_plugin_admin_hook_matches_title_sanitized_prefix(): void {
+		// Live WP body class / hook_suffix uses sanitize_title( menu title ).
+		$this->assertTrue( Admin::is_plugin_admin_hook( 'ai-access-control_page_handl-aicac-rules' ) );
+		$this->assertTrue( Admin::is_plugin_admin_hook( 'ai-access-control_page_handl-aicac-activity' ) );
+		$this->assertTrue( Admin::is_plugin_admin_hook( 'handl-aicac_page_handl-aicac-rules' ) );
+		$this->assertTrue( Admin::is_plugin_admin_hook( 'toplevel_page_handl-aicac' ) );
+		$this->assertTrue( Admin::is_plugin_admin_hook( 'settings_page_handl-ai-connector-access-control' ) );
+		$this->assertFalse( Admin::is_plugin_admin_hook( 'toplevel_page_other-plugin' ) );
+		$this->assertFalse( Admin::is_plugin_admin_hook( 'tools_page_site-health' ) );
 	}
 
 	public function test_menu_keyboard_script_assigns_focused_submenu_href(): void {
