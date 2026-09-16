@@ -190,6 +190,38 @@ final class RetryStormTest extends TestCase {
 		$this->assertCount( 1, $storm_mails );
 	}
 
+	public function test_storm_count_from_row_is_zero_unless_retry_storm_flag(): void {
+		$this->assertSame( 0, Retry_Storm::storm_count_from_row( array( 'count' => 9 ) ) );
+		$this->assertSame( 0, Retry_Storm::storm_count_from_row( array( 'decision' => 'deny' ) ) );
+		$this->assertSame(
+			4,
+			Retry_Storm::storm_count_from_row(
+				array(
+					'retry_storm' => true,
+					'count'       => 4,
+				)
+			)
+		);
+		$this->assertSame(
+			1,
+			Retry_Storm::storm_count_from_row(
+				array(
+					'retry_storm' => true,
+				)
+			)
+		);
+	}
+
+	public function test_activity_row_renders_retry_storm_badge_copy(): void {
+		$src = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php' );
+		$this->assertStringContainsString( 'handl-aicac-badge--storm', $src );
+		$this->assertStringContainsString( 'Repeated %d more times', $src );
+		$this->assertStringContainsString( 'Retry_Storm::storm_count_from_row', $src );
+
+		$css = (string) file_get_contents( HANDL_AICAC_DIR . '/assets/admin.css' );
+		$this->assertStringContainsString( '.handl-aicac-badge--storm', $css );
+	}
+
 	/**
 	 * @param array<string,mixed> $extra
 	 * @return array<string,mixed>

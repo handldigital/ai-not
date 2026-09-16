@@ -40,6 +40,7 @@ final class Audit_Export {
 			'URI',
 			'Request context',
 			'Returned error',
+			'retry_storm_count',
 		);
 		if ( $include_rule_note ) {
 			$headers[] = 'Rule note';
@@ -216,6 +217,7 @@ final class Audit_Export {
 			$uri,
 			Policy::request_context_from_row( $row ),
 			Policy::returned_error_from_row( $row ),
+			(string) Retry_Storm::storm_count_from_row( $row ),
 		);
 	}
 

@@ -46,6 +46,7 @@ final class AuditExportTest extends TestCase {
 				'URI',
 				'Request context',
 				'Returned error',
+				'retry_storm_count',
 			),
 			$headers
 		);
@@ -103,9 +104,39 @@ final class AuditExportTest extends TestCase {
 		$this->assertSame( '', $cells[11] ); // URI
 		$this->assertSame( 'unknown', $cells[12] ); // Request context (legacy)
 		$this->assertSame( '', $cells[13] ); // Returned error
+		$this->assertSame( '0', $cells[14] ); // retry_storm_count
 
 		$csv = Audit_Export::build_csv( array( $row ), $this->empty_filters(), array(), array() );
 		$this->assertStringNotContainsString( 'null', strtolower( $csv ) );
+	}
+
+	public function test_retry_storm_count_column_for_storm_and_normal_rows(): void {
+		$normal = array(
+			'ts'       => 100,
+			'decision' => 'deny',
+			'plugin'   => 'a/a.php',
+			'count'    => 9, // shadow-style count must not leak without retry_storm
+		);
+		$storm = array(
+			'ts'          => 200,
+			'decision'    => 'deny',
+			'plugin'      => 'a/a.php',
+			'retry_storm' => true,
+			'count'       => 4,
+		);
+
+		$normal_cells = Audit_Export::format_row( $normal, array(), array(), array() );
+		$storm_cells  = Audit_Export::format_row( $storm, array(), array(), array() );
+
+		$this->assertSame( '0', $normal_cells[14] );
+		$this->assertSame( '4', $storm_cells[14] );
+
+		$csv = Audit_Export::build_csv( array( $normal, $storm ), $this->empty_filters(), array(), array() );
+		$this->assertStringContainsString( 'retry_storm_count', $csv );
+		$lines = preg_split( '/\R/', trim( $csv ) ) ?: array();
+		$this->assertCount( 3, $lines ); // header + 2 rows (newest first)
+		$this->assertStringContainsString( ',4', $lines[1] );
+		$this->assertStringContainsString( ',0', $lines[2] );
 	}
 
 	public function test_csv_escapes_commas_quotes_and_newlines(): void {
