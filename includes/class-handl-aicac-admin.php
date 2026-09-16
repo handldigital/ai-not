@@ -7484,6 +7484,23 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<td class="column-time">' . esc_html( $ts ? wp_date( 'Y-m-d H:i:s', $ts ) : '—' ) . '</td>';
 		echo '<td>';
 		echo $this->render_decision_badge( $decision ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		$storm_count = Retry_Storm::storm_count_from_row( $row );
+		if ( $storm_count > 0 ) {
+			echo ' <span class="handl-aicac-badge handl-aicac-badge--storm">';
+			echo esc_html(
+				sprintf(
+					/* translators: %d: collapsed retry-storm deny count stored on this Activity row */
+					_n(
+						'Repeated %d more time',
+						'Repeated %d more times',
+						$storm_count,
+						'handl-ai-connector-access-control'
+					),
+					$storm_count
+				)
+			);
+			echo '</span>';
+		}
 		if ( $is_direct_http ) {
 			echo '<br /><span class="description handl-aicac-shadow-label" style="font-size:11px;">';
 			if ( 'deny' === $decision ) {

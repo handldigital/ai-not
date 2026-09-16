@@ -483,6 +483,24 @@ final class Retry_Storm {
 		delete_option( self::STATE_OPTION_KEY );
 	}
 
+	/**
+	 * Collapsed deny count stored on a retry-storm Activity row.
+	 * Normal rows (no retry_storm flag) return 0 — including shadow clusters that also use `count`.
+	 *
+	 * @param array<string,mixed> $row
+	 */
+	public static function storm_count_from_row( array $row ): int {
+		if ( empty( $row['retry_storm'] ) ) {
+			return 0;
+		}
+		$count = isset( $row['count'] ) ? (int) $row['count'] : 1;
+		if ( $count < 0 ) {
+			return 0;
+		}
+
+		return $count;
+	}
+
 	public static function bucket_key( string $plugin, string $family ): string {
 		return $plugin . '|' . $family;
 	}
