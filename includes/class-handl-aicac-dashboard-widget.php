@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Native dashboard widget for manage_options users.
+ * Native dashboard widget for users who can view AI Access Control.
  */
 final class Dashboard_Widget {
 	public const WIDGET_ID = 'handl_aicac_governance';
@@ -43,10 +43,10 @@ final class Dashboard_Widget {
 	}
 
 	/**
-	 * Register only for manage_options — other roles get no empty shell.
+	 * Register for manage or auditor view — other roles get no empty shell.
 	 */
 	public function register(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! Caps::user_can_view() ) {
 			return;
 		}
 		if ( ! function_exists( 'wp_add_dashboard_widget' ) ) {
@@ -64,7 +64,7 @@ final class Dashboard_Widget {
 	 * Render callback for wp_add_dashboard_widget.
 	 */
 	public function render(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! Caps::user_can_view() ) {
 			return;
 		}
 
