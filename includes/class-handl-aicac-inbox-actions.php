@@ -26,9 +26,11 @@ final class Inbox_Actions {
 	public const APPLY_HOOK = 'handl_aicac_inbox_apply';
 	public const NONCE_KEY  = 'handl_aicac_inbox_apply';
 
-	public const ACT_ALLOW_24H = 'allow_24h';
-	public const ACT_SNOOZE_7D = 'snooze_7d';
-	public const ACT_OPEN_RULE = 'open_rule';
+	public const ACT_ALLOW_24H      = 'allow_24h';
+	public const ACT_SNOOZE_7D      = 'snooze_7d';
+	public const ACT_OPEN_RULE      = 'open_rule';
+	public const ACT_ACCESS_APPROVE = 'access_approve';
+	public const ACT_ACCESS_DENY    = 'access_deny';
 
 	/** @var array{plugin?:string,kind?:string,recipient?:string}|null */
 	private static $mail_context = null;
@@ -86,6 +88,15 @@ final class Inbox_Actions {
 		}
 
 		$lines = array();
+		if ( 'access_request' === $kind ) {
+			$lines[] = __( 'Approve access for 24 hours:', 'handl-ai-connector-access-control' );
+			$lines[] = self::mint_url( self::ACT_ACCESS_APPROVE, $plugin, $recipient, $now );
+			$lines[] = '';
+			$lines[] = __( 'Deny this access request:', 'handl-ai-connector-access-control' );
+			$lines[] = self::mint_url( self::ACT_ACCESS_DENY, $plugin, $recipient, $now );
+			return $lines;
+		}
+
 		if ( 'denial' === $kind ) {
 			$lines[] = __( 'Allow this plugin for 24 hours:', 'handl-ai-connector-access-control' );
 			$lines[] = self::mint_url( self::ACT_ALLOW_24H, $plugin, $recipient, $now );
@@ -100,6 +111,19 @@ final class Inbox_Actions {
 
 		return $lines;
 	}
+
+	/**
+	 * Public temp-allow apply used by Access_Request and inbox approve tokens.
+	 */
+	public static function apply_temp_allow_24h( string $plugin, ?int $now = null ): bool {
+		$plugin = Plugin_Profile::sanitize_plugin( $plugin );
+		if ( '' === $plugin ) {
+			return false;
+		}
+		$now = null !== $now ? (int) $now : time();
+		return self::apply_allow_24h( $plugin, $now );
+	}
+
 
 	/**
 	 * @return array{ok:bool,error:string,row:?array<string,mixed>}
@@ -177,6 +201,10 @@ final class Inbox_Actions {
 
 		if ( self::ACT_ALLOW_24H === $action ) {
 			$ok = self::apply_allow_24h( $plugin, $now );
+		} elseif ( self::ACT_ACCESS_APPROVE === $action ) {
+			$ok = Access_Request::approve_plugin( $plugin, $user_id, $now )['ok'];
+		} elseif ( self::ACT_ACCESS_DENY === $action ) {
+			$ok = Access_Request::deny_plugin( $plugin, $user_id, $now )['ok'];
 		} elseif ( self::ACT_SNOOZE_7D === $action ) {
 			$ok = Alert_Snooze::set( $plugin, '7d', $now );
 		} else {
@@ -317,7 +345,13 @@ final class Inbox_Actions {
 
 	private static function sanitize_action( string $action ): string {
 		$action = sanitize_key( $action );
-		$ok     = array( self::ACT_ALLOW_24H, self::ACT_SNOOZE_7D, self::ACT_OPEN_RULE );
+		$ok     = array(
+			self::ACT_ALLOW_24H,
+			self::ACT_SNOOZE_7D,
+			self::ACT_OPEN_RULE,
+			self::ACT_ACCESS_APPROVE,
+			self::ACT_ACCESS_DENY,
+		);
 		return in_array( $action, $ok, true ) ? $action : '';
 	}
 
@@ -488,8 +522,11 @@ final class Inbox_Actions {
 	}
 
 	private static function success_message( string $action ): string {
-		if ( self::ACT_ALLOW_24H === $action ) {
+		if ( self::ACT_ALLOW_24H === $action || self::ACT_ACCESS_APPROVE === $action ) {
 			return __( 'This plugin is allowed for 24 hours.', 'handl-ai-connector-access-control' );
+		}
+		if ( self::ACT_ACCESS_DENY === $action ) {
+			return __( 'The access request was denied.', 'handl-ai-connector-access-control' );
 		}
 		if ( self::ACT_SNOOZE_7D === $action ) {
 			return __( 'Alerts for this plugin are snoozed for 7 days.', 'handl-ai-connector-access-control' );
@@ -505,8 +542,10 @@ final class Inbox_Actions {
 		$action  = (string) $row['action'];
 		$plugin  = (string) $row['plugin'];
 		$heading = __( 'Confirm this email action', 'handl-ai-connector-access-control' );
-		if ( self::ACT_ALLOW_24H === $action ) {
+		if ( self::ACT_ALLOW_24H === $action || self::ACT_ACCESS_APPROVE === $action ) {
 			$detail = __( 'Allow this plugin for 24 hours', 'handl-ai-connector-access-control' );
+		} elseif ( self::ACT_ACCESS_DENY === $action ) {
+			$detail = __( 'Deny this access request', 'handl-ai-connector-access-control' );
 		} else {
 			$detail = __( 'Snooze alerts for this plugin for 7 days', 'handl-ai-connector-access-control' );
 		}
