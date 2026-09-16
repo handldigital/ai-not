@@ -1,0 +1,21 @@
+PR #266 MCP gate live QA transcript
+Sandbox plugin SHA: 0e79a7a1609b21a21f94d26d5c43b470affbd89a
+
+$ wp handl-aicac mcp get
+Site default: inherit (inherit means allow).
+No per-plugin MCP rules.
+
+$ wp handl-aicac mcp set aicac-qa-mcp/aicac-qa-mcp.php deny
+Success: MCP rule for aicac-qa-mcp/aicac-qa-mcp.php is deny.
+
+$ wp handl-aicac mcp get
+Site default: inherit (inherit means allow).
+plugin	rule
+aicac-qa-mcp/aicac-qa-mcp.php	deny
+
+$ wp handl-aicac mcp set aicac-qa-mcp/aicac-qa-mcp.php inherit
+Success: MCP rule for aicac-qa-mcp/aicac-qa-mcp.php is inherit.
+
+$ wp handl-aicac mcp get
+Site default: inherit (inherit means allow).
+No per-plugin MCP rules.
