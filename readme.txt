@@ -205,6 +205,7 @@ Yes. With WP-CLI available and this plugin active:
 * The Rules tab now lists plugin rules that need review or belong to plugins that are no longer installed. Marking a rule as still correct does not change Allow or Deny. Review counts also appear on the Dashboard, in Site Health, and in the printable audit report.
 * Editors whose AI requests are blocked can ask for temporary access. The site owner receives no more than one email per plugin every 24 hours and can approve access for 24 hours or deny the request. Pending requests appear on the Protections screen.
 * Auditor view access: grant `handl_aicac_view` so a role can open Rules, Activity, Insights, and Site Health details without changing settings. Alerts & Settings shows which roles can view or manage.
+* Insights now includes a Who talks to whom map: plugins, providers, and models from the saved log, with call counts and estimated-spend share. Providers without a saved rate show Spend unknown.
 
 = 1.6.0 =
 * In versions 1.3.0–1.5.0, changes made on the Rules tab did not save. Version 1.6.0 saves Rules again and prevents an incomplete save from erasing rules that were not submitted.
