@@ -193,6 +193,7 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = Unreleased =
+* Optional per-plugin MCP gate: allow or deny MCP tool registration and calls (`wp handl-aicac mcp`). Missing Abilities/MCP APIs fail open. Default is inherit (allow).
 
 = 1.7.0 =
 * Optional retry-storm detector collapses rapid deny loops from the same plugin into one Activity row and one hourly alert (`wp handl-aicac retry-storm`). On by default at a 30-second window and threshold of 5; turn off to restore per-deny rows and emails.
