@@ -79,6 +79,13 @@ final class Whats_New {
 	 */
 	public static function highlights_catalog(): array {
 		return array(
+			'1.7.0' => array(
+				__( 'The Rules matrix now paginates (25, 50, or 100 rules per page) with plugin name search, so large sites no longer load or save every plugin row at once.', 'handl-ai-connector-access-control' ),
+				__( 'Editors whose AI requests are blocked can ask for temporary access. You get at most one email per plugin every 24 hours and can approve for 24 hours or deny. Pending requests appear on the Protections screen.', 'handl-ai-connector-access-control' ),
+				__( 'Grant the new view-only capability so auditors can open Rules, Activity, Insights, and Site Health details without changing settings.', 'handl-ai-connector-access-control' ),
+				__( 'Insights adds a Who talks to whom map: plugins, providers, and models from the saved log, with call counts and estimated-spend share.', 'handl-ai-connector-access-control' ),
+				__( 'Deleting the plugin now keeps your rules, activity, and alerts by default. To wipe everything, run `wp handl-aicac uninstall set purge` before deleting.', 'handl-ai-connector-access-control' ),
+			),
 			'1.6.0' => array(
 				__( 'The Rules tab saves again. In versions 1.3.0–1.5.0, Save changes did not persist. Version 1.6.0 also prevents incomplete saves from erasing rules that were not submitted.', 'handl-ai-connector-access-control' ),
 				__( 'Start from a policy pack on the Rules tab: preview Strict, Balanced, or Observe-first, download a JSON backup, then apply without replacing your existing per-plugin rules.', 'handl-ai-connector-access-control' ),
