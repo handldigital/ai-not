@@ -3198,14 +3198,44 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 
 		// --- Spend ---
+		$receipt = Cost_Receipt::compute( $log, $policy, $plugins );
 		echo '<div class="postbox handl-aicac-tile handl-aicac-tile--spend">';
 		echo '<div class="postbox-header"><h2 class="hndle">' . esc_html__( 'Estimated spend', 'handl-ai-connector-access-control' ) . '</h2></div>';
 		echo '<div class="inside">';
+		$receipt_total   = (float) ( $receipt['totals']['current'] ?? 0 );
+		$receipt_plugins = (int) ( $receipt['totals']['current_plugins'] ?? 0 );
+		$receipt_top     = $receipt['top_current'] ?? null;
+		if ( $receipt_plugins > 0 || $receipt_total > 0 ) {
+			echo '<p class="handl-aicac-spend-receipt"><strong>';
+			echo esc_html(
+				sprintf(
+					/* translators: 1: estimated USD this month, 2: plugin count with known rates */
+					__( 'Estimated AI spend this month: ~%1$s across %2$s plugins', 'handl-ai-connector-access-control' ),
+					Cost::format_usd( $receipt_total ),
+					number_format_i18n( max( 1, $receipt_plugins ) )
+				)
+			);
+			echo '</strong>';
+			if ( is_array( $receipt_top ) && isset( $receipt_top['label'], $receipt_top['usd'] ) ) {
+				echo ' <span class="description">';
+				echo esc_html(
+					sprintf(
+						/* translators: 1: plugin name, 2: estimated USD */
+						__( 'Top spender: %1$s (~%2$s est.).', 'handl-ai-connector-access-control' ),
+						(string) $receipt_top['label'],
+						Cost::format_usd( (float) $receipt_top['usd'] )
+					)
+				);
+				echo '</span>';
+			}
+			echo '</p>';
+			echo '<p class="description">' . esc_html__( 'Calendar-month estimate from the bundled price table (or your overrides). Not a bill.', 'handl-ai-connector-access-control' ) . '</p>';
+		}
 		if ( $est_any ) {
 			echo '<p class="handl-aicac-spend-total"><strong>$' . esc_html( number_format_i18n( $est_total, 2 ) ) . '</strong> ';
 			$rate_label = Cost::using_default_rates( $policy )
-				? __( 'estimate using default rates', 'handl-ai-connector-access-control' )
-				: __( 'estimate using custom rates', 'handl-ai-connector-access-control' );
+				? __( 'estimate across the saved log using default rates', 'handl-ai-connector-access-control' )
+				: __( 'estimate across the saved log using custom rates', 'handl-ai-connector-access-control' );
 			echo '<span class="description">' . esc_html( $rate_label ) . '</span></p>';
 
 			$forecast = Spend_Forecast::compute( $log, $policy );
@@ -3257,7 +3287,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				echo '<td class="column-num">' . esc_html( number_format_i18n( $row['calls'] ) ) . '</td></tr>';
 			}
 			echo '</tbody></table>';
-		} else {
+		} elseif ( $receipt_plugins < 1 && $receipt_total <= 0 ) {
 			echo '<p class="description">' . esc_html__( 'No estimates yet. Token counts are required.', 'handl-ai-connector-access-control' ) . '</p>';
 		}
 		echo '</div></div>';
@@ -3558,6 +3588,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$this->render_insights_daily_trends( $daily_trends );
 		$this->render_insights_trends( $log, $policy, $plugins );
 		$this->render_insights_provider_map( $log, $policy, $plugins );
+		$this->render_insights_cost_receipt( $log, $policy, $plugins );
 
 		$dimensions = array(
 			'plugin'    => __( 'Plugins', 'handl-ai-connector-access-control' ),
@@ -3902,6 +3933,91 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 		echo '</p>';
 		echo '</div>';
+	}
+
+	/**
+	 * AICAC-COST-RECEIPT (#263): per-plugin estimated cost for current + last calendar month.
+	 *
+	 * @param array<int,mixed>                  $log
+	 * @param array<string,mixed>               $policy
+	 * @param array<string,array<string,mixed>> $plugins
+	 */
+	private function render_insights_cost_receipt( array $log, array $policy, array $plugins ): void {
+		$receipt = Cost_Receipt::compute( $log, $policy, $plugins );
+		echo '<div class="handl-aicac-insights-cost-receipt" style="margin:1.5em 0;">';
+		echo '<h3>' . esc_html__( 'Estimated cost receipt', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<p class="description" title="' . esc_attr__( 'Estimate from logged tokens and the bundled price table (or your overrides). Not a bill.', 'handl-ai-connector-access-control' ) . '">';
+		echo esc_html__( 'Cost (est.) for the current and previous calendar month from saved Activity. Estimate only — not a bill. Models without a known rate show n/a and are left out of totals.', 'handl-ai-connector-access-control' );
+		echo '</p>';
+
+		if ( empty( $receipt['plugins'] ) ) {
+			echo '<p class="description">' . esc_html__( 'No token-bearing AI Client calls in the current or previous calendar month yet.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '</div>';
+			return;
+		}
+
+		echo '<table class="widefat striped handl-aicac-cost-receipt-table">';
+		echo '<thead><tr>';
+		echo '<th scope="col">' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-num" title="' . esc_attr__( 'Estimated cost for the current calendar month. Estimate only, not a bill.', 'handl-ai-connector-access-control' ) . '">';
+		echo esc_html__( 'Cost (est.) this month', 'handl-ai-connector-access-control' );
+		echo '</th>';
+		echo '<th scope="col" class="column-num" title="' . esc_attr__( 'Estimated cost for the previous calendar month. Estimate only, not a bill.', 'handl-ai-connector-access-control' ) . '">';
+		echo esc_html__( 'Cost (est.) last month', 'handl-ai-connector-access-control' );
+		echo '</th>';
+		echo '</tr></thead><tbody>';
+
+		foreach ( $receipt['plugins'] as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			echo '<tr><td>' . esc_html( (string) ( $row['label'] ?? '' ) ) . '</td>';
+			echo '<td class="column-num">' . esc_html( $this->format_cost_receipt_cell( $row['current'] ?? null, (int) ( $row['current_calls'] ?? 0 ), (int) ( $row['current_na_calls'] ?? 0 ) ) ) . '</td>';
+			echo '<td class="column-num">' . esc_html( $this->format_cost_receipt_cell( $row['previous'] ?? null, (int) ( $row['previous_calls'] ?? 0 ), (int) ( $row['previous_na_calls'] ?? 0 ) ) ) . '</td></tr>';
+		}
+
+		$totals = $receipt['totals'];
+		echo '</tbody><tfoot><tr>';
+		echo '<th scope="row">' . esc_html__( 'Known total (est.)', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<td class="column-num"><strong>' . esc_html( Cost::format_usd( (float) $totals['current'] ) ) . '</strong></td>';
+		echo '<td class="column-num"><strong>' . esc_html( Cost::format_usd( (float) $totals['previous'] ) ) . '</strong></td>';
+		echo '</tr></tfoot></table>';
+
+		$na = (int) $totals['current_na_calls'] + (int) $totals['previous_na_calls'];
+		echo '<p class="description handl-aicac-cost-receipt-footnote">';
+		echo esc_html__( 'Amounts are estimates from logged tokens and the bundled price table (or your rate overrides). They are not a bill.', 'handl-ai-connector-access-control' );
+		if ( $na > 0 ) {
+			echo ' ';
+			echo esc_html(
+				sprintf(
+					/* translators: %s: count of calls without a known rate */
+					_n(
+						'%s call with tokens had no known rate and was excluded from totals (shown as n/a).',
+						'%s calls with tokens had no known rate and were excluded from totals (shown as n/a).',
+						$na,
+						'handl-ai-connector-access-control'
+					),
+					number_format_i18n( $na )
+				)
+			);
+		}
+		echo '</p>';
+		echo '</div>';
+	}
+
+	/**
+	 * @param float|null $usd
+	 */
+	private function format_cost_receipt_cell( $usd, int $calls, int $na_calls ): string {
+		unset( $na_calls );
+		if ( $calls < 1 ) {
+			return '—';
+		}
+		if ( null === $usd ) {
+			return __( 'n/a', 'handl-ai-connector-access-control' );
+		}
+
+		return Cost::format_usd( (float) $usd );
 	}
 
 	/**
@@ -5043,15 +5159,18 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="handl-aicac-est-out" name="handl_aicac_est_usd_output_per_m" value="' . esc_attr( (string) $rates['output_per_m'] ) . '" />';
 		echo '<p class="description">' . esc_html__( 'Used when the provider is missing or unknown, or has no custom rates below.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<p style="margin-top:12px;"><strong>' . esc_html__( 'Rates by provider (optional)', 'handl-ai-connector-access-control' ) . '</strong></p>';
-		echo '<p class="description">' . esc_html__( 'Leave both fields blank to use the default rates for that provider. Estimates only, not billing.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Leave both fields blank to use the bundled estimate for that provider (shown as placeholder). Estimates only, not billing.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<table class="widefat striped" style="max-width:36em;"><thead><tr>';
 		echo '<th scope="col">' . esc_html__( 'Provider', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th scope="col">' . esc_html__( 'Input $ per 1M tokens', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th scope="col">' . esc_html__( 'Output $ per 1M tokens', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead><tbody>';
+		$bundled_providers = Cost_Receipt::bundled_table()['providers'];
 		foreach ( Cost::KNOWN_PROVIDERS as $provider_id ) {
 			$row_in  = isset( $provider_rates[ $provider_id ] ) ? (string) $provider_rates[ $provider_id ]['input_per_m'] : '';
 			$row_out = isset( $provider_rates[ $provider_id ] ) ? (string) $provider_rates[ $provider_id ]['output_per_m'] : '';
+			$ph_in   = isset( $bundled_providers[ $provider_id ] ) ? (string) $bundled_providers[ $provider_id ]['input_per_m'] : '';
+			$ph_out  = isset( $bundled_providers[ $provider_id ] ) ? (string) $bundled_providers[ $provider_id ]['output_per_m'] : '';
 			$in_id   = 'handl-aicac-est-prov-' . $provider_id . '-in';
 			$out_id  = 'handl-aicac-est-prov-' . $provider_id . '-out';
 			echo '<tr>';
@@ -5063,7 +5182,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 					$provider_id
 				)
 			) . '</label>';
-			echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="' . esc_attr( $in_id ) . '" name="handl_aicac_est_usd_provider[' . esc_attr( $provider_id ) . '][input]" value="' . esc_attr( $row_in ) . '" placeholder="' . esc_attr__( 'uses default rates', 'handl-ai-connector-access-control' ) . '" /></td>';
+			echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="' . esc_attr( $in_id ) . '" name="handl_aicac_est_usd_provider[' . esc_attr( $provider_id ) . '][input]" value="' . esc_attr( $row_in ) . '" placeholder="' . esc_attr( $ph_in ) . '" /></td>';
 			echo '<td><label class="screen-reader-text" for="' . esc_attr( $out_id ) . '">' . esc_html(
 				sprintf(
 					/* translators: %s: provider id */
@@ -5071,7 +5190,30 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 					$provider_id
 				)
 			) . '</label>';
-			echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="' . esc_attr( $out_id ) . '" name="handl_aicac_est_usd_provider[' . esc_attr( $provider_id ) . '][output]" value="' . esc_attr( $row_out ) . '" placeholder="' . esc_attr__( 'uses default rates', 'handl-ai-connector-access-control' ) . '" /></td>';
+			echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="' . esc_attr( $out_id ) . '" name="handl_aicac_est_usd_provider[' . esc_attr( $provider_id ) . '][output]" value="' . esc_attr( $row_out ) . '" placeholder="' . esc_attr( $ph_out ) . '" /></td>';
+			echo '</tr>';
+		}
+		echo '</tbody></table>';
+
+		// AICAC-COST-RECEIPT (#263): optional per-model overrides (bundled placeholders).
+		$model_rates     = Cost_Receipt::sanitize_model_rates( $policy['est_usd_model_rates'] ?? array() );
+		$bundled_models  = Cost_Receipt::bundled_table()['models'];
+		echo '<p style="margin-top:12px;"><strong>' . esc_html__( 'Rates by model (optional)', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		echo '<p class="description">' . esc_html__( 'Override a bundled model estimate. Leave blank to keep the bundled placeholder. Used by the cost receipt (Insights / Dashboard / digest). Estimate only, not billing.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<table class="widefat striped" style="max-width:40em;"><thead><tr>';
+		echo '<th scope="col">' . esc_html__( 'Model', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Input $ per 1M tokens', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Output $ per 1M tokens', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '</tr></thead><tbody>';
+		foreach ( $bundled_models as $model_id => $bundled_pair ) {
+			$row_in  = isset( $model_rates[ $model_id ] ) ? (string) $model_rates[ $model_id ]['input_per_m'] : '';
+			$row_out = isset( $model_rates[ $model_id ] ) ? (string) $model_rates[ $model_id ]['output_per_m'] : '';
+			$in_id   = 'handl-aicac-est-model-' . sanitize_html_class( (string) $model_id ) . '-in';
+			$out_id  = 'handl-aicac-est-model-' . sanitize_html_class( (string) $model_id ) . '-out';
+			echo '<tr>';
+			echo '<td><code>' . esc_html( (string) $model_id ) . '</code></td>';
+			echo '<td><input type="number" step="0.01" min="0" max="10000" class="small-text" id="' . esc_attr( $in_id ) . '" name="handl_aicac_est_usd_model[' . esc_attr( (string) $model_id ) . '][input]" value="' . esc_attr( $row_in ) . '" placeholder="' . esc_attr( (string) $bundled_pair['input_per_m'] ) . '" /></td>';
+			echo '<td><input type="number" step="0.01" min="0" max="10000" class="small-text" id="' . esc_attr( $out_id ) . '" name="handl_aicac_est_usd_model[' . esc_attr( (string) $model_id ) . '][output]" value="' . esc_attr( $row_out ) . '" placeholder="' . esc_attr( (string) $bundled_pair['output_per_m'] ) . '" /></td>';
 			echo '</tr>';
 		}
 		echo '</tbody></table>';
@@ -6382,6 +6524,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		);
 		$posted_provider_rates = filter_input( INPUT_POST, 'handl_aicac_est_usd_provider', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
 		$policy['est_usd_provider_rates'] = Cost::sanitize_provider_rates( is_array( $posted_provider_rates ) ? $posted_provider_rates : array() );
+		$posted_model_rates = filter_input( INPUT_POST, 'handl_aicac_est_usd_model', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		$policy['est_usd_model_rates'] = Cost_Receipt::sanitize_model_rates( is_array( $posted_model_rates ) ? $posted_model_rates : array() );
 
 		// S-103: estimated-spend thresholds (empty = off).
 		$policy['spend_threshold_site'] = Spend_Threshold::sanitize_threshold(
