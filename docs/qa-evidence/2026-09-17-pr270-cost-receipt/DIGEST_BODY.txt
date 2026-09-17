@@ -1,0 +1,24 @@
+HandL AI Connector Access Control weekly governance digest
+
+Last 7 days of saved Activity (same window as the Activity summary).
+
+AI Client calls: 3
+Blocked calls: 0
+Direct connections outside the AI Client: 0
+Usage spike alerts: 0
+Estimated spend: $10.00 ($0.00 vs the previous 7 days)
+Estimated AI spend this calendar month: ~$30.00 across 2 plugins (receipt; estimate only).
+Top spender this month: AI Provider for OpenAI (~$20.00 est.).
+
+Top plugins by estimated spend:
+AI Provider for OpenAI: $5.00 estimated, 1 calls
+Gravity Forms: $2.50 estimated, 1 calls
+AI Provider for AWS Bedrock: $2.50 estimated, 1 calls
+
+Amounts are estimates from logged token usage and your rates. They are not a bill.
+
+Turn off or change this digest:
+https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-activity
+
+Open Dashboard:
+https://handl-sandbox/wp-admin/admin.php?page=handl-aicac
