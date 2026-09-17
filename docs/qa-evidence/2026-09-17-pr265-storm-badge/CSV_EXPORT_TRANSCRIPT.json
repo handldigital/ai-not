@@ -1,0 +1,15 @@
+{
+  "source": "authenticated Activity Download CSV response",
+  "status": 200,
+  "contentType": "text/csv; charset=utf-8",
+  "disposition": "attachment; filename=\"handl-aicac-audit-20260917-190952.csv\"",
+  "header": "Time,Decision,\"Operation / family\",Provider,Model,\"Input tokens\",\"Output tokens\",\"Est. $\",Plugin,Prompt,User,URI,\"Request context\",\"Returned error\",retry_storm_count",
+  "fixtureRows": [
+    "\"2026-09-17 19:07:18\",deny,\"qa251_normal / qa251_normal\",\"QA Fixture\",normal-test,,,,qa251-normal/fixture.php,,,/qa-251/normal,unknown,,0",
+    "\"2026-09-17 19:07:16\",deny,\"qa251_storm / qa251_storm\",\"QA Fixture\",storm-test,,,,qa251-storm/fixture.php,,,/qa-251/storm,unknown,,2",
+    "\"2026-09-17 19:07:14\",deny,\"qa251_storm / qa251_storm\",\"QA Fixture\",storm-test,,,,qa251-storm/fixture.php,,,/qa-251/storm,unknown,,0",
+    "\"2026-09-17 19:07:13\",deny,\"qa251_storm / qa251_storm\",\"QA Fixture\",storm-test,,,,qa251-storm/fixture.php,,,/qa-251/storm,unknown,,0",
+    "\"2026-09-17 19:07:12\",deny,\"qa251_storm / qa251_storm\",\"QA Fixture\",storm-test,,,,qa251-storm/fixture.php,,,/qa-251/storm,unknown,,0",
+    "\"2026-09-17 19:07:11\",deny,\"qa251_storm / qa251_storm\",\"QA Fixture\",storm-test,,,,qa251-storm/fixture.php,,,/qa-251/storm,unknown,,0"
+  ]
+}
