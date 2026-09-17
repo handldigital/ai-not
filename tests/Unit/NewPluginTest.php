@@ -165,6 +165,12 @@ final class NewPluginTest extends TestCase {
 		$this->assertStringContainsString( '#handl-aicac-rule-', $url );
 	}
 
+	public function test_review_all_url_filters_pending_review(): void {
+		$url = New_Plugin::review_all_url();
+		$this->assertStringContainsString( 'page=handl-aicac-rules', $url );
+		$this->assertStringContainsString( 'handl_aicac_access=pending-review', $url );
+	}
+
 	public function test_sanitize_interim_defaults_to_deny(): void {
 		$this->assertSame( 'deny', New_Plugin::sanitize_interim( 'nope' ) );
 		$this->assertSame( 'observe', New_Plugin::sanitize_interim( 'observe' ) );
