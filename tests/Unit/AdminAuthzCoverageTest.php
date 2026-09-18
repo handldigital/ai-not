@@ -38,6 +38,9 @@ final class AdminAuthzCoverageTest extends TestCase {
 		'export_log',
 		'export_prune_candidates',
 		'export_rules',
+		'freeze_end',
+		'freeze_extend',
+		'freeze_start',
 		'import_rules_confirm',
 		'import_rules_preview',
 		'keyscan_run',
@@ -256,6 +259,18 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array(
 				'action'       => 'keyscan_run',
 				'nonce_action' => 'handl_aicac_keyscan_run',
+			),
+			array(
+				'action'       => 'freeze_start',
+				'nonce_action' => 'handl_aicac_freeze_start',
+			),
+			array(
+				'action'       => 'freeze_end',
+				'nonce_action' => 'handl_aicac_freeze_end',
+			),
+			array(
+				'action'       => 'freeze_extend',
+				'nonce_action' => 'handl_aicac_freeze_extend',
 			),
 			array(
 				'action'       => 'simulate_policy',
@@ -483,6 +498,9 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array( 'handle_compare_rules_preview', 'handl_aicac_compare_rules' ),
 			array( 'handle_compare_latest_backup', 'handl_aicac_compare_latest_backup' ),
 			array( 'handle_keyscan_run', 'handl_aicac_keyscan_run' ),
+			array( 'handle_freeze_start', 'handl_aicac_freeze_start' ),
+			array( 'handle_freeze_end', 'handl_aicac_freeze_end' ),
+			array( 'handle_freeze_extend', 'handl_aicac_freeze_extend' ),
 			array( 'handle_onboard_dismiss', 'handl_aicac_onboard' ),
 			array( 'handle_onboard_step', 'handl_aicac_onboard' ),
 			array( 'handle_onboard_test_email', 'handl_aicac_onboard' ),
@@ -528,6 +546,9 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'handle_compare_rules_preview',
 				'handle_compare_latest_backup',
 				'handle_keyscan_run',
+				'handle_freeze_start',
+				'handle_freeze_end',
+				'handle_freeze_extend',
 				'handle_onboard_dismiss',
 				'handle_onboard_step',
 				'handle_onboard_test_email',

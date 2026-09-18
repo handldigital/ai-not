@@ -32,11 +32,13 @@ register_activation_hook(
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-onboarding.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-whats-new.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-tamper.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-freeze.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-canary.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-caps.php';
 		\HandL\AICAC\Onboarding::ensure_initialized();
 		\HandL\AICAC\Whats_New::ensure_seen_version_seeded();
 		\HandL\AICAC\Tamper::on_activate();
+		\HandL\AICAC\Freeze::on_activate();
 		\HandL\AICAC\Canary::ensure_seeded();
 		\HandL\AICAC\Caps::ensure_registered();
 	}
