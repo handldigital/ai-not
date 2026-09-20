@@ -157,7 +157,7 @@ final class ResidencyTest extends TestCase {
 		$this->assertFalse( get_option( Residency::OPTION_KEY, false ) );
 	}
 
-	public function test_alert_summary_names_the_region_rule(): void {
+	public function test_alert_summary_keeps_internal_reason_and_human_email_line(): void {
 		$summary = Alerts::summarize_event_public(
 			array(
 				'denial_reason'  => Residency::REASON,
@@ -165,8 +165,38 @@ final class ResidencyTest extends TestCase {
 				'provider'       => 'openai',
 			)
 		);
-		$this->assertSame( 'residency (Listed for the European Union)', $summary['denial_reason'] );
+		$this->assertSame( Residency::REASON, $summary['denial_reason'] );
+		$this->assertSame( 'Listed for the European Union', $summary['residency_rule'] );
 		$this->assertSame( 'openai', $summary['provider'] );
+		$this->assertStringContainsString(
+			'Reason: Provider region filter (Listed for the European Union)',
+			Alerts::format_summary_lines_public( $summary )
+		);
+	}
+
+	public function test_cli_success_inactive_when_no_restriction(): void {
+		$this->assertSame(
+			'Provider region filter: No restriction. Unknown-provider check is inactive.',
+			Residency::cli_set_success_message(
+				array(
+					'region'         => Residency::REGION_NONE,
+					'strict_unknown' => true,
+				)
+			)
+		);
+		$this->assertSame(
+			'Provider region filter: Listed for the European Union. Providers with no listed region: allow and warn.',
+			Residency::cli_set_success_message( array( 'region' => Residency::REGION_EU ) )
+		);
+		$this->assertSame(
+			'Provider region filter: Listed for the United States. Providers with no listed region: block.',
+			Residency::cli_set_success_message(
+				array(
+					'region'         => Residency::REGION_US,
+					'strict_unknown' => true,
+				)
+			)
+		);
 	}
 
 	public function test_parse_map_text_ignores_comments_and_junk(): void {

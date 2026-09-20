@@ -128,12 +128,6 @@ final class CLI_Residency {
 		}
 
 		$saved = Residency::save( $current );
-		\WP_CLI::success(
-			sprintf(
-				'Provider region filter: %s. Unknown providers: %s.',
-				Residency::region_label( $saved['region'] ),
-				! empty( $saved['strict_unknown'] ) ? 'block' : 'allow and warn'
-			)
-		);
+		\WP_CLI::success( Residency::cli_set_success_message( $saved ) );
 	}
 }

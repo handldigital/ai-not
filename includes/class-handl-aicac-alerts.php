@@ -916,6 +916,13 @@ final class Alerts {
 	}
 
 	/**
+	 * @param array<string,mixed> $summary
+	 */
+	public static function format_summary_lines_public( array $summary ): string {
+		return self::format_summary_lines( $summary );
+	}
+
+	/**
 	 * Contained wp_mail wrapper. Records Alert_Health email channel result.
 	 * AICAC-EMAIL-BRAND: wraps the content block in shared chrome + multipart
 	 * plain/HTML alternative. wp_mail is pluggable; SMTP replacements may throw
@@ -1345,8 +1352,9 @@ final class Alerts {
 			|| ( isset( $event['channel'] ) && 'direct_http' === (string) $event['channel'] );
 
 		$denial_reason = isset( $event['denial_reason'] ) ? (string) $event['denial_reason'] : '';
+		$residency_rule = '';
 		if ( Residency::REASON === $denial_reason && ! empty( $event['residency_rule'] ) ) {
-			$denial_reason .= ' (' . sanitize_text_field( (string) $event['residency_rule'] ) . ')';
+			$residency_rule = sanitize_text_field( (string) $event['residency_rule'] );
 		}
 
 		$out = array(
@@ -1362,6 +1370,9 @@ final class Alerts {
 			'uri'               => self::uri_path_only( $uri ),
 			'alert_kind'        => $is_shadow ? 'shadow' : 'denial',
 		);
+		if ( '' !== $residency_rule ) {
+			$out['residency_rule'] = $residency_rule;
+		}
 
 		if ( $is_shadow ) {
 			$out['host']         = isset( $event['host'] ) ? (string) $event['host'] : '';
@@ -1399,12 +1410,20 @@ final class Alerts {
 			return implode( "\n", $lines ) . "\n";
 		}
 
+		$reason = (string) ( $summary['denial_reason'] ?? '' );
+		if ( Residency::REASON === $reason ) {
+			$reason = Policy_Simulator::reason_label( Residency::REASON );
+			if ( ! empty( $summary['residency_rule'] ) ) {
+				$reason .= ' (' . (string) $summary['residency_rule'] . ')';
+			}
+		}
+
 		$lines = array(
 			sprintf( 'Time: %s', $ts ),
 			sprintf( 'Plugin: %s', $summary['plugin'] !== '' ? $summary['plugin'] : '(unknown)' ),
 			sprintf( 'Operation: %s', $summary['operation'] !== '' ? $summary['operation'] : '—' ),
 			sprintf( 'Family: %s', $summary['capability_family'] !== '' ? $summary['capability_family'] : '—' ),
-			sprintf( 'Reason: %s', $summary['denial_reason'] !== '' ? $summary['denial_reason'] : '—' ),
+			sprintf( 'Reason: %s', '' !== $reason ? $reason : '—' ),
 		);
 		if ( ! empty( $summary['matched_tools'] ) && is_array( $summary['matched_tools'] ) ) {
 			$lines[] = 'Matched tools: ' . implode( ', ', $summary['matched_tools'] );

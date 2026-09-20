@@ -298,6 +298,28 @@ final class Residency {
 	}
 
 	/**
+	 * WP-CLI `residency set` success line. Region none disables the filter,
+	 * so the unknown-provider mode is not reported as active.
+	 *
+	 * @param array<string,mixed> $settings
+	 */
+	public static function cli_set_success_message( array $settings ): string {
+		$settings = self::sanitize_settings( $settings );
+		if ( self::REGION_NONE === $settings['region'] ) {
+			return sprintf(
+				'Provider region filter: %s. Unknown-provider check is inactive.',
+				self::region_label( $settings['region'] )
+			);
+		}
+
+		return sprintf(
+			'Provider region filter: %s. Providers with no listed region: %s.',
+			self::region_label( $settings['region'] ),
+			! empty( $settings['strict_unknown'] ) ? 'block' : 'allow and warn'
+		);
+	}
+
+	/**
 	 * @return array{
 	 *   active:bool,
 	 *   prevent:bool,
