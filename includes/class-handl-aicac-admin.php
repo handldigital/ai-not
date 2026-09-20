@@ -7491,8 +7491,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				sprintf(
 					/* translators: %d: collapsed retry-storm deny count stored on this Activity row */
 					_n(
-						'Repeated %d more time',
-						'Repeated %d more times',
+						'%d blocked attempt',
+						'%d blocked attempts',
 						$storm_count,
 						'handl-ai-connector-access-control'
 					),

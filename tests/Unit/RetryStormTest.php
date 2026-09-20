@@ -215,7 +215,7 @@ final class RetryStormTest extends TestCase {
 	public function test_activity_row_renders_retry_storm_badge_copy(): void {
 		$src = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php' );
 		$this->assertStringContainsString( 'handl-aicac-badge--storm', $src );
-		$this->assertStringContainsString( 'Repeated %d more times', $src );
+		$this->assertStringContainsString( '%d blocked attempts', $src );
 		$this->assertStringContainsString( 'Retry_Storm::storm_count_from_row', $src );
 
 		$css = (string) file_get_contents( HANDL_AICAC_DIR . '/assets/admin.css' );
