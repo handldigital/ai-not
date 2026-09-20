@@ -1344,12 +1344,17 @@ final class Alerts {
 		$is_shadow = ( 'shadow' === ( $event['alert_kind'] ?? '' ) )
 			|| ( isset( $event['channel'] ) && 'direct_http' === (string) $event['channel'] );
 
+		$denial_reason = isset( $event['denial_reason'] ) ? (string) $event['denial_reason'] : '';
+		if ( Residency::REASON === $denial_reason && ! empty( $event['residency_rule'] ) ) {
+			$denial_reason .= ' (' . sanitize_text_field( (string) $event['residency_rule'] ) . ')';
+		}
+
 		$out = array(
 			'ts'                => isset( $event['ts'] ) ? (int) $event['ts'] : time(),
 			'plugin'            => isset( $event['plugin'] ) && is_string( $event['plugin'] ) ? (string) $event['plugin'] : '',
 			'operation'         => isset( $event['operation'] ) ? (string) $event['operation'] : '',
 			'capability_family' => isset( $event['capability_family'] ) ? (string) $event['capability_family'] : '',
-			'denial_reason'     => isset( $event['denial_reason'] ) ? (string) $event['denial_reason'] : '',
+			'denial_reason'     => $denial_reason,
 			'matched_tools'     => $matched,
 			'provider'          => isset( $event['provider'] ) ? (string) $event['provider'] : '',
 			'model'             => isset( $event['model'] ) ? (string) $event['model'] : '',

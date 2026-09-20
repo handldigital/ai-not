@@ -196,6 +196,19 @@ final class Policy {
 			}
 		}
 
+		// AICAC-RESIDENCY (#229): site-level region gate — off by default.
+		if ( ! $prevent ) {
+			$res = Residency::apply_to_event( $event, $policy );
+			if ( ! empty( $res['prevent'] ) ) {
+				$event['would_decision'] = 'deny';
+				$event['denial_reason']  = Residency::REASON;
+				if ( empty( $policy['audit_only'] ) ) {
+					$prevent           = true;
+					$event['decision'] = 'deny';
+				}
+			}
+		}
+
 		// AICAC-PII-WARN (#230): opt-in payload screen — off by default (zero work).
 		// Only after an allow from rules; deny-mode PII can escalate allow → block.
 		// Redacts prompt_preview before log so the control never stores matched text.

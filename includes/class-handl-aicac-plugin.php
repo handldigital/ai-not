@@ -68,6 +68,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quiet-hours.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-break-glass.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-pii-warn.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-residency.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-selftest.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-simulator.php';
@@ -131,6 +132,7 @@ final class Plugin {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-hardened.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-retry-storm.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-siem.php';
+			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-residency.php';
 			CLI::register();
 			CLI_Audit::register();
 			CLI_Policy_Apply::register();
@@ -139,6 +141,7 @@ final class Plugin {
 			CLI_Hardened::register();
 			CLI_Retry_Storm::register();
 			CLI_Siem::register();
+			CLI_Residency::register();
 		}
 	}
 

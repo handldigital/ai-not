@@ -105,6 +105,7 @@ final class Policy_Simulator {
 			'tool_armed'        => __( 'Blocked tool rule', 'handl-ai-connector-access-control' ),
 			'ability_armed'     => __( 'Blocked tool rule', 'handl-ai-connector-access-control' ),
 			'pii'               => __( 'Personal information detected', 'handl-ai-connector-access-control' ),
+			'residency'         => __( 'Data residency', 'handl-ai-connector-access-control' ),
 		);
 		if ( isset( $map[ $reason ] ) ) {
 			return $map[ $reason ];
