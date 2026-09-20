@@ -19,6 +19,9 @@ final class Review_Due {
 
 	public const DEFAULT_DAYS = 90;
 
+	/** Default postpone for review-due snooze (days). */
+	public const SNOOZE_DAYS = 7;
+
 	/** @var list<int> */
 	public const DAY_OPTIONS = array( 30, 90, 180, 0 );
 
@@ -159,6 +162,85 @@ final class Review_Due {
 				/* translators: %s: plugin basename */
 				__( 'Still correct (%s)', 'handl-ai-connector-access-control' ),
 				$basename
+			);
+		}
+		self::put_stamps( self::normalize_stamps( $policy, $stamps ) );
+		if ( ! empty( $changes ) ) {
+			Policy_Snapshots::append_history(
+				array(
+					'ts'      => $now,
+					'actor'   => Policy_Snapshots::detect_actor(),
+					'changes' => $changes,
+					'summary' => implode( '; ', $changes ),
+				)
+			);
+		}
+
+		return count( $changes );
+	}
+
+	/**
+	 * Basenames that are stale (due) and still installed — not orphans.
+	 *
+	 * @param array<string,mixed>               $policy
+	 * @param array<string,array<string,mixed>> $installed
+	 * @return list<string>
+	 */
+	public static function due_basenames( array $policy, array $installed, ?int $now = null ): array {
+		$snap = self::snapshot( $policy, $installed, $now );
+		$out  = array();
+		foreach ( $snap['rows'] as $row ) {
+			if ( ! empty( $row['orphaned'] ) ) {
+				continue;
+			}
+			$out[] = (string) $row['basename'];
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Postpone review without claiming the rule is still correct.
+	 * Stamps last_reviewed so the row is due again after $days.
+	 * Does not change Allow or Deny.
+	 *
+	 * @param array<string,mixed> $policy
+	 * @param list<string>        $basenames
+	 * @return int Number snoozed.
+	 */
+	public static function snooze( array $policy, array $basenames, int $days = self::SNOOZE_DAYS, ?int $now = null ): int {
+		$now    = null !== $now && $now > 0 ? $now : time();
+		$window = self::sanitize_days( $policy['review_due_days'] ?? self::DEFAULT_DAYS );
+		$days   = $days > 0 ? $days : self::SNOOZE_DAYS;
+		if ( $window <= 0 ) {
+			return 0;
+		}
+
+		$stamp   = $now - ( $window * DAY_IN_SECONDS ) + ( $days * DAY_IN_SECONDS );
+		if ( $stamp > $now ) {
+			$stamp = $now;
+		}
+
+		$stamps  = self::get_stamps();
+		$plugins = isset( $policy['plugins'] ) && is_array( $policy['plugins'] )
+			? $policy['plugins']
+			: array();
+		$changes = array();
+		foreach ( $basenames as $basename ) {
+			$basename = Plugin_Profile::sanitize_plugin( (string) $basename );
+			if ( '' === $basename ) {
+				continue;
+			}
+			$rule = isset( $plugins[ $basename ] ) ? (string) $plugins[ $basename ] : '';
+			if ( 'allow' !== $rule && 'deny' !== $rule ) {
+				continue;
+			}
+			$stamps[ $basename ] = $stamp;
+			$changes[]           = sprintf(
+				/* translators: 1: plugin basename, 2: number of days */
+				__( 'Remind later in %2$d days (%1$s)', 'handl-ai-connector-access-control' ),
+				$basename,
+				$days
 			);
 		}
 		self::put_stamps( self::normalize_stamps( $policy, $stamps ) );

@@ -110,6 +110,7 @@ final class New_Plugin {
 		echo ' ';
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- links built with esc_url/esc_html above.
 		echo implode( ', ', $links );
+		echo ' <a href="' . esc_url( self::review_all_url() ) . '">' . esc_html__( 'Review all', 'handl-ai-connector-access-control' ) . '</a>';
 		echo '</p></div>';
 	}
 
@@ -402,6 +403,18 @@ final class New_Plugin {
 			}
 		}
 		return $policy;
+	}
+
+	/**
+	 * Rules tab filtered to plugins awaiting a new-plugin decision.
+	 */
+	public static function review_all_url(): string {
+		return Admin::screen_url(
+			'rules',
+			array(
+				'handl_aicac_access' => 'pending-review',
+			)
+		);
 	}
 
 	/**

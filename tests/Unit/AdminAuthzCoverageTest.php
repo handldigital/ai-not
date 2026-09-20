@@ -67,6 +67,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 		'simulate_policy',
 		'skip_prune_export',
 		'snooze_alerts',
+		'snooze_review_due',
 		'undo_quick_rule',
 	);
 
@@ -236,6 +237,10 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array(
 				'action'       => 'confirm_review_due',
 				'nonce_action' => 'handl_aicac_confirm_review_due',
+			),
+			array(
+				'action'       => 'snooze_review_due',
+				'nonce_action' => 'handl_aicac_snooze_review_due',
 			),
 			array(
 				'action'       => 'save_review_due_window',
@@ -459,6 +464,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array( 'handle_bulk_plugin_rules', 'handl_aicac_save_policy' ),
 			array( 'handle_renew_temp_allow', 'handl_aicac_renew_temp_allow' ),
 			array( 'handle_confirm_review_due', 'handl_aicac_confirm_review_due' ),
+			array( 'handle_snooze_review_due', 'handl_aicac_snooze_review_due' ),
 			array( 'handle_save_review_due_window', 'handl_aicac_save_review_due_window' ),
 			array( 'handle_snooze_alerts', 'handl_aicac_snooze_alerts' ),
 			array( 'handle_cancel_alert_snooze', 'handl_aicac_cancel_alert_snooze' ),

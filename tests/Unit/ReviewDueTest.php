@@ -177,4 +177,82 @@ final class ReviewDueTest extends TestCase {
 		$this->assertSame( 'allow', $policy['plugins']['a/a.php'] );
 		$this->assertSame( 'deny', $policy['plugins']['b/b.php'] );
 	}
+
+	public function test_due_basenames_skips_orphans(): void {
+		$now = 1_700_000_000;
+		$policy = array(
+			'plugins' => array(
+				'a/a.php'    => 'allow',
+				'gone/g.php' => 'deny',
+			),
+			'review_due_days' => 90,
+		);
+		Review_Due::put_stamps(
+			array(
+				'a/a.php'    => $now - ( 200 * DAY_IN_SECONDS ),
+				'gone/g.php' => $now - ( 200 * DAY_IN_SECONDS ),
+			)
+		);
+		$due = Review_Due::due_basenames( $policy, array( 'a/a.php' => array( 'Name' => 'A' ) ), $now );
+		$this->assertSame( array( 'a/a.php' ), $due );
+	}
+
+	public function test_snooze_clears_due_without_policy_change_and_returns_in_seven_days(): void {
+		$now = 1_700_000_000;
+		$policy = array(
+			'plugins'         => array( 'a/a.php' => 'deny' ),
+			'review_due_days' => 90,
+		);
+		Review_Due::put_stamps( array( 'a/a.php' => $now - ( 200 * DAY_IN_SECONDS ) ) );
+		$installed = array( 'a/a.php' => array( 'Name' => 'A' ) );
+		$this->assertSame( 1, Review_Due::snapshot( $policy, $installed, $now )['due'] );
+
+		$n = Review_Due::snooze( $policy, array( 'a/a.php' ), Review_Due::SNOOZE_DAYS, $now );
+		$this->assertSame( 1, $n );
+		$this->assertSame( 'deny', $policy['plugins']['a/a.php'] );
+		$this->assertSame( 0, Review_Due::snapshot( $policy, $installed, $now )['due'] );
+		$this->assertSame( 1, Review_Due::snapshot( $policy, $installed, $now + ( 7 * DAY_IN_SECONDS ) )['due'] );
+
+		$history = Policy_Snapshots::history();
+		$this->assertNotEmpty( $history );
+		$joined = implode( ' ', $history[0]['changes'] ?? array() );
+		$this->assertStringContainsString( 'a/a.php', $joined );
+		$this->assertStringContainsString( '7', $joined );
+	}
+
+	public function test_confirm_all_due_is_confirm_of_due_basenames(): void {
+		$now = 1_700_000_000;
+		$policy = array(
+			'plugins' => array(
+				'a/a.php' => 'allow',
+				'b/b.php' => 'deny',
+			),
+			'review_due_days' => 90,
+		);
+		Review_Due::put_stamps(
+			array(
+				'a/a.php' => $now - ( 200 * DAY_IN_SECONDS ),
+				'b/b.php' => $now,
+			)
+		);
+		$installed = array(
+			'a/a.php' => array( 'Name' => 'A' ),
+			'b/b.php' => array( 'Name' => 'B' ),
+		);
+		$due = Review_Due::due_basenames( $policy, $installed, $now );
+		$this->assertSame( array( 'a/a.php' ), $due );
+		Review_Due::confirm( $policy, $due, $now );
+		$snap = Review_Due::snapshot( $policy, $installed, $now );
+		$this->assertSame( 0, $snap['due'] );
+		$this->assertSame( 2, $snap['confirmed'] );
+	}
+
+	public function test_rules_ui_source_has_queue_controls(): void {
+		$src = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php' );
+		$this->assertStringContainsString( 'pending-review', $src );
+		$this->assertStringContainsString( 'Confirm all due', $src );
+		$this->assertStringContainsString( 'Remind me in 7 days', $src );
+		$this->assertStringContainsString( 'handl-aicac-review-select-all', $src );
+		$this->assertStringContainsString( 'snooze_review_due', $src );
+	}
 }
