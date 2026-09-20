@@ -557,7 +557,11 @@ if ( ! function_exists( 'add_filter' ) ) {
 	 * @param int      $accepted_args
 	 */
 	function add_filter( $hook, $callback, $priority = 10, $accepted_args = 1 ): bool {
-		unset( $hook, $callback, $priority, $accepted_args );
+		unset( $callback, $priority, $accepted_args );
+		if ( ! isset( $GLOBALS['handl_aicac_test_added_filters'] ) || ! is_array( $GLOBALS['handl_aicac_test_added_filters'] ) ) {
+			$GLOBALS['handl_aicac_test_added_filters'] = array();
+		}
+		$GLOBALS['handl_aicac_test_added_filters'][] = (string) $hook;
 		return true;
 	}
 }
@@ -912,6 +916,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-snapshots.php
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-audit-export.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-audit-evidence.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin-profile.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin-chips.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-differentiator-messaging.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-pager.php';

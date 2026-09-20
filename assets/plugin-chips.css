@@ -1,0 +1,43 @@
+/**
+ * Plugins-screen AI status chips (AICAC-PLUGIN-ROW-CHIPS).
+ */
+
+.handl-aicac-plugin-chip {
+	display: inline-block;
+	margin-left: 4px;
+	padding: 1px 7px;
+	border-radius: 3px;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1.5;
+	text-decoration: none;
+	vertical-align: middle;
+}
+
+.handl-aicac-plugin-chip:hover,
+.handl-aicac-plugin-chip:focus {
+	text-decoration: none;
+	box-shadow: 0 0 0 1px currentColor;
+}
+
+.handl-aicac-plugin-chip--allowed {
+	background: #d5f0d5;
+	color: #1e4620;
+}
+
+.handl-aicac-plugin-chip--denied,
+.handl-aicac-plugin-chip--denies {
+	background: #f5dcdc;
+	color: #8a2424;
+}
+
+.handl-aicac-plugin-chip--watched {
+	background: #e8e4f5;
+	color: #3c2d6e;
+}
+
+.handl-aicac-plugin-chip--never-seen {
+	background: #f0f0f1;
+	color: #646970;
+	font-weight: 500;
+}
