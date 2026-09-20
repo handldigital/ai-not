@@ -32,6 +32,7 @@ final class SelftestTest extends TestCase {
 		delete_option( Plugin::OPTION_KEY );
 		delete_option( Plugin::LOG_OPTION_KEY );
 		unset( $GLOBALS['handl_aicac_test_gate_registered'] );
+		unset( $GLOBALS['handl_aicac_test_mcp_surfaces'] );
 		unset( $_SERVER['REQUEST_URI'] );
 		Attribution::force_plugin( null );
 		$GLOBALS['handl_aicac_wp_mail'] = static function ( $to, $subject, $message ) {
@@ -46,9 +47,10 @@ final class SelftestTest extends TestCase {
 
 	protected function tearDown(): void {
 		Attribution::force_plugin( null );
-		unset( $GLOBALS['handl_aicac_wp_mail'], $GLOBALS['handl_aicac_test_gate_registered'] );
+		unset( $GLOBALS['handl_aicac_wp_mail'], $GLOBALS['handl_aicac_test_gate_registered'], $GLOBALS['handl_aicac_test_mcp_surfaces'] );
 		delete_option( Plugin::OPTION_KEY );
 		delete_option( Plugin::LOG_OPTION_KEY );
+		delete_option( \HandL\AICAC\Mcp_Gate::OPTION_KEY );
 		parent::tearDown();
 	}
 
@@ -88,9 +90,10 @@ final class SelftestTest extends TestCase {
 		foreach ( $report['links'] as $link ) {
 			$by[ $link['id'] ] = $link;
 		}
-		foreach ( array( 'gate', 'rule', 'deny', 'allow', 'log', 'alerts', 'policy_restored' ) as $id ) {
+		foreach ( array( 'gate', 'rule', 'deny', 'allow', 'log', 'alerts', 'policy_restored', 'mcp' ) as $id ) {
 			$this->assertTrue( $by[ $id ]['pass'], $id . ' should pass' );
 		}
+		$this->assertStringContainsString( 'skipped', $by['mcp']['label'] );
 
 		$this->assertSame( array(), self::$mails, 'selftest must not send alert mail' );
 		$this->assertNotSame( Selftest::PLUGIN_BASENAME, Attribution::resolve_from_backtrace()['plugin'] );

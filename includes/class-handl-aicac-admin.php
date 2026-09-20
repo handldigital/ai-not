@@ -3229,7 +3229,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				echo '</span>';
 			}
 			echo '</p>';
-			echo '<p class="description">' . esc_html__( 'Calendar-month estimate from the bundled price table (or your overrides). Not a bill.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Based on saved Activity. Calls without token counts or rates are excluded.', 'handl-ai-connector-access-control' ) . '</p>';
 		}
 		if ( $est_any ) {
 			echo '<p class="handl-aicac-spend-total"><strong>$' . esc_html( number_format_i18n( $est_total, 2 ) ) . '</strong> ';
@@ -3947,7 +3947,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<div class="handl-aicac-insights-cost-receipt" style="margin:1.5em 0;">';
 		echo '<h3>' . esc_html__( 'Estimated cost receipt', 'handl-ai-connector-access-control' ) . '</h3>';
 		echo '<p class="description" title="' . esc_attr__( 'Estimate from logged tokens and the bundled price table (or your overrides). Not a bill.', 'handl-ai-connector-access-control' ) . '">';
-		echo esc_html__( 'Cost (est.) for the current and previous calendar month from saved Activity. Estimate only — not a bill. Models without a known rate show n/a and are left out of totals.', 'handl-ai-connector-access-control' );
+		echo esc_html__( 'Monthly estimates from saved Activity. Uses model rates when available, otherwise provider rates. Calls without a rate are excluded. A plugin shows n/a when none of its calls can be priced. Not a bill.', 'handl-ai-connector-access-control' );
 		echo '</p>';
 
 		if ( empty( $receipt['plugins'] ) ) {
@@ -3992,8 +3992,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				sprintf(
 					/* translators: %s: count of calls without a known rate */
 					_n(
-						'%s call with tokens had no known rate and was excluded from totals (shown as n/a).',
-						'%s calls with tokens had no known rate and were excluded from totals (shown as n/a).',
+						'%s call with tokens had no rate and was excluded from totals.',
+						'%s calls with tokens had no rate and were excluded from totals.',
 						$na,
 						'handl-ai-connector-access-control'
 					),
@@ -5199,7 +5199,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$model_rates     = Cost_Receipt::sanitize_model_rates( $policy['est_usd_model_rates'] ?? array() );
 		$bundled_models  = Cost_Receipt::bundled_table()['models'];
 		echo '<p style="margin-top:12px;"><strong>' . esc_html__( 'Rates by model (optional)', 'handl-ai-connector-access-control' ) . '</strong></p>';
-		echo '<p class="description">' . esc_html__( 'Override a bundled model estimate. Leave blank to keep the bundled placeholder. Used by the cost receipt (Insights / Dashboard / digest). Estimate only, not billing.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Set both rates to override a model estimate. Leave both fields blank to use the bundled rates. Applies to monthly estimates in Insights, Dashboard, and the digest.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<table class="widefat striped" style="max-width:40em;"><thead><tr>';
 		echo '<th scope="col">' . esc_html__( 'Model', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th scope="col">' . esc_html__( 'Input $ per 1M tokens', 'handl-ai-connector-access-control' ) . '</th>';

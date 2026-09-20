@@ -384,7 +384,7 @@ final class Governance_Digest {
 		}
 
 		$lines[] = '';
-		$lines[] = __( 'Amounts are estimates from logged token usage and your rates. They are not a bill.', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'Based on saved Activity. Calls without token counts or rates are excluded.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = __( 'Turn off or change this digest:', 'handl-ai-connector-access-control' );
 		$lines[] = Admin::screen_url( 'activity' );
