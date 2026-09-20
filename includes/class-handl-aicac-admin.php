@@ -850,8 +850,8 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 				sprintf(
 					/* translators: %d: number of rules postponed */
 					_n(
-						'Reminded you about %d rule in 7 days. Allow and Deny were not changed.',
-						'Reminded you about %d rules in 7 days. Allow and Deny were not changed.',
+						'Review postponed for %d rule. Due again in 7 days. Allow and Deny were not changed.',
+						'Review postponed for %d rules. Due again in 7 days. Allow and Deny were not changed.',
 						$review_snoozed_n,
 						'handl-ai-connector-access-control'
 					),
