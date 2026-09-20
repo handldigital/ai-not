@@ -42,7 +42,7 @@ final class ResidencyTest extends TestCase {
 		$this->assertTrue( $openai['active'] );
 		$this->assertTrue( $openai['prevent'] );
 		$this->assertSame( Residency::REASON, $openai['reason'] );
-		$this->assertSame( 'EU-only', $openai['rule'] );
+		$this->assertSame( 'Listed for the European Union', $openai['rule'] );
 		$this->assertSame( array( 'us' ), $openai['regions'] );
 
 		$mistral = Residency::evaluate( 'Mistral' );
@@ -132,7 +132,7 @@ final class ResidencyTest extends TestCase {
 		$result = Residency::apply_to_event( $event );
 
 		$this->assertTrue( $result['prevent'] );
-		$this->assertSame( 'EU-only', $event['residency_rule'] );
+		$this->assertSame( 'Listed for the European Union', $event['residency_rule'] );
 		$this->assertSame( 'eu', $event['residency_region'] );
 		$this->assertSame( 'openai', $event['residency_provider'] );
 		$this->assertArrayNotHasKey( 'residency_unknown', $event );
@@ -146,7 +146,7 @@ final class ResidencyTest extends TestCase {
 		$this->assertFalse( $result['prevent'] );
 		$this->assertTrue( $result['unknown'] );
 		$this->assertTrue( $event['residency_unknown'] );
-		$this->assertSame( 'US-only', $event['residency_rule'] );
+		$this->assertSame( 'Listed for the United States', $event['residency_rule'] );
 	}
 
 	public function test_save_clears_option_when_back_to_defaults(): void {
@@ -161,11 +161,11 @@ final class ResidencyTest extends TestCase {
 		$summary = Alerts::summarize_event_public(
 			array(
 				'denial_reason'  => Residency::REASON,
-				'residency_rule' => 'EU-only',
+				'residency_rule' => 'Listed for the European Union',
 				'provider'       => 'openai',
 			)
 		);
-		$this->assertSame( 'residency (EU-only)', $summary['denial_reason'] );
+		$this->assertSame( 'residency (Listed for the European Union)', $summary['denial_reason'] );
 		$this->assertSame( 'openai', $summary['provider'] );
 	}
 

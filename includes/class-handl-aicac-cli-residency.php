@@ -27,7 +27,7 @@ final class CLI_Residency {
 	}
 
 	/**
-	 * Show the saved residency region, unknown-provider mode, and map overrides.
+	 * Show the saved provider region filter, unknown-provider mode, and map overrides.
 	 *
 	 * ## OPTIONS
 	 *
@@ -86,7 +86,7 @@ final class CLI_Residency {
 	 * : none (default), eu, or us.
 	 *
 	 * [--strict-unknown=<on|off>]
-	 * : Block unmapped providers (on) or allow and tag a warning (off).
+	 * : Block providers with no listed region (on) or allow and tag a warning (off).
 	 *
 	 * [--map=<text>]
 	 * : Override lines, `provider=region,region`. Empty region unmaps.
@@ -130,7 +130,7 @@ final class CLI_Residency {
 		$saved = Residency::save( $current );
 		\WP_CLI::success(
 			sprintf(
-				'Data residency: %s. Unknown providers: %s.',
+				'Provider region filter: %s. Unknown providers: %s.',
 				Residency::region_label( $saved['region'] ),
 				! empty( $saved['strict_unknown'] ) ? 'block' : 'allow and warn'
 			)

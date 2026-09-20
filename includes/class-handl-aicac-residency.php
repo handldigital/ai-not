@@ -1,14 +1,15 @@
 <?php
 /**
- * AICAC-RESIDENCY (#229): site-level data-residency guard.
+ * AICAC-RESIDENCY (#229): site-level provider region filter.
  *
- * Admin picks an approved region set (none / EU-only / US-only). A request
- * whose provider is not deliverable inside that set is denied with reason
- * `residency`. Unknown providers warn (allow + tag) unless fail-closed.
+ * Admin picks none / listed-for-EU / listed-for-US. A request whose provider
+ * is not listed for that selection is denied with reason `residency`.
+ * Unknown providers warn (allow + tag) unless fail-closed.
  *
- * Provider → region map is a static list of public API endpoint regions —
- * no live geolocation, no outbound calls. Site owners extend or correct it
- * with the `handl_aicac_residency_provider_map` filter or the settings map.
+ * Provider → region map is a saved list of public API endpoint regions —
+ * no live geolocation, no outbound calls, no processing/storage check.
+ * Site owners extend or correct it with the
+ * `handl_aicac_residency_provider_map` filter or the settings map.
  *
  * @package HandL_AICAC
  */
@@ -287,10 +288,10 @@ final class Residency {
 	public static function region_label( string $region ): string {
 		$region = self::sanitize_region( $region );
 		if ( self::REGION_EU === $region ) {
-			return __( 'EU-only', 'handl-ai-connector-access-control' );
+			return __( 'Listed for the European Union', 'handl-ai-connector-access-control' );
 		}
 		if ( self::REGION_US === $region ) {
-			return __( 'US-only', 'handl-ai-connector-access-control' );
+			return __( 'Listed for the United States', 'handl-ai-connector-access-control' );
 		}
 
 		return __( 'No restriction', 'handl-ai-connector-access-control' );
