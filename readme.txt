@@ -193,6 +193,7 @@ Yes. With WP-CLI available and this plugin active:
 == Changelog ==
 
 = Unreleased =
+* Optional per-plugin MCP gate: allow or deny MCP tool registration and calls (`wp handl-aicac mcp`). Missing Abilities/MCP APIs fail open. Default is inherit (allow).
 * Rules due for review: confirm all due plugins, postpone selected for 7 days, or select several at once. New-plugin notices include a Review all link, and Rules can filter to Pending review.
 
 = 1.7.0 =
