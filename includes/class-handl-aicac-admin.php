@@ -494,7 +494,7 @@ final class Admin {
 		if ( isset( $_REQUEST['handl_aicac_access'] ) ) {
 			$plugin_access_filter = sanitize_text_field( wp_unslash( (string) $_REQUEST['handl_aicac_access'] ) );
 		}
-		if ( 'effective-allow' !== $plugin_access_filter && 'effective-deny' !== $plugin_access_filter && 'default-only' !== $plugin_access_filter ) {
+		if ( 'effective-allow' !== $plugin_access_filter && 'effective-deny' !== $plugin_access_filter && 'default-only' !== $plugin_access_filter && 'pending-review' !== $plugin_access_filter ) {
 			$plugin_access_filter = 'all';
 		}
 
@@ -670,6 +670,10 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_confirm_review_due', 'handl_aicac_nonce' );
 				$this->handle_confirm_review_due();
 			}
+			if ( 'snooze_review_due' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_snooze_review_due', 'handl_aicac_nonce' );
+				$this->handle_snooze_review_due();
+			}
 			if ( 'save_review_due_window' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_save_review_due_window', 'handl_aicac_nonce' );
 				$this->handle_save_review_due_window();
@@ -740,7 +744,8 @@ final class Admin {
 		$show_compare_preview = isset( $_GET['handl_aicac_compare_preview'] ) && '1' === (string) $_GET['handl_aicac_compare_preview'];
 		$compare_err = isset( $_GET['handl_aicac_compare_error'] ) ? sanitize_key( wp_unslash( (string) $_GET['handl_aicac_compare_error'] ) ) : '';
 		$renewed_ok = isset( $_GET['handl_aicac_renewed'] ) && '1' === (string) $_GET['handl_aicac_renewed'];
-		$review_confirmed_ok = isset( $_GET['handl_aicac_review_confirmed'] ) && '1' === (string) $_GET['handl_aicac_review_confirmed'];
+		$review_confirmed_n = isset( $_GET['handl_aicac_review_confirmed'] ) ? max( 0, (int) $_GET['handl_aicac_review_confirmed'] ) : 0;
+		$review_snoozed_n   = isset( $_GET['handl_aicac_review_snoozed'] ) ? max( 0, (int) $_GET['handl_aicac_review_snoozed'] ) : 0;
 		$review_window_ok    = isset( $_GET['handl_aicac_review_window'] ) && '1' === (string) $_GET['handl_aicac_review_window'];
 		$snoozed_ok = isset( $_GET['handl_aicac_snoozed'] ) && '1' === (string) $_GET['handl_aicac_snoozed'];
 		$snooze_cancelled_ok = isset( $_GET['handl_aicac_snooze_cancelled'] ) && '1' === (string) $_GET['handl_aicac_snooze_cancelled'];
@@ -823,8 +828,37 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		if ( $renewed_ok ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Temporary allow renewed for 7 more days.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
-		if ( $review_confirmed_ok ) {
-			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Review date updated. Allow and Deny were not changed.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		if ( $review_confirmed_n > 0 ) {
+			echo '<div class="notice notice-success is-dismissible"><p>';
+			echo esc_html(
+				sprintf(
+					/* translators: %d: number of rules confirmed */
+					_n(
+						'Marked %d rule as still correct. Allow and Deny were not changed.',
+						'Marked %d rules as still correct. Allow and Deny were not changed.',
+						$review_confirmed_n,
+						'handl-ai-connector-access-control'
+					),
+					$review_confirmed_n
+				)
+			);
+			echo '</p></div>';
+		}
+		if ( $review_snoozed_n > 0 ) {
+			echo '<div class="notice notice-success is-dismissible"><p>';
+			echo esc_html(
+				sprintf(
+					/* translators: %d: number of rules postponed */
+					_n(
+						'Review postponed for %d rule. Due again in 7 days. Allow and Deny were not changed.',
+						'Review postponed for %d rules. Due again in 7 days. Allow and Deny were not changed.',
+						$review_snoozed_n,
+						'handl-ai-connector-access-control'
+					),
+					$review_snoozed_n
+				)
+			);
+			echo '</p></div>';
 		}
 		if ( $review_window_ok ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Review window saved.', 'handl-ai-connector-access-control' ) . '</p></div>';
@@ -1193,6 +1227,11 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		echo '<form method="post" id="handl-aicac-review-confirm" class="handl-aicac-rules-save-form">';
 		wp_nonce_field( 'handl_aicac_confirm_review_due', 'handl_aicac_nonce' );
 		echo '<input type="hidden" name="handl_aicac_action" value="confirm_review_due" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
+		echo '</form>';
+		echo '<form method="post" id="handl-aicac-review-snooze" class="handl-aicac-rules-save-form">';
+		wp_nonce_field( 'handl_aicac_snooze_review_due', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="snooze_review_due" />';
 		echo '<input type="hidden" name="handl_aicac_tab" value="rules" />';
 		echo '</form>';
 		echo '<form method="post" id="handl-aicac-review-window" class="handl-aicac-rules-save-form">';
@@ -1835,8 +1874,10 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	/**
 	 * Whether a plugin row is shown on the current Rules filter.
 	 * Count and render must use the same predicate so the expected-row sentinel matches.
+	 *
+	 * @param array<string,mixed> $policy
 	 */
-	private function plugin_rule_row_is_visible( string $rule, bool $enabled, string $status_filter, string $access_filter, string $default ): bool {
+	private function plugin_rule_row_is_visible( string $rule, bool $enabled, string $status_filter, string $access_filter, string $default, array $policy = array(), string $basename = '' ): bool {
 		if ( 'active' === $status_filter && ! $enabled ) {
 			return false;
 		}
@@ -1847,6 +1888,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$explicit  = ( 'allow' === $rule || 'deny' === $rule ) ? $rule : '';
 		$effective = '' !== $explicit ? $explicit : ( 'deny' === $default ? 'deny' : 'allow' );
 
+		if ( 'pending-review' === $access_filter ) {
+			return class_exists( New_Plugin::class ) && New_Plugin::is_pending( $policy, $basename );
+		}
 		if ( 'default-only' === $access_filter && '' !== $explicit ) {
 			return false;
 		}
@@ -1934,7 +1978,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		foreach ( $plugins as $basename => $data ) {
 			$rule    = $policy['plugins'][ $basename ] ?? '';
 			$enabled = isset( $active[ $basename ] );
-			if ( ! $this->plugin_rule_row_is_visible( (string) $rule, $enabled, $status_filter, $access_filter, $default_rule ) ) {
+			if ( ! $this->plugin_rule_row_is_visible( (string) $rule, $enabled, $status_filter, $access_filter, $default_rule, $policy, (string) $basename ) ) {
 				continue;
 			}
 			$name = isset( $data['Name'] ) ? (string) $data['Name'] : (string) $basename;
@@ -2060,6 +2104,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			'effective-allow' => __( 'Explicit Allow', 'handl-ai-connector-access-control' ),
 			'effective-deny'  => __( 'Explicit Deny', 'handl-ai-connector-access-control' ),
 			'default-only'    => __( 'Uses default', 'handl-ai-connector-access-control' ),
+			'pending-review'  => __( 'Pending review', 'handl-ai-connector-access-control' ),
 		);
 		echo '<div class="tablenav top">';
 		echo '<div class="alignleft actions">';
@@ -5440,14 +5485,62 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	private function handle_confirm_review_due(): void {
 		$this->require_admin_mutation( 'handl_aicac_confirm_review_due' );
 
-		$single = isset( $_POST['handl_aicac_confirm_plugin'] )
-			? Plugin_Profile::sanitize_plugin( wp_unslash( (string) $_POST['handl_aicac_confirm_plugin'] ) )
-			: '';
+		$stored = get_option( Plugin::OPTION_KEY );
+		if ( ! is_array( $stored ) ) {
+			$stored = array();
+		}
+
+		$names = array();
+		if ( isset( $_POST['handl_aicac_confirm_all_due'] ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+			$installed = function_exists( 'get_plugins' ) ? get_plugins() : array();
+			$names     = Review_Due::due_basenames( $stored, is_array( $installed ) ? $installed : array() );
+		} else {
+			$single = isset( $_POST['handl_aicac_confirm_plugin'] )
+				? Plugin_Profile::sanitize_plugin( wp_unslash( (string) $_POST['handl_aicac_confirm_plugin'] ) )
+				: '';
+			$posted = filter_input( INPUT_POST, 'handl_aicac_review_plugins', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+			if ( '' !== $single ) {
+				$names[] = $single;
+			} elseif ( is_array( $posted ) ) {
+				foreach ( $posted as $basename ) {
+					$clean = Plugin_Profile::sanitize_plugin( (string) $basename );
+					if ( '' !== $clean ) {
+						$names[] = $clean;
+					}
+				}
+			}
+		}
+		if ( empty( $names ) ) {
+			return;
+		}
+
+		$n = Review_Due::confirm( $stored, $names );
+		if ( $n < 1 ) {
+			return;
+		}
+
+		wp_safe_redirect(
+			self::redirect_url(
+				array(
+					'page'                         => 'handl-ai-connector-access-control',
+					'handl_aicac_tab'              => 'rules',
+					'handl_aicac_review_confirmed' => (string) $n,
+				)
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * AICAC-REVIEW-QUEUE: postpone selected due rules. Does not change allow/deny.
+	 */
+	private function handle_snooze_review_due(): void {
+		$this->require_admin_mutation( 'handl_aicac_snooze_review_due' );
+
 		$posted = filter_input( INPUT_POST, 'handl_aicac_review_plugins', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
 		$names  = array();
-		if ( '' !== $single ) {
-			$names[] = $single;
-		} elseif ( is_array( $posted ) ) {
+		if ( is_array( $posted ) ) {
 			foreach ( $posted as $basename ) {
 				$clean = Plugin_Profile::sanitize_plugin( (string) $basename );
 				if ( '' !== $clean ) {
@@ -5463,14 +5556,17 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		if ( ! is_array( $stored ) ) {
 			$stored = array();
 		}
-		Review_Due::confirm( $stored, $names );
+		$n = Review_Due::snooze( $stored, $names, Review_Due::SNOOZE_DAYS );
+		if ( $n < 1 ) {
+			return;
+		}
 
 		wp_safe_redirect(
 			self::redirect_url(
 				array(
-					'page'                         => 'handl-ai-connector-access-control',
-					'handl_aicac_tab'              => 'rules',
-					'handl_aicac_review_confirmed' => '1',
+					'page'                       => 'handl-ai-connector-access-control',
+					'handl_aicac_tab'            => 'rules',
+					'handl_aicac_review_snoozed' => (string) $n,
 				)
 			)
 		);
@@ -7266,7 +7362,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '<li><a href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a>';
 			echo ' <span class="description">(' . esc_html( $basename ) . ')</span></li>';
 		}
-		echo '</ul></div>';
+		echo '</ul>';
+		echo '<p style="margin:8px 0 0;"><a href="' . esc_url( New_Plugin::review_all_url() ) . '">' . esc_html__( 'Review all', 'handl-ai-connector-access-control' ) . '</a></p>';
+		echo '</div>';
 	}
 
 	/**
@@ -7340,7 +7438,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		echo '<table class="widefat striped" style="margin:0 0 10px;">';
 		echo '<thead><tr>';
-		echo '<td class="check-column"><span class="screen-reader-text">' . esc_html__( 'Select', 'handl-ai-connector-access-control' ) . '</span></td>';
+		echo '<td class="check-column"><label class="screen-reader-text" for="handl-aicac-review-select-all">' . esc_html__( 'Select all', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<input id="handl-aicac-review-select-all" type="checkbox" /></td>';
 		echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Access', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Last reviewed', 'handl-ai-connector-access-control' ) . '</th>';
@@ -7361,7 +7460,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				: __( 'Due', 'handl-ai-connector-access-control' );
 
 			echo '<tr>';
-			echo '<th class="check-column"><input type="checkbox" name="handl_aicac_review_plugins[]" value="' . esc_attr( $basename ) . '" form="handl-aicac-review-confirm" /></th>';
+			echo '<th class="check-column"><input type="checkbox" class="handl-aicac-review-cb" name="handl_aicac_review_plugins[]" value="' . esc_attr( $basename ) . '" form="handl-aicac-review-confirm" /></th>';
 			echo '<td>' . esc_html( $label ) . '<br /><code>' . esc_html( $basename ) . '</code></td>';
 			echo '<td>' . esc_html( $rule_lbl ) . '</td>';
 			echo '<td>' . esc_html( $when ) . '</td>';
@@ -7370,7 +7469,20 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '</tr>';
 		}
 		echo '</tbody></table>';
-		echo '<p style="margin:0;"><button type="submit" class="button" form="handl-aicac-review-confirm">' . esc_html__( 'Confirm selected', 'handl-ai-connector-access-control' ) . '</button></p>';
+		echo '<p style="margin:0;">';
+		echo '<button type="submit" class="button" form="handl-aicac-review-confirm">' . esc_html__( 'Confirm selected', 'handl-ai-connector-access-control' ) . '</button> ';
+		echo '<button type="submit" class="button" name="handl_aicac_confirm_all_due" value="1" form="handl-aicac-review-confirm">' . esc_html__( 'Confirm all due', 'handl-ai-connector-access-control' ) . '</button> ';
+		echo '<button type="submit" class="button" form="handl-aicac-review-snooze">' . esc_html__( 'Remind me in 7 days', 'handl-ai-connector-access-control' ) . '</button>';
+		echo '</p>';
+		echo '<script>';
+		echo '(function(){var all=document.getElementById("handl-aicac-review-select-all");if(!all)return;';
+		echo 'all.addEventListener("change",function(){document.querySelectorAll("input.handl-aicac-review-cb").forEach(function(cb){cb.checked=all.checked;});});';
+		echo '})();';
+		echo '(function(){var snooze=document.getElementById("handl-aicac-review-snooze");if(!snooze)return;';
+		echo 'snooze.addEventListener("submit",function(){snooze.querySelectorAll(\'input[name="handl_aicac_review_plugins[]"]\').forEach(function(n){n.remove();});';
+		echo 'document.querySelectorAll("input.handl-aicac-review-cb:checked").forEach(function(cb){var h=document.createElement("input");h.type="hidden";h.name="handl_aicac_review_plugins[]";h.value=cb.value;snooze.appendChild(h);});});';
+		echo '})();';
+		echo '</script>';
 		echo '</div>';
 	}
 
@@ -7628,6 +7740,23 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<td class="column-time">' . esc_html( $ts ? wp_date( 'Y-m-d H:i:s', $ts ) : '—' ) . '</td>';
 		echo '<td>';
 		echo $this->render_decision_badge( $decision ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		$storm_count = Retry_Storm::storm_count_from_row( $row );
+		if ( $storm_count > 0 ) {
+			echo ' <span class="handl-aicac-badge handl-aicac-badge--storm">';
+			echo esc_html(
+				sprintf(
+					/* translators: %d: collapsed retry-storm deny count stored on this Activity row */
+					_n(
+						'%d blocked attempt',
+						'%d blocked attempts',
+						$storm_count,
+						'handl-ai-connector-access-control'
+					),
+					$storm_count
+				)
+			);
+			echo '</span>';
+		}
 		if ( $is_direct_http ) {
 			echo '<br /><span class="description handl-aicac-shadow-label" style="font-size:11px;">';
 			if ( 'deny' === $decision ) {

@@ -194,6 +194,7 @@ Yes. With WP-CLI available and this plugin active:
 
 = Unreleased =
 * Optional per-plugin MCP gate: allow or deny MCP tool registration and calls (`wp handl-aicac mcp`). Missing Abilities/MCP APIs fail open. Default is inherit (allow).
+* Rules due for review: confirm all due plugins, postpone selected for 7 days, or select several at once. New-plugin notices include a Review all link, and Rules can filter to Pending review.
 * Insights cost receipt: estimated AI spend per plugin for this month and last month from the bundled price table (or your rate overrides), plus a Dashboard tile and weekly digest line. Unknown rates show n/a — estimates only, not a bill.
 
 = 1.7.0 =
