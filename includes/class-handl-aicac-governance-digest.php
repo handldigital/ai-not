@@ -215,6 +215,8 @@ final class Governance_Digest {
 
 		$has_activity = $client_calls > 0 || $shadow_n > 0 || $anomaly_n > 0 || $deny_n > 0;
 
+		$receipt = Cost_Receipt::compute( $log, $policy, $plugins, $now );
+
 		return array(
 			'week_id'          => self::week_id( $now ),
 			'window'           => self::WINDOW,
@@ -227,6 +229,9 @@ final class Governance_Digest {
 			'estimated_spend'  => $est_this,
 			'estimated_spend_prev' => $est_prev,
 			'top_plugins'      => $top,
+			'receipt_month_usd'     => (float) ( $receipt['totals']['current'] ?? 0 ),
+			'receipt_month_plugins' => (int) ( $receipt['totals']['current_plugins'] ?? 0 ),
+			'receipt_top'           => $receipt['top_current'] ?? null,
 			'has_activity'     => $has_activity,
 			'status'           => (string) ( $current['status'] ?? 'ok' ),
 		);
@@ -329,6 +334,27 @@ final class Governance_Digest {
 				$lines[] = __( 'Estimated spend: none yet (token counts required).', 'handl-ai-connector-access-control' );
 			}
 
+			// AICAC-COST-RECEIPT (#263): calendar-month receipt line (bundled table).
+			$r_total = isset( $stats['receipt_month_usd'] ) ? (float) $stats['receipt_month_usd'] : 0.0;
+			$r_n     = (int) ( $stats['receipt_month_plugins'] ?? 0 );
+			$r_top   = $stats['receipt_top'] ?? null;
+			if ( $r_n > 0 || $r_total > 0 ) {
+				$lines[] = sprintf(
+					/* translators: 1: estimated USD this calendar month, 2: plugin count */
+					__( 'Estimated AI spend this calendar month: ~$%1$s across %2$s plugins (receipt; estimate only).', 'handl-ai-connector-access-control' ),
+					self::format_amount( $r_total ),
+					number_format_i18n( max( 1, $r_n ) )
+				);
+				if ( is_array( $r_top ) && isset( $r_top['label'], $r_top['usd'] ) ) {
+					$lines[] = sprintf(
+						/* translators: 1: plugin name, 2: estimated USD */
+						__( 'Top spender this month: %1$s (~$%2$s est.).', 'handl-ai-connector-access-control' ),
+						(string) $r_top['label'],
+						self::format_amount( (float) $r_top['usd'] )
+					);
+				}
+			}
+
 			$top = isset( $stats['top_plugins'] ) && is_array( $stats['top_plugins'] ) ? $stats['top_plugins'] : array();
 			if ( ! empty( $top ) ) {
 				$lines[] = '';
@@ -358,7 +384,7 @@ final class Governance_Digest {
 		}
 
 		$lines[] = '';
-		$lines[] = __( 'Amounts are estimates from logged token usage and your rates. They are not a bill.', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'Based on saved Activity. Calls without token counts or rates are excluded.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = __( 'Turn off or change this digest:', 'handl-ai-connector-access-control' );
 		$lines[] = Admin::screen_url( 'activity' );

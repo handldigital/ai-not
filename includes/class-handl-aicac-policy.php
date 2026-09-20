@@ -1150,6 +1150,7 @@ final class Policy {
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate( $policy['est_usd_input_per_m'] ?? Cost::DEFAULT_INPUT_PER_M, Cost::DEFAULT_INPUT_PER_M );
 		$policy['est_usd_output_per_m'] = Cost::sanitize_rate( $policy['est_usd_output_per_m'] ?? Cost::DEFAULT_OUTPUT_PER_M, Cost::DEFAULT_OUTPUT_PER_M );
 		$policy['est_usd_provider_rates'] = Cost::sanitize_provider_rates( $policy['est_usd_provider_rates'] ?? array() );
+		$policy['est_usd_model_rates']    = Cost_Receipt::sanitize_model_rates( $policy['est_usd_model_rates'] ?? array() );
 		$policy['spend_threshold_site']    = Spend_Threshold::sanitize_threshold( $policy['spend_threshold_site'] ?? null );
 		$policy['spend_threshold_plugins'] = Spend_Threshold::sanitize_plugin_thresholds( $policy['spend_threshold_plugins'] ?? array() );
 		$policy['plugin_budgets']          = Budget::sanitize_plugin_budgets( $policy['plugin_budgets'] ?? array() );
@@ -1483,6 +1484,7 @@ final class Policy {
 		$policy['est_usd_input_per_m']  = Cost::sanitize_rate( $policy['est_usd_input_per_m'] ?? Cost::DEFAULT_INPUT_PER_M, Cost::DEFAULT_INPUT_PER_M );
 		$policy['est_usd_output_per_m'] = Cost::sanitize_rate( $policy['est_usd_output_per_m'] ?? Cost::DEFAULT_OUTPUT_PER_M, Cost::DEFAULT_OUTPUT_PER_M );
 		$policy['est_usd_provider_rates'] = Cost::sanitize_provider_rates( $policy['est_usd_provider_rates'] ?? array() );
+		$policy['est_usd_model_rates']    = Cost_Receipt::sanitize_model_rates( $policy['est_usd_model_rates'] ?? array() );
 		$policy['spend_threshold_site']    = Spend_Threshold::sanitize_threshold( $policy['spend_threshold_site'] ?? null );
 		$policy['spend_threshold_plugins'] = Spend_Threshold::sanitize_plugin_thresholds( $policy['spend_threshold_plugins'] ?? array() );
 		$policy['plugin_budgets']          = Budget::sanitize_plugin_budgets( $policy['plugin_budgets'] ?? array() );
