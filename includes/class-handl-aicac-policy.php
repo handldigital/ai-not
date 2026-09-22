@@ -209,6 +209,19 @@ final class Policy {
 			}
 		}
 
+		// AICAC-RATE-CAP (#275): per-plugin call ceilings — after residency, before PII.
+		if ( ! $prevent ) {
+			$rc = Rate_Cap::apply_to_event( $event, $policy );
+			if ( ! empty( $rc['prevent'] ) ) {
+				$event['would_decision'] = 'deny';
+				$event['denial_reason']  = Rate_Cap::REASON;
+				if ( empty( $policy['audit_only'] ) ) {
+					$prevent           = true;
+					$event['decision'] = 'deny';
+				}
+			}
+		}
+
 		// AICAC-PII-WARN (#230): opt-in payload screen — off by default (zero work).
 		// Only after an allow from rules; deny-mode PII can escalate allow → block.
 		// Redacts prompt_preview before log so the control never stores matched text.
@@ -1168,6 +1181,8 @@ final class Policy {
 		$policy['spend_threshold_plugins'] = Spend_Threshold::sanitize_plugin_thresholds( $policy['spend_threshold_plugins'] ?? array() );
 		$policy['plugin_budgets']          = Budget::sanitize_plugin_budgets( $policy['plugin_budgets'] ?? array() );
 		$policy['plugin_budget_modes']     = Budget::sanitize_plugin_budget_modes( $policy['plugin_budget_modes'] ?? array() );
+		$policy['plugin_rate_caps_hour']   = Rate_Cap::sanitize_plugin_caps( $policy['plugin_rate_caps_hour'] ?? array() );
+		$policy['plugin_rate_caps_day']    = Rate_Cap::sanitize_plugin_caps( $policy['plugin_rate_caps_day'] ?? array() );
 		$policy['anomaly_alert_enabled'] = (bool) ( $policy['anomaly_alert_enabled'] ?? false );
 		$policy['anomaly_multiplier']    = Anomaly::sanitize_multiplier( $policy['anomaly_multiplier'] ?? Anomaly::DEFAULT_MULTIPLIER );
 		$policy['anomaly_floor_calls']   = Anomaly::sanitize_floor_calls( $policy['anomaly_floor_calls'] ?? Anomaly::DEFAULT_FLOOR_CALLS );
@@ -1502,6 +1517,8 @@ final class Policy {
 		$policy['spend_threshold_plugins'] = Spend_Threshold::sanitize_plugin_thresholds( $policy['spend_threshold_plugins'] ?? array() );
 		$policy['plugin_budgets']          = Budget::sanitize_plugin_budgets( $policy['plugin_budgets'] ?? array() );
 		$policy['plugin_budget_modes']     = Budget::sanitize_plugin_budget_modes( $policy['plugin_budget_modes'] ?? array() );
+		$policy['plugin_rate_caps_hour']   = Rate_Cap::sanitize_plugin_caps( $policy['plugin_rate_caps_hour'] ?? array() );
+		$policy['plugin_rate_caps_day']    = Rate_Cap::sanitize_plugin_caps( $policy['plugin_rate_caps_day'] ?? array() );
 		$policy['anomaly_alert_enabled'] = ! empty( $policy['anomaly_alert_enabled'] );
 		$policy['anomaly_multiplier']    = Anomaly::sanitize_multiplier( $policy['anomaly_multiplier'] ?? Anomaly::DEFAULT_MULTIPLIER );
 		$policy['anomaly_floor_calls']   = Anomaly::sanitize_floor_calls( $policy['anomaly_floor_calls'] ?? Anomaly::DEFAULT_FLOOR_CALLS );

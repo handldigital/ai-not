@@ -1325,7 +1325,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		}
 
 		echo '<h2>' . esc_html__( 'Plugin rules', 'handl-ai-connector-access-control' ) . '</h2>';
-echo '<p class="description">' . esc_html__( 'Plugin rules set the main access level. AI type columns can refine an allowed plugin, such as allowing text but blocking images. A plugin-level Deny blocks every AI type. An estimated budget is a monthly ceiling based on your saved rate table. It is an estimate, not a bill. Leave the amount blank for no ceiling. Model routing is experimental, uses best-effort plugin detection, and does not guarantee spend. Leave both route fields blank to disable it.', 'handl-ai-connector-access-control' ) . '</p>';
+echo '<p class="description">' . esc_html__( 'Plugin rules set the main access level. AI type columns can refine an allowed plugin, such as allowing text but blocking images. A plugin-level Deny blocks every AI type. An estimated budget is a monthly ceiling based on your saved rate table. It is an estimate, not a bill. Leave the amount blank for no ceiling. Call caps limit raw AI Client calls per hour and per day (site timezone). Leave blank for unlimited; a warning fires at 80% and new calls are blocked at 100%. Model routing is experimental, uses best-effort plugin detection, and does not guarantee spend. Leave both route fields blank to disable it.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<p class="description handl-aicac-beyond-ca-rules">' . esc_html( Differentiator_Messaging::rules_note() ) . '</p>';
 		if ( $unforced_n > 0 && ! empty( $force_map ) ) {
 			echo '<div class="notice notice-warning inline"><p>';
@@ -1389,6 +1389,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<th scope="col" class="handl-aicac-col-force">' . esc_html__( 'Provider route (experimental)', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th scope="col" class="handl-aicac-col-force">' . esc_html__( 'Model route (experimental)', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th scope="col" class="handl-aicac-col-budget">' . esc_html__( 'Estimated budget', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="handl-aicac-col-rate-cap">' . esc_html__( 'Call caps', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th scope="col">' . esc_html__( 'Plugin file', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead>';
 		echo '<tbody>';
@@ -1396,6 +1397,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$operations = is_array( $policy['operations'] ?? null ) ? (array) $policy['operations'] : array();
 		$plugin_budgets = Budget::sanitize_plugin_budgets( $policy['plugin_budgets'] ?? array() );
 		$plugin_budget_modes = Budget::sanitize_plugin_budget_modes( $policy['plugin_budget_modes'] ?? array() );
+		$plugin_rate_caps_hour = Rate_Cap::sanitize_plugin_caps( $policy['plugin_rate_caps_hour'] ?? array() );
+		$plugin_rate_caps_day  = Rate_Cap::sanitize_plugin_caps( $policy['plugin_rate_caps_day'] ?? array() );
 
 		if ( 0 === $rules_expected ) {
 			echo '<tr><td colspan="12">';
@@ -1573,6 +1576,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '</td>';
 			echo '<td class="handl-aicac-col-budget">';
 			$this->render_plugin_budget_cell( (string) $basename, $name, $policy, $plugin_budgets, $plugin_budget_modes, $rules_form_id );
+			echo '</td>';
+			echo '<td class="handl-aicac-col-rate-cap">';
+			$this->render_plugin_rate_cap_cell( (string) $basename, $name, $plugin_rate_caps_hour, $plugin_rate_caps_day, $rules_form_id );
 			echo '</td>';
 			echo '<td><code>' . esc_html( $basename ) . '</code></td>';
 			echo '</tr>';
@@ -2692,6 +2698,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$eff     = $profile['effective'];
 		$usage   = $profile['usage'];
 		$inc     = $profile['incidents'];
+		$rate    = isset( $profile['rate_cap'] ) && is_array( $profile['rate_cap'] ) ? $profile['rate_cap'] : array();
 
 		echo '<h2>' . esc_html( (string) $profile['label'] ) . '</h2>';
 		echo '<p class="description"><code>' . esc_html( $plugin ) . '</code>';
@@ -2793,6 +2800,34 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				)
 			);
 			echo '</p>';
+			if ( ! empty( $rate ) && ( null !== ( $rate['hour_limit'] ?? null ) || null !== ( $rate['day_limit'] ?? null ) ) ) {
+				echo '<p>';
+				echo esc_html__( 'Call caps:', 'handl-ai-connector-access-control' ) . ' ';
+				$hour_l = $rate['hour_limit'] ?? null;
+				$day_l  = $rate['day_limit'] ?? null;
+				echo esc_html(
+					sprintf(
+						/* translators: 1: hour count, 2: hour limit or unlimited, 3: day count, 4: day limit or unlimited */
+						__( 'This hour %1$s / %2$s · Today %3$s / %4$s', 'handl-ai-connector-access-control' ),
+						number_format_i18n( (int) ( $rate['hour_count'] ?? 0 ) ),
+						null === $hour_l ? __( 'unlimited', 'handl-ai-connector-access-control' ) : number_format_i18n( (int) $hour_l ),
+						number_format_i18n( (int) ( $rate['day_count'] ?? 0 ) ),
+						null === $day_l ? __( 'unlimited', 'handl-ai-connector-access-control' ) : number_format_i18n( (int) $day_l )
+					)
+				);
+				if ( ! empty( $rate['warn_count'] ) || ! empty( $rate['capped_count'] ) ) {
+					echo ' · ';
+					echo esc_html(
+						sprintf(
+							/* translators: 1: soft-warn count, 2: hard-cap denial count */
+							__( 'Warnings: %1$s · Cap blocks: %2$s', 'handl-ai-connector-access-control' ),
+							number_format_i18n( (int) ( $rate['warn_count'] ?? 0 ) ),
+							number_format_i18n( (int) ( $rate['capped_count'] ?? 0 ) )
+						)
+					);
+				}
+				echo '</p>';
+			}
 			if ( ! empty( $usage['by_day'] ) ) {
 				echo '<h4>' . esc_html__( 'By day', 'handl-ai-connector-access-control' ) . '</h4>';
 				echo '<table class="widefat striped" style="max-width:36em;"><thead><tr>';
@@ -3079,6 +3114,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$this->render_drift_dashboard_line( $plugins );
 		// AICAC-BUDGET-C: over estimated-budget banner.
 		$this->render_budget_dashboard_banner( $policy, $plugins );
+		$this->render_rate_cap_dashboard_banner( $policy );
 
 		// AICAC-11: name differentiators vs WordPress AI Connector Approvals (Dashboard-primary).
 		$this->render_beyond_connector_approvals_callout();
@@ -5839,6 +5875,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$this->apply_new_plugin_settings_from_post( $policy, $merge_missing );
 		$this->apply_model_force_settings_from_post( $policy, $merge_missing );
 		$this->apply_plugin_budget_settings_from_post( $policy, $base );
+		$this->apply_plugin_rate_cap_settings_from_post( $policy, $base );
 
 		// AICAC-NEWPLUGIN: explicit Allow/Deny on save completes review.
 		$policy = New_Plugin::clear_reviewed_from_plugins_map( $policy );
@@ -7290,6 +7327,161 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	}
 
 	/**
+	 * AICAC-RATE-CAP (#275): hour/day call-cap inputs for one rules-matrix row.
+	 *
+	 * @param array<string,int> $hour_caps
+	 * @param array<string,int> $day_caps
+	 */
+	private function render_plugin_rate_cap_cell(
+		string $basename,
+		string $name,
+		array $hour_caps,
+		array $day_caps,
+		string $rules_form_id
+	): void {
+		$hour = isset( $hour_caps[ $basename ] ) ? (string) $hour_caps[ $basename ] : '';
+		$day  = isset( $day_caps[ $basename ] ) ? (string) $day_caps[ $basename ] : '';
+		$hash = md5( $basename );
+
+		echo '<label class="screen-reader-text" for="handl-aicac-rate-hour-' . esc_attr( $hash ) . '">';
+		echo esc_html(
+			sprintf(
+				/* translators: %s: plugin name */
+				__( 'Calls per hour cap for %s', 'handl-ai-connector-access-control' ),
+				$name
+			)
+		);
+		echo '</label>';
+		echo '<input type="number" step="1" min="0" max="1000000" class="small-text" id="handl-aicac-rate-hour-' . esc_attr( $hash ) . '" name="handl_aicac_plugin_rate_caps_hour[' . esc_attr( $basename ) . ']" form="' . esc_attr( $rules_form_id ) . '" value="' . esc_attr( $hour ) . '" placeholder="' . esc_attr__( 'Hour', 'handl-ai-connector-access-control' ) . '" />';
+		echo ' ';
+		echo '<label class="screen-reader-text" for="handl-aicac-rate-day-' . esc_attr( $hash ) . '">';
+		echo esc_html(
+			sprintf(
+				/* translators: %s: plugin name */
+				__( 'Calls per day cap for %s', 'handl-ai-connector-access-control' ),
+				$name
+			)
+		);
+		echo '</label>';
+		echo '<input type="number" step="1" min="0" max="1000000" class="small-text" id="handl-aicac-rate-day-' . esc_attr( $hash ) . '" name="handl_aicac_plugin_rate_caps_day[' . esc_attr( $basename ) . ']" form="' . esc_attr( $rules_form_id ) . '" value="' . esc_attr( $day ) . '" placeholder="' . esc_attr__( 'Day', 'handl-ai-connector-access-control' ) . '" />';
+		echo '<p class="description" style="margin:4px 0 0;">' . esc_html__( 'Blank = unlimited. Warns at 80%; blocks at 100%.', 'handl-ai-connector-access-control' ) . '</p>';
+	}
+
+	/**
+	 * AICAC-RATE-CAP (#275): merge posted hour/day caps into policy (keep unposted plugins).
+	 *
+	 * @param array<string,mixed> $policy
+	 * @param array<string,mixed> $base
+	 */
+	private function apply_plugin_rate_cap_settings_from_post( array &$policy, array $base ): void {
+		$hours = Rate_Cap::sanitize_plugin_caps( $base['plugin_rate_caps_hour'] ?? array() );
+		$days  = Rate_Cap::sanitize_plugin_caps( $base['plugin_rate_caps_day'] ?? array() );
+
+		$posted_hours = filter_input( INPUT_POST, 'handl_aicac_plugin_rate_caps_hour', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		$posted_days  = filter_input( INPUT_POST, 'handl_aicac_plugin_rate_caps_day', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
+		if ( ! is_array( $posted_hours ) ) {
+			$posted_hours = array();
+		}
+		if ( ! is_array( $posted_days ) ) {
+			$posted_days = array();
+		}
+
+		foreach ( $posted_hours as $basename => $raw ) {
+			$basename = Plugin_Profile::sanitize_plugin( (string) $basename );
+			if ( '' === $basename ) {
+				continue;
+			}
+			$cap = Rate_Cap::sanitize_cap( $raw );
+			if ( null === $cap ) {
+				unset( $hours[ $basename ] );
+			} else {
+				$hours[ $basename ] = $cap;
+			}
+		}
+		foreach ( $posted_days as $basename => $raw ) {
+			$basename = Plugin_Profile::sanitize_plugin( (string) $basename );
+			if ( '' === $basename ) {
+				continue;
+			}
+			$cap = Rate_Cap::sanitize_cap( $raw );
+			if ( null === $cap ) {
+				unset( $days[ $basename ] );
+			} else {
+				$days[ $basename ] = $cap;
+			}
+		}
+
+		if ( array() !== $hours || array_key_exists( 'plugin_rate_caps_hour', $base ) ) {
+			$policy['plugin_rate_caps_hour'] = $hours;
+		} else {
+			unset( $policy['plugin_rate_caps_hour'] );
+		}
+		if ( array() !== $days || array_key_exists( 'plugin_rate_caps_day', $base ) ) {
+			$policy['plugin_rate_caps_day'] = $days;
+		} else {
+			unset( $policy['plugin_rate_caps_day'] );
+		}
+	}
+
+	/**
+	 * AICAC-RATE-CAP (#275): dashboard notice when plugins are near or over call caps.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function render_rate_cap_dashboard_banner( array $policy ): void {
+		$list = Rate_Cap::active_pressure_list( $policy );
+		if ( empty( $list ) ) {
+			return;
+		}
+
+		$capped = 0;
+		$warn   = 0;
+		foreach ( $list as $row ) {
+			if ( 'capped' === ( $row['state'] ?? '' ) ) {
+				++$capped;
+			} else {
+				++$warn;
+			}
+		}
+
+		echo '<div class="notice notice-warning inline handl-aicac-rate-cap-banner" style="margin:12px 0;padding:8px 12px;">';
+		if ( $capped > 0 ) {
+			echo '<p style="margin:0 0 6px;"><strong>';
+			echo esc_html(
+				sprintf(
+					/* translators: %d: number of plugins */
+					_n(
+						'Call cap reached for %d plugin — new AI Client calls are blocked until the window resets.',
+						'Call cap reached for %d plugins — new AI Client calls are blocked until the window resets.',
+						$capped,
+						'handl-ai-connector-access-control'
+					),
+					$capped
+				)
+			);
+			echo '</strong></p>';
+		} elseif ( $warn > 0 ) {
+			echo '<p style="margin:0 0 6px;"><strong>';
+			echo esc_html(
+				sprintf(
+					/* translators: %d: number of plugins */
+					_n(
+						'%d plugin is at 80%% of its call cap.',
+						'%d plugins are at 80%% of their call caps.',
+						$warn,
+						'handl-ai-connector-access-control'
+					),
+					$warn
+				)
+			);
+			echo '</strong></p>';
+		}
+		$rules_url = self::screen_url( 'rules' );
+		echo '<p style="margin:8px 0 0;"><a href="' . esc_url( $rules_url ) . '">' . esc_html__( 'Review call caps on the Rules tab', 'handl-ai-connector-access-control' ) . '</a></p>';
+		echo '</div>';
+	}
+
+	/**
 	 * Dashboard: active alert mutes with cancel.
 	 *
 	 * @param array<string,array<string,mixed>> $plugins
@@ -8289,6 +8481,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			// Legacy reason code from pre-rename log rows.
 			'ability_armed'       => __( 'Blocked by HandL: prompt offered a blocked tool', 'handl-ai-connector-access-control' ),
 			'residency'           => __( 'Blocked by HandL: provider region filter', 'handl-ai-connector-access-control' ),
+			'rate_cap'            => __( 'Blocked by HandL: call cap reached', 'handl-ai-connector-access-control' ),
 		);
 		return $map[ $reason ] ?? sprintf(
 			/* translators: %s: internal denial reason code */
@@ -8306,6 +8499,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 		if ( 'observe' === $decision ) {
 			return '<span class="handl-aicac-badge handl-aicac-badge--observe">' . esc_html__( 'observe', 'handl-ai-connector-access-control' ) . '</span>';
+		}
+		if ( 'rate_warn' === $decision ) {
+			return '<span class="handl-aicac-badge handl-aicac-badge--observe">' . esc_html__( 'call-cap warning', 'handl-ai-connector-access-control' ) . '</span>';
 		}
 		if ( 'drift_alert' === $decision ) {
 			return '<span class="handl-aicac-badge handl-aicac-badge--observe">' . esc_html__( 'provider or model change', 'handl-ai-connector-access-control' ) . '</span>';

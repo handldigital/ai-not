@@ -444,6 +444,7 @@ final class Usage_Trends {
 			|| 'alert_snooze' === $channel
 			|| 'anomaly' === $channel
 			|| 'forecast_warn' === $channel
+			|| 'rate_warn' === $channel
 			|| 'selftest' === $channel ) {
 			return false;
 		}

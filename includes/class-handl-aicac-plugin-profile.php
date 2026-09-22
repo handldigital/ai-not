@@ -152,6 +152,7 @@ final class Plugin_Profile {
 			'effective'        => self::effective_ruleset( $policy, $plugin ),
 			'usage'            => self::usage_from_rows( $rows, $policy ),
 			'incidents'        => self::incidents_from_rows( $rows ),
+			'rate_cap'         => Rate_Cap::profile_counts( $policy, $plugin, $log ),
 			// AICAC-BLOCKED-UX Phase 1: structured payload only — Phase 2 renders it.
 			'what_they_saw'    => self::what_they_saw_from_rows( $rows ),
 			'actions'          => array(
@@ -418,6 +419,10 @@ final class Plugin_Profile {
 						'scope'     => isset( $row['scope'] ) ? (string) $row['scope'] : 'plugin',
 					);
 				}
+				continue;
+			}
+
+			if ( Rate_Cap::CHANNEL_WARN === $channel ) {
 				continue;
 			}
 
