@@ -557,6 +557,17 @@ final class Rate_Cap {
 			$event['rate_cap_count']  = $eval['count'];
 			$event['rate_capped']     = true;
 
+			// Observe mode: the call still runs, so keep counting past the cap.
+			// Enforcing mode: the call is blocked — do not inflate the counter.
+			if ( ! empty( $policy['audit_only'] ) ) {
+				$after                        = self::record_attempt( $plugin, $now );
+				$event['rate_cap_hour_count'] = $after['hour'];
+				$event['rate_cap_day_count']  = $after['day'];
+				$event['rate_cap_count']      = self::WINDOW_DAY === (string) $eval['window']
+					? $after['day']
+					: $after['hour'];
+			}
+
 			return array(
 				'active'    => true,
 				'prevent'   => true,

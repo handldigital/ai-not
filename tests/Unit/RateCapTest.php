@@ -302,6 +302,64 @@ final class RateCapTest extends TestCase {
 		$this->assertGreaterThan( $rate, $pii );
 	}
 
+	public function test_observe_mode_keeps_counting_past_cap(): void {
+		$plugin = 'acme/acme.php';
+		$tz     = new \DateTimeZone( 'UTC' );
+		$now    = ( new \DateTimeImmutable( '2026-09-22 10:30:00', $tz ) )->getTimestamp();
+
+		$policy = array(
+			'default'               => 'allow',
+			'plugin_rate_caps_hour' => array( $plugin => 2 ),
+			'plugin_rate_caps_day'  => array( $plugin => 10 ),
+			'audit_only'            => true,
+			'log_enabled'           => true,
+		);
+
+		$event = array(
+			'ts'       => $now,
+			'plugin'   => $plugin,
+			'decision' => 'allow',
+		);
+
+		// Three Observe calls with hour=2: all continue, counters keep rising.
+		$rc1 = Rate_Cap::apply_to_event( $event, $policy, null, $now );
+		$this->assertFalse( $rc1['prevent'] );
+		$rc2 = Rate_Cap::apply_to_event( $event, $policy, null, $now );
+		$this->assertFalse( $rc2['prevent'] );
+		$rc3 = Rate_Cap::apply_to_event( $event, $policy, null, $now );
+		$this->assertTrue( $rc3['prevent'] ); // would-deny tag
+		$this->assertSame( 3, (int) $event['rate_cap_hour_count'] );
+		$this->assertSame( 3, (int) $event['rate_cap_day_count'] );
+
+		$eval = Rate_Cap::evaluate( $policy, $plugin, null, $now, $tz );
+		$this->assertSame( 3, $eval['hour']['count'] );
+		$this->assertSame( 3, $eval['day']['count'] );
+	}
+
+	public function test_enforcing_mode_does_not_count_blocked_calls(): void {
+		$plugin = 'acme/acme.php';
+		$tz     = new \DateTimeZone( 'UTC' );
+		$now    = ( new \DateTimeImmutable( '2026-09-22 10:30:00', $tz ) )->getTimestamp();
+
+		$policy = array(
+			'default'               => 'allow',
+			'plugin_rate_caps_hour' => array( $plugin => 2 ),
+			'audit_only'            => false,
+		);
+
+		$event = array(
+			'ts'     => $now,
+			'plugin' => $plugin,
+		);
+		Rate_Cap::apply_to_event( $event, $policy, null, $now );
+		Rate_Cap::apply_to_event( $event, $policy, null, $now );
+		$rc3 = Rate_Cap::apply_to_event( $event, $policy, null, $now );
+		$this->assertTrue( $rc3['prevent'] );
+
+		$eval = Rate_Cap::evaluate( $policy, $plugin, null, $now, $tz );
+		$this->assertSame( 2, $eval['hour']['count'] );
+	}
+
 	public function test_soft_warn_threshold(): void {
 		$this->assertSame( 8, Rate_Cap::soft_warn_threshold( 10 ) );
 		$this->assertSame( 1, Rate_Cap::soft_warn_threshold( 1 ) );
