@@ -89,6 +89,34 @@ final class FreezeTest extends TestCase {
 		$this->assertStringContainsString( 'Panic freeze started', (string) ( $history[0]['summary'] ?? '' ) );
 	}
 
+	public function test_freeze_clears_kill_switch_exceptions_for_deny_all(): void {
+		$now = 1_700_000_000;
+		Policy::save_policy(
+			array(
+				'default'               => 'allow',
+				'plugins'               => array( 'excepted/plugin.php' => 'allow' ),
+				'kill_switch'           => true,
+				'kill_switch_exceptions'=> array( 'excepted/plugin.php' ),
+				'shadow_block_enabled'  => false,
+				'audit_only'            => false,
+				'log_enabled'           => true,
+				'alert_email'           => 'ops@example.test',
+			)
+		);
+
+		$before = Policy::evaluate( Policy::get_policy(), 'excepted/plugin.php', 'generate_text', array(), null, $now );
+		$this->assertFalse( $before['prevent'], 'exception should allow fall-through before freeze' );
+
+		$this->assertTrue( Freeze::start( 15, '', $now )['ok'] );
+		$frozen = Policy::get_policy();
+		$this->assertSame( array(), Policy::get_kill_switch_exceptions( $frozen ) );
+		$this->assertTrue( ! empty( $frozen['kill_switch'] ) );
+
+		$eval = Policy::evaluate( $frozen, 'excepted/plugin.php', 'generate_text', array(), null, $now + 1 );
+		$this->assertTrue( $eval['prevent'] );
+		$this->assertSame( 'kill_switch', (string) ( $eval['reason'] ?? '' ) );
+	}
+
 	public function test_freeze_restore_is_byte_identical_no_op_save(): void {
 		$now    = 1_700_000_000;
 		$before = get_option( Plugin::OPTION_KEY );
@@ -130,11 +158,20 @@ final class FreezeTest extends TestCase {
 	public function test_extend_requires_fresh_click_and_updates_deadline(): void {
 		$now = 1_700_000_000;
 		Freeze::start( 15, '', $now );
+		// Resetting to 15 min with three hours not applicable — start was 15; reset to 240 then back to 15 shortens.
 		$ext = Freeze::extend( 240, $now + 30 );
 		$this->assertTrue( $ext['ok'] );
 		$st = Freeze::status( $now + 30 );
 		$this->assertSame( 240 * 60, $st['remaining_seconds'] );
 		$this->assertSame( 240, $st['minutes'] );
+
+		$shorten = Freeze::extend( 15, $now + 60 );
+		$this->assertTrue( $shorten['ok'] );
+		$st2 = Freeze::status( $now + 60 );
+		$this->assertSame( 15 * 60, $st2['remaining_seconds'] );
+
+		$history = Policy_Snapshots::history();
+		$this->assertStringContainsString( 'AI freeze timer reset (15 min)', (string) ( $history[0]['summary'] ?? '' ) );
 	}
 
 	public function test_reactivation_restores_snapshot(): void {
@@ -187,6 +224,18 @@ final class FreezeTest extends TestCase {
 		Freeze::start( 60, '', $now );
 		$text = Freeze::notice_text( $now + 10 );
 		$this->assertIsString( $text );
-		$this->assertStringContainsString( 'frozen', strtolower( (string) $text ) );
+		$this->assertStringContainsString( 'AI freeze is active until', (string) $text );
+		$this->assertStringNotContainsString( 'Extend', (string) $text );
+	}
+
+	public function test_manual_end_email_copy(): void {
+		$now = 1_700_000_000;
+		Freeze::start( 15, '', $now );
+		$this->mails = array();
+		Freeze::end( $now + 5 );
+		$this->assertNotEmpty( $this->mails );
+		$body = (string) ( $this->mails[0][2] ?? '' );
+		$this->assertStringContainsString( 'AI freeze ended early. Your previous settings were restored.', $body );
+		$this->assertStringNotContainsString( 'Panic freeze was restored early', $body );
 	}
 }

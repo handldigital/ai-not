@@ -2,9 +2,10 @@
 /**
  * AICAC-PANIC-FREEZE (#267): one-click temporary deny-all with auto-restore.
  *
- * Snapshots the live policy, applies the Strict lockdown preset, and restores
- * the snapshot when the timer ends, on manual Restore, or on reactivation
- * after a mid-freeze deactivation.
+ * Snapshots the live policy, applies the Strict lockdown preset with empty
+ * Emergency-stop exceptions (true deny-all), and restores the snapshot when
+ * the timer ends, on manual Restore, or on reactivation after a mid-freeze
+ * deactivation.
  *
  * @package HandL_AICAC
  */
@@ -164,6 +165,8 @@ final class Freeze {
 				'error' => 'lockdown_unavailable',
 			);
 		}
+		// Lockdown preserves Emergency-stop exceptions; freeze must be deny-all.
+		$target['kill_switch_exceptions'] = array();
 
 		$expires_ts = $now + ( $minutes * ( defined( 'MINUTE_IN_SECONDS' ) ? (int) MINUTE_IN_SECONDS : 60 ) );
 		$actor      = Policy_Snapshots::detect_actor();
@@ -239,7 +242,7 @@ final class Freeze {
 	}
 
 	/**
-	 * Extend requires a fresh click with a new duration (no silent auto-extend).
+	 * Reset the freeze timer to a fresh duration from now (may shorten remaining time).
 	 *
 	 * @return array{ok:bool,error?:string,state?:array<string,mixed>}
 	 */
@@ -272,9 +275,9 @@ final class Freeze {
 				'ts'      => $now,
 				'actor'   => $actor,
 				'changes' => array(
-					sprintf( 'Panic freeze extended (%d min)', $minutes ),
+					sprintf( 'AI freeze timer reset (%d min)', $minutes ),
 				),
-				'summary' => sprintf( 'Panic freeze extended (%d min)', $minutes ),
+				'summary' => sprintf( 'AI freeze timer reset (%d min)', $minutes ),
 			)
 		);
 
@@ -322,7 +325,7 @@ final class Freeze {
 
 		return sprintf(
 			/* translators: %s: local end time (e.g. 14:32) */
-			__( 'AI is frozen until %s — Restore now / Extend.', 'handl-ai-connector-access-control' ),
+			__( 'AI freeze is active until %s.', 'handl-ai-connector-access-control' ),
 			$until
 		);
 	}
@@ -378,7 +381,7 @@ final class Freeze {
 		if ( 'reactivated' === $cause ) {
 			$body = __( 'Panic freeze ended on plugin reactivation. The previous policy was restored so lockdown is not stuck on.', 'handl-ai-connector-access-control' );
 		} elseif ( 'manual' === $cause ) {
-			$body = __( 'Panic freeze was restored early. The previous policy was restored.', 'handl-ai-connector-access-control' );
+			$body = __( 'AI freeze ended early. Your previous settings were restored.', 'handl-ai-connector-access-control' );
 		} else {
 			$body = __( 'Panic freeze ended. The previous policy was restored automatically.', 'handl-ai-connector-access-control' );
 		}

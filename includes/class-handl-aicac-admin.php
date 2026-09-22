@@ -1089,15 +1089,16 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 			echo '<input type="hidden" name="handl_aicac_tab" value="' . esc_attr( $tab ) . '" />';
 			submit_button( __( 'Restore now', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
 			echo '</form>';
-			echo '<form method="post" style="display:inline-block;margin:0.5em 0;">';
+			echo '<form method="post" style="display:inline-block;margin:0.5em 0;vertical-align:top;">';
 			wp_nonce_field( 'handl_aicac_freeze_extend', 'handl_aicac_nonce' );
 			echo '<input type="hidden" name="handl_aicac_action" value="freeze_extend" />';
 			echo '<input type="hidden" name="handl_aicac_tab" value="' . esc_attr( $tab ) . '" />';
-			echo '<label class="screen-reader-text" for="handl-aicac-freeze-extend-minutes">' . esc_html__( 'Extend freeze duration', 'handl-ai-connector-access-control' ) . '</label>';
+			echo '<label for="handl-aicac-freeze-extend-minutes">' . esc_html__( 'New duration', 'handl-ai-connector-access-control' ) . '</label> ';
 			echo '<select name="handl_aicac_freeze_minutes" id="handl-aicac-freeze-extend-minutes">';
 			$this->render_freeze_minute_options( 60 );
 			echo '</select> ';
-			submit_button( __( 'Extend', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+			submit_button( __( 'Reset timer', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+			echo '<p class="description" style="margin:0.35em 0 0;">' . esc_html__( 'The new duration starts now and replaces the time remaining.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '</form>';
 			echo '</div>';
 		}
