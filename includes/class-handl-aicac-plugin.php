@@ -87,6 +87,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-audit-evidence.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-analytics.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin-profile.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin-chips.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-differentiator-messaging.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-pager.php';
@@ -125,6 +126,7 @@ final class Plugin {
 		Mu_Guard::instance()->init();
 		Rest::instance()->init();
 		Dashboard_Widget::instance()->init();
+		Plugin_Chips::instance()->init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
