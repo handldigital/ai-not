@@ -1359,7 +1359,7 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 		}
 
 		echo '<h2>' . esc_html__( 'Plugin rules', 'handl-ai-connector-access-control' ) . '</h2>';
-echo '<p class="description">' . esc_html__( 'Plugin rules set the main access level. AI type columns can refine an allowed plugin, such as allowing text but blocking images. A plugin-level Deny blocks every AI type. An estimated budget is a monthly ceiling based on your saved rate table. It is an estimate, not a bill. Leave the amount blank for no ceiling. Call caps limit raw AI Client calls per hour and per day (site timezone). Leave blank for unlimited; a warning fires at 80% and new calls are blocked at 100%. Model routing is experimental, uses best-effort plugin detection, and does not guarantee spend. Leave both route fields blank to disable it.', 'handl-ai-connector-access-control' ) . '</p>';
+echo '<p class="description">' . esc_html__( 'Plugin rules set the main access level. AI type columns can refine an allowed plugin, such as allowing text but blocking images. A plugin-level Deny blocks every AI type. An estimated budget is a monthly ceiling based on your saved rate table. It is an estimate, not a bill. Leave the amount blank for no ceiling. Set an hourly or daily limit on AI Client calls for each plugin. Hourly limits reset at the start of each hour; daily limits reset at midnight, using the site timezone. Blank or 0 means no limit. Observe mode does not block calls. Model routing is experimental, uses best-effort plugin detection, and does not guarantee spend. Leave both route fields blank to disable it.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<p class="description handl-aicac-beyond-ca-rules">' . esc_html( Differentiator_Messaging::rules_note() ) . '</p>';
 		if ( $unforced_n > 0 && ! empty( $force_map ) ) {
 			echo '<div class="notice notice-warning inline"><p>';
@@ -2856,7 +2856,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 					echo esc_html(
 						sprintf(
 							/* translators: 1: soft-warn count, 2: hard-cap denial count */
-							__( 'Warnings: %1$s · Cap blocks: %2$s', 'handl-ai-connector-access-control' ),
+							__( 'Saved Activity: %1$s warnings · %2$s calls blocked by a cap', 'handl-ai-connector-access-control' ),
 							number_format_i18n( (int) ( $rate['warn_count'] ?? 0 ) ),
 							number_format_i18n( (int) ( $rate['capped_count'] ?? 0 ) )
 						)
@@ -7402,7 +7402,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		);
 		echo '</label>';
 		echo '<input type="number" step="1" min="0" max="1000000" class="small-text" id="handl-aicac-rate-day-' . esc_attr( $hash ) . '" name="handl_aicac_plugin_rate_caps_day[' . esc_attr( $basename ) . ']" form="' . esc_attr( $rules_form_id ) . '" value="' . esc_attr( $day ) . '" placeholder="' . esc_attr__( 'Day', 'handl-ai-connector-access-control' ) . '" />';
-		echo '<p class="description" style="margin:4px 0 0;">' . esc_html__( 'Blank = unlimited. Warns at 80%; blocks at 100%.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description" style="margin:4px 0 0;">' . esc_html__( 'Blank or 0 means no limit. Observe mode records activity without blocking calls.', 'handl-ai-connector-access-control' ) . '</p>';
 	}
 
 	/**
@@ -7483,20 +7483,36 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 
 		echo '<div class="notice notice-warning inline handl-aicac-rate-cap-banner" style="margin:12px 0;padding:8px 12px;">';
+		$observe = ! empty( $policy['audit_only'] );
 		if ( $capped > 0 ) {
 			echo '<p style="margin:0 0 6px;"><strong>';
-			echo esc_html(
-				sprintf(
-					/* translators: %d: number of plugins */
-					_n(
-						'Call cap reached for %d plugin — new AI Client calls are blocked until the window resets.',
-						'Call cap reached for %d plugins — new AI Client calls are blocked until the window resets.',
-						$capped,
-						'handl-ai-connector-access-control'
-					),
-					$capped
-				)
-			);
+			if ( $observe ) {
+				echo esc_html(
+					sprintf(
+						/* translators: %d: number of plugins */
+						_n(
+							'Call cap reached for %d plugin. Observe mode is on, so calls continue.',
+							'Call caps reached for %d plugins. Observe mode is on, so calls continue.',
+							$capped,
+							'handl-ai-connector-access-control'
+						),
+						$capped
+					)
+				);
+			} else {
+				echo esc_html(
+					sprintf(
+						/* translators: %d: number of plugins */
+						_n(
+							'Call cap reached for %d plugin. Further AI Client calls from that plugin are blocked.',
+							'Call caps reached for %d plugins. Further AI Client calls from those plugins are blocked.',
+							$capped,
+							'handl-ai-connector-access-control'
+						),
+						$capped
+					)
+				);
+			}
 			echo '</strong></p>';
 		} elseif ( $warn > 0 ) {
 			echo '<p style="margin:0 0 6px;"><strong>';
@@ -7504,8 +7520,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				sprintf(
 					/* translators: %d: number of plugins */
 					_n(
-						'%d plugin is at 80%% of its call cap.',
-						'%d plugins are at 80%% of their call caps.',
+						'%d plugin has used at least 80%% of a call cap.',
+						'%d plugins have used at least 80%% of a call cap.',
 						$warn,
 						'handl-ai-connector-access-control'
 					),

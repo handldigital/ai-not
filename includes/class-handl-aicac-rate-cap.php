@@ -2,9 +2,10 @@
 /**
  * AICAC-RATE-CAP (#275): per-plugin call-count ceilings (hour + day).
  *
- * Empty caps = unlimited (current behavior). Soft-warn once per window at
- * >=80%; hard deny at 100% with denial_reason `rate_cap`. Counters come from
- * the retained recent-calls log in the site timezone.
+ * Empty / 0 caps = unlimited. Soft-warn once per window at >=80%; hard deny
+ * at 100% with denial_reason `rate_cap`. Counts live in a durable option
+ * (independent of Activity logging / ring-buffer eviction) so hard limits
+ * remain enforceable.
  *
  * @package HandL_AICAC
  */
@@ -16,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Call-volume ceilings + soft-warn / hard-deny helpers.
+ * Call-volume ceilings + durable counters + soft-warn / hard-deny helpers.
  */
 final class Rate_Cap {
 
@@ -28,6 +29,12 @@ final class Rate_Cap {
 
 	/** Fired soft-warns: "{plugin}|hour|{YmdH}" / "{plugin}|day|{Ymd}" => meta. */
 	public const WARNED_OPTION_KEY = 'handl_aicac_rate_cap_warned';
+
+	/**
+	 * Durable attempt counters: "{plugin}|hour|{YmdH}" / "{plugin}|day|{Ymd}" => int.
+	 * Survives Activity log off, TTL prune, and ring-buffer eviction.
+	 */
+	public const COUNTS_OPTION_KEY = 'handl_aicac_rate_cap_counts';
 
 	public const MAX_CAP = 1000000;
 
@@ -156,8 +163,216 @@ final class Rate_Cap {
 	}
 
 	/**
-	 * Count retained Activity rows for one plugin in [start, end).
-	 * Excludes soft-warn audit rows and sticky rate_cap denials.
+	 * Durable counter storage key for one plugin + window.
+	 */
+	public static function count_key( string $plugin, string $window, string $window_key ): string {
+		$plugin = Plugin_Profile::sanitize_plugin( $plugin );
+		$window = self::WINDOW_DAY === $window ? self::WINDOW_DAY : self::WINDOW_HOUR;
+
+		return $plugin . '|' . $window . '|' . sanitize_text_field( $window_key );
+	}
+
+	/**
+	 * @return array<string,int>
+	 */
+	public static function get_counts_map(): array {
+		return self::sanitize_counts_map( get_option( self::COUNTS_OPTION_KEY, array() ) );
+	}
+
+	/**
+	 * @param mixed $raw
+	 * @return array<string,int>
+	 */
+	public static function sanitize_counts_map( $raw ): array {
+		if ( ! is_array( $raw ) ) {
+			return array();
+		}
+		$out = array();
+		foreach ( $raw as $key => $n ) {
+			$key = sanitize_text_field( (string) $key );
+			if ( '' === $key || ! is_numeric( $n ) ) {
+				continue;
+			}
+			$v = (int) $n;
+			if ( $v < 0 ) {
+				$v = 0;
+			}
+			$out[ $key ] = $v;
+		}
+
+		return $out;
+	}
+
+	/**
+	 * @param array<string,int> $map
+	 */
+	public static function save_counts_map( array $map ): void {
+		$map = self::sanitize_counts_map( $map );
+		$map = self::prune_counts_map( $map );
+		if ( empty( $map ) ) {
+			delete_option( self::COUNTS_OPTION_KEY );
+			return;
+		}
+		update_option( self::COUNTS_OPTION_KEY, $map, false );
+	}
+
+	/**
+	 * Drop stale window keys when the map grows large.
+	 *
+	 * @param array<string,int> $map
+	 * @return array<string,int>
+	 */
+	public static function prune_counts_map( array $map, ?int $now = null, ?\DateTimeZone $tz = null ): array {
+		if ( count( $map ) <= 500 ) {
+			return $map;
+		}
+		$now  = null !== $now ? (int) $now : Clock::now();
+		$tz   = Quiet_Hours::timezone( $tz );
+		$hour = self::window_bounds( self::WINDOW_HOUR, $now, $tz );
+		$day  = self::window_bounds( self::WINDOW_DAY, $now, $tz );
+		$keep = array();
+		foreach ( $map as $key => $n ) {
+			$parts = explode( '|', $key );
+			if ( count( $parts ) < 3 ) {
+				continue;
+			}
+			$window = $parts[ count( $parts ) - 2 ];
+			$suffix = $parts[ count( $parts ) - 1 ];
+			if ( self::WINDOW_HOUR === $window && $suffix === $hour['key'] ) {
+				$keep[ $key ] = $n;
+				continue;
+			}
+			if ( self::WINDOW_DAY === $window && $suffix === $day['key'] ) {
+				$keep[ $key ] = $n;
+			}
+		}
+
+		return $keep;
+	}
+
+	public static function get_window_count( string $plugin, string $window, string $window_key ): int {
+		$key = self::count_key( $plugin, $window, $window_key );
+		$map = self::get_counts_map();
+
+		return isset( $map[ $key ] ) ? (int) $map[ $key ] : 0;
+	}
+
+	/**
+	 * Increment durable hour + day counters for one allowed AI Client attempt.
+	 *
+	 * @return array{hour:int,day:int}
+	 */
+	public static function record_attempt( string $plugin, ?int $now = null, ?\DateTimeZone $tz = null ): array {
+		$plugin = Plugin_Profile::sanitize_plugin( $plugin );
+		if ( '' === $plugin ) {
+			return array(
+				'hour' => 0,
+				'day'  => 0,
+			);
+		}
+		$now  = null !== $now ? (int) $now : Clock::now();
+		$tz   = Quiet_Hours::timezone( $tz );
+		$hour = self::window_bounds( self::WINDOW_HOUR, $now, $tz );
+		$day  = self::window_bounds( self::WINDOW_DAY, $now, $tz );
+		$map  = self::get_counts_map();
+
+		$hour_key         = self::count_key( $plugin, self::WINDOW_HOUR, $hour['key'] );
+		$day_key          = self::count_key( $plugin, self::WINDOW_DAY, $day['key'] );
+		$map[ $hour_key ] = ( isset( $map[ $hour_key ] ) ? (int) $map[ $hour_key ] : 0 ) + 1;
+		$map[ $day_key ]  = ( isset( $map[ $day_key ] ) ? (int) $map[ $day_key ] : 0 ) + 1;
+		self::save_counts_map( $map );
+
+		return array(
+			'hour' => (int) $map[ $hour_key ],
+			'day'  => (int) $map[ $day_key ],
+		);
+	}
+
+	/**
+	 * Test helper: set an absolute window count.
+	 */
+	public static function set_window_count( string $plugin, string $window, string $window_key, int $count ): void {
+		$plugin = Plugin_Profile::sanitize_plugin( $plugin );
+		if ( '' === $plugin ) {
+			return;
+		}
+		$map = self::get_counts_map();
+		$key = self::count_key( $plugin, $window, $window_key );
+		if ( $count <= 0 ) {
+			unset( $map[ $key ] );
+		} else {
+			$map[ $key ] = $count;
+		}
+		self::save_counts_map( $map );
+	}
+
+	public static function clear_counts(): void {
+		delete_option( self::COUNTS_OPTION_KEY );
+	}
+
+	/**
+	 * Administrative Activity channels that are never AI Client attempts.
+	 *
+	 * @return list<string>
+	 */
+	public static function administrative_channels(): array {
+		return array(
+			'policy_restore',
+			'access_request',
+			'policy_checks',
+			'policy_save',
+			'policy_import',
+			'email',
+			'temp_allow',
+			'went_ai',
+			'canary',
+			'tamper',
+			'hardened_guard',
+			'share',
+			self::CHANNEL_WARN,
+		);
+	}
+
+	/**
+	 * Saved Activity rows that represent real AI Client attempts (profile stats).
+	 *
+	 * @param array<string,mixed> $row
+	 */
+	public static function is_counted_attempt_row( array $row, string $plugin = '' ): bool {
+		if ( class_exists( Selftest::class ) && Selftest::is_synthetic_row( $row ) ) {
+			return false;
+		}
+		if ( '' !== $plugin ) {
+			$row_plugin = isset( $row['plugin'] ) ? Plugin_Profile::sanitize_plugin( (string) $row['plugin'] ) : '';
+			if ( $row_plugin !== Plugin_Profile::sanitize_plugin( $plugin ) ) {
+				return false;
+			}
+		}
+		$channel = isset( $row['channel'] ) ? (string) $row['channel'] : '';
+		if ( in_array( $channel, self::administrative_channels(), true ) ) {
+			return false;
+		}
+		if ( class_exists( Usage_Trends::class ) && ! Usage_Trends::is_activity_row( $row ) ) {
+			return false;
+		}
+		$decision = isset( $row['decision'] ) ? (string) $row['decision'] : '';
+
+		return 'allow' === $decision || 'deny' === $decision;
+	}
+
+	/**
+	 * Grouped deny clusters store the attempt total in `count`.
+	 *
+	 * @param array<string,mixed> $row
+	 */
+	public static function attempt_count( array $row ): int {
+		$n = isset( $row['count'] ) ? (int) $row['count'] : 1;
+
+		return $n > 0 ? $n : 1;
+	}
+
+	/**
+	 * Reconstruct countable attempts from a log slice (tests / diagnostics).
 	 *
 	 * @param array<int,mixed> $log
 	 */
@@ -176,7 +391,7 @@ final class Rate_Cap {
 			if ( $ts < $start_ts || $ts >= $end_ts ) {
 				continue;
 			}
-			++$n;
+			$n += self::attempt_count( $row );
 		}
 
 		return $n;
@@ -186,18 +401,9 @@ final class Rate_Cap {
 	 * @param array<string,mixed> $row
 	 */
 	public static function is_countable_row( array $row, string $plugin ): bool {
-		$row_plugin = isset( $row['plugin'] ) ? Plugin_Profile::sanitize_plugin( (string) $row['plugin'] ) : '';
-		if ( $row_plugin !== $plugin ) {
+		if ( ! self::is_counted_attempt_row( $row, $plugin ) ) {
 			return false;
 		}
-		if ( ! Usage_Trends::is_activity_row( $row ) ) {
-			return false;
-		}
-		$channel = isset( $row['channel'] ) ? (string) $row['channel'] : '';
-		if ( self::CHANNEL_WARN === $channel ) {
-			return false;
-		}
-		// Sticky rate-cap denials must not inflate the ceiling.
 		if ( self::REASON === (string) ( $row['denial_reason'] ?? '' ) ) {
 			return false;
 		}
@@ -206,10 +412,10 @@ final class Rate_Cap {
 	}
 
 	/**
-	 * Evaluate hour + day caps for a plugin against the retained log.
+	 * Evaluate hour + day caps for a plugin against durable counters.
 	 *
-	 * @param array<string,mixed> $policy
-	 * @param array<int,mixed>|null $log
+	 * @param array<string,mixed>   $policy
+	 * @param array<int,mixed>|null $log Unused; kept so call sites stay stable.
 	 * @return array{
 	 *   prevent:bool,
 	 *   reason:string,
@@ -225,6 +431,7 @@ final class Rate_Cap {
 	 * }
 	 */
 	public static function evaluate( array $policy, string $plugin, ?array $log = null, ?int $now = null, ?\DateTimeZone $tz = null ): array {
+		unset( $log );
 		$plugin = Plugin_Profile::sanitize_plugin( $plugin );
 		$now    = null !== $now ? (int) $now : Clock::now();
 		$tz     = Quiet_Hours::timezone( $tz );
@@ -235,15 +442,11 @@ final class Rate_Cap {
 		$hour_limit = self::get_hour_cap( $policy, $plugin );
 		$day_limit  = self::get_day_cap( $policy, $plugin );
 
-		if ( null === $log ) {
-			$log = Policy::get_retained_log( $now );
-		}
-
 		$hour_count = '' !== $plugin
-			? self::count_plugin_calls_in_window( $log, $plugin, $hour_bounds['start'], $hour_bounds['end'] )
+			? self::get_window_count( $plugin, self::WINDOW_HOUR, $hour_bounds['key'] )
 			: 0;
-		$day_count = '' !== $plugin
-			? self::count_plugin_calls_in_window( $log, $plugin, $day_bounds['start'], $day_bounds['end'] )
+		$day_count  = '' !== $plugin
+			? self::get_window_count( $plugin, self::WINDOW_DAY, $day_bounds['key'] )
 			: 0;
 
 		$hour = array(
@@ -253,7 +456,7 @@ final class Rate_Cap {
 			'start' => $hour_bounds['start'],
 			'end'   => $hour_bounds['end'],
 		);
-		$day = array(
+		$day  = array(
 			'limit' => $day_limit,
 			'count' => $day_count,
 			'key'   => $day_bounds['key'],
@@ -279,7 +482,6 @@ final class Rate_Cap {
 			return $out;
 		}
 
-		// Hard deny: hour first, then day (either trips the gate).
 		foreach ( array( self::WINDOW_HOUR => $hour, self::WINDOW_DAY => $day ) as $window => $snap ) {
 			$limit = $snap['limit'];
 			if ( null === $limit ) {
@@ -296,7 +498,6 @@ final class Rate_Cap {
 			}
 		}
 
-		// Soft warn: first window that has reached >=80% (hour preferred).
 		foreach ( array( self::WINDOW_HOUR => $hour, self::WINDOW_DAY => $day ) as $window => $snap ) {
 			$limit = $snap['limit'];
 			if ( null === $limit ) {
@@ -318,13 +519,15 @@ final class Rate_Cap {
 
 	/**
 	 * Tag an Activity event; report whether to block. Soft-warn fires once per window.
+	 * Allowed attempts increment durable counters (even when Activity logging is off).
 	 *
 	 * @param array<string,mixed>      $event
 	 * @param array<string,mixed>|null $policy
-	 * @param array<int,mixed>|null    $log
+	 * @param array<int,mixed>|null    $log Unused.
 	 * @return array{active:bool,prevent:bool,reason:string,window:string,soft_warn:bool}
 	 */
 	public static function apply_to_event( array &$event, $policy = null, ?array $log = null, ?int $now = null ): array {
+		unset( $log );
 		$policy = is_array( $policy ) ? $policy : Policy::get_policy();
 		$plugin = isset( $event['plugin'] ) ? Plugin_Profile::sanitize_plugin( (string) $event['plugin'] ) : '';
 		$now    = null !== $now ? (int) $now : ( isset( $event['ts'] ) ? (int) $event['ts'] : Clock::now() );
@@ -341,7 +544,7 @@ final class Rate_Cap {
 			);
 		}
 
-		$eval = self::evaluate( $policy, $plugin, $log, $now );
+		$eval = self::evaluate( $policy, $plugin, null, $now );
 
 		$event['rate_cap_hour_limit'] = $eval['hour']['limit'];
 		$event['rate_cap_hour_count'] = $eval['hour']['count'];
@@ -363,14 +566,19 @@ final class Rate_Cap {
 			);
 		}
 
-		$soft = false;
-		if ( ! empty( $eval['soft_warn'] ) ) {
-			$soft = self::maybe_fire_soft_warn( $policy, $plugin, $eval, $now );
+		$after                        = self::record_attempt( $plugin, $now );
+		$event['rate_cap_hour_count'] = $after['hour'];
+		$event['rate_cap_day_count']  = $after['day'];
+
+		$soft       = false;
+		$eval_after = self::evaluate( $policy, $plugin, null, $now );
+		if ( ! empty( $eval_after['soft_warn'] ) ) {
+			$soft = self::maybe_fire_soft_warn( $policy, $plugin, $eval_after, $now );
 			if ( $soft ) {
-				$event['rate_warn']         = true;
-				$event['rate_warn_window']  = $eval['soft_window'];
-				$event['rate_warn_limit']   = $eval['soft_limit'];
-				$event['rate_warn_count']   = $eval['soft_count'];
+				$event['rate_warn']        = true;
+				$event['rate_warn_window'] = $eval_after['soft_window'];
+				$event['rate_warn_limit']  = $eval_after['soft_limit'];
+				$event['rate_warn_count']  = $eval_after['soft_count'];
 			}
 		}
 
@@ -384,7 +592,7 @@ final class Rate_Cap {
 	}
 
 	/**
-	 * Fire soft-warn once per plugin+window key: audit row + denied-alert pipeline channel.
+	 * Fire soft-warn once per plugin+window key: audit row + alert email.
 	 *
 	 * @param array<string,mixed> $policy
 	 * @param array<string,mixed> $eval evaluate() result
@@ -456,13 +664,12 @@ final class Rate_Cap {
 	}
 
 	public static function record_warning( string $fired_key, int $limit, int $count, int $now ): void {
-		$map = self::get_warned_map();
+		$map                = self::get_warned_map();
 		$map[ $fired_key ] = array(
 			'at'    => $now,
 			'limit' => $limit,
 			'count' => $count,
 		);
-		// Prune stale keys (keep newest 200).
 		if ( count( $map ) > 200 ) {
 			uasort(
 				$map,
@@ -475,9 +682,6 @@ final class Rate_Cap {
 		update_option( self::WARNED_OPTION_KEY, $map, false );
 	}
 
-	/**
-	 * Clear fired state (tests / CLI).
-	 */
 	public static function clear_warned(): void {
 		delete_option( self::WARNED_OPTION_KEY );
 	}
@@ -506,10 +710,15 @@ final class Rate_Cap {
 			$site,
 			$label
 		);
+
+		$footer = ! empty( $policy['audit_only'] )
+			? __( 'Observe mode is on. Calls will continue even if the cap is reached.', 'handl-ai-connector-access-control' )
+			: __( 'New calls will be blocked when the cap is reached.', 'handl-ai-connector-access-control' );
+
 		$body = implode(
 			"\n",
 			array(
-				__( 'HandL AI Connector Access Control call-cap soft warning', 'handl-ai-connector-access-control' ),
+				__( 'AI call limit warning', 'handl-ai-connector-access-control' ),
 				'',
 				sprintf(
 					/* translators: %s: plugin label */
@@ -518,13 +727,13 @@ final class Rate_Cap {
 				),
 				sprintf(
 					/* translators: 1: call count, 2: cap, 3: window label */
-					__( 'Usage: %1$d of %2$d calls %3$s (80%% warning).', 'handl-ai-connector-access-control' ),
+					__( 'Usage: %1$d of %2$d calls %3$s.', 'handl-ai-connector-access-control' ),
 					$count,
 					$limit,
 					$win
 				),
 				'',
-				__( 'New calls will be blocked when the cap is reached.', 'handl-ai-connector-access-control' ),
+				$footer,
 			)
 		);
 
@@ -544,24 +753,24 @@ final class Rate_Cap {
 		}
 
 		$row = array(
-			'ts'           => $now,
-			'decision'     => self::CHANNEL_WARN,
-			'channel'      => self::CHANNEL_WARN,
-			'plugin'       => $plugin,
-			'operation'    => '',
-			'provider'     => '',
-			'model'        => '',
-			'rate_window'  => $window,
-			'rate_limit'   => $limit,
-			'rate_count'   => $count,
-			'denial_reason'=> '',
+			'ts'            => $now,
+			'decision'      => self::CHANNEL_WARN,
+			'channel'       => self::CHANNEL_WARN,
+			'plugin'        => $plugin,
+			'operation'     => '',
+			'provider'      => '',
+			'model'         => '',
+			'rate_window'   => $window,
+			'rate_limit'    => $limit,
+			'rate_count'    => $count,
+			'denial_reason' => '',
 		);
 
 		$log = get_option( Plugin::LOG_OPTION_KEY, array() );
 		if ( ! is_array( $log ) ) {
 			$log = array();
 		}
-		$log[] = $row;
+		$log[]      = $row;
 		$limit_rows = isset( $policy['log_limit'] ) ? (int) $policy['log_limit'] : 200;
 		if ( $limit_rows > 0 && count( $log ) > $limit_rows ) {
 			$log = array_slice( $log, -$limit_rows );
@@ -599,9 +808,9 @@ final class Rate_Cap {
 	 * }
 	 */
 	public static function profile_counts( array $policy, string $plugin, array $log, ?int $now = null ): array {
-		$eval = self::evaluate( $policy, $plugin, $log, $now );
-		$warn = 0;
-		$cap  = 0;
+		$eval   = self::evaluate( $policy, $plugin, null, $now );
+		$warn   = 0;
+		$cap    = 0;
 		$plugin = Plugin_Profile::sanitize_plugin( $plugin );
 		foreach ( $log as $row ) {
 			if ( ! is_array( $row ) ) {
@@ -612,10 +821,12 @@ final class Rate_Cap {
 				continue;
 			}
 			if ( self::CHANNEL_WARN === (string) ( $row['channel'] ?? '' ) ) {
-				++$warn;
+				$warn += self::attempt_count( $row );
+				continue;
 			}
-			if ( self::REASON === (string) ( $row['denial_reason'] ?? '' ) ) {
-				++$cap;
+			if ( 'deny' === (string) ( $row['decision'] ?? '' )
+				&& self::REASON === (string) ( $row['denial_reason'] ?? '' ) ) {
+				$cap += self::attempt_count( $row );
 			}
 		}
 
@@ -636,19 +847,17 @@ final class Rate_Cap {
 	 * @return list<array{plugin:string,state:string,window:string,count:int,limit:int}>
 	 */
 	public static function active_pressure_list( array $policy, ?array $log = null, ?int $now = null ): array {
+		unset( $log );
 		$hour_map = self::sanitize_plugin_caps( $policy['plugin_rate_caps_hour'] ?? array() );
 		$day_map  = self::sanitize_plugin_caps( $policy['plugin_rate_caps_day'] ?? array() );
 		$plugins  = array_unique( array_merge( array_keys( $hour_map ), array_keys( $day_map ) ) );
 		if ( empty( $plugins ) ) {
 			return array();
 		}
-		if ( null === $log ) {
-			$log = Policy::get_retained_log( $now );
-		}
 
 		$out = array();
 		foreach ( $plugins as $plugin ) {
-			$eval = self::evaluate( $policy, $plugin, $log, $now );
+			$eval = self::evaluate( $policy, $plugin, null, $now );
 			if ( ! empty( $eval['prevent'] ) ) {
 				$out[] = array(
 					'plugin' => $plugin,

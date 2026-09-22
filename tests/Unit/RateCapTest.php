@@ -11,7 +11,6 @@ namespace HandL\AICAC\Tests\Unit;
 
 use HandL\AICAC\Plugin;
 use HandL\AICAC\Policy;
-use HandL\AICAC\Quiet_Hours;
 use HandL\AICAC\Rate_Cap;
 use PHPUnit\Framework\TestCase;
 
@@ -26,6 +25,7 @@ final class RateCapTest extends TestCase {
 		delete_option( Plugin::OPTION_KEY );
 		delete_option( Plugin::LOG_OPTION_KEY );
 		Rate_Cap::clear_warned();
+		Rate_Cap::clear_counts();
 		update_option( 'admin_email', 'admin@example.com' );
 		$GLOBALS['handl_aicac_wp_mail'] = static function ( $to, $subject, $message ) {
 			self::$mails[] = array(
@@ -42,6 +42,7 @@ final class RateCapTest extends TestCase {
 		delete_option( Plugin::OPTION_KEY );
 		delete_option( Plugin::LOG_OPTION_KEY );
 		Rate_Cap::clear_warned();
+		Rate_Cap::clear_counts();
 		parent::tearDown();
 	}
 
@@ -57,9 +58,10 @@ final class RateCapTest extends TestCase {
 		$plugin = 'acme/acme.php';
 		$tz     = new \DateTimeZone( 'UTC' );
 		$now    = ( new \DateTimeImmutable( '2026-09-22 10:30:00', $tz ) )->getTimestamp();
-		$log    = $this->seed_calls( $plugin, $now, 50 );
+		$bounds = Rate_Cap::window_bounds( Rate_Cap::WINDOW_HOUR, $now, $tz );
+		Rate_Cap::set_window_count( $plugin, Rate_Cap::WINDOW_HOUR, $bounds['key'], 50 );
 
-		$eval = Rate_Cap::evaluate( array( 'default' => 'allow' ), $plugin, $log, $now, $tz );
+		$eval = Rate_Cap::evaluate( array( 'default' => 'allow' ), $plugin, null, $now, $tz );
 		$this->assertFalse( $eval['prevent'] );
 		$this->assertFalse( $eval['soft_warn'] );
 		$this->assertNull( $eval['hour']['limit'] );
@@ -70,7 +72,8 @@ final class RateCapTest extends TestCase {
 		$plugin = 'acme/acme.php';
 		$tz     = new \DateTimeZone( 'UTC' );
 		$now    = ( new \DateTimeImmutable( '2026-09-22 10:30:00', $tz ) )->getTimestamp();
-		$log    = $this->seed_calls( $plugin, $now, 5 );
+		$bounds = Rate_Cap::window_bounds( Rate_Cap::WINDOW_HOUR, $now, $tz );
+		Rate_Cap::set_window_count( $plugin, Rate_Cap::WINDOW_HOUR, $bounds['key'], 5 );
 
 		$policy = array(
 			'default'               => 'allow',
@@ -79,18 +82,47 @@ final class RateCapTest extends TestCase {
 			'log_enabled'           => true,
 		);
 
-		$eval = Rate_Cap::evaluate( $policy, $plugin, $log, $now, $tz );
+		$eval = Rate_Cap::evaluate( $policy, $plugin, null, $now, $tz );
 		$this->assertTrue( $eval['prevent'] );
 		$this->assertSame( Rate_Cap::REASON, $eval['reason'] );
 		$this->assertSame( Rate_Cap::WINDOW_HOUR, $eval['window'] );
 		$this->assertSame( 5, $eval['count'] );
 	}
 
+	public function test_durable_counter_works_when_activity_log_is_off(): void {
+		$plugin = 'acme/acme.php';
+		$tz     = new \DateTimeZone( 'UTC' );
+		$now    = ( new \DateTimeImmutable( '2026-09-22 10:30:00', $tz ) )->getTimestamp();
+
+		$policy = array(
+			'default'               => 'allow',
+			'plugin_rate_caps_hour' => array( $plugin => 2 ),
+			'log_enabled'           => false,
+			'audit_only'            => false,
+		);
+
+		$event = array(
+			'ts'       => $now,
+			'plugin'   => $plugin,
+			'decision' => 'allow',
+		);
+		$rc1 = Rate_Cap::apply_to_event( $event, $policy, null, $now );
+		$this->assertFalse( $rc1['prevent'] );
+		$rc2 = Rate_Cap::apply_to_event( $event, $policy, null, $now );
+		$this->assertFalse( $rc2['prevent'] );
+		$rc3 = Rate_Cap::apply_to_event( $event, $policy, null, $now );
+		$this->assertTrue( $rc3['prevent'] );
+		$this->assertSame( Rate_Cap::REASON, $rc3['reason'] );
+		$this->assertSame( array(), get_option( Plugin::LOG_OPTION_KEY, array() ) );
+	}
+
 	public function test_soft_warn_once_per_window_at_eighty_percent(): void {
 		$plugin = 'acme/acme.php';
 		$tz     = new \DateTimeZone( 'UTC' );
 		$now    = ( new \DateTimeImmutable( '2026-09-22 10:30:00', $tz ) )->getTimestamp();
-		$log    = $this->seed_calls( $plugin, $now, 8 );
+		$bounds = Rate_Cap::window_bounds( Rate_Cap::WINDOW_HOUR, $now, $tz );
+		// Soft threshold for 10 is 8; seed 7 so the next allowed call crosses 80%.
+		Rate_Cap::set_window_count( $plugin, Rate_Cap::WINDOW_HOUR, $bounds['key'], 7 );
 
 		$policy = array(
 			'default'               => 'allow',
@@ -107,14 +139,16 @@ final class RateCapTest extends TestCase {
 			'decision' => 'allow',
 			'provider' => 'openai',
 		);
-		$rc = Rate_Cap::apply_to_event( $event, $policy, $log, $now );
+		$rc = Rate_Cap::apply_to_event( $event, $policy, null, $now );
 		$this->assertFalse( $rc['prevent'] );
 		$this->assertTrue( $rc['soft_warn'] );
 		$this->assertTrue( ! empty( $event['rate_warn'] ) );
 		$this->assertCount( 1, self::$mails );
+		$this->assertStringContainsString( 'AI call limit warning', self::$mails[0]['message'] );
+		$this->assertStringContainsString( 'Usage: 8 of 10 calls', self::$mails[0]['message'] );
+		$this->assertStringNotContainsString( '80%', self::$mails[0]['message'] );
 
-		// Second call in same window must not re-fire.
-		$rc2 = Rate_Cap::apply_to_event( $event, $policy, $log, $now );
+		$rc2 = Rate_Cap::apply_to_event( $event, $policy, null, $now );
 		$this->assertFalse( $rc2['soft_warn'] );
 		$this->assertCount( 1, self::$mails );
 
@@ -129,6 +163,33 @@ final class RateCapTest extends TestCase {
 		$this->assertCount( 1, $warn_rows );
 	}
 
+	public function test_observe_mode_email_footer_does_not_promise_block(): void {
+		$plugin = 'acme/acme.php';
+		$tz     = new \DateTimeZone( 'UTC' );
+		$now    = ( new \DateTimeImmutable( '2026-09-22 10:30:00', $tz ) )->getTimestamp();
+		$bounds = Rate_Cap::window_bounds( Rate_Cap::WINDOW_HOUR, $now, $tz );
+		Rate_Cap::set_window_count( $plugin, Rate_Cap::WINDOW_HOUR, $bounds['key'], 7 );
+
+		$policy = array(
+			'default'               => 'allow',
+			'plugin_rate_caps_hour' => array( $plugin => 10 ),
+			'log_enabled'           => true,
+			'audit_only'            => true,
+			'alert_on_deny'         => true,
+			'alert_email'           => 'ops@example.com',
+		);
+		Policy::save_policy( $policy );
+
+		$event = array(
+			'ts'     => $now,
+			'plugin' => $plugin,
+		);
+		Rate_Cap::apply_to_event( $event, $policy, null, $now );
+		$this->assertCount( 1, self::$mails );
+		$this->assertStringContainsString( 'Observe mode is on. Calls will continue even if the cap is reached.', self::$mails[0]['message'] );
+		$this->assertStringNotContainsString( 'New calls will be blocked', self::$mails[0]['message'] );
+	}
+
 	public function test_window_rollover_hour_and_day(): void {
 		$plugin = 'acme/acme.php';
 		$tz     = new \DateTimeZone( 'America/New_York' );
@@ -136,82 +197,96 @@ final class RateCapTest extends TestCase {
 		$hour_b = ( new \DateTimeImmutable( '2026-09-22 11:05:00', $tz ) )->getTimestamp();
 		$day_b  = ( new \DateTimeImmutable( '2026-09-23 00:05:00', $tz ) )->getTimestamp();
 
-		$log = array(
-			array(
-				'ts'       => $hour_a,
-				'plugin'   => $plugin,
-				'decision' => 'allow',
-			),
-			array(
-				'ts'       => $hour_a + 10,
-				'plugin'   => $plugin,
-				'decision' => 'allow',
-			),
-		);
+		$hour_key_a = Rate_Cap::window_bounds( Rate_Cap::WINDOW_HOUR, $hour_a, $tz )['key'];
+		$day_key_a  = Rate_Cap::window_bounds( Rate_Cap::WINDOW_DAY, $hour_a, $tz )['key'];
+		Rate_Cap::set_window_count( $plugin, Rate_Cap::WINDOW_HOUR, $hour_key_a, 2 );
+		Rate_Cap::set_window_count( $plugin, Rate_Cap::WINDOW_DAY, $day_key_a, 2 );
 
 		$hour_policy = array(
 			'plugin_rate_caps_hour' => array( $plugin => 2 ),
 		);
-		$capped = Rate_Cap::evaluate( $hour_policy, $plugin, $log, $hour_a + 20, $tz );
+		$capped = Rate_Cap::evaluate( $hour_policy, $plugin, null, $hour_a + 20, $tz );
 		$this->assertTrue( $capped['prevent'] );
 
-		$rolled_hour = Rate_Cap::evaluate( $hour_policy, $plugin, $log, $hour_b, $tz );
+		$rolled_hour = Rate_Cap::evaluate( $hour_policy, $plugin, null, $hour_b, $tz );
 		$this->assertFalse( $rolled_hour['prevent'] );
 		$this->assertSame( 0, $rolled_hour['hour']['count'] );
 
 		$day_policy = array(
 			'plugin_rate_caps_day' => array( $plugin => 2 ),
 		);
-		$day_capped = Rate_Cap::evaluate( $day_policy, $plugin, $log, $hour_b, $tz );
+		$day_capped = Rate_Cap::evaluate( $day_policy, $plugin, null, $hour_b, $tz );
 		$this->assertTrue( $day_capped['prevent'] );
 		$this->assertSame( 2, $day_capped['day']['count'] );
 
-		// Day rollover clears day count.
-		$rolled_day = Rate_Cap::evaluate( $day_policy, $plugin, $log, $day_b, $tz );
+		$rolled_day = Rate_Cap::evaluate( $day_policy, $plugin, null, $day_b, $tz );
 		$this->assertFalse( $rolled_day['prevent'] );
 		$this->assertSame( 0, $rolled_day['day']['count'] );
 	}
 
-	public function test_rate_cap_denials_do_not_inflate_count(): void {
+	public function test_admin_and_rate_cap_rows_excluded_from_log_reconstruction(): void {
 		$plugin = 'acme/acme.php';
 		$tz     = new \DateTimeZone( 'UTC' );
 		$now    = ( new \DateTimeImmutable( '2026-09-22 10:30:00', $tz ) )->getTimestamp();
-		$log    = $this->seed_calls( $plugin, $now, 3 );
-		$log[]  = array(
-			'ts'            => $now + 3,
-			'plugin'        => $plugin,
-			'decision'      => 'deny',
-			'denial_reason' => Rate_Cap::REASON,
-		);
-		$log[]  = array(
-			'ts'       => $now + 4,
-			'plugin'   => $plugin,
-			'decision' => Rate_Cap::CHANNEL_WARN,
-			'channel'  => Rate_Cap::CHANNEL_WARN,
+		$log    = array(
+			array(
+				'ts'       => $now,
+				'plugin'   => $plugin,
+				'decision' => 'allow',
+			),
+			array(
+				'ts'       => $now + 1,
+				'plugin'   => $plugin,
+				'decision' => 'allow',
+				'channel'  => 'access_request',
+			),
+			array(
+				'ts'            => $now + 2,
+				'plugin'        => $plugin,
+				'decision'      => 'deny',
+				'denial_reason' => Rate_Cap::REASON,
+				'count'         => 4,
+			),
+			array(
+				'ts'       => $now + 3,
+				'plugin'   => $plugin,
+				'decision' => 'deny',
+				'count'    => 3,
+			),
 		);
 
-		$policy = array( 'plugin_rate_caps_hour' => array( $plugin => 5 ) );
-		$eval   = Rate_Cap::evaluate( $policy, $plugin, $log, $now + 5, $tz );
-		$this->assertSame( 3, $eval['hour']['count'] );
-		$this->assertFalse( $eval['prevent'] );
+		$n = Rate_Cap::count_plugin_calls_in_window( $log, $plugin, $now, $now + 10 );
+		$this->assertSame( 4, $n ); // 1 allow + 3 grouped deny; admin + rate_cap sticky excluded.
 	}
 
-	public function test_apply_to_event_sets_denial_fields_on_prevent(): void {
+	public function test_profile_counts_only_actual_denied_blocks(): void {
 		$plugin = 'acme/acme.php';
-		$tz     = new \DateTimeZone( 'UTC' );
-		$now    = ( new \DateTimeImmutable( '2026-09-22 10:30:00', $tz ) )->getTimestamp();
-		$log    = $this->seed_calls( $plugin, $now, 2 );
-		$policy = array( 'plugin_rate_caps_hour' => array( $plugin => 2 ) );
-
-		$event = array(
-			'ts'       => $now,
-			'plugin'   => $plugin,
-			'decision' => 'allow',
+		$log    = array(
+			array(
+				'ts'       => 1,
+				'plugin'   => $plugin,
+				'channel'  => Rate_Cap::CHANNEL_WARN,
+				'decision' => Rate_Cap::CHANNEL_WARN,
+				'count'    => 2,
+			),
+			array(
+				'ts'            => 2,
+				'plugin'        => $plugin,
+				'decision'      => 'allow',
+				'denial_reason' => Rate_Cap::REASON, // Observe tag — not an actual block.
+			),
+			array(
+				'ts'            => 3,
+				'plugin'        => $plugin,
+				'decision'      => 'deny',
+				'denial_reason' => Rate_Cap::REASON,
+				'count'         => 5,
+			),
 		);
-		$rc = Rate_Cap::apply_to_event( $event, $policy, $log, $now );
-		$this->assertTrue( $rc['prevent'] );
-		$this->assertSame( Rate_Cap::REASON, $rc['reason'] );
-		$this->assertTrue( ! empty( $event['rate_capped'] ) );
+
+		$profile = Rate_Cap::profile_counts( array(), $plugin, $log );
+		$this->assertSame( 2, $profile['warn_count'] );
+		$this->assertSame( 5, $profile['capped_count'] );
 	}
 
 	public function test_policy_wire_after_residency_in_source(): void {
@@ -230,23 +305,5 @@ final class RateCapTest extends TestCase {
 	public function test_soft_warn_threshold(): void {
 		$this->assertSame( 8, Rate_Cap::soft_warn_threshold( 10 ) );
 		$this->assertSame( 1, Rate_Cap::soft_warn_threshold( 1 ) );
-	}
-
-	/**
-	 * @return list<array<string,mixed>>
-	 */
-	private function seed_calls( string $plugin, int $base_ts, int $n ): array {
-		$log = array();
-		for ( $i = 0; $i < $n; $i++ ) {
-			$log[] = array(
-				'ts'       => $base_ts + $i,
-				'plugin'   => $plugin,
-				'decision' => 'allow',
-				'provider' => 'openai',
-				'operation'=> 'generate_text',
-			);
-		}
-
-		return $log;
 	}
 }
