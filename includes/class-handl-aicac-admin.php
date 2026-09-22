@@ -635,6 +635,18 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_keyscan_run', 'handl_aicac_nonce' );
 				$this->handle_keyscan_run();
 			}
+			if ( 'freeze_start' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_freeze_start', 'handl_aicac_nonce' );
+				$this->handle_freeze_start();
+			}
+			if ( 'freeze_end' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_freeze_end', 'handl_aicac_nonce' );
+				$this->handle_freeze_end();
+			}
+			if ( 'freeze_extend' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_freeze_extend', 'handl_aicac_nonce' );
+				$this->handle_freeze_extend();
+			}
 			if ( 'preset_preview' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_preset_preview', 'handl_aicac_nonce' );
 				$this->handle_preset_preview();
@@ -1100,8 +1112,30 @@ echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be
 				$audit_notice .= ' <a href="' . esc_url( self::screen_url( 'activity' ) ) . '">' . esc_html__( 'Open Activity', 'handl-ai-connector-access-control' ) . '</a>';
 			}
 			echo '<div class="notice notice-info"><p>' . wp_kses_post( $audit_notice ) . '</p></div>';
-		} else		if ( ! empty( $policy['kill_switch'] ) ) {
+		} else		if ( ! empty( $policy['kill_switch'] ) && ! Freeze::is_active() ) {
 			echo '<div class="notice notice-warning"><p>' . esc_html__( 'Emergency stop is on. All AI Client calls are blocked except listed plugins.', 'handl-ai-connector-access-control' ) . '</p></div>';
+		}
+		$freeze_notice = Freeze::notice_text();
+		if ( null !== $freeze_notice ) {
+			echo '<div class="notice notice-error"><p><strong>' . esc_html( $freeze_notice ) . '</strong></p>';
+			echo '<form method="post" style="display:inline-block;margin:0.5em 0.75em 0.5em 0;">';
+			wp_nonce_field( 'handl_aicac_freeze_end', 'handl_aicac_nonce' );
+			echo '<input type="hidden" name="handl_aicac_action" value="freeze_end" />';
+			echo '<input type="hidden" name="handl_aicac_tab" value="' . esc_attr( $tab ) . '" />';
+			submit_button( __( 'Restore now', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+			echo '</form>';
+			echo '<form method="post" style="display:inline-block;margin:0.5em 0;vertical-align:top;">';
+			wp_nonce_field( 'handl_aicac_freeze_extend', 'handl_aicac_nonce' );
+			echo '<input type="hidden" name="handl_aicac_action" value="freeze_extend" />';
+			echo '<input type="hidden" name="handl_aicac_tab" value="' . esc_attr( $tab ) . '" />';
+			echo '<label for="handl-aicac-freeze-extend-minutes">' . esc_html__( 'New duration', 'handl-ai-connector-access-control' ) . '</label> ';
+			echo '<select name="handl_aicac_freeze_minutes" id="handl-aicac-freeze-extend-minutes">';
+			$this->render_freeze_minute_options( 60 );
+			echo '</select> ';
+			submit_button( __( 'Reset timer', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+			echo '<p class="description" style="margin:0.35em 0 0;">' . esc_html__( 'The new duration starts now and replaces the time remaining.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '</form>';
+			echo '</div>';
 		}
 		$qh_banner = Quiet_Hours::active_banner_text( $policy );
 		if ( null !== $qh_banner ) {
@@ -1683,6 +1717,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		submit_button( __( 'Save changes', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
 		echo '</p>';
 		echo '</form>';
+
+		$this->render_freeze_controls( 'protections' );
 
 		Access_Request::render_inbox_section( $plugins );
 
@@ -3065,6 +3101,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		// AICAC-ONBOARD: first-run wizard + review reminder (Dashboard only).
 		$this->render_onboarding_dashboard_section( $policy );
+		// AICAC-PANIC-FREEZE (#267): one-click deny-all with countdown restore.
+		$this->render_freeze_controls( 'dashboard' );
 		// AICAC-CHECKLIST (#190): post-wizard getting-started panel.
 		$this->render_getting_started_checklist( $policy, $log );
 		// AICAC-NEWPLUGIN: plugins awaiting first AI access decision.
@@ -9461,6 +9499,114 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				) )
 		);
 		exit;
+	}
+
+	/**
+	 * AICAC-PANIC-FREEZE (#267): start deny-all freeze.
+	 */
+	private function handle_freeze_start(): void {
+		$this->require_admin_mutation( 'handl_aicac_freeze_start' );
+		$tab     = isset( $_POST['handl_aicac_tab'] ) ? sanitize_key( wp_unslash( (string) $_POST['handl_aicac_tab'] ) ) : 'dashboard';
+		$minutes = isset( $_POST['handl_aicac_freeze_minutes'] ) ? (int) $_POST['handl_aicac_freeze_minutes'] : 0;
+		$result  = Freeze::start( $minutes );
+		$status  = ! empty( $result['ok'] ) ? 'started' : (string) ( $result['error'] ?? 'error' );
+		wp_safe_redirect(
+			self::redirect_url(
+				array(
+					'page'            => 'handl-ai-connector-access-control',
+					'handl_aicac_tab' => $tab,
+					'handl_aicac_freeze' => $status,
+				)
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * AICAC-PANIC-FREEZE (#267): restore prior policy now.
+	 */
+	private function handle_freeze_end(): void {
+		$this->require_admin_mutation( 'handl_aicac_freeze_end' );
+		$tab    = isset( $_POST['handl_aicac_tab'] ) ? sanitize_key( wp_unslash( (string) $_POST['handl_aicac_tab'] ) ) : 'dashboard';
+		$result = Freeze::end();
+		$status = ! empty( $result['ok'] ) ? 'ended' : 'not_active';
+		wp_safe_redirect(
+			self::redirect_url(
+				array(
+					'page'            => 'handl-ai-connector-access-control',
+					'handl_aicac_tab' => $tab,
+					'handl_aicac_freeze' => $status,
+				)
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * AICAC-PANIC-FREEZE (#267): fresh-click extend (no silent auto-extend).
+	 */
+	private function handle_freeze_extend(): void {
+		$this->require_admin_mutation( 'handl_aicac_freeze_extend' );
+		$tab     = isset( $_POST['handl_aicac_tab'] ) ? sanitize_key( wp_unslash( (string) $_POST['handl_aicac_tab'] ) ) : 'dashboard';
+		$minutes = isset( $_POST['handl_aicac_freeze_minutes'] ) ? (int) $_POST['handl_aicac_freeze_minutes'] : 0;
+		$result  = Freeze::extend( $minutes );
+		$status  = ! empty( $result['ok'] ) ? 'extended' : (string) ( $result['error'] ?? 'error' );
+		wp_safe_redirect(
+			self::redirect_url(
+				array(
+					'page'            => 'handl-ai-connector-access-control',
+					'handl_aicac_tab' => $tab,
+					'handl_aicac_freeze' => $status,
+				)
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * AICAC-PANIC-FREEZE (#267): Dashboard / Protections start controls.
+	 */
+	private function render_freeze_controls( string $tab ): void {
+		if ( ! self::user_can_manage_options() ) {
+			return;
+		}
+		if ( Freeze::is_active() ) {
+			return;
+		}
+
+		echo '<div class="handl-aicac-freeze-panel" style="border:1px solid #b32d2e;padding:12px 16px;background:#fcf0f1;max-width:40em;margin:0 0 1.25em;">';
+		echo '<h2 style="margin-top:0;">' . esc_html__( 'Panic freeze', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<p>' . esc_html__( 'Stop all AI Client calls now. Your current policy is saved and restored when the timer ends or you choose Restore now.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<form method="post">';
+		wp_nonce_field( 'handl_aicac_freeze_start', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="freeze_start" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="' . esc_attr( $tab ) . '" />';
+		echo '<label for="handl-aicac-freeze-start-minutes">' . esc_html__( 'Duration', 'handl-ai-connector-access-control' ) . '</label> ';
+		echo '<select name="handl_aicac_freeze_minutes" id="handl-aicac-freeze-start-minutes">';
+		$this->render_freeze_minute_options( 60 );
+		echo '</select> ';
+		submit_button( __( 'Freeze AI now', 'handl-ai-connector-access-control' ), 'delete', 'submit', false );
+		echo '</form>';
+		echo '</div>';
+	}
+
+	/**
+	 * @param int $selected Minutes selected by default.
+	 */
+	private function render_freeze_minute_options( int $selected ): void {
+		$labels = array(
+			15  => __( '15 minutes', 'handl-ai-connector-access-control' ),
+			60  => __( '1 hour', 'handl-ai-connector-access-control' ),
+			240 => __( '4 hours', 'handl-ai-connector-access-control' ),
+		);
+		foreach ( Freeze::allowed_minutes() as $mins ) {
+			$label = $labels[ $mins ] ?? sprintf(
+				/* translators: %d: minutes */
+				__( '%d minutes', 'handl-ai-connector-access-control' ),
+				$mins
+			);
+			$this->render_option( (string) $mins, (string) $selected, $label );
+		}
 	}
 
 	/**
