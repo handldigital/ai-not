@@ -221,7 +221,9 @@ final class Plugin_Chips {
 	/**
 	 * Resolve one chip payload.
 	 *
-	 * Priority: storm/recent deny volume → Denied → Watched → Allowed → never seen.
+	 * Priority: storm/recent deny volume → explicit rule → pending review →
+	 * activity recorded → no recorded activity. Labels describe rule/review/
+	 * activity state only — they do not promise the outcome of the next call.
 	 *
 	 * @param array<string,mixed> $policy
 	 * @param array<string,mixed> $rules
@@ -256,38 +258,35 @@ final class Plugin_Chips {
 			}
 		}
 
-		$pending_observe = '' !== $plugin
-			&& New_Plugin::is_pending( $policy, $plugin )
-			&& New_Plugin::INTERIM_OBSERVE === New_Plugin::interim_mode( $policy );
-		$pending_deny    = New_Plugin::should_deny_interim( $policy, '' !== $plugin ? $plugin : null );
+		$is_pending = '' !== $plugin && New_Plugin::is_pending( $policy, $plugin );
 
 		if ( $deny_count > 0 && ( $has_storm || $deny_count > 1 ) ) {
 			$status = 'denies_week';
 			$label  = sprintf(
 				/* translators: %d: number of blocked AI calls in the last 7 days */
-				_n( 'AI: %d deny this week', 'AI: %d denies this week', $deny_count, 'handl-ai-connector-access-control' ),
+				_n( 'AI: %d blocked attempt in the last 7 days', 'AI: %d blocked attempts in the last 7 days', $deny_count, 'handl-ai-connector-access-control' ),
 				$deny_count
 			);
 			$class = 'handl-aicac-plugin-chip--denies';
-		} elseif ( 'deny' === $explicit || $pending_deny ) {
+		} elseif ( 'deny' === $explicit ) {
 			$status = 'denied';
-			$label  = __( 'AI: Denied', 'handl-ai-connector-access-control' );
+			$label  = __( 'AI rule: Deny', 'handl-ai-connector-access-control' );
 			$class  = 'handl-aicac-plugin-chip--denied';
-		} elseif (
-			$pending_observe
-			|| ( $audit_only && $has_activity )
-			|| ( '' === $explicit && $has_activity )
-		) {
-			$status = 'watched';
-			$label  = __( 'AI: Watched', 'handl-ai-connector-access-control' );
-			$class  = 'handl-aicac-plugin-chip--watched';
-		} elseif ( $has_activity || 'allow' === $explicit ) {
+		} elseif ( 'allow' === $explicit ) {
 			$status = 'allowed';
-			$label  = __( 'AI: Allowed', 'handl-ai-connector-access-control' );
+			$label  = __( 'AI rule: Allow', 'handl-ai-connector-access-control' );
 			$class  = 'handl-aicac-plugin-chip--allowed';
+		} elseif ( $is_pending ) {
+			$status = 'pending';
+			$label  = __( 'AI: Pending review', 'handl-ai-connector-access-control' );
+			$class  = 'handl-aicac-plugin-chip--watched';
+		} elseif ( $has_activity ) {
+			$status = 'watched';
+			$label  = __( 'AI: Activity recorded', 'handl-ai-connector-access-control' );
+			$class  = 'handl-aicac-plugin-chip--watched';
 		} else {
 			$status = 'never_seen';
-			$label  = __( 'AI: never seen', 'handl-ai-connector-access-control' );
+			$label  = __( 'AI: No recorded activity', 'handl-ai-connector-access-control' );
 			$class  = 'handl-aicac-plugin-chip--never-seen';
 		}
 

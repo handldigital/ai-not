@@ -93,22 +93,22 @@ final class PluginChipsTest extends TestCase {
 		$index = Plugin_Chips::build_index( $policy, $log, $now );
 
 		$this->assertSame( 'allowed', $index['allow-me/allow-me.php']['status'] );
-		$this->assertSame( 'AI: Allowed', $index['allow-me/allow-me.php']['label'] );
+		$this->assertSame( 'AI rule: Allow', $index['allow-me/allow-me.php']['label'] );
 
 		$this->assertSame( 'denied', $index['deny-me/deny-me.php']['status'] );
-		$this->assertSame( 'AI: Denied', $index['deny-me/deny-me.php']['label'] );
+		$this->assertSame( 'AI rule: Deny', $index['deny-me/deny-me.php']['label'] );
 
 		$this->assertSame( 'watched', $index['watched/watched.php']['status'] );
-		$this->assertSame( 'AI: Watched', $index['watched/watched.php']['label'] );
+		$this->assertSame( 'AI: Activity recorded', $index['watched/watched.php']['label'] );
 
 		$this->assertSame( 'denies_week', $index['stormy/stormy.php']['status'] );
 		$this->assertTrue( $index['stormy/stormy.php']['has_storm'] );
 		$this->assertSame( 12, $index['stormy/stormy.php']['deny_count'] );
-		$this->assertStringContainsString( '12 denies this week', $index['stormy/stormy.php']['label'] );
+		$this->assertStringContainsString( '12 blocked attempts in the last 7 days', $index['stormy/stormy.php']['label'] );
 
 		$never = Plugin_Chips::chip_for_plugin( 'quiet/quiet.php', $policy, $policy['plugins'], false, false, 0, false );
 		$this->assertSame( 'never_seen', $never['status'] );
-		$this->assertSame( 'AI: never seen', $never['label'] );
+		$this->assertSame( 'AI: No recorded activity', $never['label'] );
 	}
 
 	public function test_chip_deep_links_to_rules_focus(): void {
@@ -159,7 +159,7 @@ final class PluginChipsTest extends TestCase {
 		Plugin_Chips::reset_cache();
 
 		$html = Plugin_Chips::chip_html( 'x/x.php' );
-		$this->assertStringContainsString( 'AI: Denied', $html );
+		$this->assertStringContainsString( 'AI rule: Deny', $html );
 		$this->assertStringContainsString( 'handl-aicac-plugin-chip--denied', $html );
 	}
 
@@ -208,11 +208,11 @@ final class PluginChipsTest extends TestCase {
 
 		for ( $i = 0; $i < 40; $i++ ) {
 			$html = Plugin_Chips::chip_html( 'a/a.php' );
-			$this->assertStringContainsString( 'AI: Allowed', $html );
+			$this->assertStringContainsString( 'AI rule: Allow', $html );
 			$html = Plugin_Chips::chip_html( 'b/b.php' );
-			$this->assertStringContainsString( 'AI: Denied', $html );
+			$this->assertStringContainsString( 'AI rule: Deny', $html );
 			$html = Plugin_Chips::chip_html( 'never/never.php' );
-			$this->assertStringContainsString( 'AI: never seen', $html );
+			$this->assertStringContainsString( 'AI: No recorded activity', $html );
 		}
 
 		// Store still empty — warm path did not re-enter get_option/get_policy.
