@@ -77,8 +77,10 @@ final class Share {
 			return;
 		}
 
-		self::record_view( $row['hash'], time() );
-		self::send_page( self::summary( time() ) );
+		$now     = time();
+		$summary = self::summary( $now );
+		self::record_view( $row['hash'], $now );
+		self::send_page( $summary );
 	}
 
 	public function handle_create(): void {
@@ -311,9 +313,13 @@ final class Share {
 			if ( $ts < $since ) {
 				continue;
 			}
-			++$calls_7d;
+			if ( ! self::is_counted_attempt( $row ) ) {
+				continue;
+			}
+			$n = self::attempt_count( $row );
+			$calls_7d += $n;
 			if ( 'deny' === (string) ( $row['decision'] ?? '' ) ) {
-				++$denies_7d;
+				$denies_7d += $n;
 			}
 			$name = '';
 			if ( ! empty( $row['provider'] ) && is_string( $row['provider'] ) ) {
@@ -327,7 +333,7 @@ final class Share {
 			if ( ! isset( $providers[ $name ] ) ) {
 				$providers[ $name ] = 0;
 			}
-			++$providers[ $name ];
+			$providers[ $name ] += $n;
 		}
 		arsort( $providers );
 		$list = array();
@@ -390,7 +396,7 @@ final class Share {
 
 		echo '<div class="handl-aicac-share" style="margin-top:2em;max-width:40em;">';
 		echo '<h2>' . esc_html__( 'Share status', 'handl-ai-connector-access-control' ) . '</h2>';
-		echo '<p class="description">' . esc_html__( 'Create a read-only status link for someone without a WordPress account. The link expires. It shows totals only, not plugin rules.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Anyone with this link can view your setup score, rule totals, recorded activity totals, provider names, and last settings change. They cannot change settings. The link expires, and you can revoke it at any time.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( '' !== $flash ) {
 			echo '<div class="notice notice-success inline"><p>';
@@ -424,7 +430,7 @@ final class Share {
 		}
 
 		echo '<table class="widefat striped"><thead><tr>';
-		echo '<th>' . esc_html__( 'Link', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Link ID', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Expires', 'handl-ai-connector-access-control' ) . '</th>';
 		if ( $can ) {
 			echo '<th></th>';
@@ -500,17 +506,18 @@ final class Share {
 		echo '<dl>';
 		echo '<dt>' . esc_html__( 'Setup score', 'handl-ai-connector-access-control' ) . '</dt>';
 		echo '<dd>' . esc_html( (string) (int) ( $summary['score'] ?? 0 ) ) . '</dd>';
-		echo '<dt>' . esc_html__( 'Plugins allowed', 'handl-ai-connector-access-control' ) . '</dt>';
+		echo '<dt>' . esc_html__( 'Plugins with an Allow rule', 'handl-ai-connector-access-control' ) . '</dt>';
 		echo '<dd>' . esc_html( (string) (int) ( $summary['allowed'] ?? 0 ) ) . '</dd>';
-		echo '<dt>' . esc_html__( 'Plugins denied', 'handl-ai-connector-access-control' ) . '</dt>';
+		echo '<dt>' . esc_html__( 'Plugins with a Deny rule', 'handl-ai-connector-access-control' ) . '</dt>';
 		echo '<dd>' . esc_html( (string) (int) ( $summary['denied'] ?? 0 ) ) . '</dd>';
-		echo '<dt>' . esc_html__( 'Calls, last 7 days', 'handl-ai-connector-access-control' ) . '</dt>';
+		echo '<dt>' . esc_html__( 'Recorded AI calls, last 7 days', 'handl-ai-connector-access-control' ) . '</dt>';
 		echo '<dd>' . esc_html( (string) (int) ( $summary['calls_7d'] ?? 0 ) ) . '</dd>';
-		echo '<dt>' . esc_html__( 'Blocked, last 7 days', 'handl-ai-connector-access-control' ) . '</dt>';
+		echo '<dt>' . esc_html__( 'Recorded blocked calls, last 7 days', 'handl-ai-connector-access-control' ) . '</dt>';
 		echo '<dd>' . esc_html( (string) (int) ( $summary['denies_7d'] ?? 0 ) ) . '</dd>';
-		echo '<dt>' . esc_html__( 'Rules last changed', 'handl-ai-connector-access-control' ) . '</dt>';
+		echo '<dt>' . esc_html__( 'Settings last changed', 'handl-ai-connector-access-control' ) . '</dt>';
 		echo '<dd>' . esc_html( $changed_label ) . '</dd>';
 		echo '</dl>';
+		echo '<p>' . esc_html__( 'Based on saved Activity. Older or unrecorded activity is not included.', 'handl-ai-connector-access-control' ) . '</p>';
 		$providers = isset( $summary['providers'] ) && is_array( $summary['providers'] ) ? $summary['providers'] : array();
 		if ( ! empty( $providers ) ) {
 			echo '<h2>' . esc_html__( 'Providers, last 7 days', 'handl-ai-connector-access-control' ) . '</h2><ul>';
@@ -625,6 +632,37 @@ final class Share {
 		}
 
 		return $out;
+	}
+
+	/**
+	 * AI Client attempts that belong on the public totals (not admin/test rows).
+	 *
+	 * @param array<string,mixed> $row
+	 */
+	private static function is_counted_attempt( array $row ): bool {
+		if ( class_exists( Selftest::class ) && Selftest::is_synthetic_row( $row ) ) {
+			return false;
+		}
+		$channel = isset( $row['channel'] ) ? (string) $row['channel'] : '';
+		if ( self::CHANNEL === $channel || ! empty( $row['share_action'] ) ) {
+			return false;
+		}
+		if ( class_exists( Usage_Trends::class ) ) {
+			return Usage_Trends::is_activity_row( $row );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Grouped deny / shadow clusters store the attempt total in `count`.
+	 *
+	 * @param array<string,mixed> $row
+	 */
+	private static function attempt_count( array $row ): int {
+		$n = isset( $row['count'] ) ? (int) $row['count'] : 1;
+
+		return $n > 0 ? $n : 1;
 	}
 
 	/**

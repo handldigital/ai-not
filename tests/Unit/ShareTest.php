@@ -160,7 +160,78 @@ final class ShareTest extends TestCase {
 		$this->assertStringNotContainsString( 'acme/acme.php', $html );
 		$this->assertStringNotContainsString( 'blocked/b.php', $html );
 		$this->assertStringContainsString( 'noindex', $html );
+		$this->assertStringContainsString( 'Plugins with an Allow rule', $html );
+		$this->assertStringContainsString( 'Plugins with a Deny rule', $html );
+		$this->assertStringContainsString( 'Recorded AI calls, last 7 days', $html );
+		$this->assertStringContainsString( 'Recorded blocked calls, last 7 days', $html );
+		$this->assertStringContainsString( 'Settings last changed', $html );
+		$this->assertStringContainsString( 'Based on saved Activity. Older or unrecorded activity is not included.', $html );
 		$this->assertArrayHasKey( 'X-Robots-Tag', Share::page_headers() );
+	}
+
+	public function test_summary_counts_ai_attempts_not_admin_or_grouped_rows(): void {
+		update_option(
+			Plugin::LOG_OPTION_KEY,
+			array(
+				array(
+					'ts'       => 1_700_000_000,
+					'plugin'   => 'acme/acme.php',
+					'decision' => 'allow',
+					'provider' => 'openai',
+				),
+				array(
+					'ts'       => 1_700_000_000,
+					'plugin'   => 'blocked/b.php',
+					'decision' => 'deny',
+					'provider' => 'openai',
+					'count'    => 5,
+					'retry_storm' => true,
+				),
+				array(
+					'ts'           => 1_700_000_000,
+					'decision'     => 'allow',
+					'channel'      => Share::CHANNEL,
+					'share_action' => 'view',
+					'provider'     => 'openai',
+				),
+				array(
+					'ts'       => 1_700_000_000,
+					'decision' => 'deny',
+					'channel'  => 'selftest',
+					'selftest' => true,
+					'provider' => 'openai',
+				),
+				array(
+					'ts'       => 1_700_000_000,
+					'decision' => 'observe',
+					'channel'  => 'direct_http',
+					'count'    => 9,
+					'provider' => 'anthropic',
+				),
+			),
+			false
+		);
+
+		$sum = Share::summary( 1_700_000_000 );
+		$this->assertSame( 6, $sum['calls_7d'] );
+		$this->assertSame( 5, $sum['denies_7d'] );
+		$this->assertSame(
+			array(
+				array(
+					'name'  => 'openai',
+					'calls' => 6,
+				),
+			),
+			$sum['providers']
+		);
+	}
+
+	public function test_settings_helper_discloses_link_access(): void {
+		$src = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-share.php' );
+		$this->assertStringContainsString( 'Anyone with this link can view your setup score, rule totals, recorded activity totals, provider names, and last settings change.', $src );
+		$this->assertStringContainsString( 'They cannot change settings. The link expires, and you can revoke it at any time.', $src );
+		$this->assertStringContainsString( 'Link ID', $src );
+		$this->assertStringNotContainsString( 'It shows totals only, not plugin rules.', $src );
 	}
 
 	public function test_plugin_php_requires_share(): void {
