@@ -32,6 +32,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-prompt-snapshot.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-operations.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cost.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cost-receipt.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-spend-threshold.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-budget.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-forecast.php';
@@ -68,6 +69,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quiet-hours.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-break-glass.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-pii-warn.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-mcp-gate.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-residency.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-selftest.php';
@@ -112,6 +114,7 @@ final class Plugin {
 		Log_Retention::instance()->init();
 		Model_Force::instance()->init();
 		Shadow_AI::instance()->init();
+		Mcp_Gate::instance()->init();
 		Canary::instance()->init();
 		Keyscan::instance()->init();
 		Admin::instance()->init();

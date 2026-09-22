@@ -41,6 +41,23 @@ final class Policy_Simulator {
 	}
 
 	/**
+	 * Preview an MCP register/call under current MCP rules.
+	 *
+	 * @return array{prevent:bool,reason:string,decision?:string,rule?:string}
+	 */
+	public static function evaluate_mcp( ?string $plugin_basename ): array {
+		if ( ! class_exists( Mcp_Gate::class ) ) {
+			return array(
+				'prevent'  => false,
+				'reason'   => '',
+				'decision' => 'allow',
+			);
+		}
+
+		return Mcp_Gate::evaluate( $plugin_basename );
+	}
+
+	/**
 	 * Human verdict chip fields from an evaluate() result.
 	 *
 	 * @param array{prevent?:bool,reason?:string,matched_tools?:list<string>} $eval
@@ -105,6 +122,7 @@ final class Policy_Simulator {
 			'tool_armed'        => __( 'Blocked tool rule', 'handl-ai-connector-access-control' ),
 			'ability_armed'     => __( 'Blocked tool rule', 'handl-ai-connector-access-control' ),
 			'pii'               => __( 'Personal information detected', 'handl-ai-connector-access-control' ),
+			'mcp'               => __( 'MCP rule', 'handl-ai-connector-access-control' ),
 			'residency'         => __( 'Provider region filter', 'handl-ai-connector-access-control' ),
 		);
 		if ( isset( $map[ $reason ] ) ) {

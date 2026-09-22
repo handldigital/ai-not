@@ -159,6 +159,25 @@ final class Selftest {
 				$msg   = __( 'Alerts are unavailable. Check that the plugin is active, then run the test again.', 'handl-ai-connector-access-control' );
 				return self::finish( $original, $links, $issue, $msg, $tab, false );
 			}
+
+			$mcp = class_exists( Mcp_Gate::class )
+				? Mcp_Gate::selftest_probe()
+				: array(
+					'status' => 'skipped',
+					'pass'   => true,
+					'label'  => __( 'MCP gate skipped (Abilities/MCP APIs not present)', 'handl-ai-connector-access-control' ),
+				);
+			$links['mcp'] = array(
+				'id'    => 'mcp',
+				'pass'  => ! empty( $mcp['pass'] ),
+				'label' => (string) ( $mcp['label'] ?? '' ),
+			);
+			if ( empty( $mcp['pass'] ) ) {
+				$issue = 'mcp_failed';
+				$tab   = 'rules';
+				$msg   = __( 'The MCP gate check failed. Deny should block; allow should pass. Missing APIs should skip, not fail.', 'handl-ai-connector-access-control' );
+				return self::finish( $original, $links, $issue, $msg, $tab, false );
+			}
 		} catch ( \Throwable $e ) {
 			$issue = 'error';
 			$tab   = 'dashboard';

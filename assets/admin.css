@@ -105,6 +105,14 @@
 	color: #3c2d6e;
 }
 
+.handl-aicac-badge--storm {
+	background: #fef3cd;
+	color: #664d03;
+	text-transform: none;
+	letter-spacing: 0;
+	font-weight: 600;
+}
+
 .handl-aicac-log-table code {
 	font-size: 11px;
 	word-break: break-all;

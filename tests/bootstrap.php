@@ -692,8 +692,8 @@ if ( ! function_exists( 'wp_remote_retrieve_response_code' ) ) {
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-clock.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-operations.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cost.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cost-receipt.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-model-force.php';
-require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cost.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-spend-threshold.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-budget.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-forecast.php';
@@ -896,6 +896,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-new-plugin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quiet-hours.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-break-glass.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-pii-warn.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-mcp-gate.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-residency.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-selftest.php';
