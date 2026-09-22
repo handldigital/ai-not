@@ -123,6 +123,7 @@ final class Policy_Simulator {
 			'ability_armed'     => __( 'Blocked tool rule', 'handl-ai-connector-access-control' ),
 			'pii'               => __( 'Personal information detected', 'handl-ai-connector-access-control' ),
 			'mcp'               => __( 'MCP rule', 'handl-ai-connector-access-control' ),
+			'residency'         => __( 'Provider region filter', 'handl-ai-connector-access-control' ),
 		);
 		if ( isset( $map[ $reason ] ) ) {
 			return $map[ $reason ];

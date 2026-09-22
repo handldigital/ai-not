@@ -201,6 +201,7 @@ final class Admin {
 		add_action( 'admin_init', array( $this, 'maybe_handle_file_downloads' ) );
 		add_action( 'admin_init', array( $this, 'maybe_redirect_legacy_settings_url' ) );
 		add_action( 'admin_init', array( Caps::class, 'ensure_registered' ) );
+		add_action( 'handl_aicac_protections_settings', array( $this, 'render_residency_settings_rows' ) );
 	}
 
 	/**
@@ -1672,6 +1673,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$this->render_role_gate_settings_rows( $policy, $form_id );
 		$this->render_new_plugin_settings_rows( $policy, $form_id );
 		$this->render_quiet_hours_settings_rows( $policy );
+		do_action( 'handl_aicac_protections_settings', $policy );
 		echo '</table>';
 
 		$this->render_ability_arming_settings( $policy, $form_id );
@@ -5428,6 +5430,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$this->apply_new_plugin_settings_from_post( $policy, true );
 		$this->apply_model_force_settings_from_post( $policy, true );
 		$this->apply_quiet_hours_settings_from_post( $policy );
+		Residency::save_from_post();
 
 		$policy = Policy::omit_unsolicited_defaults( $policy, $stored );
 		$report = Policy_Checks::evaluate_all( $policy );
@@ -7825,7 +7828,14 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 		$reason = isset( $row['denial_reason'] ) ? (string) $row['denial_reason'] : '';
 		if ( '' !== $reason && ( 'deny' === $decision || ( ! empty( $policy['audit_only'] ) && 'deny' === ( $row['would_decision'] ?? '' ) ) ) ) {
-			echo '<br /><span class="description handl-aicac-denial-reason">' . esc_html( $this->format_denial_reason_label( $reason ) ) . '</span>';
+			$reason_label = $this->format_denial_reason_label( $reason );
+			if ( 'residency' === $reason && ! empty( $row['residency_rule'] ) ) {
+				$reason_label .= ' (' . (string) $row['residency_rule'] . ')';
+			}
+			echo '<br /><span class="description handl-aicac-denial-reason">' . esc_html( $reason_label ) . '</span>';
+		}
+		if ( 'allow' === $decision && ! empty( $row['residency_unknown'] ) ) {
+			echo '<br /><span class="description">' . esc_html__( 'Provider region unknown', 'handl-ai-connector-access-control' ) . '</span>';
 		}
 		$qh_name = isset( $row['quiet_hours_window'] ) ? (string) $row['quiet_hours_window'] : '';
 		if ( '' !== $qh_name ) {
@@ -8229,6 +8239,41 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	}
 
 	/**
+	 * AICAC-RESIDENCY (#229): approved region set on Protections (own option).
+	 *
+	 * @param array<string,mixed> $policy Unused; hook signature matches do_action.
+	 */
+	public function render_residency_settings_rows( $policy = array() ): void {
+		unset( $policy );
+		$settings = Residency::get();
+		$region   = $settings['region'];
+		$strict   = ! empty( $settings['strict_unknown'] );
+		$map_text = Residency::format_map_text( $settings['map'] );
+
+		echo '<tr>';
+		echo '<th scope="row"><label for="handl-aicac-residency-region">' . esc_html__( 'Provider region filter', 'handl-ai-connector-access-control' ) . '</label></th>';
+		echo '<td>';
+		echo '<p class="description" style="max-width:46em;margin-top:0;">' . esc_html__( 'Checks AI Client calls against a saved provider region list. This does not verify where data is processed or stored.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<select name="handl_aicac_residency_region" id="handl-aicac-residency-region">';
+		$this->render_option( Residency::REGION_NONE, $region, __( 'No restriction', 'handl-ai-connector-access-control' ) );
+		$this->render_option( Residency::REGION_EU, $region, __( 'Listed for the European Union', 'handl-ai-connector-access-control' ) );
+		$this->render_option( Residency::REGION_US, $region, __( 'Listed for the United States', 'handl-ai-connector-access-control' ) );
+		echo '</select>';
+		echo '<p style="margin:10px 0 0;">';
+		echo '<label><input type="checkbox" name="handl_aicac_residency_strict_unknown" value="1" ' . checked( $strict, true, false ) . ' /> ';
+		echo esc_html__( 'Block providers with no listed region', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '</p>';
+		echo '<p class="description">' . esc_html__( 'Applies when a region is selected. Unchecked: this filter lets providers with no listed region through and marks them in Activity. Checked: this filter blocks them.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p style="margin:12px 0 4px;"><label for="handl-aicac-residency-map"><strong>' . esc_html__( 'Provider region overrides', 'handl-ai-connector-access-control' ) . '</strong></label></p>';
+		echo '<textarea name="handl_aicac_residency_map" id="handl-aicac-residency-map" rows="6" cols="40" class="large-text code" placeholder="openai=us&#10;mistral=eu">';
+		echo esc_textarea( $map_text );
+		echo '</textarea>';
+		echo '<p class="description">' . esc_html__( 'Optional overrides. One provider per line, for example openai=us or mistral=eu,us. Leave the region empty to remove a built-in provider from the list. Developers can also use the handl_aicac_residency_provider_map filter.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '</td>';
+		echo '</tr>';
+	}
+
+	/**
 	 * Human label for denial_reason codes (loud denials — admin blames this plugin).
 	 */
 	private function format_denial_reason_label( string $reason ): string {
@@ -8243,6 +8288,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			'tool_armed'          => __( 'Blocked by HandL: prompt offered a blocked tool', 'handl-ai-connector-access-control' ),
 			// Legacy reason code from pre-rename log rows.
 			'ability_armed'       => __( 'Blocked by HandL: prompt offered a blocked tool', 'handl-ai-connector-access-control' ),
+			'residency'           => __( 'Blocked by HandL: provider region filter', 'handl-ai-connector-access-control' ),
 		);
 		return $map[ $reason ] ?? sprintf(
 			/* translators: %s: internal denial reason code */
