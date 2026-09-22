@@ -208,6 +208,26 @@ final class ShareTest extends TestCase {
 					'count'    => 9,
 					'provider' => 'anthropic',
 				),
+				array(
+					'ts'       => 1_700_000_000,
+					'decision' => 'policy_restored',
+					'channel'  => 'policy_restore',
+					'plugin'   => null,
+				),
+				array(
+					'ts'       => 1_700_000_000,
+					'decision' => 'access_request',
+					'channel'  => 'access_request',
+					'plugin'   => 'blocked/b.php',
+					'provider' => '',
+				),
+				array(
+					'ts'              => 1_700_000_000,
+					'decision'        => 'policy_checks_override',
+					'channel'         => 'policy_checks',
+					'plugin'          => null,
+					'override_source' => 'save',
+				),
 			),
 			false
 		);

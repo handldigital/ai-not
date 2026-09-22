@@ -635,6 +635,28 @@ final class Share {
 	}
 
 	/**
+	 * Administrative Activity channels that are not AI Client attempts.
+	 *
+	 * @return list<string>
+	 */
+	private static function administrative_channels(): array {
+		return array(
+			self::CHANNEL,
+			'policy_restore',
+			'access_request',
+			'policy_checks',
+			'policy_save',
+			'policy_import',
+			'email',
+			'temp_allow',
+			'went_ai',
+			'canary',
+			'tamper',
+			'hardened_guard',
+		);
+	}
+
+	/**
 	 * AI Client attempts that belong on the public totals (not admin/test rows).
 	 *
 	 * @param array<string,mixed> $row
@@ -644,14 +666,15 @@ final class Share {
 			return false;
 		}
 		$channel = isset( $row['channel'] ) ? (string) $row['channel'] : '';
-		if ( self::CHANNEL === $channel || ! empty( $row['share_action'] ) ) {
+		if ( in_array( $channel, self::administrative_channels(), true ) || ! empty( $row['share_action'] ) ) {
 			return false;
 		}
-		if ( class_exists( Usage_Trends::class ) ) {
-			return Usage_Trends::is_activity_row( $row );
+		if ( class_exists( Usage_Trends::class ) && ! Usage_Trends::is_activity_row( $row ) ) {
+			return false;
 		}
+		$decision = isset( $row['decision'] ) ? (string) $row['decision'] : '';
 
-		return true;
+		return 'allow' === $decision || 'deny' === $decision;
 	}
 
 	/**
