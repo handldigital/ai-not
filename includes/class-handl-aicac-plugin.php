@@ -69,6 +69,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-new-plugin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quiet-hours.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-break-glass.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-freeze.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-pii-warn.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-mcp-gate.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-residency.php';
@@ -88,6 +89,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-audit-evidence.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-analytics.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin-profile.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-plugin-chips.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-graduate.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-differentiator-messaging.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-pager.php';
@@ -103,6 +105,7 @@ final class Plugin {
 
 		Policy::instance()->init();
 		Break_Glass::init();
+		Freeze::init();
 		Temp_Allow::instance()->init();
 		New_Plugin::instance()->init();
 		Alerts::instance()->init();
@@ -126,12 +129,14 @@ final class Plugin {
 		Mu_Guard::instance()->init();
 		Rest::instance()->init();
 		Dashboard_Widget::instance()->init();
+		Plugin_Chips::instance()->init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-audit.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-policy-apply.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-break-glass.php';
+			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-freeze.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-selftest.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-hardened.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-retry-storm.php';
@@ -142,6 +147,7 @@ final class Plugin {
 			CLI_Audit::register();
 			CLI_Policy_Apply::register();
 			CLI_Break_Glass::register();
+			CLI_Freeze::register();
 			CLI_Selftest::register();
 			CLI_Hardened::register();
 			CLI_Retry_Storm::register();
