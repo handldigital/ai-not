@@ -1883,6 +1883,10 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '</form>';
 		}
 		echo '</div>';
+
+		if ( class_exists( Share::class ) ) {
+			Share::render_settings();
+		}
 	}
 
 	/**

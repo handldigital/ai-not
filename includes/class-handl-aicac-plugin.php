@@ -100,6 +100,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-tamper.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-mu-guard.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rest.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-share.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
 
 		Policy::instance()->init();
@@ -127,6 +128,7 @@ final class Plugin {
 		Tamper::instance()->init();
 		Mu_Guard::instance()->init();
 		Rest::instance()->init();
+		Share::instance()->init();
 		Dashboard_Widget::instance()->init();
 		Plugin_Chips::instance()->init();
 
