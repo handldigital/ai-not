@@ -158,6 +158,14 @@ final class AdminbarTest extends TestCase {
 		$this->assertSame( $denies, $snap['deny_count'] );
 		$this->assertStringContainsString( 'AI Access', $snap['badge'] );
 		$this->assertStringContainsString( (string) $denies, $snap['badge'] );
+		$this->assertSame( Adminbar::HELP, $snap['tooltip'] );
+		if ( 'freeze' === $expected ) {
+			$this->assertSame( 'Panic freeze active', $snap['status'] );
+		} elseif ( 'storm' === $expected ) {
+			$this->assertSame( 'Retry storm detected', $snap['status'] );
+		} else {
+			$this->assertSame( '', $snap['status'] );
+		}
 	}
 
 	public function test_freeze_wins_over_live_storm(): void {
@@ -177,6 +185,7 @@ final class AdminbarTest extends TestCase {
 			$now
 		);
 		$this->assertSame( 'freeze', $snap['state'] );
+		$this->assertSame( 'Panic freeze active', $snap['status'] );
 	}
 
 	public function test_last_three_denies_newest_first_skips_admin_and_synthetic(): void {
@@ -260,7 +269,10 @@ final class AdminbarTest extends TestCase {
 		$root = $bar->nodes[ Adminbar::NODE_ID ];
 		$this->assertSame( 'freeze', $snap['state'] );
 		$this->assertStringContainsString( '#d63638', (string) $root['title'] );
+		$this->assertSame( Adminbar::HELP, $root['meta']['title'] );
 		$this->assertStringContainsString( 'page=handl-aicac-activity', (string) $root['href'] );
+		$this->assertArrayHasKey( Adminbar::NODE_ID . '-status', $bar->nodes );
+		$this->assertSame( 'Panic freeze active', $bar->nodes[ Adminbar::NODE_ID . '-status' ]['title'] );
 		$this->assertArrayHasKey( Adminbar::NODE_ID . '-activity', $bar->nodes );
 		$this->assertArrayHasKey( Adminbar::NODE_ID . '-protections', $bar->nodes );
 		$this->assertArrayHasKey( Adminbar::NODE_ID . '-freeze', $bar->nodes );
@@ -268,6 +280,29 @@ final class AdminbarTest extends TestCase {
 		$this->assertSame( 'Panic freeze', $bar->nodes[ Adminbar::NODE_ID . '-freeze' ]['title'] );
 		$this->assertSame( 'Activity', $bar->nodes[ Adminbar::NODE_ID . '-activity' ]['title'] );
 		$this->assertSame( 'Protections', $bar->nodes[ Adminbar::NODE_ID . '-protections' ]['title'] );
+	}
+
+	public function test_storm_dropdown_shows_retry_storm_detected(): void {
+		$now  = 1_700_006_400;
+		$snap = Adminbar::build_snapshot(
+			array(),
+			array(),
+			array(
+				'buckets' => array(
+					'x' => array(
+						'storm'        => true,
+						'window_start' => $now - 1,
+					),
+				),
+			),
+			false,
+			$now
+		);
+		$bar = new AdminbarTestBar();
+		Adminbar::add_nodes( $bar, $snap );
+		$this->assertSame( 'storm', $snap['state'] );
+		$this->assertSame( 'Retry storm detected', $bar->nodes[ Adminbar::NODE_ID . '-status' ]['title'] );
+		$this->assertSame( Adminbar::HELP, $bar->nodes[ Adminbar::NODE_ID ]['meta']['title'] );
 	}
 
 	public function test_populate_does_not_write_expired_freeze_state(): void {
@@ -314,7 +349,7 @@ final class AdminbarTest extends TestCase {
 		$html = (string) ob_get_clean();
 		$this->assertStringContainsString( 'Admin bar badge', $html );
 		$this->assertStringContainsString( 'Show a protection badge in the admin bar', $html );
-		$this->assertStringContainsString( 'Shows blocked AI calls from today. Turns red during a retry storm or panic freeze.', $html );
+		$this->assertStringContainsString( Adminbar::HELP, $html );
 		$this->assertStringContainsString( 'name="' . Adminbar::POST_PRESENT . '"', $html );
 		$this->assertStringContainsString( 'checked="checked"', $html );
 	}

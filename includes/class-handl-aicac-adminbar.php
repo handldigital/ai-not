@@ -27,6 +27,9 @@ final class Adminbar {
 
 	public const POST_ENABLED = 'handl_aicac_adminbar_enabled';
 
+	/** Settings help + badge tooltip (day boundary is UTC midnight). */
+	public const HELP = 'Shows AI calls blocked today, counted from midnight UTC. A red badge means a retry storm was detected or panic freeze is active.';
+
 	/** @var list<string> */
 	private const SKIP_CHANNELS = array(
 		'direct_http',
@@ -125,7 +128,7 @@ final class Adminbar {
 		echo '<input type="checkbox" name="' . esc_attr( self::POST_ENABLED ) . '" id="handl-aicac-adminbar-enabled" value="1"' . ( $enabled ? ' checked="checked"' : '' ) . ' /> ';
 		echo esc_html__( 'Show a protection badge in the admin bar', 'handl-ai-connector-access-control' );
 		echo '</label>';
-		echo '<p class="description">' . esc_html__( 'Shows blocked AI calls from today. Turns red during a retry storm or panic freeze.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Shows AI calls blocked today, counted from midnight UTC. A red badge means a retry storm was detected or panic freeze is active.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td>';
 		echo '</tr>';
 	}
@@ -170,6 +173,8 @@ final class Adminbar {
 	 *   state:string,
 	 *   deny_count:int,
 	 *   badge:string,
+	 *   status:string,
+	 *   tooltip:string,
 	 *   denies:list<array{plugin:string,label:string,ts:int,when:string}>,
 	 *   activity_url:string,
 	 *   protections_url:string,
@@ -218,12 +223,21 @@ final class Adminbar {
 			$count
 		);
 
+		$status = '';
+		if ( 'freeze' === $state ) {
+			$status = __( 'Panic freeze active', 'handl-ai-connector-access-control' );
+		} elseif ( 'storm' === $state ) {
+			$status = __( 'Retry storm detected', 'handl-ai-connector-access-control' );
+		}
+
 		$protections = class_exists( Admin::class ) ? Admin::screen_url( 'protections' ) : '';
 
 		return array(
 			'state'           => $state,
 			'deny_count'      => $count,
 			'badge'           => $badge,
+			'status'          => $status,
+			'tooltip'         => __( 'Shows AI calls blocked today, counted from midnight UTC. A red badge means a retry storm was detected or panic freeze is active.', 'handl-ai-connector-access-control' ),
 			'denies'          => $denies,
 			'activity_url'    => class_exists( Admin::class ) ? Admin::screen_url( 'activity' ) : '',
 			'protections_url' => $protections,
@@ -243,6 +257,10 @@ final class Adminbar {
 			$title = '<span style="color:#d63638">' . $title . '</span>';
 		}
 
+		$tooltip = isset( $snap['tooltip'] ) && '' !== (string) $snap['tooltip']
+			? (string) $snap['tooltip']
+			: __( 'Shows AI calls blocked today, counted from midnight UTC. A red badge means a retry storm was detected or panic freeze is active.', 'handl-ai-connector-access-control' );
+
 		$wp_admin_bar->add_node(
 			array(
 				'id'    => self::NODE_ID,
@@ -250,9 +268,25 @@ final class Adminbar {
 				'href'  => isset( $snap['activity_url'] ) ? (string) $snap['activity_url'] : '',
 				'meta'  => array(
 					'class' => 'handl-aicac-adminbar handl-aicac-adminbar--' . sanitize_key( $state ),
+					'title' => $tooltip,
 				),
 			)
 		);
+
+		$status = isset( $snap['status'] ) ? (string) $snap['status'] : '';
+		if ( '' !== $status ) {
+			$status_href = 'freeze' === $state
+				? ( isset( $snap['freeze_url'] ) ? (string) $snap['freeze_url'] : '' )
+				: ( isset( $snap['activity_url'] ) ? (string) $snap['activity_url'] : '' );
+			$wp_admin_bar->add_node(
+				array(
+					'id'     => self::NODE_ID . '-status',
+					'parent' => self::NODE_ID,
+					'title'  => esc_html( $status ),
+					'href'   => $status_href,
+				)
+			);
+		}
 
 		$denies = isset( $snap['denies'] ) && is_array( $snap['denies'] ) ? $snap['denies'] : array();
 		$i      = 0;
