@@ -35,6 +35,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cost-receipt.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-spend-threshold.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-budget.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rate-cap.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-forecast.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-governance-coverage.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-usage-trends.php';
@@ -143,6 +144,7 @@ final class Plugin {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-retry-storm.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-siem.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-residency.php';
+			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rate-cap.php';
 			CLI::register();
 			CLI_Audit::register();
 			CLI_Policy_Apply::register();
@@ -153,6 +155,7 @@ final class Plugin {
 			CLI_Retry_Storm::register();
 			CLI_Siem::register();
 			CLI_Residency::register();
+			CLI_Rate_Cap::register();
 		}
 	}
 

@@ -524,6 +524,9 @@ final class CLI_Policy_Apply {
 				return Budget::sanitize_plugin_budgets( is_array( $raw ) ? $raw : array() );
 			case 'plugin_budget_modes':
 				return Budget::sanitize_plugin_budget_modes( is_array( $raw ) ? $raw : array() );
+			case 'plugin_rate_caps_hour':
+			case 'plugin_rate_caps_day':
+				return Rate_Cap::sanitize_plugin_caps( is_array( $raw ) ? $raw : array() );
 			case 'model_force_unattributed_provider':
 			case 'model_force_unattributed_model':
 				return is_scalar( $raw ) ? trim( (string) $raw ) : '';
@@ -788,6 +791,8 @@ final class CLI_Policy_Apply {
 			case 'spend_threshold_plugins':
 			case 'plugin_budgets':
 			case 'plugin_budget_modes':
+			case 'plugin_rate_caps_hour':
+			case 'plugin_rate_caps_day':
 			case 'est_usd_provider_rates':
 			case 'quiet_hours':
 				$count = is_array( $canon ) ? count( $canon ) : 0;
@@ -860,6 +865,8 @@ final class CLI_Policy_Apply {
 			'plugin_expires'                     => __( 'Temporary allow expiries', 'handl-ai-connector-access-control' ),
 			'plugin_budgets'                     => __( 'Plugin budgets', 'handl-ai-connector-access-control' ),
 			'plugin_budget_modes'                => __( 'Plugin budget modes', 'handl-ai-connector-access-control' ),
+			'plugin_rate_caps_hour'              => __( 'Plugin call caps (per hour)', 'handl-ai-connector-access-control' ),
+			'plugin_rate_caps_day'               => __( 'Plugin call caps (per day)', 'handl-ai-connector-access-control' ),
 			'spend_threshold_plugins'            => __( 'Per-plugin spend alerts', 'handl-ai-connector-access-control' ),
 			'est_usd_input_per_m'                => __( 'Estimated input rate', 'handl-ai-connector-access-control' ),
 			'est_usd_output_per_m'               => __( 'Estimated output rate', 'handl-ai-connector-access-control' ),

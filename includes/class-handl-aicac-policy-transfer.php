@@ -84,6 +84,8 @@ final class Policy_Transfer {
 		'spend_threshold_plugins',
 			'plugin_budgets',
 			'plugin_budget_modes',
+			'plugin_rate_caps_hour',
+			'plugin_rate_caps_day',
 			'anomaly_alert_enabled',
 			'anomaly_multiplier',
 			'anomaly_floor_calls',

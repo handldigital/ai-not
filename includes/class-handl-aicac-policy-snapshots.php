@@ -454,6 +454,8 @@ final class Policy_Snapshots {
 			'spend_threshold_plugins',
 			'plugin_budgets',
 			'plugin_budget_modes',
+			'plugin_rate_caps_hour',
+			'plugin_rate_caps_day',
 			'anomaly_alert_enabled',
 			'anomaly_multiplier',
 			'anomaly_floor_calls',
@@ -709,6 +711,8 @@ final class Policy_Snapshots {
 			'spend_threshold_plugins',
 			'plugin_budgets',
 			'plugin_budget_modes',
+			'plugin_rate_caps_hour',
+			'plugin_rate_caps_day',
 		);
 	}
 
@@ -864,6 +868,22 @@ final class Policy_Snapshots {
 				foreach ( $ids as $id ) {
 					$from = isset( $a[ $id ] ) ? self::format_money( $a[ $id ] ) : $none;
 					$to   = isset( $b[ $id ] ) ? self::format_money( $b[ $id ] ) : $none;
+					if ( $from === $to ) {
+						continue;
+					}
+					$lines[] = sprintf( '%s (%s): %s → %s', $label, $id, $from, $to );
+				}
+				break;
+
+			case 'plugin_rate_caps_hour':
+			case 'plugin_rate_caps_day':
+				$a = self::normalize( $key, $before );
+				$b = self::normalize( $key, $after );
+				$ids = array_unique( array_merge( array_keys( $a ), array_keys( $b ) ) );
+				sort( $ids, SORT_STRING );
+				foreach ( $ids as $id ) {
+					$from = isset( $a[ $id ] ) ? (string) (int) $a[ $id ] : $none;
+					$to   = isset( $b[ $id ] ) ? (string) (int) $b[ $id ] : $none;
 					if ( $from === $to ) {
 						continue;
 					}
@@ -1171,6 +1191,11 @@ final class Policy_Snapshots {
 				$map = Budget::sanitize_plugin_budget_modes( $raw );
 				ksort( $map, SORT_STRING );
 				return $map;
+			case 'plugin_rate_caps_hour':
+			case 'plugin_rate_caps_day':
+				$map = Rate_Cap::sanitize_plugin_caps( $raw );
+				ksort( $map, SORT_STRING );
+				return $map;
 			case 'anomaly_multiplier':
 				return Anomaly::sanitize_multiplier( $raw ?? Anomaly::DEFAULT_MULTIPLIER );
 			case 'anomaly_floor_calls':
@@ -1223,6 +1248,8 @@ final class Policy_Snapshots {
 			'spend_threshold_plugins'           => __( 'Plugin estimated-spend alerts', 'handl-ai-connector-access-control' ),
 			'plugin_budgets'                    => __( 'Plugin estimated budgets', 'handl-ai-connector-access-control' ),
 			'plugin_budget_modes'               => __( 'Plugin budget modes', 'handl-ai-connector-access-control' ),
+			'plugin_rate_caps_hour'             => __( 'Plugin call caps (per hour)', 'handl-ai-connector-access-control' ),
+			'plugin_rate_caps_day'              => __( 'Plugin call caps (per day)', 'handl-ai-connector-access-control' ),
 			'anomaly_alert_enabled'             => __( 'Usage spike alerts', 'handl-ai-connector-access-control' ),
 			'anomaly_multiplier'                => __( 'Usage spike multiplier', 'handl-ai-connector-access-control' ),
 			'anomaly_floor_calls'               => __( 'Usage spike call floor', 'handl-ai-connector-access-control' ),
@@ -1301,6 +1328,8 @@ final class Policy_Snapshots {
 			case 'spend_threshold_plugins':
 			case 'plugin_budgets':
 			case 'plugin_budget_modes':
+			case 'plugin_rate_caps_hour':
+			case 'plugin_rate_caps_day':
 				// Restore preview uses a compact count; history uses map_item_change_lines.
 				if ( ! is_array( $value ) || empty( $value ) ) {
 					return __( '(none)', 'handl-ai-connector-access-control' );
