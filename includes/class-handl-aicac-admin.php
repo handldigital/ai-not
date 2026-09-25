@@ -230,6 +230,15 @@ final class Admin {
 			HANDL_AICAC_VERSION
 		);
 
+		// AICAC-PREMIUM-POLISH (#248): submit spinner + disclosure safety net.
+		wp_enqueue_script(
+			'handl-aicac-admin',
+			HANDL_AICAC_URL . 'assets/admin.js',
+			array(),
+			HANDL_AICAC_VERSION,
+			true
+		);
+
 		if ( Caps::is_read_only() ) {
 			wp_enqueue_script(
 				'handl-aicac-read-only',
@@ -457,6 +466,182 @@ final class Admin {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'handl-ai-connector-access-control' ) );
 		}
 		check_admin_referer( $nonce_action, 'handl_aicac_nonce' );
+	}
+
+	/* ------------------------------------------------------------------
+	 * AICAC-PREMIUM-POLISH (#248): shared screen shell.
+	 *
+	 * These helpers only emit wrapper markup. They never open or close a
+	 * <form>, never move an input between forms, and never change a name,
+	 * nonce, or action. Screens keep their existing form boundaries.
+	 * ------------------------------------------------------------------ */
+
+	/**
+	 * Screen name, approved one-line purpose, and content-width mode.
+	 *
+	 * Rules and Activity use the available width; everything else is capped
+	 * at 1200px. Wide tables scroll inside their own framed region.
+	 *
+	 * @return array{title:string,purpose:string,width:string}|null
+	 */
+	private static function screen_meta( string $tab ): ?array {
+		$meta = array(
+			'dashboard'    => array(
+				'title'   => __( 'Dashboard', 'handl-ai-connector-access-control' ),
+				'purpose' => __( 'See current AI access, recent activity, and anything that needs attention.', 'handl-ai-connector-access-control' ),
+				'width'   => 'narrow',
+			),
+			'rules'        => array(
+				'title'   => __( 'Rules', 'handl-ai-connector-access-control' ),
+				'purpose' => __( 'Choose which plugins can use AI and add limits when needed.', 'handl-ai-connector-access-control' ),
+				'width'   => 'wide',
+			),
+			'protections'  => array(
+				'title'   => __( 'Protections', 'handl-ai-connector-access-control' ),
+				'purpose' => __( 'Set site-wide safeguards for AI use.', 'handl-ai-connector-access-control' ),
+				'width'   => 'narrow',
+			),
+			'activity'     => array(
+				'title'   => __( 'Activity', 'handl-ai-connector-access-control' ),
+				'purpose' => __( 'Review AI calls and the rules applied to them.', 'handl-ai-connector-access-control' ),
+				'width'   => 'wide',
+			),
+			'insights'     => array(
+				'title'   => __( 'Insights', 'handl-ai-connector-access-control' ),
+				'purpose' => __( 'See patterns in AI use and estimated spend.', 'handl-ai-connector-access-control' ),
+				'width'   => 'narrow',
+			),
+			'policy-tools' => array(
+				'title'   => __( 'Policy Tools', 'handl-ai-connector-access-control' ),
+				'purpose' => __( 'Test, back up, and restore policy settings.', 'handl-ai-connector-access-control' ),
+				'width'   => 'narrow',
+			),
+			'alerts'       => array(
+				'title'   => __( 'Alerts & Settings', 'handl-ai-connector-access-control' ),
+				'purpose' => __( 'Control activity logging, alerts, reports, and data retention.', 'handl-ai-connector-access-control' ),
+				'width'   => 'narrow',
+			),
+		);
+
+		return $meta[ $tab ] ?? null;
+	}
+
+	/**
+	 * Compact screen header: name plus its approved one-line purpose.
+	 */
+	private function render_screen_header( string $tab ): void {
+		$meta = self::screen_meta( $tab );
+		if ( null === $meta ) {
+			return;
+		}
+		echo '<div class="handl-aicac-screen-header">';
+		echo '<h2 class="handl-aicac-screen-title">' . esc_html( $meta['title'] ) . '</h2>';
+		echo '<p class="handl-aicac-screen-purpose">' . esc_html( $meta['purpose'] ) . '</p>';
+		echo '</div>';
+	}
+
+	/**
+	 * Open a primary section card. Primary sections always start visible.
+	 */
+	private function section_open( string $title, string $desc = '', string $id = '', string $extra_class = '' ): void {
+		$class = 'handl-aicac-section';
+		if ( '' !== $extra_class ) {
+			$class .= ' ' . $extra_class;
+		}
+		echo '<section class="' . esc_attr( $class ) . '"';
+		if ( '' !== $id ) {
+			echo ' id="' . esc_attr( $id ) . '"';
+		}
+		echo '>';
+		if ( '' !== $title ) {
+			echo '<div class="handl-aicac-section__header">';
+			echo '<h2 class="handl-aicac-section__title">' . esc_html( $title ) . '</h2>';
+			if ( '' !== $desc ) {
+				echo '<p class="handl-aicac-section__desc">' . esc_html( $desc ) . '</p>';
+			}
+			echo '</div>';
+		}
+		echo '<div class="handl-aicac-section__body">';
+	}
+
+	private function section_close(): void {
+		echo '</div></section>';
+	}
+
+	/**
+	 * Open a secondary section as a native disclosure.
+	 *
+	 * $open must be true whenever the section carries a validation error,
+	 * confirmation, preview, or action result — an error is never hidden
+	 * behind a closed disclosure.
+	 */
+	private function disclosure_open( string $title, bool $open = false, string $id = '', string $summary_note = '' ): void {
+		echo '<details class="handl-aicac-disclosure"';
+		if ( '' !== $id ) {
+			echo ' id="' . esc_attr( $id ) . '"';
+		}
+		echo $open ? ' open' : '';
+		echo '>';
+		echo '<summary>';
+		echo '<span class="handl-aicac-disclosure__title">' . esc_html( $title ) . '</span>';
+		if ( '' !== $summary_note ) {
+			echo '<span class="handl-aicac-disclosure__summary-note">' . esc_html( $summary_note ) . '</span>';
+		}
+		echo '</summary>';
+		echo '<div class="handl-aicac-disclosure__body">';
+	}
+
+	private function disclosure_close(): void {
+		echo '</div></details>';
+	}
+
+	/**
+	 * Frame a wide table so it scrolls inside its own region instead of
+	 * forcing horizontal scroll on the whole page.
+	 */
+	private function table_frame_open(): void {
+		echo '<div class="handl-aicac-table-frame"><div class="handl-aicac-table-frame__scroll" tabindex="0" role="region" aria-label="' . esc_attr__( 'Scrollable table', 'handl-ai-connector-access-control' ) . '">';
+	}
+
+	private function table_frame_close(): void {
+		echo '</div></div>';
+	}
+
+	/**
+	 * Sticky bottom save bar inside the content area.
+	 *
+	 * The spacer keeps the bar clear of the final row, the pager, and the
+	 * WordPress footer when the page is scrolled to the end.
+	 */
+	private function render_sticky_save_bar( string $label, string $note = '', string $form_id = '', bool $emit_action = false ): void {
+		echo '<div class="handl-aicac-sticky-save-spacer" aria-hidden="true"></div>';
+		echo '<div class="handl-aicac-sticky-save">';
+		echo '<button type="submit"';
+		if ( $emit_action ) {
+			echo ' name="handl_aicac_action" value="save"';
+		}
+		echo ' class="button button-primary"';
+		if ( '' !== $form_id ) {
+			echo ' form="' . esc_attr( $form_id ) . '"';
+		}
+		echo ' data-aicac-action="save">';
+		echo esc_html( $label );
+		echo '</button>';
+		if ( '' !== $note ) {
+			echo '<p class="handl-aicac-sticky-save__note">' . esc_html( $note ) . '</p>';
+		}
+		echo '</div>';
+	}
+
+	/**
+	 * Shared empty state: one sentence, optional single recovery action.
+	 */
+	private function render_empty_state( string $message, string $action_label = '', string $action_url = '' ): void {
+		echo '<p class="handl-aicac-empty">' . esc_html( $message );
+		if ( '' !== $action_label && '' !== $action_url ) {
+			echo '<a class="handl-aicac-empty__action" href="' . esc_url( $action_url ) . '">' . esc_html( $action_label ) . '</a>';
+		}
+		echo '</p>';
 	}
 
 	public function render_page(): void {
@@ -805,7 +990,10 @@ final class Admin {
 
 		$icon_src = add_query_arg( 'ver', HANDL_AICAC_VERSION, HANDL_AICAC_URL . 'assets/icon-128x128.png' );
 
-		echo '<div class="wrap' . ( Caps::is_read_only() ? ' handl-aicac-read-only' : '' ) . '">';
+		$screen_meta  = self::screen_meta( $tab );
+		$screen_width = null !== $screen_meta ? (string) $screen_meta['width'] : 'narrow';
+
+		echo '<div class="wrap handl-aicac-screen handl-aicac-screen--' . esc_attr( $screen_width ) . ' handl-aicac-screen--' . esc_attr( $tab ) . ( Caps::is_read_only() ? ' handl-aicac-read-only' : '' ) . '">';
 		echo '<h1 style="display:flex;align-items:center;gap:12px;">';
 		echo '<img src="' . esc_url( $icon_src ) . '" alt="" width="40" height="40" style="border-radius:8px;" loading="lazy" decoding="async" />';
 		echo esc_html__( 'HandL AI Access', 'handl-ai-connector-access-control' );
@@ -813,8 +1001,7 @@ final class Admin {
 		if ( Caps::is_read_only() ) {
 			echo '<div class="notice notice-info"><p>' . esc_html__( 'You have read-only access. You can view and export data, but only an administrator can save changes.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
-echo '<p>' . esc_html__( 'See which AI activity these rules control, what may be driving estimated spend, and block a plugin with one click. The default is Allow.', 'handl-ai-connector-access-control' );
-		echo ' ' . esc_html( Differentiator_Messaging::page_subtitle_addition() ) . '</p>';
+		$this->render_screen_header( $tab );
 
 		echo '<div id="handl-aicac-notices" role="status" aria-live="polite">';
 		if ( $auditor_roles_saved ) {
@@ -1378,6 +1565,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo ' ' . esc_html__( 'Model routes follow the detected plugin. Calls with no detected plugin may run without a route, so model routing is not a spend guarantee.', 'handl-ai-connector-access-control' );
 			echo '</p></div>';
 		}
+		// #248: one sticky control row — filters and search left, count and pager right.
+		echo '<div class="handl-aicac-sticky-filters">';
 		$this->render_plugin_rules_filters(
 			$plugin_status_filter,
 			$plugin_access_filter,
@@ -1409,7 +1598,11 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		);
 		echo '<br class="clear" />';
 		echo '</div>';
+		echo '</div>'; // .handl-aicac-sticky-filters
 
+		// #248: the matrix is one framed region. Operation and file columns
+		// scroll inside it rather than forcing horizontal page scroll.
+		$this->table_frame_open();
 		echo '<table class="widefat striped handl-aicac-rules-matrix">';
 		echo '<thead><tr>';
 		echo '<th scope="col" id="cb" class="manage-column column-cb check-column"><label class="screen-reader-text" for="handl-aicac-bulk-select-all">' . esc_html__( 'Select all', 'handl-ai-connector-access-control' ) . '</label>';
@@ -1420,12 +1613,11 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		foreach ( $family_labels as $family_id => $family_label ) {
 			echo '<th scope="col" class="handl-aicac-col-family">' . esc_html( $family_label ) . '</th>';
 		}
-		echo '<th scope="col" class="handl-aicac-col-force">' . esc_html__( 'Provider route (experimental)', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th scope="col" class="handl-aicac-col-force">' . esc_html__( 'Model route (experimental)', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th scope="col" class="handl-aicac-col-budget">' . esc_html__( 'Estimated budget', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th scope="col" class="handl-aicac-col-rate-cap">' . esc_html__( 'Call caps', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th scope="col">' . esc_html__( 'Plugin file', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead>';
+		// Routing, budget, and call caps moved into the per-row Advanced
+		// controls disclosure, so the header is four columns shorter.
+		$rules_colspan = 5 + count( $family_labels );
 		echo '<tbody>';
 
 		$operations = is_array( $policy['operations'] ?? null ) ? (array) $policy['operations'] : array();
@@ -1435,12 +1627,17 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$plugin_rate_caps_day  = Rate_Cap::sanitize_plugin_caps( $policy['plugin_rate_caps_day'] ?? array() );
 
 		if ( 0 === $rules_expected ) {
-			echo '<tr><td colspan="12">';
-			if ( '' !== $plugin_rules_search ) {
-				echo esc_html__( 'No plugins match this search.', 'handl-ai-connector-access-control' );
-			} else {
-				echo esc_html__( 'No plugins match these filters.', 'handl-ai-connector-access-control' );
-			}
+			$rules_clear_url = Pager::url(
+				$rules_base_url,
+				array(),
+				array(
+					Pager::PAGE_ARG     => 1,
+					Pager::PER_PAGE_ARG => $rules_per_page,
+				)
+			);
+			echo '<tr><td colspan="' . esc_attr( (string) $rules_colspan ) . '" class="handl-aicac-empty-cell">';
+			echo esc_html__( 'No plugins match your search or filters.', 'handl-ai-connector-access-control' );
+			echo ' <a class="handl-aicac-empty__action" href="' . esc_url( $rules_clear_url ) . '">' . esc_html__( 'Clear filters', 'handl-ai-connector-access-control' ) . '</a>';
 			echo '</td></tr>';
 		}
 
@@ -1510,6 +1707,12 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			$this->render_option( 'allow', (string) $rule, __( 'Allow', 'handl-ai-connector-access-control' ) );
 			$this->render_option( 'deny', (string) $rule, __( 'Deny', 'handl-ai-connector-access-control' ) );
 			echo '</select>';
+			// #248: keep the primary AI access select compact. Everything that
+			// refines the rule lives in one keyboard-operable disclosure. Closed
+			// <details> still submits its fields, so form ownership is unchanged.
+			echo '<details class="handl-aicac-row-advanced">';
+			echo '<summary>' . esc_html__( 'Advanced controls', 'handl-ai-connector-access-control' ) . '<span class="screen-reader-text"> ' . esc_html( $name ) . '</span></summary>';
+			echo '<div class="handl-aicac-row-advanced__body">';
 			// AICAC-TEMP-ALLOW: optional expiry on Allow rules only.
 			$expire_preset = Temp_Allow::preset_for_stored( $policy, (string) $basename );
 			$expire_ts     = Temp_Allow::expires_at( $policy, (string) $basename );
@@ -1574,6 +1777,37 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '</div>';
 			// AICAC-SNOOZE: mute alerts for this plugin without changing rules.
 			$this->render_plugin_snooze_controls( (string) $basename, $name, 'rules' );
+
+			echo '<div class="handl-aicac-row-advanced__group">';
+			echo '<span class="handl-aicac-row-advanced__label">' . esc_html__( 'Provider route (experimental)', 'handl-ai-connector-access-control' ) . '</span>';
+			echo '<input type="text" class="regular-text code" style="max-width:9em;" name="handl_aicac_model_force[' . esc_attr( $basename ) . '][provider]" form="' . esc_attr( $rules_form_id ) . '" value="' . esc_attr( $force_p ) . '" placeholder="openai" autocomplete="off" aria-label="' . esc_attr( sprintf(
+				/* translators: %s: plugin name */
+				__( '%s provider route', 'handl-ai-connector-access-control' ),
+				$name
+			) ) . '" />';
+			echo '</div>';
+
+			echo '<div class="handl-aicac-row-advanced__group">';
+			echo '<span class="handl-aicac-row-advanced__label">' . esc_html__( 'Model route (experimental)', 'handl-ai-connector-access-control' ) . '</span>';
+			echo '<input type="text" class="regular-text code" style="max-width:11em;" name="handl_aicac_model_force[' . esc_attr( $basename ) . '][model]" form="' . esc_attr( $rules_form_id ) . '" value="' . esc_attr( $force_m ) . '" placeholder="gpt-4o-mini" autocomplete="off" aria-label="' . esc_attr( sprintf(
+				/* translators: %s: plugin name */
+				__( '%s model route', 'handl-ai-connector-access-control' ),
+				$name
+			) ) . '" />';
+			echo '</div>';
+
+			echo '<div class="handl-aicac-row-advanced__group handl-aicac-col-budget">';
+			echo '<span class="handl-aicac-row-advanced__label">' . esc_html__( 'Estimated budget', 'handl-ai-connector-access-control' ) . '</span>';
+			$this->render_plugin_budget_cell( (string) $basename, $name, $policy, $plugin_budgets, $plugin_budget_modes, $rules_form_id );
+			echo '</div>';
+
+			echo '<div class="handl-aicac-row-advanced__group handl-aicac-col-rate-cap">';
+			echo '<span class="handl-aicac-row-advanced__label">' . esc_html__( 'Call caps', 'handl-ai-connector-access-control' ) . '</span>';
+			$this->render_plugin_rate_cap_cell( (string) $basename, $name, $plugin_rate_caps_hour, $plugin_rate_caps_day, $rules_form_id );
+			echo '</div>';
+
+			echo '</div>'; // .handl-aicac-row-advanced__body
+			echo '</details>';
 			echo '</td>';
 			foreach ( $family_labels as $family_id => $family_label ) {
 				$family_rule = isset( $plugin_ops[ $family_id ] ) ? (string) $plugin_ops[ $family_id ] : '';
@@ -1594,32 +1828,13 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				echo '</select>';
 				echo '</td>';
 			}
-			echo '<td class="handl-aicac-col-force">';
-			echo '<input type="text" class="regular-text code" style="max-width:9em;" name="handl_aicac_model_force[' . esc_attr( $basename ) . '][provider]" form="' . esc_attr( $rules_form_id ) . '" value="' . esc_attr( $force_p ) . '" placeholder="openai" autocomplete="off" aria-label="' . esc_attr( sprintf(
-				/* translators: %s: plugin name */
-				__( '%s provider route', 'handl-ai-connector-access-control' ),
-				$name
-			) ) . '" />';
-			echo '</td>';
-			echo '<td class="handl-aicac-col-force">';
-			echo '<input type="text" class="regular-text code" style="max-width:11em;" name="handl_aicac_model_force[' . esc_attr( $basename ) . '][model]" form="' . esc_attr( $rules_form_id ) . '" value="' . esc_attr( $force_m ) . '" placeholder="gpt-4o-mini" autocomplete="off" aria-label="' . esc_attr( sprintf(
-				/* translators: %s: plugin name */
-				__( '%s model route', 'handl-ai-connector-access-control' ),
-				$name
-			) ) . '" />';
-			echo '</td>';
-			echo '<td class="handl-aicac-col-budget">';
-			$this->render_plugin_budget_cell( (string) $basename, $name, $policy, $plugin_budgets, $plugin_budget_modes, $rules_form_id );
-			echo '</td>';
-			echo '<td class="handl-aicac-col-rate-cap">';
-			$this->render_plugin_rate_cap_cell( (string) $basename, $name, $plugin_rate_caps_hour, $plugin_rate_caps_day, $rules_form_id );
-			echo '</td>';
 			echo '<td><code>' . esc_html( $basename ) . '</code></td>';
 			echo '</tr>';
 		}
 
 		echo '</tbody>';
 		echo '</table>';
+		$this->table_frame_close();
 
 		echo '<div class="tablenav bottom handl-aicac-bulk-nav">';
 		Pager::render_tablenav_pages(
@@ -1654,13 +1869,17 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 		echo '</script>';
 
-		echo '<p class="submit">';
+		// #248: sticky bottom save bar. The spacer keeps it clear of the last
+		// row, the pager, and the WordPress footer once the page is at the end.
+		echo '<div class="handl-aicac-sticky-save-spacer" aria-hidden="true"></div>';
+		echo '<div class="handl-aicac-sticky-save">';
 		// Keep form= even when Save is inside the Rules form by containment —
 		// that association is what the source test can see.
 		echo '<button type="submit" name="handl_aicac_action" value="save" class="button button-primary" form="' . esc_attr( $rules_form_id ) . '" data-aicac-action="save">';
 		echo esc_html__( 'Save changes', 'handl-ai-connector-access-control' );
 		echo '</button>';
-		echo '</p>';
+		echo '<p class="handl-aicac-sticky-save__note">' . esc_html__( 'Changes apply to the plugins shown on this page', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '</div>';
 
 		echo '</form>';
 
@@ -1685,6 +1904,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<input type="hidden" name="handl_aicac_action" value="save" />';
 		echo '<input type="hidden" name="handl_aicac_settings_present" value="1" />';
 
+		// #248: three sections inside the one existing Protections form.
+		$this->section_open( __( 'Policy defaults', 'handl-ai-connector-access-control' ) );
 		echo '<table class="form-table" role="presentation">';
 		echo '<tr>';
 		echo '<th scope="row"><label for="handl-aicac-default">' . esc_html__( 'Default policy', 'handl-ai-connector-access-control' ) . '</label></th>';
@@ -1708,6 +1929,11 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<p class="description">' . esc_html__( 'Choose what happens when an AI Client operation does not fit Text, Image, Speech, Text to speech, or Video. This includes music, embeddings, and generic methods. Support checks follow the same rule as the matching generation method.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td>';
 		echo '</tr>';
+		echo '</table>';
+		$this->section_close();
+
+		$this->section_open( __( 'Site-wide safeguards', 'handl-ai-connector-access-control' ) );
+		echo '<table class="form-table" role="presentation">';
 		$this->render_kill_switch_settings_rows( $policy, $form_id, $plugins );
 		$this->render_shadow_block_settings_rows( $policy, $form_id, $plugins );
 		$this->render_role_gate_settings_rows( $policy, $form_id );
@@ -1715,9 +1941,12 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$this->render_quiet_hours_settings_rows( $policy );
 		do_action( 'handl_aicac_protections_settings', $policy );
 		echo '</table>';
+		$this->section_close();
 
+		$this->disclosure_open( __( 'Advanced controls', 'handl-ai-connector-access-control' ), false, 'handl-aicac-protections-advanced' );
 		$this->render_ability_arming_settings( $policy, $form_id );
 		$this->render_model_force_settings( $policy, $form_id, $log );
+		$this->disclosure_close();
 
 		echo '<p class="submit">';
 		submit_button( __( 'Save changes', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
@@ -1760,12 +1989,25 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$this->render_policy_simulator_panel( $policy, $plugins, $log, $sim_form_id );
 		echo '</form>';
 
+		// #248: the remaining tools are secondary disclosures. Each one opens
+		// automatically while it is showing a preview, confirmation, or result
+		// so an action state is never hidden behind a closed summary.
+		$template_open = $show_pack_preview || $pack_backup_needed || $show_preset_preview;
+		$this->disclosure_open( __( 'Start from a template', 'handl-ai-connector-access-control' ), $template_open, 'handl-aicac-tools-template' );
 		$this->render_policy_packs_section( $policy, $show_pack_preview, $pack_backup_needed );
 		$this->render_presets_section( $policy, $show_preset_preview );
+		$this->disclosure_close();
+
+		$backup_open = $show_restore_preview || '' !== $restore_status || $show_import_preview || $show_compare_preview;
+		$this->disclosure_open( __( 'Backup and recovery', 'handl-ai-connector-access-control' ), $backup_open, 'handl-aicac-tools-backup' );
+		$this->render_rules_transfer_section( $policy, $show_import_preview, $show_compare_preview );
 		$this->render_policy_restore_section( $policy, $show_restore_preview, $restore_status );
 		$this->render_policy_change_history_section();
+		$this->disclosure_close();
+
+		$this->disclosure_open( __( 'Policy checks', 'handl-ai-connector-access-control' ), $show_checks_confirm, 'handl-aicac-tools-checks' );
 		$this->render_policy_checks_section( $plugins, $show_checks_confirm );
-		$this->render_rules_transfer_section( $policy, $show_import_preview, $show_compare_preview );
+		$this->disclosure_close();
 		echo '</div>';
 	}
 
@@ -1807,34 +2049,21 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<input type="hidden" name="handl_aicac_action" value="send_test_webhook" />';
 		echo '<input type="hidden" name="handl_aicac_tab" value="alerts" />';
 		echo '</form>';
+		// #248: shell for the queued-summary action so its button can sit in
+		// the Alert delivery section without nesting a form in the settings form.
+		echo '<form method="post" id="handl-aicac-send-digest" style="display:none;" hidden>';
+		wp_nonce_field( 'handl_aicac_send_digest', 'handl_aicac_nonce' );
+		echo '<input type="hidden" name="handl_aicac_action" value="send_denial_digest" />';
+		echo '<input type="hidden" name="handl_aicac_tab" value="alerts" />';
+		echo '</form>';
 
-		echo '<form method="post" style="margin-bottom:1.5em;">';
+		echo '<form method="post" id="handl-aicac-alerts-save" style="margin-bottom:1.5em;">';
 		wp_nonce_field( 'handl_aicac_save_policy', 'handl_aicac_nonce' );
 		echo '<input type="hidden" name="handl_aicac_action" value="save" />';
 		echo '<input type="hidden" name="handl_aicac_tab" value="alerts" />';
 		$this->render_logging_settings( $policy, $log );
-		submit_button( __( 'Save Activity settings', 'handl-ai-connector-access-control' ) );
+		$this->render_sticky_save_bar( __( 'Save alert and activity settings', 'handl-ai-connector-access-control' ) );
 		echo '</form>';
-
-		$pending_digest = count( Alerts::pending_digest_rows() );
-		$alerts_on      = ! empty( $policy['alert_on_deny'] ) || ! empty( $policy['alert_on_shadow'] );
-		if ( $pending_digest > 0 && $alerts_on ) {
-			echo '<form method="post" style="margin-bottom:1.5em;">';
-			wp_nonce_field( 'handl_aicac_send_digest', 'handl_aicac_nonce' );
-			echo '<input type="hidden" name="handl_aicac_action" value="send_denial_digest" />';
-			echo '<input type="hidden" name="handl_aicac_tab" value="alerts" />';
-			submit_button(
-				sprintf(
-					/* translators: %d: queued alert count */
-					__( 'Send alert summary now (%d queued)', 'handl-ai-connector-access-control' ),
-					$pending_digest
-				),
-				'secondary',
-				'submit',
-				false
-			);
-			echo '</form>';
-		}
 
 		$this->render_auditor_role_matrix();
 
@@ -2300,6 +2529,10 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<div class="handl-aicac-beyond-ca" role="note">';
 		echo '<p class="handl-aicac-beyond-ca__title"><strong>' . esc_html( Differentiator_Messaging::headline() ) . '</strong></p>';
 		echo '<p class="handl-aicac-beyond-ca__body">' . esc_html( Differentiator_Messaging::body() ) . '</p>';
+		// #248: the long page subtitle moved off the top of every screen and
+		// lives with the rest of the scope explanation.
+		echo '<p class="handl-aicac-beyond-ca__scope">' . esc_html__( 'See which AI activity these rules control, what may be driving estimated spend, and block a plugin with one click. The default is Allow.', 'handl-ai-connector-access-control' );
+		echo ' ' . esc_html( Differentiator_Messaging::page_subtitle_addition() ) . '</p>';
 		echo '<p class="handl-aicac-beyond-ca__coexist description">' . esc_html( Differentiator_Messaging::coexistence() ) . '</p>';
 		echo '</div>';
 	}
@@ -3144,28 +3377,6 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$this->render_freeze_controls( 'dashboard' );
 		// AICAC-CHECKLIST (#190): post-wizard getting-started panel.
 		$this->render_getting_started_checklist( $policy, $log );
-		// AICAC-NEWPLUGIN: plugins awaiting first AI access decision.
-		$this->render_new_plugin_dashboard_line( $policy, $plugins );
-		// AICAC-REVIEW-DUE: stale / orphaned explicit rules.
-		$this->render_review_due_dashboard_line( $policy, $plugins );
-		// AICAC-RULE-TEST: open failures after an override.
-		$this->render_policy_checks_dashboard_line( $plugins );
-		// AICAC-SNOOZE: active per-plugin alert mutes.
-		$this->render_alert_snooze_dashboard_line( $plugins );
-		// AICAC-DRIFT: recent provider/model change alerts.
-		$this->render_drift_dashboard_line( $plugins );
-		// AICAC-BUDGET-C: over estimated-budget banner.
-		$this->render_budget_dashboard_banner( $policy, $plugins );
-		$this->render_rate_cap_dashboard_banner( $policy );
-
-		// AICAC-11: name differentiators vs WordPress AI Connector Approvals (Dashboard-primary).
-		$this->render_beyond_connector_approvals_callout();
-
-		// AICAC-KEYSCAN: embedded AI API keys in active plugins (masked only).
-		$this->render_keyscan_dashboard_tile();
-
-		// AICAC-SCORE (#189): advisory configuration completeness (not AI-channel coverage).
-		$this->render_governance_coverage_card( $log, $policy, $plugins );
 
 		// --- Coverage tile (Δ1 + Δ5) ---
 		echo '<div class="postbox handl-aicac-tile handl-aicac-tile--coverage">';
@@ -3244,6 +3455,30 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo esc_html__( 'Not counted: calls stopped before this plugin runs, direct cURL requests, and external workers that do not use WordPress HTTP or the AI Client.', 'handl-ai-connector-access-control' );
 		echo '</p>';
 		echo '</div></div>';
+
+		// #248: one compact Needs attention section. Each line already escapes
+		// its own output; buffering only tells us whether anything is pending.
+		ob_start();
+		// AICAC-NEWPLUGIN: plugins awaiting first AI access decision.
+		$this->render_new_plugin_dashboard_line( $policy, $plugins );
+		// AICAC-REVIEW-DUE: stale / orphaned explicit rules.
+		$this->render_review_due_dashboard_line( $policy, $plugins );
+		// AICAC-RULE-TEST: open failures after an override.
+		$this->render_policy_checks_dashboard_line( $plugins );
+		// AICAC-DRIFT: recent provider/model change alerts.
+		$this->render_drift_dashboard_line( $plugins );
+		// AICAC-BUDGET-C: over estimated-budget banner.
+		$this->render_budget_dashboard_banner( $policy, $plugins );
+		$this->render_rate_cap_dashboard_banner( $policy );
+		$attention = (string) ob_get_clean();
+
+		$this->section_open( __( 'Needs attention', 'handl-ai-connector-access-control' ), '', 'handl-aicac-needs-attention' );
+		if ( '' === trim( $attention ) ) {
+			echo '<p class="handl-aicac-needs-attention__healthy">' . esc_html__( 'Nothing needs your attention. AI access controls are operating normally.', 'handl-ai-connector-access-control' ) . '</p>';
+		} else {
+			echo $attention; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- buffered from renderers that escape their own output.
+		}
+		$this->section_close();
 
 		// Secondary tiles: 2-col on wide viewports (CSS); coverage stays full-width above.
 		echo '<div class="handl-aicac-dashboard-grid">';
@@ -3535,6 +3770,19 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '</div></div>';
 
 		echo '</div>'; // .handl-aicac-dashboard-grid
+
+		// #248: read-only diagnostics and long supporting lists stay collapsed.
+		$this->disclosure_open( __( 'More diagnostics', 'handl-ai-connector-access-control' ), false, 'handl-aicac-more-diagnostics' );
+		// AICAC-SNOOZE: active per-plugin alert mutes (one row per mute).
+		$this->render_alert_snooze_dashboard_line( $plugins );
+		// AICAC-KEYSCAN: embedded AI API keys in active plugins (masked only).
+		$this->render_keyscan_dashboard_tile();
+		// AICAC-SCORE (#189): advisory configuration completeness (not AI-channel coverage).
+		$this->render_governance_coverage_card( $log, $policy, $plugins );
+		// AICAC-11: name differentiators vs WordPress AI Connector Approvals.
+		$this->render_beyond_connector_approvals_callout();
+		$this->disclosure_close();
+
 		echo '</div>'; // .handl-aicac-dashboard
 	}
 
@@ -3592,7 +3840,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '</p>';
 		if ( 0 === $stored_count ) {
 			echo '<p class="handl-aicac-insights-empty-note">';
-			echo esc_html__( 'No data yet. Turn on Learn mode or logging in Activity, then run a few AI Client requests.', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'Not enough activity yet. Insights will appear after AI calls are recorded.', 'handl-ai-connector-access-control' );
 			echo ' <a href="' . esc_url( self::screen_url( 'activity' ) ) . '">';
 			echo esc_html__( 'Open Activity', 'handl-ai-connector-access-control' );
 			echo '</a></p>';
@@ -3684,9 +3932,54 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 
 		$forecast = Spend_Forecast::compute( $log, $policy );
+		$daily_trends = Daily_Trends::compute( $log, $policy, $plugins );
+
+		$dimensions = array(
+			'plugin'    => __( 'Plugins', 'handl-ai-connector-access-control' ),
+			'provider'  => __( 'Providers', 'handl-ai-connector-access-control' ),
+			'model'     => __( 'Models', 'handl-ai-connector-access-control' ),
+			'operation' => __( 'Operations', 'handl-ai-connector-access-control' ),
+		);
+
+		$this->render_insights_toolbar( $dimensions, $dimension, $metric, $base_url );
+
+		if ( empty( $rows ) ) {
+			$this->render_empty_state( __( 'Not enough activity yet. Insights will appear after AI calls are recorded.', 'handl-ai-connector-access-control' ) );
+		} else {
+			$chart_max = 0;
+			foreach ( $rows as $row ) {
+				$chart_max = max( $chart_max, $this->insights_row_metric_value( $row, $metric ) );
+			}
+
+			echo '<div class="handl-aicac-insights-panel">';
+			echo '<table class="widefat handl-aicac-insights-table">';
+			echo '<thead><tr>';
+			echo '<th scope="col" class="column-rank">' . esc_html__( '#', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col" class="column-label">' . esc_html( $dimensions[ $dimension ] ) . '</th>';
+			echo '<th scope="col" class="column-chart">' . esc_html__( 'Share', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col" class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col" class="column-num">' . esc_html__( 'Total tokens', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col" class="column-num">' . esc_html__( 'Largest call', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col" class="column-num">' . esc_html__( 'Largest input', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col" class="column-num">' . esc_html__( 'Largest output', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col" class="column-time">' . esc_html__( 'Last seen', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '</tr></thead><tbody>';
+
+			$rank = 0;
+			foreach ( $rows as $row ) {
+				++$rank;
+				$this->render_insights_table_row( $row, $rank, $dimension, $metric, $chart_max, $daily_trends );
+			}
+
+			echo '</tbody></table>';
+			echo '</div>';
+		}
+
+		// #248: long month-end tables and trend charts are secondary
+		// disclosures. They open when they hold useful data.
 		if ( null !== $forecast && ! empty( $forecast['plugins'] ) ) {
-			echo '<div class="handl-aicac-insights-forecast" style="margin:1.25em 0;">';
-			echo '<h3>' . esc_html__( 'Estimated month-end by plugin', 'handl-ai-connector-access-control' ) . '</h3>';
+			$this->disclosure_open( __( 'Estimated month-end by plugin', 'handl-ai-connector-access-control' ), true, 'handl-aicac-insights-forecast' );
+			echo '<div class="handl-aicac-insights-forecast">';
 			echo '<p class="description">' . esc_html__( 'Projected from this month’s estimated spend so far. Estimate only, not a bill.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '<table class="widefat striped"><thead><tr>';
 			echo '<th scope="col">' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
@@ -3707,21 +4000,23 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				echo '<td class="column-num">$' . esc_html( number_format_i18n( (float) $row['projected'], 2 ) ) . '</td></tr>';
 			}
 			echo '</tbody></table></div>';
+			$this->disclosure_close();
 		}
 
-		$daily_trends = Daily_Trends::compute( $log, $policy, $plugins );
 		$this->render_insights_daily_trends( $daily_trends );
 		$this->render_insights_trends( $log, $policy, $plugins );
 		$this->render_insights_provider_map( $log, $policy, $plugins );
 		$this->render_insights_cost_receipt( $log, $policy, $plugins );
 
-		$dimensions = array(
-			'plugin'    => __( 'Plugins', 'handl-ai-connector-access-control' ),
-			'provider'  => __( 'Providers', 'handl-ai-connector-access-control' ),
-			'model'     => __( 'Models', 'handl-ai-connector-access-control' ),
-			'operation' => __( 'Operations', 'handl-ai-connector-access-control' ),
-		);
+		echo '</div>';
+	}
 
+	/**
+	 * One dimension/metric toolbar above the primary ranking panel.
+	 *
+	 * @param array<string,string> $dimensions
+	 */
+	private function render_insights_toolbar( array $dimensions, string $dimension, string $metric, string $base_url ): void {
 		echo '<div class="handl-aicac-insights-toolbar">';
 		echo '<nav class="handl-aicac-insights-pills" aria-label="' . esc_attr__( 'Group by', 'handl-ai-connector-access-control' ) . '">';
 		foreach ( $dimensions as $dim_key => $dim_label ) {
@@ -3762,41 +4057,6 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 		echo '</nav>';
 		echo '</div>';
-
-		if ( empty( $rows ) ) {
-			echo '<p class="handl-aicac-insights-table-empty">' . esc_html__( 'No data to chart for this group yet.', 'handl-ai-connector-access-control' ) . '</p>';
-			echo '</div>';
-			return;
-		}
-
-		$chart_max = 0;
-		foreach ( $rows as $row ) {
-			$chart_max = max( $chart_max, $this->insights_row_metric_value( $row, $metric ) );
-		}
-
-		echo '<div class="handl-aicac-insights-panel">';
-		echo '<table class="widefat handl-aicac-insights-table">';
-		echo '<thead><tr>';
-		echo '<th scope="col" class="column-rank">' . esc_html__( '#', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th scope="col" class="column-label">' . esc_html( $dimensions[ $dimension ] ) . '</th>';
-		echo '<th scope="col" class="column-chart">' . esc_html__( 'Share', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th scope="col" class="column-num">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th scope="col" class="column-num">' . esc_html__( 'Total tokens', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th scope="col" class="column-num">' . esc_html__( 'Largest call', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th scope="col" class="column-num">' . esc_html__( 'Largest input', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th scope="col" class="column-num">' . esc_html__( 'Largest output', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th scope="col" class="column-time">' . esc_html__( 'Last seen', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '</tr></thead><tbody>';
-
-		$rank = 0;
-		foreach ( $rows as $row ) {
-			++$rank;
-			$this->render_insights_table_row( $row, $rank, $dimension, $metric, $chart_max, $daily_trends );
-		}
-
-		echo '</tbody></table>';
-		echo '</div>';
-		echo '</div>';
 	}
 
 	/**
@@ -3832,12 +4092,15 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	 * }|null $daily
 	 */
 	private function render_insights_daily_trends( ?array $daily ): void {
-		echo '<div class="handl-aicac-insights-daily" style="margin:1.5em 0;">';
-		echo '<h3>' . esc_html__( 'Daily trends', 'handl-ai-connector-access-control' ) . '</h3>';
+		// #248: secondary disclosure — open only when it holds useful data.
+		$has_data = null !== $daily && ! empty( $daily['has_activity'] );
+		$this->disclosure_open( __( 'Daily trends', 'handl-ai-connector-access-control' ), $has_data, 'handl-aicac-insights-daily' );
+		echo '<div class="handl-aicac-insights-daily">';
 
 		if ( null === $daily ) {
 			echo '<p class="description">' . esc_html__( 'Daily trends need at least two days of saved Activity. Keep Activity logging on and retain at least two days.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '</div>';
+			$this->disclosure_close();
 			return;
 		}
 
@@ -3883,6 +4146,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 		echo '</div>';
 		echo '</div>';
+		$this->disclosure_close();
 	}
 
 	/**
@@ -3899,8 +4163,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			return;
 		}
 
-		echo '<div class="handl-aicac-insights-trends" style="margin:1.5em 0;">';
-		echo '<h3>' . esc_html__( 'Weekly trends', 'handl-ai-connector-access-control' ) . '</h3>';
+		$this->disclosure_open( __( 'Weekly trends', 'handl-ai-connector-access-control' ), true, 'handl-aicac-insights-weekly' );
+		echo '<div class="handl-aicac-insights-trends">';
 		echo '<p class="description">' . esc_html__( 'Calls and estimated spend by week from the saved log for the last 8 weeks. Weeks without saved data are labeled “No data kept” instead of zero. Estimate only, not a bill.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		echo '<table class="widefat striped handl-aicac-trends-table">';
@@ -3960,6 +4224,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo esc_html( implode( '; ', $parts ) );
 		echo '</p>';
 		echo '</div>';
+		$this->disclosure_close();
 	}
 
 	/**
@@ -4330,13 +4595,12 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '</div>';
 		}
 
-		$this->render_webhook_delivery_log();
-
+		// Suggested rules sits above Recent calls, in Learn mode only.
 		if ( ! empty( $policy['audit_only'] ) ) {
 			$this->render_suggested_rules( $log, $policy, $plugins, $log_filters );
 		}
 
-		echo '<h2>' . esc_html__( 'Recent calls', 'handl-ai-connector-access-control' ) . '</h2>';
+		$this->section_open( __( 'Recent calls', 'handl-ai-connector-access-control' ), '', 'handl-aicac-recent-calls' );
 
 		$activity_per_page_allowed = self::activity_allowed_per_page();
 		$activity_per_page         = Pager::sanitize_per_page(
@@ -4358,6 +4622,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$activity_base   = self::screen_url( 'activity' );
 		$activity_query  = $this->activity_list_query_args( $log_filters, $activity_per_page );
 
+		echo '<div class="handl-aicac-activity-toolbar">';
 		$this->render_log_filters(
 			$log_filters,
 			$filter_options,
@@ -4367,7 +4632,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			$activity_query
 		);
 
-		echo '<form method="post" style="margin:0 0 1em;display:inline-block;">';
+		echo '<form method="post">';
 		wp_nonce_field( 'handl_aicac_export_audit_report', 'handl_aicac_nonce' );
 		echo '<input type="hidden" name="handl_aicac_action" value="export_audit_report" />';
 		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
@@ -4396,7 +4661,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo ' <span class="description">' . esc_html__( 'Opens a printable report in your browser. Use Print → Save as PDF. Nothing is uploaded.', 'handl-ai-connector-access-control' ) . '</span>';
 		echo '</form>';
 
-		echo '<form method="post" style="margin:0 0 1em;">';
+		echo '<form method="post">';
 		wp_nonce_field( 'handl_aicac_export_log', 'handl_aicac_nonce' );
 		echo '<input type="hidden" name="handl_aicac_action" value="export_log" />';
 		echo '<input type="hidden" name="handl_aicac_tab" value="activity" />';
@@ -4409,6 +4674,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		);
 		echo ' <span class="description">' . esc_html__( 'Downloads all saved activity matching your current filters, not just the rows shown here.', 'handl-ai-connector-access-control' ) . '</span>';
 		echo '</form>';
+		echo '</div>'; // .handl-aicac-activity-toolbar
 
 		$retention_phrase = $this->retention_mode_phrase( $policy );
 
@@ -4458,6 +4724,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			);
 		}
 		echo '</p>';
+		// #248: the log scrolls inside its own frame, never the whole page.
+		$this->table_frame_open();
 		echo '<table class="widefat striped handl-aicac-log-table">';
 		echo '<thead><tr>';
 		echo '<th scope="col" class="column-time">' . esc_html__( 'Time', 'handl-ai-connector-access-control' ) . '</th>';
@@ -4480,19 +4748,19 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 
 		if ( 0 === count( $rows_to_show ) ) {
-			if ( 0 === $stored_count ) {
-				$empty_message = ! empty( $policy['audit_only'] )
-					? __( 'No calls logged yet. Make an AI Client request while Learn mode is on.', 'handl-ai-connector-access-control' )
-					: __( 'No calls logged yet. Turn on logging above, then make an AI Client request.', 'handl-ai-connector-access-control' );
-			} elseif ( $this->log_filters_active( $log_filters ) ) {
-				$empty_message = __( 'No calls match the current filters.', 'handl-ai-connector-access-control' );
+			$filters_on = $this->log_filters_active( $log_filters );
+			echo '<tr><td colspan="13" class="handl-aicac-empty-cell">';
+			if ( $filters_on ) {
+				echo esc_html__( 'No AI activity matches these filters.', 'handl-ai-connector-access-control' );
+				echo ' <a class="handl-aicac-empty__action" href="' . esc_url( $activity_base ) . '">' . esc_html__( 'Clear filters', 'handl-ai-connector-access-control' ) . '</a>';
 			} else {
-				$empty_message = __( 'No calls to display.', 'handl-ai-connector-access-control' );
+				echo esc_html__( 'No AI activity recorded yet. Calls will appear here after a plugin uses the WordPress AI Client.', 'handl-ai-connector-access-control' );
 			}
-			echo '<tr><td colspan="13">' . esc_html( $empty_message ) . '</td></tr>';
+			echo '</td></tr>';
 		}
 
 		echo '</tbody></table>';
+		$this->table_frame_close();
 
 		echo '<div class="tablenav bottom handl-aicac-activity-nav">';
 		Pager::render_tablenav_pages(
@@ -4507,6 +4775,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		);
 		echo '<br class="clear" />';
 		echo '</div>';
+		$this->section_close();
+
+		$this->render_webhook_delivery_log();
 		echo '</div>';
 	}
 
@@ -4952,7 +5223,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				)
 			);
 			echo '</button>';
-			echo ' <span class="description">' . esc_html__( 'Keeps the full eight-week Insights window. Fills the field only; select Save Activity settings to apply it.', 'handl-ai-connector-access-control' ) . '</span>';
+			echo ' <span class="description">' . esc_html__( 'Keeps the full eight-week Insights window. Fills the field only; select Save alert and activity settings to apply it.', 'handl-ai-connector-access-control' ) . '</span>';
 			echo '</p>';
 		}
 
@@ -5007,11 +5278,12 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	private function render_webhook_delivery_log(): void {
 		$rows = Webhook_Delivery_Log::get_rows();
 
-		echo '<h2>' . esc_html__( 'Webhook delivery log', 'handl-ai-connector-access-control' ) . '</h2>';
+		$this->disclosure_open( __( 'Webhook delivery log', 'handl-ai-connector-access-control' ), false, 'handl-aicac-webhook-log' );
 		echo '<p class="description" style="max-width:52em;">' . esc_html__( 'Shows the last 20 webhook delivery attempts from this site. HandL retries once after a server error or timeout. If the retry also fails, HandL emails the blocked-call alert recipient, or the site admin if none is saved. Failure emails are limited to one every 15 minutes.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( array() === $rows ) {
-			echo '<p class="description">' . esc_html__( 'No webhook delivery attempts recorded yet.', 'handl-ai-connector-access-control' ) . '</p>';
+			$this->render_empty_state( __( 'No webhook deliveries recorded yet.', 'handl-ai-connector-access-control' ) );
+			$this->disclosure_close();
 			return;
 		}
 
@@ -5055,6 +5327,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 
 		echo '</tbody></table>';
+		$this->disclosure_close();
 	}
 
 	/**
@@ -5067,6 +5340,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$log_limit   = (int) ( $policy['log_limit'] ?? 200 );
 		$max_age     = Policy::sanitize_log_max_age_days( $policy['log_max_age_days'] ?? null );
 
+		// #248: four visual sections inside the one existing settings form.
+		$this->section_open( __( 'Activity logging', 'handl-ai-connector-access-control' ) );
 		echo '<p class="description" style="max-width:52em;margin-bottom:1em;">';
 		echo esc_html__( 'Use this tab to see AI Client and direct AI HTTP activity. Learn mode logs every call without blocking it. Manage enforcement on the Rules tab.', 'handl-ai-connector-access-control' );
 		echo '</p>';
@@ -5120,6 +5395,11 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$this->render_log_retention_export_gate( $policy );
 		echo '</td>';
 		echo '</tr>';
+		echo '</table>';
+		$this->section_close();
+
+		$this->section_open( __( 'Alert delivery', 'handl-ai-connector-access-control' ) );
+		echo '<table class="form-table" role="presentation">';
 
 		// F3: denial alerts + AICAC-SHADOW-ALERT shadow-AI observe emails.
 		$alert_on      = ! empty( $policy['alert_on_deny'] );
@@ -5177,6 +5457,26 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 					$pending
 				)
 			) . '</strong></p>';
+			// #248: the queued-summary action sits with its own channel via
+			// form=, instead of a detached form at the bottom of the screen.
+			if ( $alert_on || $alert_shadow ) {
+				echo '<p style="margin-top:8px;">';
+				submit_button(
+					sprintf(
+						/* translators: %d: queued alert count */
+						__( 'Send alert summary now (%d queued)', 'handl-ai-connector-access-control' ),
+						$pending
+					),
+					'secondary',
+					'submit',
+					false,
+					array(
+						'form' => 'handl-aicac-send-digest',
+						'id'   => 'handl-aicac-send-digest-now',
+					)
+				);
+				echo '</p>';
+			}
 		}
 		echo '</td>';
 		echo '</tr>';
@@ -5189,6 +5489,26 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<p class="description">' . esc_html__( 'Off by default. Requires logging or learn mode. Sends one alert for each plugin and AI provider domain while that activity remains in the log. These alerts do not block requests. Uses the same email address and delivery schedule as blocked-request alerts.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td>';
 		echo '</tr>';
+
+		// AICAC-DRIFT: provider/model change alerts (default: new provider only).
+		$drift_mode = Drift::sanitize_mode( $policy['drift_alert_mode'] ?? Drift::MODE_PROVIDER );
+		echo '<tr>';
+		echo '<th scope="row"><label for="handl-aicac-drift-alert-mode">' . esc_html__( 'Provider or model change alerts', 'handl-ai-connector-access-control' ) . '</label></th>';
+		echo '<td>';
+		echo '<select id="handl-aicac-drift-alert-mode" name="handl_aicac_drift_alert_mode">';
+		echo '<option value="provider" ' . selected( $drift_mode, Drift::MODE_PROVIDER, false ) . '>' . esc_html__( 'New providers only (default)', 'handl-ai-connector-access-control' ) . '</option>';
+		echo '<option value="model" ' . selected( $drift_mode, Drift::MODE_MODEL, false ) . '>' . esc_html__( 'New providers or models', 'handl-ai-connector-access-control' ) . '</option>';
+		echo '<option value="off" ' . selected( $drift_mode, Drift::MODE_OFF, false ) . '>' . esc_html__( 'Off', 'handl-ai-connector-access-control' ) . '</option>';
+		echo '</select>';
+		echo '<p class="description">' . esc_html__( 'Sends one alert the first time a plugin uses a new provider. Choose “New providers or models” to alert on either change. The plugin’s first recorded call creates a baseline and does not send an alert. Alerts use the blocked-call email address and optional webhook. This does not change Allow or Deny rules.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '</td>';
+		echo '</tr>';
+
+		echo '</table>';
+		$this->section_close();
+
+		$this->disclosure_open( __( 'Scheduled reports', 'handl-ai-connector-access-control' ), false, 'handl-aicac-alerts-reports' );
+		echo '<table class="form-table" role="presentation">';
 
 		// F7: weekly aggregate report email (Dashboard mailed).
 		// Checked-but-inactive when no explicit preference: always render checked; delivery is
@@ -5269,6 +5589,12 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '</p>';
 		echo '</td>';
 		echo '</tr>';
+
+		echo '</table>';
+		$this->disclosure_close();
+
+		$this->disclosure_open( __( 'Estimated spend', 'handl-ai-connector-access-control' ), false, 'handl-aicac-alerts-spend' );
+		echo '<table class="form-table" role="presentation">';
 
 		// F3 / AICAC-24: estimated $ rates (observability only).
 		$rates          = Cost::fallback_rates_from_policy( $policy );
@@ -5411,21 +5737,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '</td>';
 		echo '</tr>';
 
-		// AICAC-DRIFT: provider/model change alerts (default: new provider only).
-		$drift_mode = Drift::sanitize_mode( $policy['drift_alert_mode'] ?? Drift::MODE_PROVIDER );
-		echo '<tr>';
-		echo '<th scope="row"><label for="handl-aicac-drift-alert-mode">' . esc_html__( 'Provider or model change alerts', 'handl-ai-connector-access-control' ) . '</label></th>';
-		echo '<td>';
-		echo '<select id="handl-aicac-drift-alert-mode" name="handl_aicac_drift_alert_mode">';
-		echo '<option value="provider" ' . selected( $drift_mode, Drift::MODE_PROVIDER, false ) . '>' . esc_html__( 'New providers only (default)', 'handl-ai-connector-access-control' ) . '</option>';
-		echo '<option value="model" ' . selected( $drift_mode, Drift::MODE_MODEL, false ) . '>' . esc_html__( 'New providers or models', 'handl-ai-connector-access-control' ) . '</option>';
-		echo '<option value="off" ' . selected( $drift_mode, Drift::MODE_OFF, false ) . '>' . esc_html__( 'Off', 'handl-ai-connector-access-control' ) . '</option>';
-		echo '</select>';
-		echo '<p class="description">' . esc_html__( 'Sends one alert the first time a plugin uses a new provider. Choose “New providers or models” to alert on either change. The plugin’s first recorded call creates a baseline and does not send an alert. Alerts use the blocked-call email address and optional webhook. This does not change Allow or Deny rules.', 'handl-ai-connector-access-control' ) . '</p>';
-		echo '</td>';
-		echo '</tr>';
-
 		echo '</table>';
+		$this->disclosure_close();
 	}
 
 	private function handle_save_rules(): bool {
@@ -7608,15 +7921,37 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				$count
 			)
 		);
-		echo '</strong></p><ul style="margin:0 0 0 1.2em;list-style:disc;">';
+		echo '</strong></p><ul class="handl-aicac-needs-attention__list">';
+		// #248: at most five names here. The count plus Review all in Rules
+		// covers the rest, so the full list is not repeated on the Dashboard.
+		$shown = 0;
 		foreach ( $pending as $basename ) {
+			if ( $shown >= 5 ) {
+				break;
+			}
+			++$shown;
 			$label = isset( $plugins[ $basename ]['Name'] ) ? (string) $plugins[ $basename ]['Name'] : $basename;
 			$url   = New_Plugin::review_rules_url( $basename );
-			echo '<li><a href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a>';
-			echo ' <span class="description">(' . esc_html( $basename ) . ')</span></li>';
+			echo '<li><a href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a></li>';
 		}
 		echo '</ul>';
-		echo '<p style="margin:8px 0 0;"><a href="' . esc_url( New_Plugin::review_all_url() ) . '">' . esc_html__( 'Review all', 'handl-ai-connector-access-control' ) . '</a></p>';
+		if ( $count > $shown ) {
+			echo '<p class="handl-aicac-needs-attention__more">';
+			echo esc_html(
+				sprintf(
+					/* translators: %d: number of plugins not listed above */
+					_n(
+						'%d more plugin is waiting.',
+						'%d more plugins are waiting.',
+						$count - $shown,
+						'handl-ai-connector-access-control'
+					),
+					$count - $shown
+				)
+			);
+			echo '</p>';
+		}
+		echo '<p style="margin:8px 0 0;"><a href="' . esc_url( New_Plugin::review_all_url() ) . '">' . esc_html__( 'Review all in Rules', 'handl-ai-connector-access-control' ) . '</a></p>';
 		echo '</div>';
 	}
 
@@ -7792,15 +8127,19 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	private function render_suggested_rules( array $log, array $policy, array $plugins, array $log_filters ): void {
 		$suggested = Policy::suggested_rules_from_log( $log, $policy, $plugins );
 
-		echo '<h2>' . esc_html__( 'Suggested rules', 'handl-ai-connector-access-control' ) . '</h2>';
+		// #248: secondary disclosure, collapsed when there is nothing to act on.
+		$this->disclosure_open( __( 'Suggested rules', 'handl-ai-connector-access-control' ), ! empty( $suggested ), 'handl-aicac-suggested-rules' );
 		echo '<p class="description handl-aicac-log-meta" style="margin-top:0;">';
 		echo esc_html__( 'Plugins found while Learn mode was on. “Would block at plugin level” reflects only the Emergency stop and plugin rule. AI type rules are evaluated separately.', 'handl-ai-connector-access-control' );
 		echo '</p>';
 
 		if ( empty( $suggested ) ) {
 			echo '<p>' . esc_html__( 'No identified plugin calls in the log yet.', 'handl-ai-connector-access-control' ) . '</p>';
+			$this->disclosure_close();
 			return;
 		}
+
+		$this->table_frame_open();
 
 		echo '<table class="widefat striped handl-aicac-suggested-rules">';
 		echo '<thead><tr>';
@@ -7827,6 +8166,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 
 		echo '</tbody></table>';
+		$this->table_frame_close();
+		$this->disclosure_close();
 	}
 
 	private function format_explicit_rule_label( string $explicit ): string {
@@ -8655,7 +8996,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$backup_ok = ! empty( $pending['backup_downloaded'] );
 
 		echo '<div class="handl-aicac-pack-preview" style="border:1px solid #c3c4c7;padding:12px 16px;background:#fff;max-width:52em;margin-top:1em;">';
-		echo '<h3>' . esc_html__( 'Starter pack preview', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<h3 class="handl-aicac-autofocus" tabindex="-1">' . esc_html__( 'Starter pack preview', 'handl-ai-connector-access-control' ) . '</h3>';
 		if ( is_array( $def ) ) {
 			echo '<p><strong>' . esc_html( (string) $def['label'] ) . '</strong> — ' . esc_html( (string) $def['description'] ) . '</p>';
 		}
@@ -8800,7 +9141,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$diff      = Presets::diff( $preset_id, $policy );
 
 		echo '<div class="handl-aicac-preset-preview" style="border:1px solid #c3c4c7;padding:12px 16px;background:#fff;max-width:52em;margin-top:1em;">';
-		echo '<h3>' . esc_html__( 'Preset preview', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<h3 class="handl-aicac-autofocus" tabindex="-1">' . esc_html__( 'Preset preview', 'handl-ai-connector-access-control' ) . '</h3>';
 		if ( is_array( $def ) ) {
 			echo '<p><strong>' . esc_html( (string) $def['label'] ) . '</strong> — ' . esc_html( (string) $def['description'] ) . '</p>';
 		}
@@ -8954,7 +9295,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$lines    = Policy_Transfer::format_diff_lines( $diff );
 
 		echo '<div class="handl-aicac-import-preview" style="border:1px solid #c3c4c7;padding:12px 16px;background:#fff;max-width:52em;">';
-		echo '<h3>' . esc_html__( 'Import preview', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<h3 class="handl-aicac-autofocus" tabindex="-1">' . esc_html__( 'Import preview', 'handl-ai-connector-access-control' ) . '</h3>';
 		echo '<p><strong>' . esc_html__( 'Mode: replace all rules', 'handl-ai-connector-access-control' ) . '</strong> — ';
 		echo esc_html__( 'Confirming this import replaces all current rules with the uploaded settings. The same safety checks used when saving Rules will run first.', 'handl-ai-connector-access-control' );
 		echo '</p>';
@@ -9020,7 +9361,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$not_comp = $compare['not_comparable'];
 
 		echo '<div class="handl-aicac-compare-preview" style="border:1px solid #c3c4c7;padding:12px 16px;background:#fff;max-width:52em;margin-bottom:1em;">';
-		echo '<h3>' . esc_html__( 'Compare with uploaded backup', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<h3 class="handl-aicac-autofocus" tabindex="-1">' . esc_html__( 'Compare with uploaded backup', 'handl-ai-connector-access-control' ) . '</h3>';
 		echo '<p>' . esc_html__( 'This comparison does not change your rules. Use Import if you want to replace them with the uploaded file.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( ! empty( $not_comp ) ) {
@@ -9393,7 +9734,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$rows = Policy_Snapshots::diff_rows( $policy, $latest['policy'] );
 
 		echo '<div class="handl-aicac-restore-preview" style="border:1px solid #c3c4c7;padding:12px 16px;background:#fff;max-width:52em;margin-top:0.5em;">';
-		echo '<h3>' . esc_html__( 'Restore preview', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<h3 class="handl-aicac-autofocus" tabindex="-1">' . esc_html__( 'Restore preview', 'handl-ai-connector-access-control' ) . '</h3>';
 		echo '<p>' . esc_html__( 'The rules and settings below will change. Restoring also saves the current policy, so you can reverse this restore.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		$this->render_confirm_diff_table(
@@ -9434,7 +9775,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<p class="description">' . esc_html__( 'A local record of who changed rules or settings, when they changed them, and a summary of each change. Recent changes are kept even when Activity logging is off and are not cleared by the Activity keep period. Emergency stop changes are always recorded.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( empty( $entries ) ) {
-			echo '<p class="description">' . esc_html__( 'No policy changes recorded yet. Future changes will appear after the current policy has been saved once.', 'handl-ai-connector-access-control' ) . '</p>';
+			$this->render_empty_state( __( 'No policy changes recorded yet.', 'handl-ai-connector-access-control' ) );
 			echo '</div>';
 			return;
 		}

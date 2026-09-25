@@ -278,19 +278,19 @@
 }
 
 .handl-aicac-insights-hero {
-	margin: 0 0 1.25em;
-	padding: 1.25em 1.5em;
-	border-radius: 10px;
-	background: linear-gradient(135deg, #f0f6fc 0%, #f6f7f7 48%, #eef9f0 100%);
-	border: 1px solid #c3c4c7;
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+	margin: 0 0 24px;
+	padding: 16px 20px;
+	border-radius: 8px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	box-shadow: none;
 }
 
 .handl-aicac-insights-title {
-	margin: 0 0 0.35em;
-	font-size: 1.35em;
+	margin: 0 0 8px;
+	font-size: 15px;
 	font-weight: 600;
-	line-height: 1.25;
+	line-height: 1.35;
 }
 
 .handl-aicac-insights-lead {
@@ -368,15 +368,15 @@
 .handl-aicac-insights-metric {
 	display: inline-block;
 	padding: 6px 14px;
-	border-radius: 999px;
+	border-radius: 3px;
 	font-size: 13px;
 	font-weight: 500;
 	line-height: 1.3;
 	text-decoration: none;
 	color: #2c3338;
-	background: #fff;
+	background: #f6f7f7;
 	border: 1px solid #c3c4c7;
-	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+	transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
 }
 
 .handl-aicac-insights-pill:hover,
@@ -392,8 +392,8 @@
 }
 
 .handl-aicac-insights-metric.is-active {
-	background: #1d2327;
-	border-color: #1d2327;
+	background: #2271b1;
+	border-color: #2271b1;
 	color: #fff;
 }
 
@@ -448,7 +448,7 @@
 }
 
 .handl-aicac-insights-row--leader {
-	background: linear-gradient(90deg, rgba(34, 113, 177, 0.06) 0%, transparent 55%);
+	background: #f0f6fc;
 }
 
 .handl-aicac-insights-rank-badge {
@@ -468,13 +468,13 @@
 	display: block;
 	height: 100%;
 	border-radius: 6px;
-	background: linear-gradient(90deg, #72aee6 0%, #2271b1 100%);
+	background: #2271b1;
 	min-width: 0;
-	transition: width 0.25s ease;
+	transition: width 180ms ease;
 }
 
 .handl-aicac-insights-row--leader .handl-aicac-insights-bar__fill {
-	background: linear-gradient(90deg, #68de7c 0%, #00a32a 100%);
+	background: #00a32a;
 }
 
 .handl-aicac-insights-bar__value {
@@ -838,5 +838,468 @@
 
 .handl-aicac-auditor-matrix table {
 	margin-top: 0.75em;
+}
+
+/* =====================================================================
+ * AICAC-PREMIUM-POLISH (#248): shared console shell.
+ * One accent (WordPress admin blue), native controls, no decorative
+ * gradients. Spacing rhythm: 24px between sections, 16-20px inside a
+ * section, 8px between a label and its supporting copy.
+ * ===================================================================== */
+
+.handl-aicac-screen-header {
+	margin: 4px 0 24px;
+}
+
+.handl-aicac-screen-header .handl-aicac-screen-title {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 1.35;
+}
+
+.handl-aicac-screen-header .handl-aicac-screen-purpose {
+	margin: 8px 0 0;
+	max-width: 62ch;
+	font-size: 14px;
+	line-height: 1.5;
+	color: #50575e;
+}
+
+/* 1200px reading measure on the non-table screens. Rules and Activity opt
+ * out and scroll wide tables inside their own frame instead. */
+.handl-aicac-screen--narrow .handl-aicac-screen-header,
+.handl-aicac-screen--narrow .handl-aicac-tab-panel {
+	max-width: 1200px;
+}
+
+.handl-aicac-screen--wide .handl-aicac-tab-panel {
+	max-width: none;
+}
+
+/* --- Section cards --------------------------------------------------- */
+
+.handl-aicac-section,
+.handl-aicac-disclosure {
+	box-sizing: border-box;
+	margin: 0 0 24px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	box-shadow: none;
+}
+
+.handl-aicac-section__header {
+	padding: 14px 20px;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.handl-aicac-section__title {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.4;
+}
+
+.handl-aicac-section__desc {
+	margin: 8px 0 0;
+	max-width: 62ch;
+	font-size: 13px;
+	line-height: 1.5;
+	color: #50575e;
+}
+
+.handl-aicac-section__body {
+	padding: 16px 20px 20px;
+}
+
+.handl-aicac-section__body > :first-child,
+.handl-aicac-disclosure__body > :first-child {
+	margin-top: 0;
+}
+
+.handl-aicac-section__body > :last-child,
+.handl-aicac-disclosure__body > :last-child {
+	margin-bottom: 0;
+}
+
+.handl-aicac-section__body > h2,
+.handl-aicac-section__body > h3,
+.handl-aicac-disclosure__body > h2,
+.handl-aicac-disclosure__body > h3 {
+	margin: 20px 0 8px;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.4;
+}
+
+.handl-aicac-section__body .form-table {
+	margin-top: 0;
+}
+
+/* Never nest a card inside a card. */
+.handl-aicac-section .handl-aicac-section,
+.handl-aicac-section .handl-aicac-disclosure,
+.handl-aicac-disclosure .handl-aicac-section {
+	border: 0;
+	border-radius: 0;
+	margin: 0;
+	padding: 0;
+}
+
+/* --- Native details/summary disclosures ------------------------------ */
+
+.handl-aicac-disclosure > summary {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	box-sizing: border-box;
+	min-height: 44px;
+	margin: 0;
+	padding: 10px 20px;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.4;
+	color: #1d2327;
+	cursor: pointer;
+	list-style: none;
+	border-radius: 8px;
+	transition: background-color 150ms ease, color 150ms ease;
+}
+
+.handl-aicac-disclosure > summary::-webkit-details-marker {
+	display: none;
+}
+
+.handl-aicac-disclosure > summary::before {
+	content: "";
+	flex: 0 0 auto;
+	width: 0;
+	height: 0;
+	border-top: 5px solid transparent;
+	border-bottom: 5px solid transparent;
+	border-left: 6px solid #50575e;
+	transition: transform 150ms ease;
+}
+
+.handl-aicac-disclosure[open] > summary::before {
+	transform: rotate(90deg);
+}
+
+.handl-aicac-disclosure > summary:hover {
+	background: #f6f7f7;
+	color: #135e96;
+}
+
+.handl-aicac-disclosure > summary:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: -2px;
+}
+
+.handl-aicac-disclosure[open] > summary {
+	border-bottom: 1px solid #dcdcde;
+	border-radius: 8px 8px 0 0;
+}
+
+.handl-aicac-disclosure__summary-note {
+	margin-left: auto;
+	font-size: 12px;
+	font-weight: 400;
+	color: #646970;
+}
+
+.handl-aicac-disclosure__body {
+	padding: 16px 20px 20px;
+}
+
+/* Per-row Advanced controls inside the Rules matrix — inline, not a card. */
+.handl-aicac-row-advanced {
+	margin: 8px 0 0;
+	border: 0;
+	background: none;
+}
+
+.handl-aicac-row-advanced > summary {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	box-sizing: border-box;
+	min-height: 44px;
+	padding: 2px 0;
+	font-size: 12px;
+	font-weight: 600;
+	color: #2271b1;
+	cursor: pointer;
+	list-style: none;
+}
+
+.handl-aicac-row-advanced > summary::-webkit-details-marker {
+	display: none;
+}
+
+.handl-aicac-row-advanced > summary::before {
+	content: "";
+	flex: 0 0 auto;
+	width: 0;
+	height: 0;
+	border-top: 4px solid transparent;
+	border-bottom: 4px solid transparent;
+	border-left: 5px solid currentColor;
+	transition: transform 150ms ease;
+}
+
+.handl-aicac-row-advanced[open] > summary::before {
+	transform: rotate(90deg);
+}
+
+.handl-aicac-row-advanced > summary:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+}
+
+.handl-aicac-row-advanced__body {
+	padding: 4px 0 0;
+	border-top: 1px solid #f0f0f1;
+	margin-top: 4px;
+}
+
+.handl-aicac-row-advanced__group {
+	margin: 12px 0 0;
+}
+
+.handl-aicac-row-advanced__group:first-child {
+	margin-top: 8px;
+}
+
+.handl-aicac-row-advanced__label {
+	display: block;
+	margin: 0 0 4px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	color: #646970;
+}
+
+/* --- Framed, internally scrolling table regions ---------------------- */
+
+.handl-aicac-table-frame {
+	box-sizing: border-box;
+	margin: 0 0 16px;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	background: #fff;
+	overflow: hidden;
+}
+
+.handl-aicac-table-frame__scroll {
+	overflow-x: auto;
+	overflow-y: visible;
+	max-width: 100%;
+	-webkit-overflow-scrolling: touch;
+}
+
+.handl-aicac-table-frame__scroll > table.widefat {
+	margin: 0;
+	border: 0;
+	box-shadow: none;
+}
+
+.handl-aicac-rules-matrix th,
+.handl-aicac-rules-matrix td {
+	vertical-align: top;
+}
+
+/* --- Sticky control rows and save bars -------------------------------- */
+
+.handl-aicac-sticky-filters {
+	position: sticky;
+	top: 32px;
+	z-index: 20;
+	margin: 0 0 12px;
+	padding: 8px 12px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+}
+
+.handl-aicac-sticky-filters .handl-aicac-table-filters {
+	margin: 0;
+}
+
+.handl-aicac-sticky-filters .handl-aicac-bulk-nav {
+	margin: 4px 0 0;
+}
+
+.handl-aicac-sticky-save {
+	position: sticky;
+	bottom: 0;
+	z-index: 20;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 16px;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 12px 20px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.04);
+}
+
+.handl-aicac-sticky-save__note {
+	margin: 0;
+	font-size: 13px;
+	line-height: 1.5;
+	color: #646970;
+}
+
+/* Reserve room so the bar never rests on the final row, pager, or footer. */
+.handl-aicac-sticky-save-spacer {
+	height: 64px;
+}
+
+/* --- Empty states ----------------------------------------------------- */
+
+.handl-aicac-empty {
+	margin: 0;
+	padding: 24px 20px;
+	text-align: center;
+	color: #50575e;
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.handl-aicac-empty__action {
+	display: inline-block;
+	margin-left: 8px;
+}
+
+td.handl-aicac-empty-cell {
+	padding: 24px 20px;
+	text-align: center;
+	color: #50575e;
+}
+
+/* --- Dashboard: needs attention -------------------------------------- */
+
+.handl-aicac-needs-attention__list {
+	margin: 0 0 8px;
+	padding-left: 1.2em;
+	list-style: disc;
+}
+
+.handl-aicac-needs-attention__list li {
+	margin: 0 0 4px;
+}
+
+.handl-aicac-needs-attention__more {
+	margin: 0;
+	font-size: 13px;
+	color: #646970;
+}
+
+.handl-aicac-needs-attention__healthy {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+/* --- Activity toolbar -------------------------------------------------- */
+
+.handl-aicac-activity-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 12px 16px;
+	margin: 0 0 12px;
+}
+
+.handl-aicac-activity-toolbar form {
+	margin: 0;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+}
+
+.handl-aicac-activity-toolbar .description {
+	flex: 1 1 18em;
+	min-width: 0;
+}
+
+/* --- Numeric data, buttons, focus ------------------------------------- */
+
+.handl-aicac-section .column-num,
+.handl-aicac-disclosure .column-num,
+.handl-aicac-table-frame .column-num {
+	font-variant-numeric: tabular-nums;
+}
+
+.handl-aicac-screen .button,
+.handl-aicac-screen .button-primary,
+.handl-aicac-screen .button-secondary {
+	transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, opacity 150ms ease;
+}
+
+.handl-aicac-screen .button:focus-visible,
+.handl-aicac-screen a:focus-visible,
+.handl-aicac-screen summary:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 1px;
+}
+
+/* Submit feedback: WordPress spinner beside the control that was pressed. */
+.handl-aicac-busy-spinner {
+	float: none;
+	margin: 0 0 0 6px;
+	vertical-align: middle;
+}
+
+form[aria-busy="true"] .handl-aicac-busy-spinner {
+	visibility: visible;
+}
+
+/* --- Responsive ------------------------------------------------------- */
+
+@media screen and (max-width: 960px) {
+	.handl-aicac-section__header,
+	.handl-aicac-section__body,
+	.handl-aicac-disclosure > summary,
+	.handl-aicac-disclosure__body,
+	.handl-aicac-sticky-save {
+		padding-left: 14px;
+		padding-right: 14px;
+	}
+}
+
+@media screen and (max-width: 782px) {
+	.handl-aicac-sticky-filters {
+		top: 46px;
+	}
+
+	.handl-aicac-activity-toolbar {
+		flex-direction: column;
+		align-items: stretch;
+	}
+}
+
+@media screen and (max-width: 600px) {
+	/* The admin bar stops being fixed here, so no sticky offset is needed. */
+	.handl-aicac-sticky-filters {
+		top: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.handl-aicac-screen *,
+	.handl-aicac-screen *::before,
+	.handl-aicac-screen *::after {
+		transition-duration: 0.01ms !important;
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		scroll-behavior: auto !important;
+	}
 }
 
