@@ -157,6 +157,14 @@ final class Went_AI {
 			);
 		}
 
+		if ( New_Plugin::hold_is_pending( $policy, $plugin ) ) {
+			return array(
+				'tagged'  => true,
+				'alerted' => false,
+				'reason'  => 'newcomer_hold',
+			);
+		}
+
 		if ( null !== Quiet_Hours::active_window( $policy, $ts ) ) {
 			return array(
 				'tagged'  => true,
