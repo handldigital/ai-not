@@ -36,6 +36,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-spend-threshold.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-budget.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rate-cap.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-soft-deny.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-forecast.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-governance-coverage.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-usage-trends.php';
@@ -109,6 +110,7 @@ final class Plugin {
 		Freeze::init();
 		Temp_Allow::instance()->init();
 		New_Plugin::instance()->init();
+		Soft_Deny::instance()->init();
 		Alerts::instance()->init();
 		Inbox_Actions::instance()->init();
 		Access_Request::instance()->init();
