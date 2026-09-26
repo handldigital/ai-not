@@ -102,8 +102,8 @@ final class DisclosureTest extends TestCase {
 
 		$html = Disclosure::render_html( $snap );
 		$this->assertStringContainsString( Disclosure::HEADING, $html );
-		$this->assertStringContainsString( 'OpenAI — Text', $html );
-		$this->assertStringContainsString( 'Anthropic — Image', $html );
+		$this->assertStringContainsString( 'OpenAI: Text', $html );
+		$this->assertStringContainsString( 'Anthropic: Image', $html );
 		$this->assertStringNotContainsString( 'acme/acme.php', $html );
 		$this->assertStringNotContainsString( 'vision/vision.php', $html );
 	}
@@ -113,27 +113,40 @@ final class DisclosureTest extends TestCase {
 		$this->assertSame( 'observe', $snap['mode'] );
 		$this->assertSame( Disclosure::MODE_OBSERVE, $snap['mode_text'] );
 		$html = Disclosure::render_html( $snap );
-		$this->assertStringContainsString( Disclosure::MODE_OBSERVE, $html );
-		$this->assertStringNotContainsString( Disclosure::PAUSED, $html );
+		$this->assertStringContainsString( $this->esc( Disclosure::MODE_OBSERVE ), $html );
+		$this->assertStringNotContainsString( $this->esc( Disclosure::PAUSED ), $html );
 	}
 
 	public function test_freeze_paused_copy(): void {
 		$snap = Disclosure::build_snapshot( array(), $this->activeLog(), true, true );
 		$this->assertSame( 'paused', $snap['mode'] );
 		$this->assertTrue( $snap['paused'] );
+		$this->assertSame( '', $snap['mode_text'] );
 		$html = Disclosure::render_html( $snap );
-		$this->assertStringContainsString( Disclosure::PAUSED, $html );
+		$this->assertStringContainsString( $this->esc( Disclosure::PAUSED ), $html );
 		$this->assertStringContainsString( 'OpenAI', $html );
+		$this->assertStringNotContainsString( $this->esc( Disclosure::MODE_GATED ), $html );
 	}
 
 	public function test_kill_switch_paused_copy(): void {
 		$snap = Disclosure::build_snapshot( array( 'kill_switch' => true, 'audit_only' => true ), $this->activeLog(), false, true );
 		$this->assertSame( 'paused', $snap['mode'] );
 		$this->assertTrue( $snap['paused'] );
-		$this->assertSame( Disclosure::MODE_OBSERVE, $snap['mode_text'] );
+		$this->assertSame( '', $snap['mode_text'] );
 		$html = Disclosure::render_html( $snap );
-		$this->assertStringContainsString( Disclosure::PAUSED, $html );
-		$this->assertStringContainsString( Disclosure::MODE_OBSERVE, $html );
+		$this->assertStringContainsString( $this->esc( Disclosure::PAUSED ), $html );
+		$this->assertStringNotContainsString( $this->esc( Disclosure::MODE_OBSERVE ), $html );
+		$this->assertStringNotContainsString( $this->esc( Disclosure::MODE_GATED ), $html );
+	}
+
+	public function test_watch_plus_freeze_shows_only_paused(): void {
+		$snap = Disclosure::build_snapshot( array( 'audit_only' => true ), $this->activeLog(), true, true );
+		$this->assertTrue( $snap['paused'] );
+		$this->assertSame( '', $snap['mode_text'] );
+		$html = Disclosure::render_html( $snap );
+		$this->assertStringContainsString( $this->esc( Disclosure::PAUSED ), $html );
+		$this->assertStringNotContainsString( $this->esc( Disclosure::MODE_OBSERVE ), $html );
+		$this->assertStringNotContainsString( 'without blocking', $html );
 	}
 
 	public function test_empty_state_when_no_activity(): void {
@@ -153,7 +166,7 @@ final class DisclosureTest extends TestCase {
 		$this->assertStringContainsString( Disclosure::PROVIDERS_PREFIX, $html );
 		$this->assertStringContainsString( 'OpenAI', $html );
 		$this->assertStringNotContainsString( '<ul', $html );
-		$this->assertStringNotContainsString( 'OpenAI — Text', $html );
+		$this->assertStringNotContainsString( 'OpenAI: Text', $html );
 	}
 
 	public function test_never_renders_pii_keys_paths_or_option_names(): void {
@@ -241,9 +254,9 @@ final class DisclosureTest extends TestCase {
 
 	public function test_block_detail_false(): void {
 		$html = Disclosure::render( false, array(), $this->activeLog(), false );
-		$this->assertStringNotContainsString( 'OpenAI — Text', $html );
+		$this->assertStringNotContainsString( 'OpenAI: Text', $html );
 		$html_on = Disclosure::render( true, array(), $this->activeLog(), false );
-		$this->assertStringContainsString( 'OpenAI — Text', $html_on );
+		$this->assertStringContainsString( 'OpenAI: Text', $html_on );
 	}
 
 	public function test_privacy_append_only_on_privacy_page_when_enabled(): void {
@@ -299,6 +312,10 @@ final class DisclosureTest extends TestCase {
 		$this->assertStringContainsString( Disclosure::SETTINGS_DETAIL, $html );
 		$this->assertStringContainsString( Disclosure::SETTINGS_HELP, $html );
 		$this->assertStringContainsString( Disclosure::POST_PRESENT, $html );
+	}
+
+	private function esc( string $text ): string {
+		return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
 	}
 
 	public function test_plugin_php_requires_and_inits_disclosure(): void {

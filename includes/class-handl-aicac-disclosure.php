@@ -32,29 +32,29 @@ final class Disclosure {
 
 	public const POST_DETAIL = 'handl_aicac_disclosure_detail';
 
-	public const HEADING = 'How this site uses AI';
+	public const HEADING = 'AI activity on this site';
 
-	public const MODE_GATED = 'This site checks AI calls before they run.';
+	public const MODE_GATED = 'This site\'s AI access control checks the requests it handles before they run.';
 
-	public const MODE_OBSERVE = 'This site watches AI calls. It does not block them.';
+	public const MODE_OBSERVE = 'This site\'s AI access control is set to watch requests without blocking them.';
 
-	public const PAUSED = 'AI calls are currently paused.';
+	public const PAUSED = 'This site\'s AI access control is set to pause the requests it handles.';
 
-	public const EMPTY = 'This site has not recorded any AI activity yet.';
+	public const EMPTY = 'No AI activity is available to show in this disclosure.';
 
-	public const PROVIDERS_PREFIX = 'AI companies used: ';
+	public const PROVIDERS_PREFIX = 'AI services in the activity log: ';
 
-	public const FAMILIES_PREFIX = 'Used for: ';
+	public const FAMILIES_PREFIX = 'Request types: ';
 
-	public const FOOTNOTE = 'This list comes from this site\'s AI access settings and recorded calls.';
+	public const FOOTNOTE = 'Based on this site\'s AI access settings and saved activity log. Entries may include blocked requests and checks for available AI features. This is not a complete history of AI use.';
 
 	public const SETTINGS_TITLE = 'Public AI disclosure';
 
 	public const SETTINGS_PRIVACY = 'Show this disclosure on the privacy policy page';
 
-	public const SETTINGS_DETAIL = 'List which AI companies this site used';
+	public const SETTINGS_DETAIL = 'Show request types for each AI service';
 
-	public const SETTINGS_HELP = 'Visitors see company names and what they were used for (text, images). Personal data, plugin file names, and secret keys stay off this list.';
+	public const SETTINGS_HELP = 'AI service names and request types come from the saved activity log. Turn this on to show request types beside each service.';
 
 	public const SHORTCODE_HINT = 'Or add the [handl_ai_disclosure] shortcode to any page.';
 
@@ -233,9 +233,9 @@ final class Disclosure {
 		echo '<br />';
 		echo '<label for="handl-aicac-disclosure-detail">';
 		echo '<input type="checkbox" name="' . esc_attr( self::POST_DETAIL ) . '" id="handl-aicac-disclosure-detail" value="1"' . ( $detail ? ' checked="checked"' : '' ) . ' /> ';
-		echo esc_html__( 'List which AI companies this site used', 'handl-ai-connector-access-control' );
+		echo esc_html__( 'Show request types for each AI service', 'handl-ai-connector-access-control' );
 		echo '</label>';
-		echo '<p class="description">' . esc_html__( 'Visitors see company names and what they were used for (text, images). Personal data, plugin file names, and secret keys stay off this list.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'AI service names and request types come from the saved activity log. Turn this on to show request types beside each service.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'Or add the [handl_ai_disclosure] shortcode to any page.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td>';
 		echo '</tr>';
@@ -420,7 +420,7 @@ final class Disclosure {
 			'empty'          => $empty,
 			'detail'         => $detail,
 			'heading'        => self::HEADING,
-			'mode_text'      => $observe ? self::MODE_OBSERVE : self::MODE_GATED,
+			'mode_text'      => $paused ? '' : ( $observe ? self::MODE_OBSERVE : self::MODE_GATED ),
 			'paused_text'    => self::PAUSED,
 			'empty_text'     => self::EMPTY,
 			'providers_text' => $empty ? '' : self::PROVIDERS_PREFIX . implode( ', ', $provider_names ),
@@ -437,7 +437,10 @@ final class Disclosure {
 	public static function render_html( array $snap ): string {
 		$html  = '<section class="handl-aicac-disclosure">';
 		$html .= '<h2 class="handl-aicac-disclosure__heading">' . esc_html( (string) ( $snap['heading'] ?? self::HEADING ) ) . '</h2>';
-		$html .= '<p class="handl-aicac-disclosure__mode">' . esc_html( (string) ( $snap['mode_text'] ?? self::MODE_GATED ) ) . '</p>';
+		$mode_text = (string) ( $snap['mode_text'] ?? '' );
+		if ( '' !== $mode_text ) {
+			$html .= '<p class="handl-aicac-disclosure__mode">' . esc_html( $mode_text ) . '</p>';
+		}
 		if ( ! empty( $snap['paused'] ) ) {
 			$html .= '<p class="handl-aicac-disclosure__paused">' . esc_html( (string) ( $snap['paused_text'] ?? self::PAUSED ) ) . '</p>';
 		}
@@ -474,7 +477,7 @@ final class Disclosure {
 					}
 					$line  = $label;
 					if ( ! empty( $bits ) ) {
-						$line .= ' — ' . implode( ', ', $bits );
+						$line .= ': ' . implode( ', ', $bits );
 					}
 					$html .= '<li>' . esc_html( $line ) . '</li>';
 				}
