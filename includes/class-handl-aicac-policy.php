@@ -237,14 +237,28 @@ final class Policy {
 			}
 		}
 
+		// AICAC-SOFT-DENY (#279): deny stays a deny for Activity/storm/alerts, but
+		// generating ops can stub a parseable empty HTTP success instead of WP_Error.
+		// Placed after gate evaluation (and after #271's insert point) so soft mode
+		// never changes evaluate()/apply_to_event hunks owned by parallel PRs.
+		$soft_deny = Soft_Deny::maybe_arm_from_deny(
+			$prevent,
+			$event,
+			$policy,
+			is_string( $plugin ) ? $plugin : null,
+			$operation,
+			$family
+		);
+
 		// AICAC-BLOCKED-UX Phase 1: capture request context + caller-facing error on real denies.
 		if ( $prevent ) {
 			$event['request_context'] = self::detect_request_context();
 			// Generating methods: AI Client returns WP_Error(prompt_prevented, …).
 			// Support checks return false with no WP_Error — leave returned_error empty.
-			$event['returned_error'] = self::is_generating_operation( $operation )
-				? self::caller_deny_error_message()
-				: '';
+			// Soft deny: caller receives an empty success stub, not prompt_prevented.
+			$event['returned_error'] = ( $soft_deny || ! self::is_generating_operation( $operation ) )
+				? ''
+				: self::caller_deny_error_message();
 		}
 
 		$this->log_event( $event );
@@ -261,7 +275,8 @@ final class Policy {
 			Access_Request::note_deny( $event );
 		}
 
-		return $prevent;
+		// Soft deny: let the prompt proceed so Soft_Deny can stub wp_remote_*.
+		return $soft_deny ? false : $prevent;
 	}
 
 	/**
@@ -1183,6 +1198,8 @@ final class Policy {
 		$policy['plugin_budget_modes']     = Budget::sanitize_plugin_budget_modes( $policy['plugin_budget_modes'] ?? array() );
 		$policy['plugin_rate_caps_hour']   = Rate_Cap::sanitize_plugin_caps( $policy['plugin_rate_caps_hour'] ?? array() );
 		$policy['plugin_rate_caps_day']    = Rate_Cap::sanitize_plugin_caps( $policy['plugin_rate_caps_day'] ?? array() );
+		// AICAC-SOFT-DENY (#279): per-plugin hard|soft deny response (default hard = absent).
+		$policy[ Soft_Deny::POLICY_KEY ] = Soft_Deny::sanitize_plugin_modes( $policy[ Soft_Deny::POLICY_KEY ] ?? array() );
 		$policy['anomaly_alert_enabled'] = (bool) ( $policy['anomaly_alert_enabled'] ?? false );
 		$policy['anomaly_multiplier']    = Anomaly::sanitize_multiplier( $policy['anomaly_multiplier'] ?? Anomaly::DEFAULT_MULTIPLIER );
 		$policy['anomaly_floor_calls']   = Anomaly::sanitize_floor_calls( $policy['anomaly_floor_calls'] ?? Anomaly::DEFAULT_FLOOR_CALLS );
@@ -1519,6 +1536,8 @@ final class Policy {
 		$policy['plugin_budget_modes']     = Budget::sanitize_plugin_budget_modes( $policy['plugin_budget_modes'] ?? array() );
 		$policy['plugin_rate_caps_hour']   = Rate_Cap::sanitize_plugin_caps( $policy['plugin_rate_caps_hour'] ?? array() );
 		$policy['plugin_rate_caps_day']    = Rate_Cap::sanitize_plugin_caps( $policy['plugin_rate_caps_day'] ?? array() );
+		// AICAC-SOFT-DENY (#279): per-plugin hard|soft deny response (default hard = absent).
+		$policy[ Soft_Deny::POLICY_KEY ] = Soft_Deny::sanitize_plugin_modes( $policy[ Soft_Deny::POLICY_KEY ] ?? array() );
 		$policy['anomaly_alert_enabled'] = ! empty( $policy['anomaly_alert_enabled'] );
 		$policy['anomaly_multiplier']    = Anomaly::sanitize_multiplier( $policy['anomaly_multiplier'] ?? Anomaly::DEFAULT_MULTIPLIER );
 		$policy['anomaly_floor_calls']   = Anomaly::sanitize_floor_calls( $policy['anomaly_floor_calls'] ?? Anomaly::DEFAULT_FLOOR_CALLS );
