@@ -103,6 +103,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rest.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-share.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-disclosure.php';
 
 		Policy::instance()->init();
 		Break_Glass::init();
@@ -132,6 +133,7 @@ final class Plugin {
 		Share::instance()->init();
 		Dashboard_Widget::instance()->init();
 		Plugin_Chips::instance()->init();
+		Disclosure::instance()->init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
