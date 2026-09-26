@@ -1074,10 +1074,8 @@
 .handl-aicac-row-advanced__label {
 	display: block;
 	margin: 0 0 4px;
-	font-size: 11px;
+	font-size: 12px;
 	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: 0.02em;
 	color: #646970;
 }
 
@@ -1108,6 +1106,60 @@
 .handl-aicac-rules-matrix th,
 .handl-aicac-rules-matrix td {
 	vertical-align: top;
+}
+
+/* Keep selection / Plugin / Status / AI access visible while family and
+ * file columns scroll inside the framed region (#248 Rules AC). */
+.handl-aicac-rules-matrix .handl-aicac-col-anchor {
+	position: sticky;
+	z-index: 1;
+	background: #fff;
+}
+
+.handl-aicac-rules-matrix thead .handl-aicac-col-anchor {
+	z-index: 3;
+	background: #fff;
+}
+
+.handl-aicac-rules-matrix.striped > tbody > :nth-child(odd) > .handl-aicac-col-anchor {
+	background: #f6f7f7;
+}
+
+.handl-aicac-rules-matrix.striped > tbody > :nth-child(even) > .handl-aicac-col-anchor {
+	background: #fff;
+}
+
+.handl-aicac-rules-matrix .handl-aicac-col-cb {
+	left: 0;
+	width: 2.5em;
+	min-width: 2.5em;
+	max-width: 2.5em;
+	box-sizing: border-box;
+}
+
+.handl-aicac-rules-matrix .handl-aicac-col-plugin {
+	left: 2.5em;
+	width: 12em;
+	min-width: 12em;
+	max-width: 12em;
+	box-sizing: border-box;
+}
+
+.handl-aicac-rules-matrix .handl-aicac-col-status {
+	left: calc(2.5em + 12em);
+	width: 5.5em;
+	min-width: 5.5em;
+	max-width: 5.5em;
+	box-sizing: border-box;
+	white-space: nowrap;
+}
+
+.handl-aicac-rules-matrix .handl-aicac-col-access {
+	left: calc(2.5em + 12em + 5.5em);
+	width: 9em;
+	min-width: 9em;
+	box-sizing: border-box;
+	box-shadow: 2px 0 0 #dcdcde;
 }
 
 /* --- Sticky control rows and save bars -------------------------------- */

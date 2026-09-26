@@ -1605,11 +1605,11 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$this->table_frame_open();
 		echo '<table class="widefat striped handl-aicac-rules-matrix">';
 		echo '<thead><tr>';
-		echo '<th scope="col" id="cb" class="manage-column column-cb check-column"><label class="screen-reader-text" for="handl-aicac-bulk-select-all">' . esc_html__( 'Select all', 'handl-ai-connector-access-control' ) . '</label>';
+		echo '<th scope="col" id="cb" class="manage-column column-cb check-column handl-aicac-col-anchor handl-aicac-col-cb"><label class="screen-reader-text" for="handl-aicac-bulk-select-all">' . esc_html__( 'Select all', 'handl-ai-connector-access-control' ) . '</label>';
 		echo '<input id="handl-aicac-bulk-select-all" type="checkbox" /></th>';
-		echo '<th scope="col">' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th scope="col">' . esc_html__( 'Status', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th scope="col">' . esc_html__( 'AI access', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="handl-aicac-col-anchor handl-aicac-col-plugin">' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="handl-aicac-col-anchor handl-aicac-col-status">' . esc_html__( 'Status', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="handl-aicac-col-anchor handl-aicac-col-access">' . esc_html__( 'AI access', 'handl-ai-connector-access-control' ) . '</th>';
 		foreach ( $family_labels as $family_id => $family_label ) {
 			echo '<th scope="col" class="handl-aicac-col-family">' . esc_html( $family_label ) . '</th>';
 		}
@@ -1665,7 +1665,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			}
 
 			echo '<tr id="handl-aicac-rule-' . esc_attr( md5( $basename ) ) . '">';
-			echo '<th scope="row" class="check-column">';
+			echo '<th scope="row" class="check-column handl-aicac-col-anchor handl-aicac-col-cb">';
 			echo '<label class="screen-reader-text" for="handl-aicac-bulk-cb-' . esc_attr( md5( $basename ) ) . '">';
 			echo esc_html(
 				sprintf(
@@ -1677,7 +1677,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '</label>';
 			echo '<input type="checkbox" class="handl-aicac-bulk-cb" id="handl-aicac-bulk-cb-' . esc_attr( md5( $basename ) ) . '" name="handl_aicac_bulk_plugins[]" value="' . esc_attr( $basename ) . '" form="' . esc_attr( $bulk_form_id ) . '" />';
 			echo '</th>';
-			echo '<td><strong>' . esc_html( $name ) . '</strong>';
+			echo '<td class="handl-aicac-col-anchor handl-aicac-col-plugin"><strong>' . esc_html( $name ) . '</strong>';
 			if ( New_Plugin::is_pending( $policy, $basename ) ) {
 				echo ' <span class="handl-aicac-needs-review" style="display:inline-block;margin-left:6px;padding:1px 6px;border-radius:3px;background:#f0b849;color:#1d2327;font-size:11px;font-weight:600;">';
 				echo esc_html__( 'Needs review', 'handl-ai-connector-access-control' );
@@ -1700,8 +1700,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 				echo '</span>';
 			}
 			echo '</td>';
-			echo '<td>' . ( $enabled ? '<span class="dashicons dashicons-yes"></span> ' . esc_html__( 'Active', 'handl-ai-connector-access-control' ) : esc_html__( 'Inactive', 'handl-ai-connector-access-control' ) ) . '</td>';
-			echo '<td>';
+			echo '<td class="handl-aicac-col-anchor handl-aicac-col-status">' . ( $enabled ? '<span class="dashicons dashicons-yes"></span> ' . esc_html__( 'Active', 'handl-ai-connector-access-control' ) : esc_html__( 'Inactive', 'handl-ai-connector-access-control' ) ) . '</td>';
+			echo '<td class="handl-aicac-col-anchor handl-aicac-col-access">';
 			echo '<select name="handl_aicac_rule[' . esc_attr( $basename ) . ']" form="' . esc_attr( $rules_form_id ) . '">';
 			$this->render_option( '', (string) $rule, __( 'Default', 'handl-ai-connector-access-control' ) );
 			$this->render_option( 'allow', (string) $rule, __( 'Allow', 'handl-ai-connector-access-control' ) );
@@ -3458,6 +3458,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 		// #248: one compact Needs attention section. Each line already escapes
 		// its own output; buffering only tells us whether anything is pending.
+		// Alert-delivery failures shown in the Alert delivery tile must block
+		// the healthy all-clear — same consecutive-failure threshold.
 		ob_start();
 		// AICAC-NEWPLUGIN: plugins awaiting first AI access decision.
 		$this->render_new_plugin_dashboard_line( $policy, $plugins );
@@ -3470,6 +3472,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		// AICAC-BUDGET-C: over estimated-budget banner.
 		$this->render_budget_dashboard_banner( $policy, $plugins );
 		$this->render_rate_cap_dashboard_banner( $policy );
+		// AICAC-ALERT-HEALTH: actionable delivery failures (tile parity).
+		$this->render_alert_delivery_dashboard_line( $policy );
 		$attention = (string) ob_get_clean();
 
 		$this->section_open( __( 'Needs attention', 'handl-ai-connector-access-control' ), '', 'handl-aicac-needs-attention' );
@@ -7891,6 +7895,72 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 		echo '</ul>';
 		echo '<p class="description" style="margin:6px 0 0;">' . esc_html__( 'Muted plugins still follow your rules and still write to the activity log. Alert emails and webhooks are not sent during the mute.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '</div>';
+	}
+
+	/**
+	 * Dashboard Needs attention: alert email/webhook delivery failures.
+	 *
+	 * Mirrors the danger state on the Alert delivery tile so the healthy
+	 * all-clear is never shown while that tile reports consecutive failures.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	private function render_alert_delivery_dashboard_line( array $policy ): void {
+		$email_to     = Alerts::resolve_email( $policy );
+		$webhook_url  = Alerts::resolve_webhook( $policy );
+		$show_email   = '' !== $email_to;
+		$show_webhook = '' !== $webhook_url;
+		if ( ! $show_email && ! $show_webhook ) {
+			return;
+		}
+
+		$health  = Alert_Health::get_state();
+		$failing = array();
+		if ( $show_email ) {
+			$row = $health[ Alert_Health::CHANNEL_EMAIL ];
+			if ( (int) $row['consecutive_failures'] >= Alert_Health::FAILURE_THRESHOLD ) {
+				$failing[] = array(
+					'channel' => Alert_Health::CHANNEL_EMAIL,
+					'row'     => $row,
+				);
+			}
+		}
+		if ( $show_webhook ) {
+			$row = $health[ Alert_Health::CHANNEL_WEBHOOK ];
+			if ( (int) $row['consecutive_failures'] >= Alert_Health::FAILURE_THRESHOLD ) {
+				$failing[] = array(
+					'channel' => Alert_Health::CHANNEL_WEBHOOK,
+					'row'     => $row,
+				);
+			}
+		}
+		if ( empty( $failing ) ) {
+			return;
+		}
+
+		$labels = array();
+		foreach ( $failing as $item ) {
+			$labels[] = Alert_Health::channel_label( (string) $item['channel'] );
+		}
+
+		echo '<div class="notice notice-error inline handl-aicac-alert-delivery-failing" style="margin:12px 0;padding:8px 12px;">';
+		echo '<p style="margin:0 0 6px;"><strong>' . esc_html__( 'Alert sending is failing repeatedly', 'handl-ai-connector-access-control' ) . '</strong></p>';
+		echo '<p class="description" style="margin:0 0 6px;">';
+		echo esc_html(
+			sprintf(
+				/* translators: %s: comma-separated channel labels */
+				__( 'Alert sending failed at least 3 times in a row for: %s. Check your email or webhook settings, then send a test from the Dashboard.', 'handl-ai-connector-access-control' ),
+				implode( ', ', $labels )
+			)
+		);
+		echo '</p><ul class="handl-aicac-needs-attention__list">';
+		foreach ( $failing as $item ) {
+			echo '<li>' . esc_html( Alert_Health::format_status_line( (string) $item['channel'], $item['row'] ) ) . '</li>';
+		}
+		echo '</ul>';
+		$alerts_url = self::screen_url( 'alerts' ) . '#handl-aicac-alert-email';
+		echo '<p style="margin:8px 0 0;"><a href="' . esc_url( $alerts_url ) . '">' . esc_html__( 'Alerts & Settings', 'handl-ai-connector-access-control' ) . '</a></p>';
 		echo '</div>';
 	}
 
