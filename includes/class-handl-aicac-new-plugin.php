@@ -672,14 +672,14 @@ final class New_Plugin {
 			: 'WordPress';
 		$subject = sprintf(
 			/* translators: 1: site name, 2: plugin name */
-			__( '[%1$s] HandL: %2$s made its first AI call', 'handl-ai-connector-access-control' ),
+			__( '[%1$s] HandL: Review AI access for %2$s', 'handl-ai-connector-access-control' ),
 			$site,
 			$label
 		);
 		$lines   = array();
 		$lines[] = sprintf(
 			/* translators: %s: plugin display name */
-			__( '%s made its first AI call — Allow / Deny / keep watching.', 'handl-ai-connector-access-control' ),
+			__( '%s tried to use AI. Review its access.', 'handl-ai-connector-access-control' ),
 			$label
 		);
 		$lines[] = '';
@@ -687,8 +687,13 @@ final class New_Plugin {
 		$lines[] = self::hold_action_url( self::ACTION_ALLOW, $plugin );
 		$lines[] = __( 'Deny:', 'handl-ai-connector-access-control' );
 		$lines[] = self::hold_action_url( self::ACTION_DENY, $plugin );
-		$lines[] = __( 'Keep watching:', 'handl-ai-connector-access-control' );
+		$lines[] = self::hold_ack_is_dismiss( $policy )
+			? __( 'Dismiss notice:', 'handl-ai-connector-access-control' )
+			: __( 'Keep watching:', 'handl-ai-connector-access-control' );
 		$lines[] = self::hold_action_url( self::ACTION_WATCH, $plugin );
+		if ( self::hold_ack_is_dismiss( $policy ) ) {
+			$lines[] = __( 'Dismissing this notice does not change access.', 'handl-ai-connector-access-control' );
+		}
 		$body    = implode( "\n", $lines ) . "\n";
 		return Alerts::safe_wp_mail( $to, $subject, $body );
 	}
@@ -721,7 +726,7 @@ final class New_Plugin {
 
 	/**
 	 * Allow / Deny writes a stored plugin rule and clears the hold.
-	 * Keep watching stores only the ack (notice dismiss); the hold stays.
+	 * The watch action stores only the ack (notice dismiss); access is unchanged.
 	 *
 	 * @param array<string,mixed>|null $policy
 	 * @return array<string,mixed>
@@ -758,7 +763,7 @@ final class New_Plugin {
 	}
 
 	/**
-	 * Pending hold plugins that have not been acked with keep watching.
+	 * Pending hold plugins whose review notice has not been acknowledged.
 	 *
 	 * @param array<string,mixed> $policy
 	 * @return list<string>
@@ -798,7 +803,7 @@ final class New_Plugin {
 			echo esc_html(
 				sprintf(
 					/* translators: %s: plugin display name */
-					__( '%s made its first AI call — Allow / Deny / keep watching', 'handl-ai-connector-access-control' ),
+					__( '%s tried to use AI. Review its access.', 'handl-ai-connector-access-control' ),
 					$label
 				)
 			);
@@ -807,9 +812,32 @@ final class New_Plugin {
 			echo ' ';
 			self::echo_hold_action_button( self::ACTION_DENY, $basename, __( 'Deny', 'handl-ai-connector-access-control' ) );
 			echo ' ';
-			self::echo_hold_action_button( self::ACTION_WATCH, $basename, __( 'Keep watching', 'handl-ai-connector-access-control' ) );
+			self::echo_hold_action_button( self::ACTION_WATCH, $basename, self::hold_ack_label( $policy ) );
+			if ( self::hold_ack_is_dismiss( $policy ) ) {
+				echo '</p><p class="description">';
+				echo esc_html__( 'Dismissing this notice does not change access.', 'handl-ai-connector-access-control' );
+			}
 		}
 		echo '</p></div>';
+	}
+
+	/**
+	 * Watch mode keeps "Keep watching". Block mode labels the same ack as dismiss.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	public static function hold_ack_is_dismiss( array $policy ): bool {
+		return self::HOLD_DENY === self::hold_mode( $policy );
+	}
+
+	/**
+	 * @param array<string,mixed> $policy
+	 */
+	public static function hold_ack_label( array $policy ): string {
+		if ( self::hold_ack_is_dismiss( $policy ) ) {
+			return __( 'Dismiss notice', 'handl-ai-connector-access-control' );
+		}
+		return __( 'Keep watching', 'handl-ai-connector-access-control' );
 	}
 
 	private static function echo_hold_action_button( string $action, string $plugin, string $label ): void {
@@ -899,19 +927,19 @@ final class New_Plugin {
 		$mode    = self::hold_mode( $policy );
 
 		echo '<tr>';
-		echo '<th scope="row">' . esc_html__( 'First AI call hold', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="row">' . esc_html__( 'Review new AI activity', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<td>';
 		echo '<input type="hidden" name="' . esc_attr( self::POST_HOLD_PRESENT ) . '" value="1" />';
 		echo '<label>';
 		echo '<input type="checkbox" name="' . esc_attr( self::POST_HOLD_ENABLED ) . '" value="1"' . ( $enabled ? ' checked="checked"' : '' ) . ' /> ';
-		echo esc_html__( 'Hold a plugin\'s first AI call until you Allow, Deny, or keep watching', 'handl-ai-connector-access-control' );
+		echo esc_html__( 'Ask me to review AI activity from plugins without an Allow or Deny rule', 'handl-ai-connector-access-control' );
 		echo '</label>';
-		echo '<p><label for="handl-aicac-newcomer-hold-mode">' . esc_html__( 'When held', 'handl-ai-connector-access-control' ) . '</label> ';
+		echo '<p><label for="handl-aicac-newcomer-hold-mode">' . esc_html__( 'While awaiting review', 'handl-ai-connector-access-control' ) . '</label> ';
 		echo '<select name="' . esc_attr( self::POST_HOLD_MODE ) . '" id="handl-aicac-newcomer-hold-mode">';
-		echo '<option value="' . esc_attr( self::HOLD_WATCH ) . '"' . ( self::HOLD_WATCH === $mode ? ' selected="selected"' : '' ) . '>' . esc_html__( 'Watch (allow this call and ask)', 'handl-ai-connector-access-control' ) . '</option>';
-		echo '<option value="' . esc_attr( self::HOLD_DENY ) . '"' . ( self::HOLD_DENY === $mode ? ' selected="selected"' : '' ) . '>' . esc_html__( 'Block (deny this call and ask)', 'handl-ai-connector-access-control' ) . '</option>';
+		echo '<option value="' . esc_attr( self::HOLD_WATCH ) . '"' . ( self::HOLD_WATCH === $mode ? ' selected="selected"' : '' ) . '>' . esc_html__( 'Watch (ask without adding a block)', 'handl-ai-connector-access-control' ) . '</option>';
+		echo '<option value="' . esc_attr( self::HOLD_DENY ) . '"' . ( self::HOLD_DENY === $mode ? ' selected="selected"' : '' ) . '>' . esc_html__( 'Block (block until reviewed)', 'handl-ai-connector-access-control' ) . '</option>';
 		echo '</select></p>';
-		echo '<p class="description">' . esc_html__( 'Off by default. Plugins you already allowed or denied are not held.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Off by default. Plugins with an Allow or Deny rule are skipped. Other safeguards still apply. Learn mode does not block calls.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td>';
 		echo '</tr>';
 	}

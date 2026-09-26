@@ -216,7 +216,11 @@ final class NewPluginTest extends TestCase {
 		$this->assertTrue( ! empty( $event['first_seen_hold'] ) );
 		$this->assertTrue( $hit['emailed'] );
 		$this->assertCount( 1, $mails );
-		$this->assertStringContainsString( 'made its first AI call', (string) $mails[0][1] );
+		$this->assertStringContainsString( 'Review AI access for', (string) $mails[0][1] );
+		$this->assertStringContainsString( 'tried to use AI. Review its access.', (string) $mails[0][2] );
+		$this->assertStringContainsString( 'Keep watching:', (string) $mails[0][2] );
+		$this->assertStringNotContainsString( 'Dismiss notice', (string) $mails[0][2] );
+		$this->assertStringNotContainsString( 'made its first AI call', (string) $mails[0][1] . (string) $mails[0][2] );
 
 		$second = New_Plugin::apply_to_event( $event, $hit['policy'], 1_700_000_100, false );
 		$this->assertTrue( $second['active'] );
@@ -310,12 +314,75 @@ final class NewPluginTest extends TestCase {
 		ob_start();
 		New_Plugin::instance()->render_hold_settings( array() );
 		$html = (string) ob_get_clean();
-		$this->assertStringContainsString( 'First AI call hold', $html );
-		$this->assertStringContainsString( 'Hold a plugin', $html );
-		$this->assertStringContainsString( 'Watch (allow this call and ask)', $html );
-		$this->assertStringContainsString( 'Block (deny this call and ask)', $html );
-		$this->assertStringContainsString( 'Off by default', $html );
+		$this->assertStringContainsString( 'Review new AI activity', $html );
+		$this->assertStringContainsString( 'Ask me to review AI activity from plugins without an Allow or Deny rule', $html );
+		$this->assertStringContainsString( 'While awaiting review', $html );
+		$this->assertStringContainsString( 'Watch (ask without adding a block)', $html );
+		$this->assertStringContainsString( 'Block (block until reviewed)', $html );
+		$this->assertStringContainsString( 'Off by default. Plugins with an Allow or Deny rule are skipped. Other safeguards still apply. Learn mode does not block calls.', $html );
+		$this->assertStringNotContainsString( 'First AI call hold', $html );
+		$this->assertStringNotContainsString( 'Hold a plugin', $html );
 		$this->assertStringContainsString( 'name="' . New_Plugin::POST_HOLD_PRESENT . '"', $html );
+	}
+
+	public function test_newcomer_hold_block_mode_email_uses_dismiss_copy(): void {
+		$policy = array(
+			'newcomer_hold_enabled' => true,
+			'newcomer_hold_mode'    => 'deny',
+			'alert_email'           => 'owner@example.com',
+		);
+		$mails = array();
+		$GLOBALS['handl_aicac_wp_mail'] = static function ( $to, $subject, $message ) use ( &$mails ) {
+			$mails[] = array( $to, $subject, $message );
+			return true;
+		};
+
+		$this->assertTrue( New_Plugin::send_hold_email( $policy, 'gallery/gallery.php' ) );
+		$this->assertCount( 1, $mails );
+		$this->assertStringContainsString( 'Review AI access for', (string) $mails[0][1] );
+		$this->assertStringContainsString( 'tried to use AI. Review its access.', (string) $mails[0][2] );
+		$this->assertStringContainsString( 'Dismiss notice:', (string) $mails[0][2] );
+		$this->assertStringContainsString( 'Dismissing this notice does not change access.', (string) $mails[0][2] );
+		$this->assertStringNotContainsString( 'Keep watching', (string) $mails[0][2] );
+		$this->assertStringNotContainsString( 'made its first AI call', (string) $mails[0][1] . (string) $mails[0][2] );
+		unset( $GLOBALS['handl_aicac_wp_mail'] );
+	}
+
+	public function test_newcomer_hold_notice_copy_watch_vs_block(): void {
+		$GLOBALS['handl_aicac_test_current_user_can'] = true;
+		update_option(
+			Plugin::OPTION_KEY,
+			array(
+				'newcomer_hold_enabled' => true,
+				'newcomer_hold_mode'    => 'watch',
+				'newcomer_hold_pending' => array( 'gallery/gallery.php' => 1 ),
+			)
+		);
+		ob_start();
+		New_Plugin::instance()->maybe_hold_notice();
+		$watch = (string) ob_get_clean();
+		$this->assertStringContainsString( 'tried to use AI. Review its access.', $watch );
+		$this->assertStringContainsString( 'Keep watching', $watch );
+		$this->assertStringNotContainsString( 'Dismiss notice', $watch );
+		$this->assertStringNotContainsString( 'made its first AI call', $watch );
+		$this->assertStringNotContainsString( 'Allow / Deny', $watch );
+
+		update_option(
+			Plugin::OPTION_KEY,
+			array(
+				'newcomer_hold_enabled' => true,
+				'newcomer_hold_mode'    => 'deny',
+				'newcomer_hold_pending' => array( 'gallery/gallery.php' => 1 ),
+			)
+		);
+		ob_start();
+		New_Plugin::instance()->maybe_hold_notice();
+		$block = (string) ob_get_clean();
+		$this->assertStringContainsString( 'tried to use AI. Review its access.', $block );
+		$this->assertStringContainsString( 'Dismiss notice', $block );
+		$this->assertStringContainsString( 'Dismissing this notice does not change access.', $block );
+		$this->assertStringNotContainsString( 'Keep watching', $block );
+		unset( $GLOBALS['handl_aicac_test_current_user_can'] );
 	}
 
 	public function test_newcomer_hold_notice_lists_unacked_only(): void {
