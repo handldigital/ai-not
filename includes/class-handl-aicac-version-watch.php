@@ -298,8 +298,8 @@ final class Version_Watch {
 			'installed' => $installed_v,
 			'label'     => __( 'Version changed', 'handl-ai-connector-access-control' ),
 			'note'      => sprintf(
-				/* translators: 1: version at allow/confirm, 2: installed version */
-				__( 'Allowed at %1$s; now running %2$s — re-review recommended.', 'handl-ai-connector-access-control' ),
+				/* translators: 1: previously recorded version, 2: current installed version */
+				__( 'Previously recorded version: %1$s. Current version: %2$s. Review the Allow rule.', 'handl-ai-connector-access-control' ),
 				$stamped,
 				$installed_v
 			),
@@ -528,7 +528,7 @@ final class Version_Watch {
 
 		return sprintf(
 			/* translators: 1: site name, 2: plugin name */
-			__( '[%1$s] HandL: %2$s updated — re-review Allow rule', 'handl-ai-connector-access-control' ),
+			__( '[%1$s] HandL: Review %2$s after a version change', 'handl-ai-connector-access-control' ),
 			$site,
 			$label
 		);
@@ -536,7 +536,7 @@ final class Version_Watch {
 
 	public static function build_body( string $plugin, string $stamped, string $installed ): string {
 		$lines   = array();
-		$lines[] = __( 'HandL AI Connector Access Control — plugin version change', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'HandL AI Connector Access Control: plugin version change', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = sprintf(
 			/* translators: %s: plugin display name or basename */
@@ -544,13 +544,13 @@ final class Version_Watch {
 			self::plugin_label( $plugin )
 		);
 		$lines[] = sprintf(
-			/* translators: 1: version at allow/confirm, 2: installed version */
-			__( 'Allowed at version %1$s; now running %2$s.', 'handl-ai-connector-access-control' ),
+			/* translators: 1: previously recorded version, 2: current installed version */
+			__( 'Previously recorded version: %1$s. Current version: %2$s.', 'handl-ai-connector-access-control' ),
 			'' !== $stamped ? $stamped : __( 'unknown', 'handl-ai-connector-access-control' ),
 			'' !== $installed ? $installed : __( 'unknown', 'handl-ai-connector-access-control' )
 		);
 		$lines[] = '';
-		$lines[] = __( 'The Allow rule was granted to the earlier code. Re-confirm it still applies. This alert does not change Allow or Deny.', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'This plugin has an Allow rule. Review whether it should still be allowed after the version change. Your access rules have not changed.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = __( 'Review this plugin’s rules:', 'handl-ai-connector-access-control' );
 		$lines[] = Plugin_Profile::rules_url( $plugin );

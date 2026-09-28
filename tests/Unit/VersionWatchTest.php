@@ -208,12 +208,19 @@ final class VersionWatchTest extends TestCase {
 		);
 
 		$this->assertCount( 1, self::$mails );
+		$this->assertStringContainsString( 'Review Acme after a version change', self::$mails[0]['subject'] );
+		$this->assertStringContainsString( 'Previously recorded version: 1.0.0. Current version: 3.1.0.', self::$mails[0]['message'] );
+		$this->assertStringContainsString( 'Your access rules have not changed.', self::$mails[0]['message'] );
 		$this->assertTrue( Version_Watch::is_mismatch( 'acme/acme.php', $GLOBALS['handl_aicac_test_plugins'] ) );
 		$status = Version_Watch::status_for( 'acme/acme.php', $GLOBALS['handl_aicac_test_plugins'] );
 		$this->assertTrue( $status['due'] );
 		$this->assertSame( '1.0.0', $status['stamped'] );
 		$this->assertSame( '3.1.0', $status['installed'] );
-		$this->assertNotSame( '', $status['label'] );
+		$this->assertSame( 'Version changed', $status['label'] );
+		$this->assertSame(
+			'Previously recorded version: 1.0.0. Current version: 3.1.0. Review the Allow rule.',
+			$status['note']
+		);
 	}
 
 	public function test_baseline_missing_stamp_does_not_alert(): void {
