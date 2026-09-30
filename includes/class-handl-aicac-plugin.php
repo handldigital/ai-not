@@ -47,6 +47,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-drift.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-went-ai.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-retry-storm.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-incident.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-siem.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-email-template.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alert-health.php';
