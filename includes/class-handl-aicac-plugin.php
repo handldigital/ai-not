@@ -66,6 +66,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-temp-allow.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rule-notes.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-review-due.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dead-rules.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-new-plugin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quiet-hours.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-break-glass.php';
@@ -109,6 +110,7 @@ final class Plugin {
 		Freeze::init();
 		Temp_Allow::instance()->init();
 		New_Plugin::instance()->init();
+		Dead_Rules::init();
 		Alerts::instance()->init();
 		Inbox_Actions::instance()->init();
 		Access_Request::instance()->init();
