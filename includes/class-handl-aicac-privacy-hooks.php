@@ -115,12 +115,15 @@ final class Privacy_Hooks {
 
 	/**
 	 * @param string $email_address Requested email.
-	 * @param int    $page          1-based page.
+	 * @param int    $page          WP core increments this; remaining matches
+	 *                              shrink after anonymize, so each call drains
+	 *                              the next PAGE_SIZE from the front.
 	 * @return array{items_removed:bool,items_retained:bool,messages:list<string>,done:bool}
 	 */
 	public static function erase( $email_address, $page = 1 ): array {
 		$email   = self::normalize_email( (string) $email_address );
 		$page    = max( 1, (int) $page );
+		unset( $page );
 		$user_id = self::resolve_user_id( $email );
 		$log     = Policy::get_retained_log();
 
@@ -138,9 +141,8 @@ final class Privacy_Hooks {
 			$match_indexes[] = (int) $i;
 		}
 
-		$offset = ( $page - 1 ) * self::PAGE_SIZE;
-		$slice  = array_slice( $match_indexes, $offset, self::PAGE_SIZE );
-		$done   = ( $offset + count( $slice ) ) >= count( $match_indexes );
+		$slice = array_slice( $match_indexes, 0, self::PAGE_SIZE );
+		$done  = count( $match_indexes ) <= self::PAGE_SIZE;
 
 		$removed = 0;
 		foreach ( $slice as $i ) {

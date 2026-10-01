@@ -175,6 +175,51 @@ final class PrivacyHooksTest extends TestCase {
 		$this->assertStringNotContainsString( 'ada@example.com', (string) wp_json_encode( $evidence ) );
 	}
 
+	public function test_eraser_drains_remaining_matches_across_pages(): void {
+		$t   = 1_700_000_000;
+		$log = array();
+		for ( $i = 0; $i < 100; $i++ ) {
+			$log[] = $this->row( $t + $i, 7, 'prompt ' . $i );
+		}
+		$log[] = $this->row( $t + 500, 9, 'keep other' );
+		update_option( Plugin::OPTION_KEY, array( 'log_enabled' => true, 'log_limit' => 1000 ), false );
+		update_option( Plugin::LOG_OPTION_KEY, $log, false );
+
+		$page1 = Privacy_Hooks::erase( 'ada@example.com', 1 );
+		$this->assertTrue( $page1['items_removed'] );
+		$this->assertFalse( $page1['done'] );
+
+		$page2 = Privacy_Hooks::erase( 'ada@example.com', 2 );
+		$this->assertTrue( $page2['items_removed'] );
+		$this->assertTrue( $page2['done'] );
+
+		$stored = get_option( Plugin::LOG_OPTION_KEY, array() );
+		$this->assertIsArray( $stored );
+		$still_personal = 0;
+		$other_ok       = false;
+		foreach ( $stored as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			if ( Privacy_Hooks::CHANNEL === ( $row['channel'] ?? '' ) ) {
+				continue;
+			}
+			if ( 9 === (int) ( $row['user_id'] ?? 0 ) ) {
+				$other_ok = ( 'keep other' === ( $row['prompt_preview'] ?? '' ) );
+				continue;
+			}
+			if ( Privacy_Hooks::row_has_personal_data( $row ) ) {
+				++$still_personal;
+			}
+			$this->assertSame( 0, (int) ( $row['user_id'] ?? -1 ) );
+			$this->assertSame( '', (string) ( $row['prompt_preview'] ?? 'x' ) );
+			$this->assertSame( 1, (int) ( $row['count'] ?? 0 ) );
+			$this->assertSame( 'allow', (string) ( $row['decision'] ?? '' ) );
+		}
+		$this->assertSame( 0, $still_personal );
+		$this->assertTrue( $other_ok );
+	}
+
 	public function test_eraser_does_not_touch_non_matching_users(): void {
 		$t = 1_700_000_000;
 		$original = array(
