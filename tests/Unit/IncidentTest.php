@@ -150,6 +150,26 @@ final class IncidentTest extends TestCase {
 		$this->assertCount( 1, $incidents );
 		$this->assertSame( array( 'deny_burst' ), $incidents[0]['reasons'] );
 		$this->assertSame( array( 'acme/acme.php' ), $incidents[0]['plugins'] );
+		$text = Incident::export( $incidents[0], 'text' );
+		$this->assertStringContainsString( 'Repeated blocked requests', $text );
+		$this->assertStringNotContainsString( 'Deny burst', $text );
+	}
+
+	public function test_export_labels_policy_save_as_saved_or_restored(): void {
+		$t   = 1_700_000_000;
+		$log = array(
+			$this->row( $t, 'acme/acme.php', 'allow' ),
+			array(
+				'ts'       => $t + 10,
+				'decision' => 'policy_restored',
+				'channel'  => 'policy_restore',
+			),
+		);
+		$incident = Incident::group( $log )[0];
+		$text     = Incident::export( $incident, 'text' );
+		$this->assertSame( 'policy_save', Incident::event_type( $log[1] ) );
+		$this->assertStringContainsString( 'Policy saved or restored', $text );
+		$this->assertStringContainsString( 'Detection: Policy saved or restored', $text );
 	}
 
 	public function test_export_filter_hook_receives_payload(): void {

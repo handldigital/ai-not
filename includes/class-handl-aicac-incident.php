@@ -36,8 +36,8 @@ final class Incident {
 	private const REASON_LABELS = array(
 		'freeze_started' => 'Panic freeze started',
 		'retry_storm'    => 'Retry storm',
-		'deny_burst'     => 'Deny burst',
-		'policy_save'    => 'Policy saved',
+		'deny_burst'     => 'Repeated blocked requests',
+		'policy_save'    => 'Policy saved or restored',
 	);
 
 	/** @var array<string,string> */
@@ -45,7 +45,7 @@ final class Incident {
 		'freeze_started' => 'Panic freeze started',
 		'freeze_ended'   => 'Panic freeze ended',
 		'retry_storm'    => 'Retry storm',
-		'policy_save'    => 'Policy saved',
+		'policy_save'    => 'Policy saved or restored',
 		'deny'           => 'Deny',
 		'allow'          => 'Allow',
 		'observe'        => 'Watch',
