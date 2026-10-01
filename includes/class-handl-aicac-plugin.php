@@ -103,6 +103,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rest.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-share.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-privacy-hooks.php';
 
 		Policy::instance()->init();
 		Break_Glass::init();
