@@ -451,4 +451,157 @@ final class Provider_Map {
 
 		return $model;
 	}
+
+	/** Filter: replace or extend the static endpoint/SDK signature table. */
+	public const FILTER_SIGNATURES = 'handl_aicac_preflight_signatures';
+
+	/**
+	 * Known AI API hosts and SDK strings. Single source of truth for preflight.
+	 *
+	 * @return array<string,array{label:string,hosts:list<string>,needles:list<string>}>
+	 */
+	public static function endpoint_signatures(): array {
+		$map = array(
+			'openai'     => array(
+				'label'   => 'OpenAI',
+				'hosts'   => array( 'api.openai.com' ),
+				'needles' => array( 'OpenAI\\Client', 'OpenAI\\Factory' ),
+			),
+			'anthropic'  => array(
+				'label'   => 'Anthropic',
+				'hosts'   => array( 'api.anthropic.com' ),
+				'needles' => array( 'Anthropic\\Client', '@anthropic-ai/sdk' ),
+			),
+			'google'     => array(
+				'label'   => 'Google AI',
+				'hosts'   => array( 'generativelanguage.googleapis.com' ),
+				'needles' => array( 'Google\\GenerativeAI', '@google/generative-ai' ),
+			),
+			'cohere'     => array(
+				'label'   => 'Cohere',
+				'hosts'   => array( 'api.cohere.ai', 'api.cohere.com' ),
+				'needles' => array( 'Cohere\\Client' ),
+			),
+			'mistral'    => array(
+				'label'   => 'Mistral',
+				'hosts'   => array( 'api.mistral.ai' ),
+				'needles' => array( 'MistralAI\\Client' ),
+			),
+			'groq'       => array(
+				'label'   => 'Groq',
+				'hosts'   => array( 'api.groq.com' ),
+				'needles' => array( 'Groq\\Groq' ),
+			),
+			'together'   => array(
+				'label'   => 'Together',
+				'hosts'   => array( 'api.together.xyz' ),
+				'needles' => array(),
+			),
+			'fireworks'  => array(
+				'label'   => 'Fireworks',
+				'hosts'   => array( 'api.fireworks.ai' ),
+				'needles' => array(),
+			),
+			'perplexity' => array(
+				'label'   => 'Perplexity',
+				'hosts'   => array( 'api.perplexity.ai' ),
+				'needles' => array(),
+			),
+			'xai'        => array(
+				'label'   => 'xAI',
+				'hosts'   => array( 'api.x.ai' ),
+				'needles' => array(),
+			),
+			'deepseek'   => array(
+				'label'   => 'DeepSeek',
+				'hosts'   => array( 'api.deepseek.com' ),
+				'needles' => array(),
+			),
+			'openrouter' => array(
+				'label'   => 'OpenRouter',
+				'hosts'   => array( 'openrouter.ai' ),
+				'needles' => array(),
+			),
+		);
+
+		$filtered = apply_filters( self::FILTER_SIGNATURES, $map );
+		if ( ! is_array( $filtered ) ) {
+			return $map;
+		}
+
+		$out = array();
+		foreach ( $filtered as $id => $row ) {
+			$id = Cost::normalize_provider_id( (string) $id );
+			if ( '' === $id || ! is_array( $row ) ) {
+				continue;
+			}
+			$hosts = array();
+			foreach ( (array) ( $row['hosts'] ?? array() ) as $host ) {
+				$host = strtolower( trim( (string) $host ) );
+				if ( '' !== $host ) {
+					$hosts[] = $host;
+				}
+			}
+			$needles = array();
+			foreach ( (array) ( $row['needles'] ?? array() ) as $needle ) {
+				$needle = trim( (string) $needle );
+				if ( '' !== $needle ) {
+					$needles[] = $needle;
+				}
+			}
+			$label = sanitize_text_field( (string) ( $row['label'] ?? $id ) );
+			$out[ $id ] = array(
+				'label'   => '' !== $label ? $label : $id,
+				'hosts'   => array_values( array_unique( $hosts ) ),
+				'needles' => array_values( array_unique( $needles ) ),
+			);
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Plain-language provider name from the signature table.
+	 */
+	public static function signature_label( string $provider_id ): string {
+		$id   = Cost::normalize_provider_id( $provider_id );
+		$map  = self::endpoint_signatures();
+		if ( isset( $map[ $id ]['label'] ) && is_string( $map[ $id ]['label'] ) && '' !== $map[ $id ]['label'] ) {
+			return $map[ $id ]['label'];
+		}
+
+		return '' !== $id ? $id : $provider_id;
+	}
+
+	/**
+	 * Provider ids whose host or SDK needle appears in $text.
+	 *
+	 * @return list<string>
+	 */
+	public static function match_text( string $text ): array {
+		if ( '' === $text ) {
+			return array();
+		}
+		$hay   = strtolower( $text );
+		$found = array();
+		foreach ( self::endpoint_signatures() as $id => $sig ) {
+			foreach ( $sig['hosts'] as $host ) {
+				if ( '' !== $host && false !== strpos( $hay, $host ) ) {
+					$found[ $id ] = true;
+					continue 2;
+				}
+			}
+			foreach ( $sig['needles'] as $needle ) {
+				if ( '' !== $needle && false !== strpos( $hay, strtolower( $needle ) ) ) {
+					$found[ $id ] = true;
+					break;
+				}
+			}
+		}
+
+		$ids = array_keys( $found );
+		sort( $ids, SORT_STRING );
+
+		return $ids;
+	}
 }
