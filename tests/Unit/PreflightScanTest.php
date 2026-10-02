@@ -155,9 +155,10 @@ final class PreflightScanTest extends TestCase {
 		ob_start();
 		Preflight_Scan::instance()->maybe_admin_notice();
 		$html = (string) ob_get_clean();
-		$this->assertStringContainsString( 'AI Caller ships code that names Anthropic and OpenAI (1 file).', $html );
+		$this->assertStringContainsString( 'AI Caller contains references to Anthropic and OpenAI in 1 file. This scan does not confirm that data was sent.', $html );
 		$this->assertStringContainsString( 'Add a Deny rule', $html );
-		$this->assertStringContainsString( 'Review', $html );
+		$this->assertStringContainsString( 'Review rules', $html );
+		$this->assertStringContainsString( 'Dismiss', $html );
 	}
 
 	public function test_update_notices_only_when_endpoint_added(): void {
@@ -276,6 +277,19 @@ final class PreflightScanTest extends TestCase {
 		$this->assertContains( 'xai', $row['providers'] );
 	}
 
+	public function test_notice_message_pluralizes_files(): void {
+		$one = Preflight_Scan::notice_message( 'Theme X', array( 'openai' ), 1 );
+		$this->assertSame(
+			'Theme X contains references to OpenAI in 1 file. This scan does not confirm that data was sent.',
+			$one
+		);
+		$many = Preflight_Scan::notice_message( 'Theme X', array( 'anthropic', 'openai' ), 3 );
+		$this->assertSame(
+			'Theme X contains references to Anthropic and OpenAI in 3 files. This scan does not confirm that data was sent.',
+			$many
+		);
+	}
+
 	public function test_plugin_row_meta_lists_endpoints(): void {
 		$this->plugin_tree(
 			'chippy',
@@ -286,7 +300,7 @@ final class PreflightScanTest extends TestCase {
 		Preflight_Scan::scan_and_record( 'chippy/chippy.php', 'install' );
 		$meta = Preflight_Scan::instance()->filter_plugin_row_meta( array(), 'chippy/chippy.php' );
 		$this->assertNotEmpty( $meta );
-		$this->assertStringContainsString( 'AI endpoints: Groq', $meta[0] );
+		$this->assertStringContainsString( 'AI references found: Groq', $meta[0] );
 	}
 
 	public function test_on_upgrader_never_throws(): void {

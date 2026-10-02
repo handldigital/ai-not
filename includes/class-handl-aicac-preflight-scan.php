@@ -476,7 +476,7 @@ final class Preflight_Scan {
 			echo esc_html( $message );
 			if ( 'plugin' === $kind ) {
 				echo ' <a href="' . esc_url( self::starter_url( $id ) ) . '">' . esc_html__( 'Add a Deny rule', 'handl-ai-connector-access-control' ) . '</a>';
-				echo ' <a href="' . esc_url( Plugin_Profile::rules_url( $id ) ) . '">' . esc_html__( 'Review', 'handl-ai-connector-access-control' ) . '</a>';
+				echo ' <a href="' . esc_url( Plugin_Profile::rules_url( $id ) ) . '">' . esc_html__( 'Review rules', 'handl-ai-connector-access-control' ) . '</a>';
 			}
 			echo ' <a href="' . esc_url( self::dismiss_url( $kind, $id ) ) . '">' . esc_html__( 'Dismiss', 'handl-ai-connector-access-control' ) . '</a>';
 			echo '</p></div>';
@@ -505,7 +505,7 @@ final class Preflight_Scan {
 		$meta[] = '<a href="' . esc_url( $url ) . '">' . esc_html(
 			sprintf(
 				/* translators: %s: provider names */
-				__( 'AI endpoints: %s', 'handl-ai-connector-access-control' ),
+				__( 'AI references found: %s', 'handl-ai-connector-access-control' ),
 				$labels
 			)
 		) . '</a>';
@@ -599,8 +599,8 @@ final class Preflight_Scan {
 		return sprintf(
 			/* translators: 1: plugin or theme name, 2: provider names, 3: file count */
 			_n(
-				'%1$s ships code that names %2$s (%3$d file).',
-				'%1$s ships code that names %2$s (%3$d files).',
+				'%1$s contains references to %2$s in %3$d file. This scan does not confirm that data was sent.',
+				'%1$s contains references to %2$s in %3$d files. This scan does not confirm that data was sent.',
 				$n,
 				'handl-ai-connector-access-control'
 			),
