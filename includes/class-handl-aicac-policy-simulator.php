@@ -125,6 +125,7 @@ final class Policy_Simulator {
 			'mcp'               => __( 'MCP rule', 'handl-ai-connector-access-control' ),
 			'residency'         => __( 'Provider region filter', 'handl-ai-connector-access-control' ),
 			'rate_cap'          => __( 'Call cap', 'handl-ai-connector-access-control' ),
+			'newcomer_hold'     => __( 'First AI call hold', 'handl-ai-connector-access-control' ),
 		);
 		if ( isset( $map[ $reason ] ) ) {
 			return $map[ $reason ];

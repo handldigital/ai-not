@@ -237,6 +237,20 @@ final class Policy {
 			}
 		}
 
+		// AICAC-NEWCOMER-HOLD (#271): flag first_seen_hold; deny-mode can still block.
+		$hold_reason = isset( $would_eval['reason'] ) ? (string) $would_eval['reason'] : '';
+		if ( empty( $event['selftest'] ) && ( ! $prevent || New_Plugin::REASON === $hold_reason ) ) {
+			$hold = New_Plugin::apply_to_event( $event, $policy, $now_ts );
+			if ( ! empty( $hold['prevent'] ) ) {
+				$event['would_decision'] = 'deny';
+				$event['denial_reason']  = New_Plugin::REASON;
+				if ( empty( $policy['audit_only'] ) ) {
+					$prevent           = true;
+					$event['decision'] = 'deny';
+				}
+			}
+		}
+
 		// AICAC-BLOCKED-UX Phase 1: capture request context + caller-facing error on real denies.
 		if ( $prevent ) {
 			$event['request_context'] = self::detect_request_context();
@@ -826,6 +840,18 @@ final class Policy {
 				array(
 					'prevent' => true,
 					'reason'  => 'plugin',
+				),
+				$policy,
+				$armed_tools
+			);
+		}
+
+		// AICAC-NEWCOMER-HOLD (#271): first AI call deny-mode (Watch does not prevent).
+		if ( New_Plugin::should_deny_hold( $policy, $plugin_basename ) ) {
+			return self::with_matched_tools(
+				array(
+					'prevent' => true,
+					'reason'  => New_Plugin::REASON,
 				),
 				$policy,
 				$armed_tools
