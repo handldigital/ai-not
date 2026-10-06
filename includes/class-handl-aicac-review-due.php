@@ -131,6 +131,11 @@ final class Review_Due {
 		}
 
 		self::put_stamps( self::normalize_stamps( $incoming, $stamps ) );
+
+		// AICAC-VERSION-WATCH (#283): stamp installed version alongside review stamps.
+		if ( class_exists( Version_Watch::class, false ) ) {
+			Version_Watch::stamp_on_rule_changes( $incoming, $previous );
+		}
 	}
 
 	/**
@@ -165,6 +170,10 @@ final class Review_Due {
 			);
 		}
 		self::put_stamps( self::normalize_stamps( $policy, $stamps ) );
+		// AICAC-VERSION-WATCH (#283): restamp installed version on confirm.
+		if ( class_exists( Version_Watch::class, false ) ) {
+			Version_Watch::stamp_on_confirm( $policy, $basenames );
+		}
 		if ( ! empty( $changes ) ) {
 			Policy_Snapshots::append_history(
 				array(
@@ -292,6 +301,14 @@ final class Review_Due {
 			if ( $window > 0 ) {
 				$is_stale = $ts <= 0 || ( $now - $ts ) >= $window;
 			}
+			// AICAC-VERSION-WATCH (#283): installed version drifted since Allow/confirm.
+			$version_due = false;
+			if ( ! $is_orphan && 'allow' === $rule && class_exists( Version_Watch::class, false ) ) {
+				$version_due = Version_Watch::is_mismatch( $basename, $installed );
+				if ( $version_due ) {
+					$is_stale = true;
+				}
+			}
 			if ( $is_orphan ) {
 				++$orphaned;
 			} elseif ( $is_stale ) {
@@ -307,6 +324,7 @@ final class Review_Due {
 					'last_reviewed' => $ts,
 					'orphaned'      => $is_orphan,
 					'stale'         => $is_stale,
+					'version_due'   => $version_due,
 				);
 			}
 		}

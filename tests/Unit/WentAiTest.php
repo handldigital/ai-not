@@ -118,6 +118,21 @@ final class WentAiTest extends TestCase {
 		$this->assertSame( array(), self::$mails );
 	}
 
+	public function test_newcomer_hold_pending_does_not_double_alert(): void {
+		$policy = $this->persist_policy(
+			array(
+				'newcomer_hold_enabled' => true,
+				'newcomer_hold_pending' => array( 'fresh/fresh.php' => 1_700_000_000 ),
+			)
+		);
+		$event = $this->ai_event( 'fresh/fresh.php', 'openai', 'gpt-4o-mini' );
+		$hit   = Went_AI::observe( $event, $policy );
+		$this->assertTrue( $hit['tagged'] );
+		$this->assertFalse( $hit['alerted'] );
+		$this->assertSame( 'newcomer_hold', $hit['reason'] );
+		$this->assertSame( array(), self::$mails );
+	}
+
 	public function test_provider_change_on_established_caller_is_not_went_ai(): void {
 		$policy = $this->persist_policy();
 		$base = $this->ai_event( 'legacy/legacy.php', 'openai', 'gpt-4o-mini' );

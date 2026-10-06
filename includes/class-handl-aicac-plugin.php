@@ -36,6 +36,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-spend-threshold.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-budget.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rate-cap.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-soft-deny.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-forecast.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-governance-coverage.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-usage-trends.php';
@@ -47,6 +48,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-drift.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-went-ai.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-retry-storm.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-incident.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-siem.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-email-template.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-alert-health.php';
@@ -66,6 +68,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-temp-allow.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rule-notes.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-review-due.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-version-watch.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-new-plugin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quiet-hours.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-break-glass.php';
@@ -104,6 +107,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-share.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-adminbar.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-disclosure.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-privacy-hooks.php';
 
 		Policy::instance()->init();
@@ -111,6 +115,8 @@ final class Plugin {
 		Freeze::init();
 		Temp_Allow::instance()->init();
 		New_Plugin::instance()->init();
+		Soft_Deny::instance()->init();
+		Version_Watch::init();
 		Alerts::instance()->init();
 		Inbox_Actions::instance()->init();
 		Access_Request::instance()->init();
@@ -135,6 +141,7 @@ final class Plugin {
 		Dashboard_Widget::instance()->init();
 		Plugin_Chips::instance()->init();
 		Adminbar::instance()->init();
+		Disclosure::instance()->init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
