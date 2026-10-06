@@ -269,6 +269,9 @@ final class Disclosure {
 		echo '<p class="description">' . esc_html__( 'AI service names and request types come from the saved activity log. Turn this on to show request types beside each service.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'Same facts as this disclosure, as JSON. Off by default.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'Or add the [handl_ai_disclosure] shortcode to any page.', 'handl-ai-connector-access-control' ) . '</p>';
+		if ( class_exists( Badge::class ) ) {
+			Badge::render_settings( $policy );
+		}
 		echo '</td>';
 		echo '</tr>';
 	}
@@ -460,8 +463,9 @@ final class Disclosure {
 			'families_text'  => $empty || empty( $family_names ) ? '' : self::FAMILIES_PREFIX . implode( ', ', $family_names ),
 			'footnote'       => self::FOOTNOTE,
 			'providers'      => $providers,
-			'families'       => $family_list,
-			'json_enabled'   => self::is_json_enabled( $policy ),
+			'families'         => $family_list,
+			'json_enabled'     => self::is_json_enabled( $policy ),
+			'privacy_enabled'  => self::is_privacy_enabled( $policy ),
 		);
 	}
 
@@ -657,6 +661,14 @@ final class Disclosure {
 			$html .= '<p class="handl-aicac-disclosure__json"><a href="' . esc_url( $url ) . '">' . esc_html( self::FOOTER_JSON ) . '</a></p>';
 		}
 		$html .= '</section>';
+		if ( class_exists( Badge::class ) ) {
+			$html .= Badge::render(
+				array(
+					self::POLICY_PRIVACY_KEY => ! empty( $snap['privacy_enabled'] ),
+					self::POLICY_JSON_KEY    => ! empty( $snap['json_enabled'] ),
+				)
+			);
+		}
 
 		return $html;
 	}

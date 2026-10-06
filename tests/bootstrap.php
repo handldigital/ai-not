@@ -298,6 +298,16 @@ if ( ! function_exists( 'home_url' ) ) {
 	}
 }
 
+if ( ! function_exists( 'get_privacy_policy_url' ) ) {
+	function get_privacy_policy_url(): string {
+		if ( isset( $GLOBALS['handl_aicac_test_privacy_url'] ) ) {
+			return (string) $GLOBALS['handl_aicac_test_privacy_url'];
+		}
+
+		return 'https://example.test/privacy-policy/';
+	}
+}
+
 if ( ! function_exists( 'rest_url' ) ) {
 	/**
 	 * @param string $path Path.
@@ -1155,6 +1165,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-share.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-adminbar.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-disclosure.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-badge.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-ai-json.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-privacy-hooks.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-preflight-scan.php';
