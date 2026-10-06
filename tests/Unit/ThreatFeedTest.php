@@ -195,10 +195,28 @@ final class ThreatFeedTest extends TestCase {
 		$this->assertSame( 'allow', Policy::get_policy()['plugins']['acme/acme.php'] );
 
 		$this->assertStringContainsString( 'Review an Allow rule', self::$mails[0]['subject'] );
-		$this->assertStringContainsString( 'advisory match', self::$mails[0]['message'] );
+		$this->assertStringContainsString( 'review your Allow rules', self::$mails[0]['message'] );
 		$this->assertStringContainsString( 'Your access rules have not changed.', self::$mails[0]['message'] );
+		$this->assertStringNotContainsString( 'advisory match', self::$mails[0]['message'] );
 		$this->assertSame( $now, Threat_Feed::get_state()['applied_ids']['adv-2026-001'] );
 		$this->assertSame( '', Threat_Feed::get_state()['last_error'] );
+	}
+
+	public function test_body_lists_all_matched_plugins_to_review(): void {
+		$body = Threat_Feed::build_body(
+			'acme/acme.php',
+			array(
+				'id'       => 'adv-multi',
+				'reason'   => 'two allows',
+				'severity' => 'high',
+			),
+			array( 'acme/acme.php', 'other/other.php' )
+		);
+		$this->assertStringContainsString( 'HandL AI Connector Access Control: review your Allow rules', $body );
+		$this->assertStringContainsString( 'Plugin: acme/acme.php', $body );
+		$this->assertStringContainsString( 'Plugins to review: acme/acme.php, other/other.php', $body );
+		$this->assertStringNotContainsString( 'Also matched:', $body );
+		$this->assertStringNotContainsString( 'advisory match', $body );
 	}
 
 	public function test_no_match_is_noop(): void {

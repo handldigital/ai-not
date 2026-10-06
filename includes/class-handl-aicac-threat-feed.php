@@ -619,7 +619,7 @@ final class Threat_Feed {
 			$reason = __( 'Not recorded', 'handl-ai-connector-access-control' );
 		}
 		$lines   = array();
-		$lines[] = __( 'HandL AI Connector Access Control: advisory match', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'HandL AI Connector Access Control: review your Allow rules', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = sprintf(
 			/* translators: %s: plugin display name or basename */
@@ -632,8 +632,8 @@ final class Threat_Feed {
 				$labels[] = self::plugin_label( $basename );
 			}
 			$lines[] = sprintf(
-				/* translators: %s: comma-separated plugin names */
-				__( 'Also matched: %s', 'handl-ai-connector-access-control' ),
+				/* translators: %s: comma-separated plugin names, including the first */
+				__( 'Plugins to review: %s', 'handl-ai-connector-access-control' ),
 				implode( ', ', $labels )
 			);
 		}
