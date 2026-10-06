@@ -92,7 +92,7 @@ final class OnboardingTest extends TestCase {
 			$src
 		);
 		$this->assertStringContainsString(
-			'Step %d of 4: set up monitoring, alerts, and a first look at AI plugins.',
+			'Step %d of 4: set up monitoring, alerts, and scan plugins and themes.',
 			$src
 		);
 		$this->assertStringContainsString( '1. How do you want to start?', $src );
@@ -125,8 +125,9 @@ final class OnboardingTest extends TestCase {
 		$this->assertStringContainsString( 'handle_onboard_test_email', $src );
 		$this->assertStringContainsString( 'Onboarding::render_scan_step', $src );
 		$onboard = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-onboarding.php' );
-		$this->assertStringContainsString( '4. Plugins that mention AI', $onboard );
+		$this->assertStringContainsString( '4. Scan plugins and themes', $onboard );
 		$this->assertStringContainsString( 'Skip this scan', $onboard );
+		$this->assertStringNotContainsString( 'handl-aicac-onboard-scan-form").submit()', $onboard );
 		$this->assertStringNotContainsString(
 			'Send test email uses your current saved alert address',
 			$src
@@ -252,12 +253,24 @@ final class OnboardingTest extends TestCase {
 		$this->assertCount( 1, get_option( Plugin::LOG_OPTION_KEY ) );
 	}
 
-	public function test_progress_copy_before_scan(): void {
+	public function test_idle_scan_step_waits_for_scan_now(): void {
 		ob_start();
 		Onboarding::render_scan_step( array( 'scan_status' => Onboarding::SCAN_NONE ) );
 		$html = (string) ob_get_clean();
-		$this->assertStringContainsString( Onboarding::SCAN_PROGRESS, $html );
+		$this->assertStringContainsString( Onboarding::SCAN_HEADING, $html );
+		$this->assertStringContainsString( 'Scan now', $html );
 		$this->assertStringContainsString( Onboarding::SCAN_SKIP, $html );
+		$this->assertStringNotContainsString( Onboarding::SCAN_PROGRESS, $html );
+		$this->assertStringNotContainsString( 'handl-aicac-onboard-scan-run', $html );
+	}
+
+	public function test_progress_copy_only_after_scan_now(): void {
+		ob_start();
+		Onboarding::render_scan_step( array( 'scan_status' => Onboarding::SCAN_RUNNING ) );
+		$html = (string) ob_get_clean();
+		$this->assertStringContainsString( Onboarding::SCAN_PROGRESS, $html );
+		$this->assertStringNotContainsString( Onboarding::SCAN_SKIP, $html );
+		$this->assertStringContainsString( 'handl-aicac-onboard-scan-run', $html );
 	}
 
 	private function write_plugin( string $slug, string $body ): void {

@@ -2669,7 +2669,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<p class="description">' . esc_html(
 			sprintf(
 				/* translators: %d: current step number 1–4 */
-				__( 'Step %d of 4: set up monitoring, alerts, and a first look at AI plugins.', 'handl-ai-connector-access-control' ),
+				__( 'Step %d of 4: set up monitoring, alerts, and scan plugins and themes.', 'handl-ai-connector-access-control' ),
 				$step
 			)
 		) . '</p>';
@@ -2944,6 +2944,15 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		if ( 'finish' === $intent ) {
 			Onboarding::complete( $state );
 			$this->redirect_onboard_dashboard( array( 'handl_aicac_onboard_done' => '1' ) );
+		}
+
+		$current = Onboarding::sanitize_scan_status( $state['scan_status'] ?? Onboarding::SCAN_NONE );
+		if ( Onboarding::SCAN_RUNNING !== $current ) {
+			$state['scan_status'] = Onboarding::SCAN_RUNNING;
+			$state['step']        = Onboarding::STEP_SCAN;
+			$state['status']      = Onboarding::STATUS_ACTIVE;
+			Onboarding::save_state( $state );
+			$this->redirect_onboard_dashboard();
 		}
 
 		$out = Onboarding::run_site_scan();
