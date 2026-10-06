@@ -116,6 +116,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-threat-feed.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-demo-mode.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-why.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rescan-schedule.php';
 
 		Policy::instance()->init();
 		Break_Glass::init();
@@ -156,6 +157,7 @@ final class Plugin {
 		Threat_Feed::init();
 		Demo_Mode::init();
 		Why::init();
+		Rescan_Schedule::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
@@ -169,6 +171,7 @@ final class Plugin {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-siem.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-residency.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rate-cap.php';
+			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rescan.php';
 			CLI::register();
 			CLI_Audit::register();
 			CLI_Policy_Apply::register();
@@ -180,6 +183,7 @@ final class Plugin {
 			CLI_Siem::register();
 			CLI_Residency::register();
 			CLI_Rate_Cap::register();
+			CLI_Rescan::register();
 		}
 	}
 
