@@ -69,6 +69,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rule-notes.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-review-due.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-version-watch.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dead-rules.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-new-plugin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quiet-hours.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-break-glass.php';
@@ -118,6 +119,7 @@ final class Plugin {
 		New_Plugin::instance()->init();
 		Soft_Deny::instance()->init();
 		Version_Watch::init();
+		Dead_Rules::init();
 		Alerts::instance()->init();
 		Inbox_Actions::instance()->init();
 		Access_Request::instance()->init();
