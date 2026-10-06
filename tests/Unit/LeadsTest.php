@@ -96,7 +96,9 @@ final class LeadsTest extends TestCase {
 			$src
 		);
 		// Finish path calls Leads only when consent stored.
-		$this->assertStringContainsString( 'Leads::maybe_register', $src );
+		$onboard = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-onboarding.php' );
+		$this->assertStringContainsString( 'Leads::maybe_register', $onboard );
+		$this->assertStringContainsString( 'Onboarding::complete', $src );
 	}
 
 	public function test_privacy_discloses_opt_in_transmission(): void {

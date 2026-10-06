@@ -2669,8 +2669,8 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<h2 style="margin-top:0;">' . esc_html__( 'Quick setup', 'handl-ai-connector-access-control' ) . '</h2>';
 		echo '<p class="description">' . esc_html(
 			sprintf(
-				/* translators: %d: current step number 1–3 */
-				__( 'Step %d of 3: set up monitoring and alerts in about two minutes.', 'handl-ai-connector-access-control' ),
+				/* translators: %d: current step number 1–4 */
+				__( 'Step %d of 4: set up monitoring, alerts, and scan plugins and themes.', 'handl-ai-connector-access-control' ),
 				$step
 			)
 		) . '</p>';
@@ -2686,8 +2686,10 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			$this->render_onboarding_step_mode( $policy, $state );
 		} elseif ( 2 === $step ) {
 			$this->render_onboarding_step_alerts( $policy );
-		} else {
+		} elseif ( 3 === $step ) {
 			$this->render_onboarding_step_review( $state );
+		} else {
+			Onboarding::render_scan_step( $state );
 		}
 
 		echo '</div>';
@@ -2806,7 +2808,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<p><label><input type="checkbox" name="handl_aicac_onboard_set_reminder" value="1" checked="checked" /> ';
 		echo esc_html__( 'Remind me when the watch window ends', 'handl-ai-connector-access-control' ) . '</label></p>';
 
-		submit_button( __( 'Finish setup', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
+		submit_button( __( 'Continue', 'handl-ai-connector-access-control' ), 'primary', 'submit', false );
 		echo '</form>';
 	}
 
@@ -2921,22 +2923,45 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			$this->redirect_onboard_dashboard();
 		}
 
-		// Step 3 — finish. Opt-in lead POST only when consent was checked on step 2.
-		$set_reminder = isset( $_POST['handl_aicac_onboard_set_reminder'] );
-		$days         = Onboarding::sanitize_observe_days( $state['observe_days'] ?? Onboarding::DEFAULT_OBSERVE_DAYS );
-		$state['review_due_ts'] = $set_reminder ? Onboarding::review_due_timestamp( $days ) : 0;
-		$state['step']          = 3;
-		$state['status']        = Onboarding::STATUS_COMPLETE;
-		Onboarding::save_state( $state );
-
-		// Failures are silent and never block wizard completion (no retry queue v1).
-		if ( ! empty( $state['leads_consent'] ) ) {
-			$policy = Policy::get_policy();
-			$email  = Alerts::sanitize_email( $policy['alert_email'] ?? '' );
-			Leads::maybe_register( $email, true );
+		if ( 3 === $step ) {
+			$set_reminder = isset( $_POST['handl_aicac_onboard_set_reminder'] );
+			$days         = Onboarding::sanitize_observe_days( $state['observe_days'] ?? Onboarding::DEFAULT_OBSERVE_DAYS );
+			$state['review_due_ts'] = $set_reminder ? Onboarding::review_due_timestamp( $days ) : 0;
+			$state['step']          = Onboarding::STEP_SCAN;
+			$state['scan_status']   = Onboarding::SCAN_NONE;
+			$state['status']        = Onboarding::STATUS_ACTIVE;
+			Onboarding::save_state( $state );
+			$this->redirect_onboard_dashboard();
 		}
 
-		$this->redirect_onboard_dashboard( array( 'handl_aicac_onboard_done' => '1' ) );
+		$intent = isset( $_POST['handl_aicac_onboard_scan_intent'] )
+			? sanitize_key( (string) wp_unslash( (string) $_POST['handl_aicac_onboard_scan_intent'] ) )
+			: 'scan';
+		if ( 'skip' === $intent ) {
+			$state['scan_status'] = Onboarding::SCAN_SKIPPED;
+			Onboarding::complete( $state );
+			$this->redirect_onboard_dashboard( array( 'handl_aicac_onboard_done' => '1' ) );
+		}
+		if ( 'finish' === $intent ) {
+			Onboarding::complete( $state );
+			$this->redirect_onboard_dashboard( array( 'handl_aicac_onboard_done' => '1' ) );
+		}
+
+		$current = Onboarding::sanitize_scan_status( $state['scan_status'] ?? Onboarding::SCAN_NONE );
+		if ( Onboarding::SCAN_RUNNING !== $current ) {
+			$state['scan_status'] = Onboarding::SCAN_RUNNING;
+			$state['step']        = Onboarding::STEP_SCAN;
+			$state['status']      = Onboarding::STATUS_ACTIVE;
+			Onboarding::save_state( $state );
+			$this->redirect_onboard_dashboard();
+		}
+
+		$out = Onboarding::run_site_scan();
+		$state['scan_status'] = ! empty( $out['ok'] ) ? Onboarding::SCAN_RAN : Onboarding::SCAN_ERROR;
+		$state['step']        = Onboarding::STEP_SCAN;
+		$state['status']      = Onboarding::STATUS_ACTIVE;
+		Onboarding::save_state( $state );
+		$this->redirect_onboard_dashboard();
 	}
 
 	/**
