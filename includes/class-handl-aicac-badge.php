@@ -22,11 +22,15 @@ final class Badge {
 
 	public const BLOCK_NAME = 'handl-aicac/badge';
 
-	public const LABEL = 'AI use disclosed';
+	public const LABEL = 'AI disclosure';
 
-	public const SETTINGS_SNIPPET = 'Copy this HTML to show the badge on any page. It links to this site\'s public AI disclosure.';
+	public const SETTINGS_SNIPPET = 'Copy this HTML to link to this site’s public AI disclosure. Remove pasted badges if you turn the disclosure off.';
 
 	public const SETTINGS_TA_LABEL = 'Badge embed code';
+
+	public const QUERY_VAR = 'handl_aicac_disclosure';
+
+	public const PATH = '/ai-disclosure/';
 
 	/** @var Badge|null */
 	private static $instance = null;
@@ -51,6 +55,45 @@ final class Badge {
 			add_shortcode( self::SHORTCODE, array( $this, 'render_shortcode' ) );
 		}
 		add_action( 'init', array( $this, 'register_block' ) );
+		add_action( 'init', array( $this, 'register_rewrite' ) );
+		add_filter( 'query_vars', array( $this, 'query_vars' ) );
+		add_action( 'template_redirect', array( $this, 'maybe_serve' ), 0 );
+		add_action( 'update_option_' . Plugin::OPTION_KEY, array( $this, 'maybe_flush_rewrites' ), 10, 2 );
+	}
+
+	public function register_rewrite(): void {
+		if ( ! function_exists( 'add_rewrite_rule' ) ) {
+			return;
+		}
+		add_rewrite_rule( '^ai-disclosure/?$', 'index.php?' . self::QUERY_VAR . '=1', 'top' );
+	}
+
+	/**
+	 * @param mixed $vars Query vars.
+	 * @return array<int|string,mixed>
+	 */
+	public function query_vars( $vars ) {
+		if ( ! is_array( $vars ) ) {
+			$vars = array();
+		}
+		$vars[] = self::QUERY_VAR;
+
+		return $vars;
+	}
+
+	/**
+	 * @param mixed $old Previous option.
+	 * @param mixed $value New option.
+	 */
+	public function maybe_flush_rewrites( $old, $value ): void {
+		$old_on = class_exists( Disclosure::class ) && Disclosure::is_privacy_enabled( is_array( $old ) ? $old : array() );
+		$new_on = class_exists( Disclosure::class ) && Disclosure::is_privacy_enabled( is_array( $value ) ? $value : array() );
+		if ( $old_on === $new_on ) {
+			return;
+		}
+		if ( function_exists( 'flush_rewrite_rules' ) ) {
+			flush_rewrite_rules( false );
+		}
 	}
 
 	public function register_block(): void {
@@ -129,7 +172,7 @@ final class Badge {
 			return;
 		}
 		$snippet = self::embed_snippet( $policy );
-		echo '<p class="description">' . esc_html__( 'Copy this HTML to show the badge on any page. It links to this site\'s public AI disclosure.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Copy this HTML to link to this site’s public AI disclosure. Remove pasted badges if you turn the disclosure off.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<p><label for="handl-aicac-badge-embed">' . esc_html__( 'Badge embed code', 'handl-ai-connector-access-control' ) . '</label></p>';
 		echo '<textarea id="handl-aicac-badge-embed" class="large-text code" rows="6" readonly="readonly">';
 		echo function_exists( 'esc_textarea' ) ? esc_textarea( $snippet ) : htmlspecialchars( $snippet, ENT_QUOTES, 'UTF-8' );
@@ -143,21 +186,94 @@ final class Badge {
 				return $url;
 			}
 		}
+
+		return self::public_url();
+	}
+
+	public static function public_url(): string {
 		if ( function_exists( 'home_url' ) ) {
-			return home_url( '/' );
+			return home_url( self::PATH );
 		}
 
-		return '/';
+		return self::PATH;
+	}
+
+	public static function is_requested(): bool {
+		if ( isset( $_GET[ self::QUERY_VAR ] ) && '1' === (string) wp_unslash( (string) $_GET[ self::QUERY_VAR ] ) ) {
+			return true;
+		}
+		if ( function_exists( 'get_query_var' ) && (string) get_query_var( self::QUERY_VAR ) === '1' ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Public HTML disclosure when no privacy-policy page is set.
+	 *
+	 * @param array<string,mixed>|null $policy
+	 * @return array{status:int,body:string}
+	 */
+	public static function respond( ?array $policy = null ): array {
+		if ( null === $policy ) {
+			$policy = class_exists( Policy::class ) ? Policy::get_policy() : array();
+		}
+		$policy = is_array( $policy ) ? $policy : array();
+		if ( ! class_exists( Disclosure::class ) || ! Disclosure::is_privacy_enabled( $policy ) ) {
+			return array(
+				'status' => 404,
+				'body'   => '',
+			);
+		}
+		$inner = Disclosure::render( null, $policy, null, null );
+		$title = class_exists( Disclosure::class ) ? Disclosure::HEADING : self::LABEL;
+		$body  = '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>' . esc_html( $title ) . '</title></head><body>';
+		$body .= $inner;
+		$body .= '</body></html>';
+
+		return array(
+			'status' => 200,
+			'body'   => $body,
+		);
+	}
+
+	public function maybe_serve(): void {
+		if ( ! self::is_requested() ) {
+			return;
+		}
+		$out = self::respond();
+		self::emit( $out );
+	}
+
+	/**
+	 * @param array{status:int,body:string} $out
+	 */
+	public static function emit( array $out ): void {
+		if ( function_exists( 'status_header' ) ) {
+			status_header( (int) $out['status'] );
+		}
+		$phpunit = defined( 'HANDL_AICAC_PHPUNIT' ) && HANDL_AICAC_PHPUNIT;
+		if ( $phpunit ) {
+			$GLOBALS['handl_aicac_test_badge_emitted'] = $out;
+			return;
+		}
+		if ( function_exists( 'header' ) ) {
+			header( 'Content-Type: text/html; charset=UTF-8' );
+		}
+		echo (string) ( $out['body'] ?? '' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- assembled HTML.
+		exit;
 	}
 
 	public static function svg(): string {
 		$label = self::LABEL;
 
-		return '<svg xmlns="http://www.w3.org/2000/svg" width="154" height="28" viewBox="0 0 154 28" role="img" aria-labelledby="handl-aicac-badge-title">'
+		return '<svg xmlns="http://www.w3.org/2000/svg" width="132" height="28" viewBox="0 0 132 28" role="img" aria-labelledby="handl-aicac-badge-title">'
 			. '<title id="handl-aicac-badge-title">' . esc_html( $label ) . '</title>'
-			. '<rect width="154" height="28" rx="4" fill="#111111"/>'
-			. '<circle cx="14" cy="14" r="6" fill="#ffffff"/>'
-			. '<path d="M11.2 14.1 l2.1 2.2 4.2-5.2" fill="none" stroke="#111111" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>'
+			. '<rect width="132" height="28" rx="4" fill="#111111"/>'
+			. '<circle cx="14" cy="14" r="7" fill="none" stroke="#ffffff" stroke-width="1.6"/>'
+			. '<circle cx="14" cy="10" r="1.15" fill="#ffffff"/>'
+			. '<path d="M14 13.2 v7.2" fill="none" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round"/>'
 			. '<text x="26" y="18" fill="#ffffff" font-size="12" font-family="system-ui,sans-serif">' . esc_html( $label ) . '</text>'
 			. '</svg>';
 	}

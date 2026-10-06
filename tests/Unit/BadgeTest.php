@@ -56,6 +56,7 @@ final class BadgeTest extends TestCase {
 		$this->assertStringContainsString( '<title', $html );
 		$this->assertStringContainsString( Badge::LABEL, $html );
 		$this->assertStringContainsString( 'https://example.test/privacy-policy/', $html );
+		$this->assertStringNotContainsString( 'AI use disclosed', $html );
 		$this->assertStringNotContainsString( '<img', $html );
 		$this->assertStringNotContainsString( 'src=', $html );
 		$this->assertStringNotContainsString( 'url(', $html );
@@ -110,7 +111,8 @@ final class BadgeTest extends TestCase {
 		Disclosure::instance()->render_settings( $policy );
 		$html = (string) ob_get_clean();
 		$this->assertStringContainsString( 'handl-aicac-badge-embed', $html );
-		$this->assertStringContainsString( 'Copy this HTML to show the badge on any page', $html );
+		$this->assertStringContainsString( 'Copy this HTML to link to this site', $html );
+		$this->assertStringContainsString( 'Remove pasted badges if you turn the disclosure off', $html );
 		$this->assertStringContainsString( htmlspecialchars( Badge::embed_snippet( $policy ), ENT_QUOTES, 'UTF-8' ), $html );
 	}
 
@@ -132,13 +134,37 @@ final class BadgeTest extends TestCase {
 		$readme = (string) file_get_contents( HANDL_AICAC_DIR . '/readme.txt' );
 		$unreleased = preg_split( '/\n= 1\./', $readme, 2 )[0] ?? '';
 		$this->assertStringContainsString(
-			'Public AI-use-disclosed badge with a copyable HTML snippet when the disclosure page is on. Inline SVG, no outside requests. Off with the disclosure.',
+			'Public AI disclosure badge with a copyable HTML snippet. Inline SVG, no outside requests. Shortcode and block badges hide when disclosure is off; pasted HTML must be removed manually.',
 			$unreleased
 		);
 		$pos_scan  = strrpos( $unreleased, 'Quick setup includes an optional scan' );
-		$pos_badge = strrpos( $unreleased, 'Public AI-use-disclosed badge' );
+		$pos_badge = strrpos( $unreleased, 'Public AI disclosure badge' );
 		$this->assertNotFalse( $pos_scan );
 		$this->assertNotFalse( $pos_badge );
 		$this->assertGreaterThan( $pos_scan, $pos_badge );
+	}
+
+	public function test_missing_privacy_page_links_to_public_disclosure(): void {
+		$GLOBALS['handl_aicac_test_privacy_url'] = '';
+		$html = Badge::render( array( Disclosure::POLICY_PRIVACY_KEY => true ) );
+		$this->assertStringContainsString( 'https://example.test/ai-disclosure/', $html );
+		$this->assertStringNotContainsString( 'href="https://example.test/"', $html );
+	}
+
+	public function test_public_disclosure_route_serves_heading_when_on(): void {
+		$policy = array( Disclosure::POLICY_PRIVACY_KEY => true );
+		$off    = Badge::respond( array() );
+		$this->assertSame( 404, $off['status'] );
+		$this->assertSame( '', $off['body'] );
+		$on = Badge::respond( $policy );
+		$this->assertSame( 200, $on['status'] );
+		$this->assertStringContainsString( Disclosure::HEADING, $on['body'] );
+		$this->assertStringContainsString( 'handl-aicac-disclosure', $on['body'] );
+	}
+
+	public function test_init_registers_public_route(): void {
+		Badge::instance()->init();
+		$actions = $GLOBALS['handl_aicac_test_added_actions'] ?? array();
+		$this->assertContains( 'template_redirect', $actions );
 	}
 }
