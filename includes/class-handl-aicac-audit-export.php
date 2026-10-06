@@ -78,7 +78,7 @@ final class Audit_Export {
 	 * Whether a retained log row matches the active Activity filters.
 	 *
 	 * @param array<string,mixed>                                                         $row
-	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $filters
+	 * @param array{decision?:string,operation?:string,provider?:string,model?:string,plugin?:string,source?:string} $filters
 	 */
 	public static function row_matches_filters( array $row, array $filters ): bool {
 		foreach ( array( 'decision', 'operation', 'provider', 'model', 'plugin' ) as $field ) {
@@ -99,6 +99,12 @@ final class Audit_Export {
 			}
 		}
 
+		if ( isset( $filters['source'] ) && '' !== $filters['source'] ) {
+			if ( ! Why::row_matches_source( $row, (string) $filters['source'] ) ) {
+				return false;
+			}
+		}
+
 		return true;
 	}
 
@@ -107,7 +113,7 @@ final class Audit_Export {
 	 * Includes every matching retained entry (not capped at the on-screen 50).
 	 *
 	 * @param array<int,mixed>                                                            $log
-	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $filters
+	 * @param array{decision?:string,operation?:string,provider?:string,model?:string,plugin?:string,source?:string} $filters
 	 * @return list<array<string,mixed>>
 	 */
 	public static function filtered_rows( array $log, array $filters ): array {
@@ -230,7 +236,7 @@ final class Audit_Export {
 	 * Uses PHP's fputcsv so commas/newlines/quotes are RFC-style escaped.
 	 *
 	 * @param array<int,mixed>                                                            $log
-	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $filters
+	 * @param array{decision?:string,operation?:string,provider?:string,model?:string,plugin?:string,source?:string} $filters
 	 * @param array<string,array<string,mixed>>                                           $plugins
 	 * @param array<string,mixed>                                                         $policy
 	 * @param array<int,string>                                                           $user_labels

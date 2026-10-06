@@ -56,7 +56,7 @@ final class Admin {
 	public const ACTIVITY_DEFAULT_PER_PAGE = 50;
 
 	/**
-	 * @var array{decision:string,operation:string,provider:string,model:string,plugin:string}
+	 * @var array{decision:string,operation:string,provider:string,model:string,plugin:string,source:string}
 	 */
 	private array $log_filters = array(
 		'decision'  => '',
@@ -64,6 +64,7 @@ final class Admin {
 		'provider'  => '',
 		'model'     => '',
 		'plugin'    => '',
+		'source'    => '',
 	);
 
 	/** Set when Activity save rejects an invalid webhook URL (AC6). */
@@ -2306,7 +2307,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	 * Filtered Activity rows, newest first (before paging).
 	 *
 	 * @param array<int,mixed> $log
-	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $filters
+	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string,source:string} $filters
 	 * @return list<array<string,mixed>>
 	 */
 	private function collect_filtered_log_rows( array $log, array $filters ): array {
@@ -2326,7 +2327,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	/**
 	 * Query args preserved across Activity filter/pager links (page omitted).
 	 *
-	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $filters
+	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string,source:string} $filters
 	 * @return array<string, scalar>
 	 */
 	private function activity_list_query_args( array $filters, int $per_page ): array {
@@ -2471,7 +2472,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 	/**
 	 * @param 'dashboard'|'rules'|'activity'|'insights'|'profile' $active_tab
-	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $log_filters
+	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string,source:string} $log_filters
 	 */
 	private function render_tabs( string $active_tab, string $plugin_status_filter, string $plugin_access_filter, array $log_filters ): void {
 		$base_args = array(
@@ -4797,7 +4798,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	}
 
 	/**
-	 * @return array{decision:string,operation:string,provider:string,model:string,plugin:string}
+	 * @return array{decision:string,operation:string,provider:string,model:string,plugin:string,source:string}
 	 */
 	private function parse_log_filters(): array {
 		$filters = array(
@@ -4806,6 +4807,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			'provider'  => '',
 			'model'     => '',
 			'plugin'    => '',
+			'source'    => '',
 		);
 
 		if ( isset( $_REQUEST['handl_aicac_log_decision'] ) ) {
@@ -4837,11 +4839,16 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			$filters[ $key ] = $value;
 		}
 
+		if ( isset( $_REQUEST['handl_aicac_log_source'] ) ) {
+			$source = sanitize_key( wp_unslash( (string) $_REQUEST['handl_aicac_log_source'] ) );
+			$filters['source'] = Why::sanitize_filter( $source );
+		}
+
 		return $filters;
 	}
 
 	/**
-	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $filters
+	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string,source:string} $filters
 	 * @return array<string,string>
 	 */
 	private function log_filters_to_query_args( array $filters ): array {
@@ -4856,7 +4863,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	}
 
 	/**
-	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $filters
+	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string,source:string} $filters
 	 */
 	private function log_filters_active( array $filters ): bool {
 		foreach ( $filters as $value ) {
@@ -4942,7 +4949,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	}
 
 	/**
-	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $filters
+	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string,source:string} $filters
 	 * @param array{decision:array<string,string>,operation:array<string,string>,provider:array<string,string>,model:array<string,string>,plugin:array<string,string>} $filter_options
 	 * @param array<string,array<string,mixed>> $plugins
 	 * @param array<string, scalar> $activity_query
@@ -5040,6 +5047,14 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			$filters['plugin'],
 			$filter_options['plugin']
 		);
+		$this->render_log_filter_select(
+			'handl-aicac-log-source-filter',
+			'handl_aicac_log_source',
+			__( 'All explanations', 'handl-ai-connector-access-control' ),
+			__( 'Filter by decision source', 'handl-ai-connector-access-control' ),
+			isset( $filters['source'] ) ? (string) $filters['source'] : '',
+			Why::filter_choices()
+		);
 		submit_button( __( 'Filter', 'handl-ai-connector-access-control' ), '', 'filter_action', false );
 		if ( $this->log_filters_active( $filters ) ) {
 			$clear_url = Pager::url(
@@ -5080,7 +5095,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	}
 
 	/**
-	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $filters
+	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string,source:string} $filters
 	 */
 	private function render_log_filter_hiddens( array $filters ): void {
 		foreach ( $this->log_filters_to_query_args( $filters ) as $key => $value ) {
@@ -5090,7 +5105,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 	/**
 	 * @param array<string,mixed> $row
-	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $filters
+	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string,source:string} $filters
 	 */
 	private function log_row_matches_filters( array $row, array $filters ): bool {
 		return Audit_Export::row_matches_filters( $row, $filters );
@@ -7059,7 +7074,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	}
 
 	/**
-	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $log_filters
+	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string,source:string} $log_filters
 	 */
 	private function handle_quick_rule_redirect( array $log_filters ): void {
 		$this->require_admin_mutation( 'handl_aicac_quick_rule' );
@@ -8262,7 +8277,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	}
 
 	/**
-	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $log_filters
+	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string,source:string} $log_filters
 	 */
 	private function render_quick_rule_buttons( string $plugin_basename, array $log_filters ): void {
 		if ( '' === $plugin_basename ) {
@@ -8382,7 +8397,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	 * @param array<string,mixed> $row
 	 * @param array<string,array<string,mixed>> $plugins
 	 * @param array<string,mixed> $policy
-	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string} $log_filters
+	 * @param array{decision:string,operation:string,provider:string,model:string,plugin:string,source:string} $log_filters
 	 */
 	private function render_log_row( array $row, array $plugins, array $policy, array $log_filters ): void {
 		$ts        = isset( $row['ts'] ) ? (int) $row['ts'] : 0;
@@ -9700,6 +9715,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			'provider'  => '',
 			'model'     => '',
 			'plugin'    => '',
+			'source'    => '',
 		);
 		$payload  = Audit_Export::build_csv( $rows, $empty_filters, $plugins, $policy, $user_labels );
 		$filename = 'handl-aicac-prune-candidates-' . gmdate( 'Ymd-His' ) . '.csv';
