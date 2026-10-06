@@ -1,6 +1,7 @@
 <?php
 /**
- * AICAC-CHAT-NOTIFY (#298): Slack Block Kit / Teams Adaptive Card alerts.
+ * AICAC-CHAT-NOTIFY (#298) / AICAC-CHAT-REPORTS (#306): Slack Block Kit /
+ * Teams MessageCard alerts and compact report cards.
  *
  * Option + filter + WP-CLI. No admin UI (follow-up). Reuses Alert_Routing
  * types; does not add a second routing table. Chat POST failure never
@@ -49,6 +50,13 @@ final class Chat_Notify {
 	public const FILTER_CONFIG = 'handl_aicac_chat_notify_config';
 
 	public const FILTER_SHOULD_SEND = 'handl_aicac_chat_notify_should_send';
+
+	/** Compact weekly / monthly / governance digest cards (not alert classes). */
+	public const REPORT_WEEKLY = 'report_weekly';
+
+	public const REPORT_MONTHLY = 'report_monthly';
+
+	public const REPORT_DIGEST = 'report_digest';
 
 	/** @var bool */
 	private static $registered = false;
@@ -116,7 +124,7 @@ final class Chat_Notify {
 
 	/**
 	 * @param mixed $raw
-	 * @return array{slack_url:string,teams_url:string,min_severity:int}
+	 * @return array{slack_url:string,teams_url:string,min_severity:int,report_weekly:bool,report_monthly:bool,report_digest:bool}
 	 */
 	public static function sanitize_config( $raw ): array {
 		if ( ! is_array( $raw ) ) {
@@ -135,14 +143,45 @@ final class Chat_Notify {
 		}
 
 		return array(
-			'slack_url'    => $slack,
-			'teams_url'    => $teams,
-			'min_severity' => $min,
+			'slack_url'      => $slack,
+			'teams_url'      => $teams,
+			'min_severity'   => $min,
+			'report_weekly'  => self::flag( $raw[ self::REPORT_WEEKLY ] ?? false ),
+			'report_monthly' => self::flag( $raw[ self::REPORT_MONTHLY ] ?? false ),
+			'report_digest'  => self::flag( $raw[ self::REPORT_DIGEST ] ?? false ),
 		);
 	}
 
 	/**
-	 * @return array{slack_url:string,teams_url:string,min_severity:int}
+	 * @param mixed $value
+	 */
+	public static function flag( $value ): bool {
+		if ( is_bool( $value ) ) {
+			return $value;
+		}
+		if ( is_int( $value ) || is_float( $value ) ) {
+			return (int) $value !== 0;
+		}
+		$s = strtolower( trim( (string) $value ) );
+
+		return in_array( $s, array( '1', 'true', 'yes', 'on' ), true );
+	}
+
+	/**
+	 * @return list<string>
+	 */
+	public static function report_kinds(): array {
+		return array( self::REPORT_WEEKLY, self::REPORT_MONTHLY, self::REPORT_DIGEST );
+	}
+
+	public static function report_enabled( string $kind ): bool {
+		$config = self::get_config();
+
+		return in_array( $kind, self::report_kinds(), true ) && ! empty( $config[ $kind ] );
+	}
+
+	/**
+	 * @return array{slack_url:string,teams_url:string,min_severity:int,report_weekly:bool,report_monthly:bool,report_digest:bool}
 	 */
 	public static function get_config(): array {
 		$stored = self::sanitize_config( get_option( self::OPTION_KEY, array() ) );
@@ -609,7 +648,289 @@ final class Chat_Notify {
 	}
 
 	/**
-	 * @return array{slack_configured:bool,teams_configured:bool,slack_url_masked:string,teams_url_masked:string,min_severity:int}
+	 * Compact report card for Slack/Teams. Never includes the HTML table.
+	 * Chat 4xx is isolated to webhook health; callers keep sending email.
+	 *
+	 * @param array<string,mixed> $stats
+	 * @param array<string,mixed> $policy
+	 * @return array{slack:array{ok:bool,http_status:?int,error:string},teams:array{ok:bool,http_status:?int,error:string}}
+	 */
+	public static function maybe_deliver_report( string $kind, array $stats, array $policy ): array {
+		unset( $policy );
+		$empty = array(
+			'ok'          => false,
+			'http_status' => null,
+			'error'       => '',
+		);
+		$out   = array(
+			'slack' => $empty,
+			'teams' => $empty,
+		);
+		if ( ! self::report_enabled( $kind ) ) {
+			return $out;
+		}
+
+		foreach ( self::targets() as $target ) {
+			$config = self::get_config();
+			$url    = self::TARGET_TEAMS === $target ? $config['teams_url'] : $config['slack_url'];
+			if ( '' === $url ) {
+				continue;
+			}
+			$payload = self::TARGET_TEAMS === $target
+				? self::build_report_teams_card( $kind, $stats )
+				: self::build_report_slack_blocks( $kind, $stats );
+			$log_event = 'chat_' . $target;
+			try {
+				$out[ $target ] = Alerts::deliver_webhook( $url, $payload, $log_event );
+			} catch ( \Throwable $e ) {
+				unset( $e );
+				Alert_Health::record_result( Alert_Health::CHANNEL_WEBHOOK, false, 'Chat request error' );
+				Webhook_Delivery_Log::push(
+					array(
+						'ts'          => time(),
+						'event'       => $log_event,
+						'http_status' => null,
+						'retries'     => 0,
+						'ok'          => false,
+						'error'       => 'Chat request error',
+					)
+				);
+				$out[ $target ] = array(
+					'ok'          => false,
+					'http_status' => null,
+					'error'       => 'Chat request error',
+				);
+			}
+		}
+
+		return $out;
+	}
+
+	/**
+	 * @param array<string,mixed> $stats
+	 * @return array<string,mixed>
+	 */
+	public static function build_report_slack_blocks( string $kind, array $stats ): array {
+		$fields = self::compact_report_fields( $kind, $stats );
+		$link   = self::report_deep_link( $kind );
+		$title  = self::report_title( $kind );
+
+		$block_fields = array();
+		foreach ( $fields as $field ) {
+			$block_fields[] = array(
+				'type' => 'mrkdwn',
+				'text' => '*' . $field['name'] . "*\n" . $field['value'],
+			);
+		}
+
+		$blocks = array(
+			array(
+				'type' => 'header',
+				'text' => array(
+					'type'  => 'plain_text',
+					'text'  => $title,
+					'emoji' => false,
+				),
+			),
+			array(
+				'type'   => 'section',
+				'fields' => $block_fields,
+			),
+		);
+		if ( '' !== $link ) {
+			$blocks[] = array(
+				'type'     => 'actions',
+				'elements' => array(
+					array(
+						'type' => 'button',
+						'text' => array(
+							'type'  => 'plain_text',
+							'text'  => self::report_deep_link_label( $kind ),
+							'emoji' => false,
+						),
+						'url'  => $link,
+					),
+				),
+			);
+		}
+
+		return array(
+			'text'   => $title,
+			'blocks' => $blocks,
+			'event'  => 'chat_slack',
+			'type'   => 'handl_aicac_chat_slack',
+		);
+	}
+
+	/**
+	 * @param array<string,mixed> $stats
+	 * @return array<string,mixed>
+	 */
+	public static function build_report_teams_card( string $kind, array $stats ): array {
+		$fields = self::compact_report_fields( $kind, $stats );
+		$link   = self::report_deep_link( $kind );
+		$title  = self::report_title( $kind );
+		$facts  = array();
+		foreach ( $fields as $field ) {
+			$facts[] = array(
+				'name'  => $field['name'],
+				'value' => $field['value'],
+			);
+		}
+
+		$card = array(
+			'@type'      => 'MessageCard',
+			'@context'   => 'https://schema.org/extensions',
+			'summary'    => $title,
+			'themeColor' => '1565C0',
+			'title'      => $title,
+			'sections'   => array(
+				array(
+					'facts' => $facts,
+				),
+			),
+			'event'      => 'chat_teams',
+			'type'       => 'handl_aicac_chat_teams',
+		);
+		if ( '' !== $link ) {
+			$card['potentialAction'] = array(
+				array(
+					'@type'   => 'OpenUri',
+					'name'    => self::report_deep_link_label( $kind ),
+					'targets' => array(
+						array(
+							'os'  => 'default',
+							'uri' => $link,
+						),
+					),
+				),
+			);
+		}
+
+		return $card;
+	}
+
+	public static function report_title( string $kind ): string {
+		if ( self::REPORT_MONTHLY === $kind ) {
+			return __( 'Monthly AI audit report', 'handl-ai-connector-access-control' );
+		}
+		if ( self::REPORT_DIGEST === $kind ) {
+			return __( 'Weekly AI governance digest', 'handl-ai-connector-access-control' );
+		}
+
+		return __( 'Weekly AI report', 'handl-ai-connector-access-control' );
+	}
+
+	public static function report_deep_link( string $kind ): string {
+		if ( ! class_exists( Admin::class ) ) {
+			return '';
+		}
+		$screen = 'dashboard';
+		if ( self::REPORT_MONTHLY === $kind ) {
+			$screen = 'activity';
+		}
+
+		return Admin::screen_url( $screen );
+	}
+
+	public static function report_deep_link_label( string $kind ): string {
+		if ( self::REPORT_MONTHLY === $kind ) {
+			return __( 'Open Activity', 'handl-ai-connector-access-control' );
+		}
+
+		return __( 'Open Dashboard', 'handl-ai-connector-access-control' );
+	}
+
+	/**
+	 * Headline numbers plus at most three top-plugin lines.
+	 *
+	 * @param array<string,mixed> $stats
+	 * @return list<array{name:string,value:string}>
+	 */
+	public static function compact_report_fields( string $kind, array $stats ): array {
+		$fields = array();
+		if ( self::REPORT_MONTHLY === $kind ) {
+			$fields[] = array(
+				'name'  => __( 'Calls', 'handl-ai-connector-access-control' ),
+				'value' => (string) number_format_i18n( (int) ( $stats['calls'] ?? 0 ) ),
+			);
+			$fields[] = array(
+				'name'  => __( 'Estimated spend', 'handl-ai-connector-access-control' ),
+				'value' => '$' . number_format_i18n( (float) ( $stats['spend'] ?? 0 ), 2 ),
+			);
+			$fields[] = array(
+				'name'  => __( 'Blocked calls', 'handl-ai-connector-access-control' ),
+				'value' => (string) number_format_i18n( (int) ( $stats['incidents'] ?? 0 ) ),
+			);
+
+			return $fields;
+		}
+
+		if ( self::REPORT_DIGEST === $kind ) {
+			$fields[] = array(
+				'name'  => __( 'AI Client calls', 'handl-ai-connector-access-control' ),
+				'value' => (string) number_format_i18n( (int) ( $stats['ai_client_calls'] ?? 0 ) ),
+			);
+			$fields[] = array(
+				'name'  => __( 'Blocked calls', 'handl-ai-connector-access-control' ),
+				'value' => (string) number_format_i18n( (int) ( $stats['blocked_calls'] ?? 0 ) ),
+			);
+			$est = $stats['estimated_spend'] ?? null;
+			$fields[] = array(
+				'name'  => __( 'Estimated spend', 'handl-ai-connector-access-control' ),
+				'value' => null === $est ? '—' : ( '$' . number_format_i18n( (float) $est, 2 ) ),
+			);
+		} else {
+			$coverage = is_array( $stats['coverage'] ?? null ) ? $stats['coverage'] : array();
+			$fields[] = array(
+				'name'  => __( 'Known AI activity', 'handl-ai-connector-access-control' ),
+				'value' => (string) number_format_i18n( (int) ( $coverage['M'] ?? 0 ) ),
+			);
+			$fields[] = array(
+				'name'  => __( 'Blocked calls', 'handl-ai-connector-access-control' ),
+				'value' => (string) number_format_i18n( (int) ( $stats['deny_n'] ?? 0 ) ),
+			);
+			$fields[] = array(
+				'name'  => __( 'Estimated spend', 'handl-ai-connector-access-control' ),
+				'value' => ! empty( $stats['est_any'] )
+					? ( '$' . number_format_i18n( (float) ( $stats['est_total'] ?? 0 ), 2 ) )
+					: __( 'No estimates yet', 'handl-ai-connector-access-control' ),
+			);
+		}
+
+		$top = is_array( $stats['top_plugins'] ?? null ) ? $stats['top_plugins'] : array();
+		$i   = 0;
+		foreach ( $top as $row ) {
+			if ( $i >= 3 || ! is_array( $row ) ) {
+				continue;
+			}
+			++$i;
+			$label = (string) ( $row['label'] ?? '' );
+			$usd   = isset( $row['usd'] ) ? (float) $row['usd'] : ( isset( $row['estimated_usd'] ) ? (float) $row['estimated_usd'] : null );
+			$calls = (int) ( $row['calls'] ?? 0 );
+			$value = null !== $usd
+				? sprintf(
+					/* translators: 1: USD amount, 2: call count */
+					__( '$%1$s estimated, %2$s calls', 'handl-ai-connector-access-control' ),
+					number_format_i18n( $usd, 2 ),
+					number_format_i18n( $calls )
+				)
+				: sprintf(
+					/* translators: %s: call count */
+					__( '%s calls', 'handl-ai-connector-access-control' ),
+					number_format_i18n( $calls )
+				);
+			$fields[] = array(
+				'name'  => $label,
+				'value' => $value,
+			);
+		}
+
+		return $fields;
+	}
+
+	/**
+	 * @return array{slack_configured:bool,teams_configured:bool,slack_url_masked:string,teams_url_masked:string,min_severity:int,report_weekly:bool,report_monthly:bool,report_digest:bool}
 	 */
 	public static function status(): array {
 		$config = self::get_config();
@@ -620,6 +941,9 @@ final class Chat_Notify {
 			'slack_url_masked'   => self::mask_url( $config['slack_url'] ),
 			'teams_url_masked'   => self::mask_url( $config['teams_url'] ),
 			'min_severity'       => $config['min_severity'],
+			'report_weekly'      => ! empty( $config[ self::REPORT_WEEKLY ] ),
+			'report_monthly'     => ! empty( $config[ self::REPORT_MONTHLY ] ),
+			'report_digest'      => ! empty( $config[ self::REPORT_DIGEST ] ),
 		);
 	}
 
@@ -634,12 +958,15 @@ final class Chat_Notify {
 		$st = self::status();
 		\WP_CLI::log(
 			sprintf(
-				'Chat notify: slack=%s %s | teams=%s %s | min_severity=%d',
+				'Chat notify: slack=%s %s | teams=%s %s | min_severity=%d | weekly=%s monthly=%s digest=%s',
 				$st['slack_configured'] ? 'on' : 'off',
 				$st['slack_url_masked'],
 				$st['teams_configured'] ? 'on' : 'off',
 				$st['teams_url_masked'],
-				(int) $st['min_severity']
+				(int) $st['min_severity'],
+				$st['report_weekly'] ? 'on' : 'off',
+				$st['report_monthly'] ? 'on' : 'off',
+				$st['report_digest'] ? 'on' : 'off'
 			)
 		);
 	}
@@ -672,13 +999,25 @@ final class Chat_Notify {
 		if ( array_key_exists( 'min-severity', $assoc_args ) ) {
 			$current['min_severity'] = $assoc_args['min-severity'];
 		}
+		if ( array_key_exists( 'weekly-report', $assoc_args ) ) {
+			$current[ self::REPORT_WEEKLY ] = self::flag( $assoc_args['weekly-report'] );
+		}
+		if ( array_key_exists( 'monthly-report', $assoc_args ) ) {
+			$current[ self::REPORT_MONTHLY ] = self::flag( $assoc_args['monthly-report'] );
+		}
+		if ( array_key_exists( 'digest', $assoc_args ) ) {
+			$current[ self::REPORT_DIGEST ] = self::flag( $assoc_args['digest'] );
+		}
 		$saved = self::save_config( $current );
 		\WP_CLI::success(
 			sprintf(
-				'Saved. slack=%s teams=%s min_severity=%d',
+				'Saved. slack=%s teams=%s min_severity=%d weekly=%s monthly=%s digest=%s',
 				self::mask_url( $saved['slack_url'] ),
 				self::mask_url( $saved['teams_url'] ),
-				(int) $saved['min_severity']
+				(int) $saved['min_severity'],
+				! empty( $saved[ self::REPORT_WEEKLY ] ) ? 'on' : 'off',
+				! empty( $saved[ self::REPORT_MONTHLY ] ) ? 'on' : 'off',
+				! empty( $saved[ self::REPORT_DIGEST ] ) ? 'on' : 'off'
 			)
 		);
 	}
