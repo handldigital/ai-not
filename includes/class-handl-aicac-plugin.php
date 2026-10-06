@@ -112,6 +112,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-privacy-hooks.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-preflight-scan.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-chat-notify.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-threat-feed.php';
 
 		Policy::instance()->init();
 		Break_Glass::init();
@@ -148,6 +149,7 @@ final class Plugin {
 		Adminbar::instance()->init();
 		Disclosure::instance()->init();
 		Chat_Notify::init();
+		Threat_Feed::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
