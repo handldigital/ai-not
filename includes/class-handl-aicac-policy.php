@@ -1931,6 +1931,11 @@ final class Policy {
 	public static function append_log_event( array $event ): void {
 		$policy = self::get_policy();
 
+		// AICAC-WHY (#287): stamp the mechanism that fired before SIEM/Chat_Notify see the row.
+		if ( class_exists( Why::class, false ) ) {
+			Why::stamp( $event, $policy );
+		}
+
 		// AICAC-SIEM: export at funnel entry (independent of activity-log retention).
 		$is_selftest_early = class_exists( Selftest::class ) && Selftest::is_synthetic_row( $event );
 		$is_demo_early     = class_exists( Demo_Mode::class ) && Demo_Mode::skip_emitters( $event );
