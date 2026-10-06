@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class Why {
 
-	public const LEGACY_COPY = 'Recorded before decision tracing was added.';
+	public const LEGACY_COPY = 'No explanation is available for this older entry.';
 
 	public const SUMMARY_COPY = 'Why?';
 
@@ -102,7 +102,7 @@ final class Why {
 	 */
 	public static function explain_line( array $event ): string {
 		if ( ! array_key_exists( 'decision_source', $event ) ) {
-			return __( 'Recorded before decision tracing was added.', 'handl-ai-connector-access-control' );
+			return __( 'No explanation is available for this older entry.', 'handl-ai-connector-access-control' );
 		}
 
 		$source = is_string( $event['decision_source'] ) ? (string) $event['decision_source'] : '';
@@ -111,9 +111,9 @@ final class Why {
 
 		switch ( $source ) {
 			case 'freeze':
-				return __( 'Denied because Panic freeze is on.', 'handl-ai-connector-access-control' );
+				return __( 'Denied because Panic freeze was on.', 'handl-ai-connector-access-control' );
 			case 'kill_switch':
-				return __( 'Denied because Emergency stop is on.', 'handl-ai-connector-access-control' );
+				return __( 'Denied because Emergency stop was on.', 'handl-ai-connector-access-control' );
 			case 'quiet_hours':
 				if ( '' !== $window ) {
 					return sprintf(
@@ -130,7 +130,7 @@ final class Why {
 			case 'rule:explicit-allow':
 				return __( 'Allowed because this plugin has an Allow rule.', 'handl-ai-connector-access-control' );
 			case 'newcomer_hold':
-				return __( 'Denied because this plugin is awaiting first-AI-call review.', 'handl-ai-connector-access-control' );
+				return __( 'Denied because this plugin needed approval for its first AI call.', 'handl-ai-connector-access-control' );
 			case 'budget:hard':
 				return __( 'Denied because the estimated budget was reached.', 'handl-ai-connector-access-control' );
 			case 'budget:observe':
@@ -164,9 +164,9 @@ final class Why {
 			case 'tool_armed':
 				return __( 'Denied because the prompt offered a blocked tool.', 'handl-ai-connector-access-control' );
 			case 'break_glass':
-				return __( 'Allowed because Break-glass is on.', 'handl-ai-connector-access-control' );
+				return __( 'Allowed because Break-glass was on.', 'handl-ai-connector-access-control' );
 			case 'temp_allow':
-				return __( 'Allowed because a temporary Allow is still in effect.', 'handl-ai-connector-access-control' );
+				return __( 'Allowed because a temporary Allow was active.', 'handl-ai-connector-access-control' );
 			case 'default:allow':
 				return __( 'Allowed by the site default policy.', 'handl-ai-connector-access-control' );
 			case 'default:deny':
@@ -174,7 +174,7 @@ final class Why {
 		}
 
 		if ( '' === $source ) {
-			return __( 'Recorded before decision tracing was added.', 'handl-ai-connector-access-control' );
+			return __( 'No explanation is available for this older entry.', 'handl-ai-connector-access-control' );
 		}
 
 		return sprintf(
