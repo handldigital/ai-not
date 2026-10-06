@@ -810,6 +810,36 @@ if ( ! function_exists( 'get_userdata' ) ) {
 		return (object) $store[ $uid ];
 	}
 }
+if ( ! function_exists( 'get_user_by' ) ) {
+	/**
+	 * @param string     $field id|ID|slug|email|login.
+	 * @param string|int $value Lookup value.
+	 * @return object|false
+	 */
+	function get_user_by( $field, $value ) {
+		$store = $GLOBALS['handl_aicac_test_users'] ?? array();
+		$field = (string) $field;
+		foreach ( $store as $uid => $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$obj = (object) array_merge( $row, array( 'ID' => (int) $uid ) );
+			if ( ( 'id' === $field || 'ID' === $field ) && (int) $uid === (int) $value ) {
+				return $obj;
+			}
+			if ( 'email' === $field && isset( $row['user_email'] ) && strtolower( (string) $row['user_email'] ) === strtolower( (string) $value ) ) {
+				return $obj;
+			}
+			if ( 'login' === $field && isset( $row['user_login'] ) && (string) $row['user_login'] === (string) $value ) {
+				return $obj;
+			}
+			if ( 'slug' === $field && isset( $row['user_nicename'] ) && (string) $row['user_nicename'] === (string) $value ) {
+				return $obj;
+			}
+		}
+		return false;
+	}
+}
 if ( ! function_exists( 'get_user_meta' ) ) {
 	/**
 	 * @param int    $user_id User id.
@@ -986,5 +1016,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-share.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-adminbar.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-disclosure.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-privacy-hooks.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-preflight-scan.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-threat-feed.php';
 require_once __DIR__ . '/stubs/namespace-filter-input.php';
