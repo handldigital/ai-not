@@ -189,10 +189,10 @@ final class LeadsTest extends TestCase {
 		);
 		foreach ( $it as $file ) {
 			$path = $file->getPathname();
-			if ( $file->isDir() ) {
-				rmdir( $path );
-			} else {
+			if ( is_link( $path ) || $file->isFile() ) {
 				unlink( $path );
+			} elseif ( $file->isDir() ) {
+				rmdir( $path );
 			}
 		}
 		rmdir( $dir );

@@ -34,6 +34,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  *     # Remove plugin data the next time the plugin is deleted
  *     $ wp handl-aicac uninstall set purge
  *
+ *     # Scan every installed plugin and theme for known AI endpoints
+ *     $ wp handl-aicac scan-all
+ *
  * @when after_wp_load
  */
 final class CLI {
@@ -55,6 +58,7 @@ final class CLI {
 		\WP_CLI::add_command( 'aicac rule', self::class );
 		\WP_CLI::add_command( 'handl-aicac uninstall get', array( self::class, 'cmd_uninstall_get' ) );
 		\WP_CLI::add_command( 'handl-aicac uninstall set', array( self::class, 'cmd_uninstall_set' ) );
+		\WP_CLI::add_command( 'handl-aicac scan-all', array( self::class, 'cmd_scan_all' ) );
 	}
 
 	/**
@@ -305,5 +309,49 @@ final class CLI {
 			\WP_CLI::error( $error );
 		}
 		\WP_CLI::success( self::uninstall_status_message( self::get_uninstall_policy() ) );
+	}
+
+	/**
+	 * Scan every installed plugin and theme for known AI endpoints.
+	 *
+	 * Read-only. Prints a table of hits and always exits 0.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp handl-aicac scan-all
+	 *
+	 * @param array<int,string>    $args
+	 * @param array<string,string> $assoc_args
+	 */
+	public static function cmd_scan_all( $args, $assoc_args ): void {
+		unset( $args, $assoc_args );
+		$run  = Preflight_Scan::scan_all();
+		$hits = isset( $run['hits'] ) && is_array( $run['hits'] ) ? $run['hits'] : array();
+		if ( empty( $hits ) ) {
+			\WP_CLI::log( 'No AI provider references found.' );
+		} else {
+			$rows = array();
+			foreach ( $hits as $hit ) {
+				if ( ! is_array( $hit ) ) {
+					continue;
+				}
+				$providers = isset( $hit['providers'] ) && is_array( $hit['providers'] )
+					? array_map( 'strval', $hit['providers'] )
+					: array();
+				$rows[] = array(
+					'plugin'    => (string) ( $hit['id'] ?? '' ),
+					'providers' => Preflight_Scan::provider_labels( $providers ),
+					'files'     => (string) (int) ( $hit['file_count'] ?? 0 ),
+				);
+			}
+			\WP_CLI\Utils\format_items( 'table', $rows, array( 'plugin', 'providers', 'files' ) );
+		}
+		\WP_CLI::success(
+			sprintf(
+				'Scanned %d plugins and themes. %d with AI references.',
+				(int) ( $run['scanned'] ?? 0 ),
+				(int) ( $run['hit_count'] ?? 0 )
+			)
+		);
 	}
 }

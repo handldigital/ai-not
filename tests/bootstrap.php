@@ -899,6 +899,58 @@ if ( ! function_exists( 'get_plugins' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_get_themes' ) ) {
+	/**
+	 * @return array<string,mixed>
+	 */
+	function wp_get_themes(): array {
+		if ( isset( $GLOBALS['handl_aicac_test_themes'] ) && is_array( $GLOBALS['handl_aicac_test_themes'] ) ) {
+			return $GLOBALS['handl_aicac_test_themes'];
+		}
+		return array();
+	}
+}
+
+if ( ! function_exists( 'get_theme_root' ) ) {
+	function get_theme_root(): string {
+		if ( isset( $GLOBALS['handl_aicac_test_theme_root'] ) && is_string( $GLOBALS['handl_aicac_test_theme_root'] ) && '' !== $GLOBALS['handl_aicac_test_theme_root'] ) {
+			return $GLOBALS['handl_aicac_test_theme_root'];
+		}
+		return sys_get_temp_dir() . '/handl-aicac-themes';
+	}
+}
+
+if ( ! function_exists( 'wp_nonce_field' ) ) {
+	/**
+	 * @param mixed $action Action.
+	 * @param string $name Field name.
+	 * @param bool $referer Referer.
+	 * @param bool $echo Echo.
+	 */
+	function wp_nonce_field( $action = -1, $name = '_wpnonce', $referer = true, $echo = true ) {
+		unset( $action, $referer );
+		$html = '<input type="hidden" name="' . esc_attr( (string) $name ) . '" value="testnonce" />';
+		if ( $echo ) {
+			echo $html;
+		}
+		return $html;
+	}
+}
+
+if ( ! function_exists( 'submit_button' ) ) {
+	/**
+	 * @param string $text Text.
+	 * @param string $type Type.
+	 * @param string $name Name.
+	 * @param bool   $wrap Wrap.
+	 * @param mixed  $other Other.
+	 */
+	function submit_button( $text = '', $type = 'primary', $name = 'submit', $wrap = true, $other = array() ) {
+		unset( $type, $wrap, $other );
+		echo '<input type="submit" name="' . esc_attr( (string) $name ) . '" class="button" value="' . esc_attr( (string) $text ) . '" />';
+	}
+}
+
 if ( ! function_exists( 'check_admin_referer' ) ) {
 	/**
 	 * @param string $action Action.

@@ -46,7 +46,7 @@ final class PreflightScanTest extends TestCase {
 			$this->rm_rf( $this->plugin_root() . '/' . $slug );
 		}
 		$this->created_slugs = array();
-		unset( $GLOBALS['handl_aicac_test_filters'], $GLOBALS['handl_aicac_test_plugins'] );
+		unset( $GLOBALS['handl_aicac_test_filters'], $GLOBALS['handl_aicac_test_plugins'], $GLOBALS['handl_aicac_test_themes'], $GLOBALS['handl_aicac_test_theme_root'] );
 		parent::tearDown();
 	}
 
@@ -314,5 +314,176 @@ final class PreflightScanTest extends TestCase {
 			)
 		);
 		$this->assertTrue( true );
+	}
+
+	public function test_scan_all_lists_two_hits_and_omits_clean(): void {
+		$GLOBALS['handl_aicac_test_plugins'] = array(
+			'openai-plug/openai-plug.php'       => array( 'Name' => 'OpenAI Plug' ),
+			'anthropic-plug/anthropic-plug.php' => array( 'Name' => 'Anthropic Plug' ),
+			'clean-plug/clean-plug.php'         => array( 'Name' => 'Clean Plug' ),
+		);
+		$this->plugin_tree(
+			'openai-plug',
+			array( 'openai-plug.php' => "<?php\n\$u='https://api.openai.com/v1';\n" )
+		);
+		$this->plugin_tree(
+			'anthropic-plug',
+			array( 'anthropic-plug.php' => "<?php\n\$u='https://api.anthropic.com/v1';\n" )
+		);
+		$this->plugin_tree(
+			'clean-plug',
+			array( 'clean-plug.php' => "<?php\necho 'ok';\n" )
+		);
+
+		$before_policy = Policy::get_policy();
+		$run           = Preflight_Scan::scan_all();
+		$this->assertSame( 3, $run['scanned'] );
+		$this->assertSame( 2, $run['hit_count'] );
+		$ids = array_map(
+			static function ( array $row ): string {
+				return (string) $row['id'];
+			},
+			$run['hits']
+		);
+		$this->assertContains( 'openai-plug/openai-plug.php', $ids );
+		$this->assertContains( 'anthropic-plug/anthropic-plug.php', $ids );
+		$this->assertNotContains( 'clean-plug/clean-plug.php', $ids );
+		foreach ( $run['hits'] as $hit ) {
+			if ( 'openai-plug/openai-plug.php' === $hit['id'] ) {
+				$this->assertContains( 'openai', $hit['providers'] );
+				$this->assertSame( 1, $hit['file_count'] );
+			}
+			if ( 'anthropic-plug/anthropic-plug.php' === $hit['id'] ) {
+				$this->assertContains( 'anthropic', $hit['providers'] );
+				$this->assertSame( 1, $hit['file_count'] );
+			}
+		}
+		$this->assertSame( array(), Preflight_Scan::pending_notices() );
+		$this->assertSame( $before_policy['plugins'] ?? array(), Policy::get_policy()['plugins'] ?? array() );
+
+		$log = get_option( Plugin::LOG_OPTION_KEY );
+		$this->assertIsArray( $log );
+		$this->assertCount( 1, $log );
+		$this->assertSame( 'scan_all', $log[0]['operation'] ?? '' );
+		$this->assertSame( 2, $log[0]['hit_count'] ?? 0 );
+
+		ob_start();
+		Preflight_Scan::render_policy_tools_section();
+		$html = (string) ob_get_clean();
+		$this->assertStringContainsString( 'Scan all installed plugins and themes', $html );
+		$this->assertStringContainsString( 'OpenAI Plug', $html );
+		$this->assertStringContainsString( 'Anthropic Plug', $html );
+		$this->assertStringNotContainsString( 'Clean Plug', $html );
+		$this->assertStringContainsString( 'Add a Deny rule', $html );
+		$this->assertStringContainsString( 'Review rules', $html );
+		$this->assertStringContainsString( 'Dismiss', $html );
+	}
+
+	public function test_scan_all_rerun_adds_one_activity_row(): void {
+		$GLOBALS['handl_aicac_test_plugins'] = array(
+			'openai-plug/openai-plug.php' => array( 'Name' => 'OpenAI Plug' ),
+		);
+		$this->plugin_tree(
+			'openai-plug',
+			array( 'openai-plug.php' => "<?php\n\$u='https://api.openai.com/v1';\n" )
+		);
+		Preflight_Scan::scan_all();
+		Preflight_Scan::scan_all();
+		$log = get_option( Plugin::LOG_OPTION_KEY );
+		$this->assertIsArray( $log );
+		$this->assertCount( 2, $log );
+		foreach ( $log as $row ) {
+			$this->assertIsArray( $row );
+			$this->assertSame( 'scan_all', $row['operation'] ?? '' );
+		}
+		$this->assertSame( array(), Preflight_Scan::pending_notices() );
+	}
+
+	public function test_scan_all_zero_hits_empty_state_and_run_row(): void {
+		$GLOBALS['handl_aicac_test_plugins'] = array(
+			'clean-plug/clean-plug.php' => array( 'Name' => 'Clean Plug' ),
+		);
+		$this->plugin_tree(
+			'clean-plug',
+			array( 'clean-plug.php' => "<?php\necho 'ok';\n" )
+		);
+		$run = Preflight_Scan::scan_all();
+		$this->assertSame( 1, $run['scanned'] );
+		$this->assertSame( 0, $run['hit_count'] );
+		$this->assertSame( array(), $run['hits'] );
+		$log = get_option( Plugin::LOG_OPTION_KEY );
+		$this->assertIsArray( $log );
+		$this->assertCount( 1, $log );
+		$this->assertSame( 'scan_all', $log[0]['operation'] ?? '' );
+		$this->assertSame( 0, $log[0]['hit_count'] ?? -1 );
+
+		ob_start();
+		Preflight_Scan::render_policy_tools_section();
+		$html = (string) ob_get_clean();
+		$this->assertStringContainsString( 'No AI provider references to show.', $html );
+		$cli = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php' );
+		$this->assertStringContainsString( 'No AI provider references found.', $cli );
+		$this->assertStringNotContainsString( 'handl-aicac-scan-all-results', $html );
+	}
+
+	public function test_scan_all_batches_when_inventory_exceeds_batch_size(): void {
+		$plugins = array();
+		$count   = 101;
+		for ( $i = 0; $i < $count; $i++ ) {
+			$slug = sprintf( 'sa-%03d', $i );
+			$file = $slug . '/' . $slug . '.php';
+			$plugins[ $file ] = array( 'Name' => 'SA ' . $i );
+			$body = 0 === $i
+				? "<?php\n\$u='https://api.openai.com/v1';\n"
+				: "<?php\necho 'ok';\n";
+			$this->plugin_tree( $slug, array( $slug . '.php' => $body ) );
+		}
+		$GLOBALS['handl_aicac_test_plugins'] = $plugins;
+		$run = Preflight_Scan::scan_all();
+		$this->assertSame( $count, $run['scanned'] );
+		$this->assertGreaterThan( 1, $run['batch_count'] );
+		$this->assertSame( Preflight_Scan::SCAN_ALL_BATCH, $run['batch_size'] );
+		$this->assertSame( 1, $run['hit_count'] );
+		$this->assertSame( 'sa-000/sa-000.php', $run['hits'][0]['id'] ?? '' );
+	}
+
+	public function test_scan_all_includes_themes_and_skips_self(): void {
+		$GLOBALS['handl_aicac_test_plugins'] = array(
+			'handl-ai-connector-access-control/handl-ai-connector-access-control.php' => array( 'Name' => 'AICAC' ),
+		);
+		$this->plugin_tree(
+			'handl-ai-connector-access-control',
+			array( 'handl-ai-connector-access-control.php' => "<?php\n\$u='https://api.openai.com/v1';\n" )
+		);
+		$theme_root = sys_get_temp_dir() . '/handl-aicac-themes';
+		$GLOBALS['handl_aicac_test_theme_root'] = $theme_root;
+		$GLOBALS['handl_aicac_test_themes']     = array( 'hit-theme' => array( 'Name' => 'Hit Theme' ) );
+		$dir = $theme_root . '/hit-theme';
+		if ( ! is_dir( $dir ) ) {
+			mkdir( $dir, 0777, true );
+		}
+		file_put_contents( $dir . '/functions.php', "<?php\n\$u='https://api.anthropic.com/v1';\n" );
+
+		$run = Preflight_Scan::scan_all();
+		$ids = array_map(
+			static function ( array $row ): string {
+				return (string) $row['id'];
+			},
+			$run['hits']
+		);
+		$this->assertContains( 'hit-theme', $ids );
+		$this->assertNotContains( 'handl-ai-connector-access-control/handl-ai-connector-access-control.php', $ids );
+
+		$this->rm_rf( $dir );
+		unset( $GLOBALS['handl_aicac_test_theme_root'], $GLOBALS['handl_aicac_test_themes'] );
+	}
+
+	public function test_cli_and_admin_wire_scan_all(): void {
+		$cli = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php' );
+		$this->assertStringContainsString( "add_command( 'handl-aicac scan-all'", $cli );
+		$admin = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-admin.php' );
+		$this->assertStringContainsString( 'Preflight_Scan::render_policy_tools_section()', $admin );
+		$this->assertStringContainsString( "'scan_all' === \$posted_action", $admin );
+		$this->assertStringContainsString( 'function handle_scan_all(', $admin );
 	}
 }
