@@ -101,12 +101,22 @@ final class ChatNotifyTest extends TestCase {
 		$this->assertIsArray( $payload['blocks'] );
 		$json = (string) wp_json_encode( $payload );
 		$this->assertStringContainsString( '"blocks"', $json );
-		$this->assertStringContainsString( 'Deny storm', $json );
+		$this->assertStringContainsString( 'Repeated blocked requests', $json );
 		$this->assertStringContainsString( "*Plugin*\nacme/acme.php", $payload['blocks'][1]['fields'][1]['text'] );
 		$this->assertStringContainsString( "*Provider*\nopenai", $payload['blocks'][1]['fields'][2]['text'] );
 		$this->assertStringContainsString( "*Count*\n12", $payload['blocks'][1]['fields'][3]['text'] );
 		$this->assertStringContainsString( 'handl-aicac-activity', $payload['blocks'][2]['elements'][0]['url'] );
 		$this->assertStringContainsString( 'Open Activity', $payload['blocks'][2]['elements'][0]['text']['text'] );
+	}
+
+	public function test_krusty_copy_titles_and_not_recorded(): void {
+		$this->assertSame( 'Repeated blocked requests', Chat_Notify::class_title( Chat_Notify::CLASS_DENY_STORM ) );
+		$this->assertSame( 'AI spending alert', Chat_Notify::class_title( Chat_Notify::CLASS_BUDGET ) );
+		$this->assertSame( 'Access control status changed', Chat_Notify::class_title( Chat_Notify::CLASS_TAMPER ) );
+		$this->assertSame( 'Trap AI API key used', Chat_Notify::class_title( Chat_Notify::CLASS_CANARY ) );
+		$fields = Chat_Notify::card_fields( array(), Chat_Notify::CLASS_DENY_STORM );
+		$this->assertSame( 'Not recorded', $fields[1]['value'] );
+		$this->assertSame( 'Not recorded', $fields[2]['value'] );
 	}
 
 	public function test_teams_adaptive_card_includes_facts_and_open_uri(): void {
@@ -253,7 +263,7 @@ final class ChatNotifyTest extends TestCase {
 		$this->assertCount( 1, self::$posts );
 		$body = json_decode( (string) self::$posts[0]['args']['body'], true );
 		$this->assertIsArray( $body );
-		$this->assertStringContainsString( 'Tamper', (string) wp_json_encode( $body ) );
+		$this->assertStringContainsString( 'Access control status changed', (string) wp_json_encode( $body ) );
 	}
 
 	public function test_filter_can_block_delivery(): void {

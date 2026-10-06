@@ -534,11 +534,11 @@ final class Chat_Notify {
 		);
 		$fields[] = array(
 			'name'  => __( 'Plugin', 'handl-ai-connector-access-control' ),
-			'value' => '' !== $plugin ? $plugin : __( '(none)', 'handl-ai-connector-access-control' ),
+			'value' => '' !== $plugin ? $plugin : __( 'Not recorded', 'handl-ai-connector-access-control' ),
 		);
 		$fields[] = array(
 			'name'  => __( 'Provider', 'handl-ai-connector-access-control' ),
-			'value' => '' !== $provider ? $provider : __( '(none)', 'handl-ai-connector-access-control' ),
+			'value' => '' !== $provider ? $provider : __( 'Not recorded', 'handl-ai-connector-access-control' ),
 		);
 		$fields[] = array(
 			'name'  => __( 'Count', 'handl-ai-connector-access-control' ),
@@ -551,11 +551,11 @@ final class Chat_Notify {
 	public static function class_title( string $class ): string {
 		switch ( $class ) {
 			case self::CLASS_DENY_STORM:
-				return __( 'Deny storm', 'handl-ai-connector-access-control' );
+				return __( 'Repeated blocked requests', 'handl-ai-connector-access-control' );
 			case self::CLASS_BUDGET:
-				return __( 'Budget breach', 'handl-ai-connector-access-control' );
+				return __( 'AI spending alert', 'handl-ai-connector-access-control' );
 			case self::CLASS_TAMPER:
-				return __( 'Tamper', 'handl-ai-connector-access-control' );
+				return __( 'Access control status changed', 'handl-ai-connector-access-control' );
 			case self::CLASS_POLICY:
 				return __( 'Policy change', 'handl-ai-connector-access-control' );
 			case self::CLASS_INCIDENT:
@@ -569,7 +569,7 @@ final class Chat_Notify {
 			case self::CLASS_SHADOW:
 				return __( 'Direct AI call', 'handl-ai-connector-access-control' );
 			case self::CLASS_CANARY:
-				return __( 'Canary', 'handl-ai-connector-access-control' );
+				return __( 'Trap AI API key used', 'handl-ai-connector-access-control' );
 			default:
 				return __( 'Alert', 'handl-ai-connector-access-control' );
 		}
