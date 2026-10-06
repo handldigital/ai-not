@@ -298,6 +298,92 @@ if ( ! function_exists( 'home_url' ) ) {
 	}
 }
 
+if ( ! function_exists( 'rest_url' ) ) {
+	/**
+	 * @param string $path Path.
+	 */
+	function rest_url( $path = '' ): string {
+		return 'https://example.test/wp-json/' . ltrim( (string) $path, '/' );
+	}
+}
+
+if ( ! function_exists( 'add_rewrite_rule' ) ) {
+	/**
+	 * @param string $regex Regex.
+	 * @param string $query Query.
+	 * @param string $after Position.
+	 */
+	function add_rewrite_rule( $regex, $query, $after = 'bottom' ): void {
+		if ( ! isset( $GLOBALS['handl_aicac_test_rewrite_rules'] ) || ! is_array( $GLOBALS['handl_aicac_test_rewrite_rules'] ) ) {
+			$GLOBALS['handl_aicac_test_rewrite_rules'] = array();
+		}
+		$GLOBALS['handl_aicac_test_rewrite_rules'][] = array(
+			'regex' => (string) $regex,
+			'query' => (string) $query,
+			'after' => (string) $after,
+		);
+	}
+}
+
+if ( ! function_exists( 'get_query_var' ) ) {
+	/**
+	 * @param string $var Query var.
+	 * @param mixed  $default Default.
+	 * @return mixed
+	 */
+	function get_query_var( $var, $default = '' ) {
+		$store = $GLOBALS['handl_aicac_test_query_vars'] ?? array();
+		if ( is_array( $store ) && array_key_exists( (string) $var, $store ) ) {
+			return $store[ (string) $var ];
+		}
+
+		return $default;
+	}
+}
+
+if ( ! function_exists( 'status_header' ) ) {
+	/**
+	 * @param int $code HTTP status.
+	 */
+	function status_header( $code ): void {
+		$GLOBALS['handl_aicac_test_status_header'] = (int) $code;
+	}
+}
+
+if ( ! function_exists( 'flush_rewrite_rules' ) ) {
+	/**
+	 * @param bool $hard Hard flush.
+	 */
+	function flush_rewrite_rules( $hard = true ): void {
+		$GLOBALS['handl_aicac_test_flush_rewrite'] = (bool) $hard;
+	}
+}
+
+if ( ! function_exists( 'register_rest_route' ) ) {
+	/**
+	 * @param string              $namespace Namespace.
+	 * @param string              $route     Route.
+	 * @param array<string,mixed> $args      Args.
+	 */
+	function register_rest_route( $namespace, $route, $args = array() ): bool {
+		if ( ! isset( $GLOBALS['handl_aicac_test_rest_routes'] ) || ! is_array( $GLOBALS['handl_aicac_test_rest_routes'] ) ) {
+			$GLOBALS['handl_aicac_test_rest_routes'] = array();
+		}
+		$GLOBALS['handl_aicac_test_rest_routes'][] = array(
+			'namespace' => (string) $namespace,
+			'route'     => (string) $route,
+			'args'      => $args,
+		);
+		return true;
+	}
+}
+
+if ( ! function_exists( '__return_true' ) ) {
+	function __return_true() {
+		return true;
+	}
+}
+
 if ( ! function_exists( 'admin_url' ) ) {
 	/**
 	 * @param string $path Path.
@@ -1069,6 +1155,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-share.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-adminbar.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-disclosure.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-ai-json.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-privacy-hooks.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-preflight-scan.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-chat-notify.php';

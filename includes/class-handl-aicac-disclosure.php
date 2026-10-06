@@ -26,11 +26,15 @@ final class Disclosure {
 
 	public const POLICY_DETAIL_KEY = 'disclosure_detail';
 
+	public const POLICY_JSON_KEY = 'disclosure_json';
+
 	public const POST_PRESENT = 'handl_aicac_disclosure_present';
 
 	public const POST_PRIVACY = 'handl_aicac_disclosure_privacy';
 
 	public const POST_DETAIL = 'handl_aicac_disclosure_detail';
+
+	public const POST_JSON = 'handl_aicac_disclosure_json';
 
 	public const HEADING = 'How this site uses AI';
 
@@ -54,7 +58,15 @@ final class Disclosure {
 
 	public const SETTINGS_DETAIL = 'Show request types for each AI service';
 
+	public const SETTINGS_JSON = 'Publish a machine-readable copy at /.well-known/ai.json';
+
 	public const SETTINGS_HELP = 'AI service names and request types come from the saved activity log. Turn this on to show request types beside each service.';
+
+	public const SETTINGS_JSON_HELP = 'Same facts as this disclosure, as JSON. Off by default.';
+
+	public const FOOTER_JSON = 'Machine-readable copy';
+
+	public const PLUGIN_PUBLIC_NAME = 'HandL AI Connector Access Control';
 
 	public const SHORTCODE_HINT = 'Or add the [handl_ai_disclosure] shortcode to any page.';
 
@@ -185,6 +197,15 @@ final class Disclosure {
 	}
 
 	/**
+	 * Default OFF when the policy key is absent.
+	 *
+	 * @param array<string,mixed> $policy
+	 */
+	public static function is_json_enabled( array $policy ): bool {
+		return ! empty( $policy[ self::POLICY_JSON_KEY ] );
+	}
+
+	/**
 	 * @param mixed $value New option value.
 	 * @param mixed $old   Previous option value.
 	 * @return mixed
@@ -198,6 +219,7 @@ final class Disclosure {
 		if ( $posted ) {
 			$value[ self::POLICY_PRIVACY_KEY ] = ! empty( $_POST[ self::POST_PRIVACY ] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$value[ self::POLICY_DETAIL_KEY ]  = ! empty( $_POST[ self::POST_DETAIL ] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$value[ self::POLICY_JSON_KEY ]    = ! empty( $_POST[ self::POST_JSON ] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 
 			return $value;
 		}
@@ -208,6 +230,9 @@ final class Disclosure {
 			}
 			if ( array_key_exists( self::POLICY_DETAIL_KEY, $old ) ) {
 				$value[ self::POLICY_DETAIL_KEY ] = ! empty( $old[ self::POLICY_DETAIL_KEY ] );
+			}
+			if ( array_key_exists( self::POLICY_JSON_KEY, $old ) ) {
+				$value[ self::POLICY_JSON_KEY ] = ! empty( $old[ self::POLICY_JSON_KEY ] );
 			}
 		}
 
@@ -221,6 +246,7 @@ final class Disclosure {
 		$policy  = is_array( $policy ) ? $policy : array();
 		$privacy = self::is_privacy_enabled( $policy );
 		$detail  = self::is_detail_enabled( $policy );
+		$json    = self::is_json_enabled( $policy );
 
 		echo '<tr>';
 		echo '<th scope="row">' . esc_html__( 'Public AI disclosure', 'handl-ai-connector-access-control' ) . '</th>';
@@ -235,7 +261,13 @@ final class Disclosure {
 		echo '<input type="checkbox" name="' . esc_attr( self::POST_DETAIL ) . '" id="handl-aicac-disclosure-detail" value="1"' . ( $detail ? ' checked="checked"' : '' ) . ' /> ';
 		echo esc_html__( 'Show request types for each AI service', 'handl-ai-connector-access-control' );
 		echo '</label>';
+		echo '<br />';
+		echo '<label for="handl-aicac-disclosure-json">';
+		echo '<input type="checkbox" name="' . esc_attr( self::POST_JSON ) . '" id="handl-aicac-disclosure-json" value="1"' . ( $json ? ' checked="checked"' : '' ) . ' /> ';
+		echo esc_html__( 'Publish a machine-readable copy at /.well-known/ai.json', 'handl-ai-connector-access-control' );
+		echo '</label>';
 		echo '<p class="description">' . esc_html__( 'AI service names and request types come from the saved activity log. Turn this on to show request types beside each service.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Same facts as this disclosure, as JSON. Off by default.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'Or add the [handl_ai_disclosure] shortcode to any page.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td>';
 		echo '</tr>';
@@ -336,7 +368,8 @@ final class Disclosure {
 	 *   families_text:string,
 	 *   footnote:string,
 	 *   providers:list<array{id:string,label:string,families:list<array{id:string,label:string}>}>,
-	 *   families:list<array{id:string,label:string}>
+	 *   families:list<array{id:string,label:string}>,
+	 *   json_enabled:bool
 	 * }
 	 */
 	public static function build_snapshot( array $policy, array $log, bool $freeze, bool $detail ): array {
@@ -428,7 +461,141 @@ final class Disclosure {
 			'footnote'       => self::FOOTNOTE,
 			'providers'      => $providers,
 			'families'       => $family_list,
+			'json_enabled'   => self::is_json_enabled( $policy ),
 		);
+	}
+
+	/**
+	 * Machine document mirroring the public page. No option writes.
+	 *
+	 * @param array<string,mixed> $policy
+	 * @param array<int,mixed>    $log
+	 * @return array{
+	 *   name:string,
+	 *   version:string,
+	 *   generated_at:string,
+	 *   mode:string,
+	 *   mode_label:string,
+	 *   providers:list<array{id:string,label:string,used_for?:list<string>}>,
+	 *   used_for:list<string>
+	 * }
+	 */
+	public static function build_machine_document( array $policy, array $log, bool $freeze ): array {
+		$detail = self::is_detail_enabled( $policy );
+		$snap   = self::build_snapshot( $policy, $log, $freeze, $detail );
+
+		$max = 0;
+		foreach ( $log as $row ) {
+			if ( ! is_array( $row ) || ! self::is_public_row( $row ) ) {
+				continue;
+			}
+			if ( '' === self::row_provider( $row ) ) {
+				continue;
+			}
+			$ts = isset( $row['ts'] ) ? (int) $row['ts'] : 0;
+			if ( $ts > $max ) {
+				$max = $ts;
+			}
+		}
+
+		$providers = array();
+		if ( isset( $snap['providers'] ) && is_array( $snap['providers'] ) ) {
+			foreach ( $snap['providers'] as $row ) {
+				if ( ! is_array( $row ) ) {
+					continue;
+				}
+				$id    = isset( $row['id'] ) ? (string) $row['id'] : '';
+				$label = isset( $row['label'] ) ? (string) $row['label'] : '';
+				if ( '' === $id || '' === $label ) {
+					continue;
+				}
+				$entry = array(
+					'id'    => $id,
+					'label' => $label,
+				);
+				if ( $detail ) {
+					$used = array();
+					if ( isset( $row['families'] ) && is_array( $row['families'] ) ) {
+						foreach ( $row['families'] as $fam ) {
+							if ( ! is_array( $fam ) ) {
+								continue;
+							}
+							$fl = isset( $fam['label'] ) ? (string) $fam['label'] : '';
+							if ( '' !== $fl ) {
+								$used[] = $fl;
+							}
+						}
+					}
+					$entry['used_for'] = $used;
+				}
+				$providers[] = $entry;
+			}
+		}
+
+		$used_for = array();
+		if ( isset( $snap['families'] ) && is_array( $snap['families'] ) ) {
+			foreach ( $snap['families'] as $fam ) {
+				if ( ! is_array( $fam ) ) {
+					continue;
+				}
+				$fl = isset( $fam['label'] ) ? (string) $fam['label'] : '';
+				if ( '' !== $fl ) {
+					$used_for[] = $fl;
+				}
+			}
+		}
+
+		$mode_label = ! empty( $snap['paused'] ) ? self::PAUSED : (string) ( $snap['mode_text'] ?? '' );
+
+		return array(
+			'name'         => self::PLUGIN_PUBLIC_NAME,
+			'version'      => defined( 'HANDL_AICAC_VERSION' ) ? (string) HANDL_AICAC_VERSION : '',
+			'generated_at' => $max > 0 ? gmdate( 'Y-m-d\TH:i:s\Z', $max ) : '',
+			'mode'         => (string) ( $snap['mode'] ?? 'gated' ),
+			'mode_label'   => $mode_label,
+			'providers'    => $providers,
+			'used_for'     => $used_for,
+		);
+	}
+
+	/**
+	 * @param array<string,mixed> $document
+	 */
+	public static function encode_machine_document( array $document ): string {
+		$flags = 0;
+		if ( defined( 'JSON_UNESCAPED_SLASHES' ) ) {
+			$flags |= JSON_UNESCAPED_SLASHES;
+		}
+		if ( defined( 'JSON_UNESCAPED_UNICODE' ) ) {
+			$flags |= JSON_UNESCAPED_UNICODE;
+		}
+		$json = function_exists( 'wp_json_encode' ) ? wp_json_encode( $document, $flags ) : json_encode( $document, $flags );
+		if ( ! is_string( $json ) || '' === $json ) {
+			return '{"name":"","version":"","generated_at":"","mode":"gated","mode_label":"","providers":[],"used_for":[]}';
+		}
+
+		return $json;
+	}
+
+	/**
+	 * Retained log for public JSON. Prunes in memory only — no option writes.
+	 *
+	 * @return array<int,mixed>
+	 */
+	public static function public_log_readonly(): array {
+		$log = function_exists( 'get_option' ) ? get_option( Plugin::LOG_OPTION_KEY, array() ) : array();
+		if ( ! is_array( $log ) ) {
+			return array();
+		}
+		if ( ! class_exists( Policy::class ) ) {
+			return $log;
+		}
+		$policy = Policy::get_policy();
+		if ( class_exists( Log_Retention::class ) && Log_Retention::should_defer_ttl_prune() ) {
+			$policy['log_max_age_days'] = null;
+		}
+
+		return Policy::apply_log_retention( $log, is_array( $policy ) ? $policy : array(), null );
 	}
 
 	/**
@@ -485,6 +652,10 @@ final class Disclosure {
 			}
 		}
 		$html .= '<p class="handl-aicac-disclosure__footnote">' . esc_html( (string) ( $snap['footnote'] ?? self::FOOTNOTE ) ) . '</p>';
+		if ( ! empty( $snap['json_enabled'] ) ) {
+			$url = class_exists( Ai_Json::class ) ? Ai_Json::public_url() : '/.well-known/ai.json';
+			$html .= '<p class="handl-aicac-disclosure__json"><a href="' . esc_url( $url ) . '">' . esc_html( self::FOOTER_JSON ) . '</a></p>';
+		}
 		$html .= '</section>';
 
 		return $html;

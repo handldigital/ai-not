@@ -65,6 +65,8 @@ final class DisclosureTest extends TestCase {
 		$this->assertFalse( Disclosure::is_privacy_enabled( array() ) );
 		$this->assertFalse( Disclosure::is_detail_enabled( array( Disclosure::POLICY_DETAIL_KEY => false ) ) );
 		$this->assertTrue( Disclosure::is_privacy_enabled( array( Disclosure::POLICY_PRIVACY_KEY => true ) ) );
+		$this->assertFalse( Disclosure::is_json_enabled( array() ) );
+		$this->assertTrue( Disclosure::is_json_enabled( array( Disclosure::POLICY_JSON_KEY => true ) ) );
 	}
 
 	/**
@@ -291,6 +293,7 @@ final class DisclosureTest extends TestCase {
 		$out = Disclosure::merge_on_policy_save( array( 'default' => 'allow' ), array() );
 		$this->assertTrue( $out[ Disclosure::POLICY_PRIVACY_KEY ] );
 		$this->assertFalse( $out[ Disclosure::POLICY_DETAIL_KEY ] );
+		$this->assertFalse( $out[ Disclosure::POLICY_JSON_KEY ] );
 	}
 
 	public function test_merge_policy_save_preserves_old_when_not_posted(): void {
@@ -300,10 +303,12 @@ final class DisclosureTest extends TestCase {
 			array(
 				Disclosure::POLICY_PRIVACY_KEY => true,
 				Disclosure::POLICY_DETAIL_KEY  => false,
+				Disclosure::POLICY_JSON_KEY    => true,
 			)
 		);
 		$this->assertTrue( $out[ Disclosure::POLICY_PRIVACY_KEY ] );
 		$this->assertFalse( $out[ Disclosure::POLICY_DETAIL_KEY ] );
+		$this->assertTrue( $out[ Disclosure::POLICY_JSON_KEY ] );
 	}
 
 	public function test_settings_render_uses_copy_constants(): void {
@@ -314,7 +319,10 @@ final class DisclosureTest extends TestCase {
 		$this->assertStringContainsString( Disclosure::SETTINGS_PRIVACY, $html );
 		$this->assertStringContainsString( Disclosure::SETTINGS_DETAIL, $html );
 		$this->assertStringContainsString( Disclosure::SETTINGS_HELP, $html );
+		$this->assertStringContainsString( Disclosure::SETTINGS_JSON, $html );
+		$this->assertStringContainsString( Disclosure::SETTINGS_JSON_HELP, $html );
 		$this->assertStringContainsString( Disclosure::POST_PRESENT, $html );
+		$this->assertStringContainsString( Disclosure::POST_JSON, $html );
 	}
 
 	private function esc( string $text ): string {
@@ -329,5 +337,73 @@ final class DisclosureTest extends TestCase {
 		$this->assertNotFalse( $disc );
 		$this->assertGreaterThan( $admin, $disc );
 		$this->assertNotFalse( strpos( $src, 'Disclosure::instance()->init()' ) );
+		$this->assertNotFalse( strpos( $src, "require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-ai-json.php'" ) );
+		$this->assertNotFalse( strpos( $src, 'Ai_Json::instance()->init()' ) );
+	}
+
+	public function test_machine_document_names_fixture_providers_and_is_byte_stable(): void {
+		$policy = array( Disclosure::POLICY_JSON_KEY => true );
+		$log    = $this->activeLog();
+		$before = $GLOBALS['handl_aicac_test_options'] ?? array();
+		$doc    = Disclosure::build_machine_document( $policy, $log, false );
+		$json   = Disclosure::encode_machine_document( $doc );
+		$again  = Disclosure::encode_machine_document( Disclosure::build_machine_document( $policy, $log, false ) );
+		$this->assertSame( $json, $again );
+		$this->assertSame( $before, $GLOBALS['handl_aicac_test_options'] ?? array() );
+		$this->assertSame( 'OpenAI', $doc['providers'][0]['label'] );
+		$this->assertSame( 'Anthropic', $doc['providers'][1]['label'] );
+		$this->assertSame( array( 'Text' ), $doc['providers'][0]['used_for'] );
+		$this->assertSame( array( 'Image' ), $doc['providers'][1]['used_for'] );
+		$this->assertSame( array( 'Text', 'Image' ), $doc['used_for'] );
+		$this->assertSame( 'gated', $doc['mode'] );
+		$this->assertSame( Disclosure::MODE_GATED, $doc['mode_label'] );
+		$this->assertSame( HANDL_AICAC_VERSION, $doc['version'] );
+		$this->assertSame( Disclosure::PLUGIN_PUBLIC_NAME, $doc['name'] );
+		$this->assertSame( '2023-11-14T22:15:00Z', $doc['generated_at'] );
+		$this->assertStringNotContainsString( 'acme/acme.php', $json );
+		$this->assertStringNotContainsString( 'vision/vision.php', $json );
+	}
+
+	public function test_machine_document_empty_is_well_formed(): void {
+		$doc = Disclosure::build_machine_document( array(), array(), false );
+		$this->assertSame( array(), $doc['providers'] );
+		$this->assertSame( array(), $doc['used_for'] );
+		$this->assertSame( '', $doc['generated_at'] );
+		$json = Disclosure::encode_machine_document( $doc );
+		$decoded = json_decode( $json, true );
+		$this->assertIsArray( $decoded );
+		$this->assertSame( $doc['name'], $decoded['name'] );
+	}
+
+	public function test_machine_document_omits_detail_and_redacts_leaks(): void {
+		$log = array(
+			array(
+				'ts'                => 1_700_000_000,
+				'provider'          => 'openai',
+				'capability_family' => 'text',
+				'plugin'            => 'secret/secret.php',
+				'user_email'        => 'ada@example.com',
+			),
+			array(
+				'ts'       => 1_700_000_050,
+				'provider' => 'sk-live-abcdef',
+			),
+		);
+		$doc = Disclosure::build_machine_document( array( Disclosure::POLICY_DETAIL_KEY => false ), $log, false );
+		$this->assertArrayNotHasKey( 'used_for', $doc['providers'][0] );
+		$json = Disclosure::encode_machine_document( $doc );
+		$this->assertStringContainsString( 'OpenAI', $json );
+		$this->assertStringContainsString( '"used_for":["Text"]', $json );
+		$this->assertStringNotContainsString( 'secret/secret.php', $json );
+		$this->assertStringNotContainsString( 'ada@example.com', $json );
+		$this->assertStringNotContainsString( 'sk-live', $json );
+	}
+
+	public function test_html_footer_links_json_only_when_enabled(): void {
+		$off = Disclosure::render_html( Disclosure::build_snapshot( array(), $this->activeLog(), false, true ) );
+		$this->assertStringNotContainsString( Disclosure::FOOTER_JSON, $off );
+		$on = Disclosure::render_html( Disclosure::build_snapshot( array( Disclosure::POLICY_JSON_KEY => true ), $this->activeLog(), false, true ) );
+		$this->assertStringContainsString( Disclosure::FOOTER_JSON, $on );
+		$this->assertStringContainsString( '/.well-known/ai.json', $on );
 	}
 }
