@@ -109,6 +109,8 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-adminbar.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-disclosure.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-privacy-hooks.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-preflight-scan.php';
 
 		Policy::instance()->init();
 		Break_Glass::init();
@@ -131,6 +133,7 @@ final class Plugin {
 		Mcp_Gate::instance()->init();
 		Canary::instance()->init();
 		Keyscan::instance()->init();
+		Preflight_Scan::instance()->init();
 		Admin::instance()->init();
 		Whats_New::instance()->init();
 		Network_Admin::instance()->init();
