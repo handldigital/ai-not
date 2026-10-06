@@ -172,6 +172,7 @@ final class Plugin {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-residency.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rate-cap.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rescan.php';
+			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-threat-feed.php';
 			CLI::register();
 			CLI_Audit::register();
 			CLI_Policy_Apply::register();
@@ -184,6 +185,7 @@ final class Plugin {
 			CLI_Residency::register();
 			CLI_Rate_Cap::register();
 			CLI_Rescan::register();
+			CLI_Threat_Feed::register();
 		}
 	}
 

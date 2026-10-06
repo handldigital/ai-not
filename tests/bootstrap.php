@@ -1164,4 +1164,5 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-demo-mode.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-why.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rescan-schedule.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rescan.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-threat-feed.php';
 require_once __DIR__ . '/stubs/namespace-filter-input.php';
