@@ -200,6 +200,7 @@ Yes. With WP-CLI available and this plugin active:
 * Demo Mode: Preview with sample data adds labeled Activity rows you can remove in one click. Sample rows never change rules and are left out of alerts, exports, and digests.
 * Chat reports: optional Slack / Teams cards for the weekly report, monthly audit, and governance digest. Compact numbers plus a link to the full screen; a chat failure does not stop the email.
 * Optional machine-readable AI disclosure at /.well-known/ai.json (and a REST copy for sites without pretty permalinks). Same facts as the public disclosure page. Off by default.
+* Quick setup ends with an optional scan of installed plugins and themes for known AI endpoints. Skip or a read error still finishes setup. Results stay on Policy Tools.
 
 = 1.7.0 =
 * Optional retry-storm detector collapses rapid deny loops from the same plugin into one Activity row and one hourly alert (`wp handl-aicac retry-storm`). On by default at a 30-second window and threshold of 5; turn off to restore per-deny rows and emails.

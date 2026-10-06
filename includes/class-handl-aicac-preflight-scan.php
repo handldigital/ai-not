@@ -856,7 +856,6 @@ final class Preflight_Scan {
 	 */
 	public static function render_policy_tools_section(): void {
 		$run  = self::last_run();
-		$hits = isset( $run['hits'] ) && is_array( $run['hits'] ) ? $run['hits'] : array();
 		$done = self::has_last_run();
 
 		echo '<p class="description">' . esc_html__( 'Reads installed plugin and theme files for known AI endpoints. This scan does not change rules and does not confirm that data was sent.', 'handl-ai-connector-access-control' ) . '</p>';
@@ -874,8 +873,19 @@ final class Preflight_Scan {
 			return;
 		}
 
+		self::render_scan_all_results( $run );
+	}
+
+	/**
+	 * Results table / empty state from a stored scan_all summary.
+	 *
+	 * @param array<string,mixed> $run last_run payload.
+	 */
+	public static function render_scan_all_results( array $run ): void {
+		$hits = isset( $run['hits'] ) && is_array( $run['hits'] ) ? $run['hits'] : array();
 		if ( empty( $hits ) ) {
 			echo '<p>' . esc_html__( 'No AI provider references to show.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'This scan does not change rules and does not confirm that data was sent.', 'handl-ai-connector-access-control' ) . '</p>';
 			return;
 		}
 
