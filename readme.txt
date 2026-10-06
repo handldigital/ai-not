@@ -197,7 +197,7 @@ Yes. With WP-CLI available and this plugin active:
 * Rules due for review: confirm all due plugins, postpone selected for 7 days, or select several at once. New-plugin notices include a Review all link, and Rules can filter to Pending review.
 * Insights cost receipt: estimated AI spend per plugin for this month and last month from the bundled price table (or your rate overrides), plus a Dashboard tile and weekly digest line. Unknown rates show n/a — estimates only, not a bill.
 * Admin bar badge: today's blocked AI calls, red during a retry storm or panic freeze. Off-switch on Protections.
-* Demo Mode: Preview with sample data seeds labeled Activity rows you can remove in one click. Sample rows never change rules and are left out of alerts, exports, and digests.
+* Demo Mode: Preview with sample data adds labeled Activity rows you can remove in one click. Sample rows never change rules and are left out of alerts, exports, and digests.
 
 = 1.7.0 =
 * Optional retry-storm detector collapses rapid deny loops from the same plugin into one Activity row and one hourly alert (`wp handl-aicac retry-storm`). On by default at a 30-second window and threshold of 5; turn off to restore per-deny rows and emails.
