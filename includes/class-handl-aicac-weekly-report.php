@@ -170,6 +170,9 @@ final class Weekly_Report {
 			if ( ! is_array( $row ) ) {
 				continue;
 			}
+			if ( class_exists( Demo_Mode::class ) && Demo_Mode::skip_emitters( $row ) ) {
+				continue;
+			}
 			$is_direct = isset( $row['channel'] ) && 'direct_http' === (string) $row['channel'];
 			if ( ! $is_direct && 'deny' === (string) ( $row['decision'] ?? '' ) ) {
 				++$deny_n;

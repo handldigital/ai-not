@@ -1938,10 +1938,11 @@ final class Policy {
 
 		// AICAC-SIEM: export at funnel entry (independent of activity-log retention).
 		$is_selftest_early = class_exists( Selftest::class ) && Selftest::is_synthetic_row( $event );
-		if ( ! $is_selftest_early && class_exists( Siem::class ) && Siem::is_enabled( $policy ) ) {
+		$is_demo_early     = class_exists( Demo_Mode::class ) && Demo_Mode::skip_emitters( $event );
+		if ( ! $is_selftest_early && ! $is_demo_early && class_exists( Siem::class ) && Siem::is_enabled( $policy ) ) {
 			Siem::observe( $event, $policy );
 		}
-		if ( ! $is_selftest_early && class_exists( Chat_Notify::class ) ) {
+		if ( ! $is_selftest_early && ! $is_demo_early && class_exists( Chat_Notify::class ) ) {
 			Chat_Notify::observe( $event, $policy );
 		}
 

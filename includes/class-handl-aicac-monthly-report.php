@@ -374,6 +374,9 @@ final class Monthly_Report {
 			if ( ! is_array( $row ) ) {
 				continue;
 			}
+			if ( class_exists( Demo_Mode::class ) && Demo_Mode::skip_emitters( $row ) ) {
+				continue;
+			}
 			$channel = isset( $row['channel'] ) ? (string) $row['channel'] : '';
 			if ( 'direct_http' === $channel
 				|| 'spend_threshold' === $channel
