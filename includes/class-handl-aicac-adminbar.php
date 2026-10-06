@@ -355,6 +355,9 @@ final class Adminbar {
 		if ( class_exists( Selftest::class ) && Selftest::is_synthetic_row( $row ) ) {
 			return false;
 		}
+		if ( class_exists( Demo_Mode::class ) && Demo_Mode::skip_emitters( $row ) ) {
+			return false;
+		}
 		if ( ! empty( $row['share_action'] ) ) {
 			return false;
 		}

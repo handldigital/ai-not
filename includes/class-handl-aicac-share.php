@@ -665,6 +665,9 @@ final class Share {
 		if ( class_exists( Selftest::class ) && Selftest::is_synthetic_row( $row ) ) {
 			return false;
 		}
+		if ( class_exists( Demo_Mode::class ) && Demo_Mode::skip_emitters( $row ) ) {
+			return false;
+		}
 		$channel = isset( $row['channel'] ) ? (string) $row['channel'] : '';
 		if ( in_array( $channel, self::administrative_channels(), true ) || ! empty( $row['share_action'] ) ) {
 			return false;

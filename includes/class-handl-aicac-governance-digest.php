@@ -142,6 +142,9 @@ final class Governance_Digest {
 		}
 
 		$log   = Policy::get_retained_log( $now );
+		if ( class_exists( Demo_Mode::class ) ) {
+			$log = Demo_Mode::without_demo( $log );
+		}
 		$stats = self::build_stats( $policy, $log, $plugins, $now );
 
 		if ( empty( $stats['has_activity'] ) && ! self::always_send( $policy ) ) {

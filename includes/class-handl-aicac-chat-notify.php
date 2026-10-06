@@ -297,6 +297,9 @@ final class Chat_Notify {
 	 */
 	public static function observe( array $event, array $policy ): void {
 		try {
+			if ( class_exists( Demo_Mode::class ) && Demo_Mode::skip_emitters( $event ) ) {
+				return;
+			}
 			$class = self::classify( $event );
 			if ( null === $class || self::CLASS_TEST === $class ) {
 				return;
