@@ -64,6 +64,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 		'save',
 		'save_auditor_roles',
 		'save_review_due_window',
+		'scan_all',
 		'send_denial_digest',
 		'send_test_email',
 		'send_test_webhook',
@@ -264,6 +265,10 @@ final class AdminAuthzCoverageTest extends TestCase {
 			array(
 				'action'       => 'keyscan_run',
 				'nonce_action' => 'handl_aicac_keyscan_run',
+			),
+			array(
+				'action'       => 'scan_all',
+				'nonce_action' => 'handl_aicac_scan_all',
 			),
 			array(
 				'action'       => 'freeze_start',
@@ -552,6 +557,7 @@ final class AdminAuthzCoverageTest extends TestCase {
 				'handle_compare_rules_preview',
 				'handle_compare_latest_backup',
 				'handle_keyscan_run',
+				'handle_scan_all',
 				'handle_freeze_start',
 				'handle_freeze_end',
 				'handle_freeze_extend',

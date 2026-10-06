@@ -820,6 +820,10 @@ final class Admin {
 				check_admin_referer( 'handl_aicac_keyscan_run', 'handl_aicac_nonce' );
 				$this->handle_keyscan_run();
 			}
+			if ( 'scan_all' === $posted_action ) {
+				check_admin_referer( 'handl_aicac_scan_all', 'handl_aicac_nonce' );
+				$this->handle_scan_all();
+			}
 			if ( 'freeze_start' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_freeze_start', 'handl_aicac_nonce' );
 				$this->handle_freeze_start();
@@ -1988,6 +1992,13 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<input type="hidden" name="handl_aicac_tab" value="policy-tools" />';
 		$this->render_policy_simulator_panel( $policy, $plugins, $log, $sim_form_id );
 		echo '</form>';
+
+		$scan_open = class_exists( Preflight_Scan::class ) && Preflight_Scan::has_last_run();
+		$this->disclosure_open( __( 'Scan installed plugins and themes', 'handl-ai-connector-access-control' ), $scan_open, 'handl-aicac-tools-scan-all' );
+		if ( class_exists( Preflight_Scan::class ) ) {
+			Preflight_Scan::render_policy_tools_section();
+		}
+		$this->disclosure_close();
 
 		// #248: the remaining tools are secondary disclosures. Each one opens
 		// automatically while it is showing a preview, confirmation, or result
@@ -10108,6 +10119,24 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		submit_button( $btn, 'secondary', 'submit', false );
 		echo '</form>';
 		echo '</div></div>';
+	}
+
+	/**
+	 * AICAC-SCAN-ALL (#305): on-demand preflight of every installed plugin and theme.
+	 */
+	private function handle_scan_all(): void {
+		$this->require_admin_mutation( 'handl_aicac_scan_all' );
+		Preflight_Scan::scan_all();
+		wp_safe_redirect(
+			self::redirect_url(
+				array(
+					'page'                 => 'handl-ai-connector-access-control',
+					'handl_aicac_tab'      => 'policy-tools',
+					'handl_aicac_scan_all' => '1',
+				)
+			)
+		);
+		exit;
 	}
 
 	/**

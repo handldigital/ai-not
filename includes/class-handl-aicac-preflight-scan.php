@@ -27,6 +27,11 @@ final class Preflight_Scan {
 
 	public const ACTION_DISMISS = 'handl_aicac_preflight_dismiss';
 
+	public const ACTION_SCAN_ALL = 'handl_aicac_scan_all';
+
+	/** Plugins/themes processed per inner batch of scan_all(). */
+	public const SCAN_ALL_BATCH = 25;
+
 	/** Max bytes read per file. */
 	public const MAX_FILE_BYTES = 262144;
 
@@ -393,7 +398,7 @@ final class Preflight_Scan {
 	/**
 	 * Stored scan state.
 	 *
-	 * @return array{items:array<string,array<string,array<string,mixed>>>,notices:array<string,array<string,mixed>>}
+	 * @return array{items:array<string,array<string,array<string,mixed>>>,notices:array<string,array<string,mixed>>,last_run:array<string,mixed>}
 	 */
 	public static function get_state(): array {
 		$raw = get_option( self::OPTION_KEY );
@@ -404,11 +409,13 @@ final class Preflight_Scan {
 		if ( empty( $items ) && isset( $raw['plugins'] ) && is_array( $raw['plugins'] ) ) {
 			$items = array( 'plugin' => $raw['plugins'] );
 		}
-		$notices = isset( $raw['notices'] ) && is_array( $raw['notices'] ) ? $raw['notices'] : array();
+		$notices  = isset( $raw['notices'] ) && is_array( $raw['notices'] ) ? $raw['notices'] : array();
+		$last_run = isset( $raw['last_run'] ) && is_array( $raw['last_run'] ) ? $raw['last_run'] : array();
 
 		return array(
-			'items'   => $items,
-			'notices' => $notices,
+			'items'    => $items,
+			'notices'  => $notices,
+			'last_run' => $last_run,
 		);
 	}
 
@@ -419,8 +426,9 @@ final class Preflight_Scan {
 		update_option(
 			self::OPTION_KEY,
 			array(
-				'items'   => isset( $state['items'] ) && is_array( $state['items'] ) ? $state['items'] : array(),
-				'notices' => isset( $state['notices'] ) && is_array( $state['notices'] ) ? $state['notices'] : array(),
+				'items'    => isset( $state['items'] ) && is_array( $state['items'] ) ? $state['items'] : array(),
+				'notices'  => isset( $state['notices'] ) && is_array( $state['notices'] ) ? $state['notices'] : array(),
+				'last_run' => isset( $state['last_run'] ) && is_array( $state['last_run'] ) ? $state['last_run'] : array(),
 			),
 			false
 		);
@@ -559,10 +567,29 @@ final class Preflight_Scan {
 	}
 
 	public static function dismiss_notice( string $kind, string $id ): void {
-		$state = self::get_state();
-		$key   = $kind . ':' . $id;
+		$state   = self::get_state();
+		$key     = $kind . ':' . $id;
+		$changed = false;
 		if ( isset( $state['notices'][ $key ] ) ) {
 			unset( $state['notices'][ $key ] );
+			$changed = true;
+		}
+		if ( isset( $state['last_run']['hits'] ) && is_array( $state['last_run']['hits'] ) ) {
+			$kept = array();
+			foreach ( $state['last_run']['hits'] as $row ) {
+				if ( ! is_array( $row ) ) {
+					continue;
+				}
+				if ( (string) ( $row['kind'] ?? '' ) === $kind && (string) ( $row['id'] ?? '' ) === $id ) {
+					$changed = true;
+					continue;
+				}
+				$kept[] = $row;
+			}
+			$state['last_run']['hits']      = $kept;
+			$state['last_run']['hit_count'] = count( $kept );
+		}
+		if ( $changed ) {
 			self::save_state( $state );
 		}
 	}
@@ -681,6 +708,223 @@ final class Preflight_Scan {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- debug-only quiet pass.
 			error_log( 'HandL AICAC preflight: ' . $id . ' had no known AI endpoints.' );
 		}
+	}
+
+	/**
+	 * Installed plugins and themes to scan. Self is skipped.
+	 *
+	 * @return list<array{kind:string,id:string,dir:string}>
+	 */
+	public static function inventory(): array {
+		$out = array();
+		if ( function_exists( 'get_plugins' ) ) {
+			$plugins = get_plugins();
+			if ( is_array( $plugins ) ) {
+				foreach ( $plugins as $basename => $_data ) {
+					$basename = Plugin_Profile::sanitize_plugin( (string) $basename );
+					if ( '' === $basename || self::is_self( $basename ) ) {
+						continue;
+					}
+					$out[] = array(
+						'kind' => 'plugin',
+						'id'   => $basename,
+						'dir'  => self::plugin_dir( $basename ),
+					);
+				}
+			}
+		}
+		if ( function_exists( 'wp_get_themes' ) ) {
+			$themes = wp_get_themes();
+			if ( is_array( $themes ) ) {
+				foreach ( $themes as $stylesheet => $theme ) {
+					$slug = sanitize_key( (string) $stylesheet );
+					if ( is_object( $theme ) && method_exists( $theme, 'get_stylesheet' ) ) {
+						$from_obj = sanitize_key( (string) $theme->get_stylesheet() );
+						if ( '' !== $from_obj ) {
+							$slug = $from_obj;
+						}
+					}
+					if ( '' === $slug ) {
+						continue;
+					}
+					$out[] = array(
+						'kind' => 'theme',
+						'id'   => $slug,
+						'dir'  => self::theme_dir( $slug ),
+					);
+				}
+			}
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Scan every installed plugin and theme. Read-only: never writes rules.
+	 * One aggregate Activity row. No admin notices, no mail.
+	 *
+	 * @return array{ts:int,scanned:int,hit_count:int,hits:list<array<string,mixed>>,batch_count:int,batch_size:int}
+	 */
+	public static function scan_all(): array {
+		$targets    = self::inventory();
+		$batch_size = self::SCAN_ALL_BATCH;
+		$batches    = 0;
+		$scanned    = 0;
+		$hits       = array();
+		$state      = self::get_state();
+		if ( ! isset( $state['items'] ) || ! is_array( $state['items'] ) ) {
+			$state['items'] = array();
+		}
+
+		$chunks = array_chunk( $targets, max( 1, $batch_size ) );
+		foreach ( $chunks as $chunk ) {
+			++$batches;
+			foreach ( $chunk as $target ) {
+				++$scanned;
+				$kind = (string) $target['kind'];
+				$id   = (string) $target['id'];
+				$hit  = self::scan_directory( (string) $target['dir'] );
+				$entry = array(
+					'kind'       => $kind,
+					'id'         => $id,
+					'providers'  => $hit['providers'],
+					'file_count' => (int) $hit['file_count'],
+					'files'      => array_slice( $hit['files'], 0, 20 ),
+					'scanned_at' => time(),
+					'action'     => 'scan_all',
+				);
+				if ( ! isset( $state['items'][ $kind ] ) || ! is_array( $state['items'][ $kind ] ) ) {
+					$state['items'][ $kind ] = array();
+				}
+				$state['items'][ $kind ][ $id ] = $entry;
+				if ( empty( $hit['providers'] ) ) {
+					continue;
+				}
+				$hits[] = array(
+					'kind'       => $kind,
+					'id'         => $id,
+					'label'      => self::item_label( $kind, $id ),
+					'providers'  => $hit['providers'],
+					'file_count' => (int) $hit['file_count'],
+				);
+			}
+		}
+
+		if ( 0 === $batches && empty( $targets ) ) {
+			$batches = 0;
+		}
+
+		$run = array(
+			'ts'          => time(),
+			'scanned'     => $scanned,
+			'hit_count'   => count( $hits ),
+			'hits'        => $hits,
+			'batch_count' => $batches,
+			'batch_size'  => $batch_size,
+		);
+		$state['last_run'] = $run;
+		self::save_state( $state );
+		self::log_scan_all_activity( $run );
+
+		return $run;
+	}
+
+	/**
+	 * @return array<string,mixed>
+	 */
+	public static function last_run(): array {
+		$state = self::get_state();
+
+		return isset( $state['last_run'] ) && is_array( $state['last_run'] ) ? $state['last_run'] : array();
+	}
+
+	public static function has_last_run(): bool {
+		$run = self::last_run();
+
+		return isset( $run['ts'] ) && (int) $run['ts'] > 0;
+	}
+
+	/**
+	 * Policy Tools body: button, summary table, empty state.
+	 */
+	public static function render_policy_tools_section(): void {
+		$run  = self::last_run();
+		$hits = isset( $run['hits'] ) && is_array( $run['hits'] ) ? $run['hits'] : array();
+		$done = self::has_last_run();
+
+		echo '<p class="description">' . esc_html__( 'Reads installed plugin and theme files for known AI endpoints. This scan does not change rules and does not confirm that data was sent.', 'handl-ai-connector-access-control' ) . '</p>';
+
+		if ( Caps::user_can_manage() ) {
+			echo '<form method="post" style="margin:0 0 1em;">';
+			wp_nonce_field( self::ACTION_SCAN_ALL, 'handl_aicac_nonce' );
+			echo '<input type="hidden" name="handl_aicac_action" value="scan_all" />';
+			echo '<input type="hidden" name="handl_aicac_tab" value="policy-tools" />';
+			submit_button( __( 'Scan all installed plugins and themes', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+			echo '</form>';
+		}
+
+		if ( ! $done ) {
+			return;
+		}
+
+		if ( empty( $hits ) ) {
+			echo '<p>' . esc_html__( 'No AI provider references found.', 'handl-ai-connector-access-control' ) . '</p>';
+			return;
+		}
+
+		echo '<table class="widefat striped" id="handl-aicac-scan-all-results">';
+		echo '<thead><tr>';
+		echo '<th scope="col">' . esc_html__( 'Plugin or theme', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Providers', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Files', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Actions', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '</tr></thead><tbody>';
+		foreach ( $hits as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$kind      = isset( $row['kind'] ) ? (string) $row['kind'] : 'plugin';
+			$id        = isset( $row['id'] ) ? (string) $row['id'] : '';
+			$label     = isset( $row['label'] ) && '' !== (string) $row['label'] ? (string) $row['label'] : $id;
+			$providers = isset( $row['providers'] ) && is_array( $row['providers'] ) ? array_map( 'strval', $row['providers'] ) : array();
+			$files     = isset( $row['file_count'] ) ? (int) $row['file_count'] : 0;
+			echo '<tr>';
+			echo '<td>' . esc_html( $label ) . '<br /><code>' . esc_html( $id ) . '</code></td>';
+			echo '<td>' . esc_html( self::provider_labels( $providers ) ) . '</td>';
+			echo '<td>' . esc_html( (string) $files ) . '</td>';
+			echo '<td>';
+			if ( 'plugin' === $kind && '' !== $id ) {
+				echo '<a href="' . esc_url( self::starter_url( $id ) ) . '">' . esc_html__( 'Add a Deny rule', 'handl-ai-connector-access-control' ) . '</a> ';
+				echo '<a href="' . esc_url( Plugin_Profile::rules_url( $id ) ) . '">' . esc_html__( 'Review rules', 'handl-ai-connector-access-control' ) . '</a> ';
+			}
+			echo '<a href="' . esc_url( self::dismiss_url( $kind, $id ) ) . '">' . esc_html__( 'Dismiss', 'handl-ai-connector-access-control' ) . '</a>';
+			echo '</td>';
+			echo '</tr>';
+		}
+		echo '</tbody></table>';
+	}
+
+	/**
+	 * @param array<string,mixed> $run
+	 */
+	private static function log_scan_all_activity( array $run ): void {
+		if ( ! class_exists( Policy::class ) ) {
+			return;
+		}
+		Policy::append_log_event(
+			array(
+				'channel'       => self::CHANNEL,
+				'ts'            => isset( $run['ts'] ) ? (int) $run['ts'] : time(),
+				'plugin'        => '',
+				'decision'      => 'observe',
+				'denial_reason' => 'scan_all',
+				'operation'     => 'scan_all',
+				'hit_count'     => isset( $run['hit_count'] ) ? (int) $run['hit_count'] : 0,
+				'scanned'       => isset( $run['scanned'] ) ? (int) $run['scanned'] : 0,
+				'batch_count'   => isset( $run['batch_count'] ) ? (int) $run['batch_count'] : 0,
+				'user_id'       => function_exists( 'get_current_user_id' ) ? get_current_user_id() : 0,
+			)
+		);
 	}
 
 	private static function is_self( string $basename ): bool {
