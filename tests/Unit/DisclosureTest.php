@@ -101,7 +101,10 @@ final class DisclosureTest extends TestCase {
 		$this->assertStringContainsString( 'Image', $snap['families_text'] );
 
 		$html = Disclosure::render_html( $snap );
-		$this->assertStringContainsString( Disclosure::HEADING, $html );
+		$this->assertStringContainsString( 'How this site uses AI', $html );
+		$this->assertStringContainsString( 'This site checks AI calls before they run.', $html );
+		$this->assertStringContainsString( 'AI companies used:', $html );
+		$this->assertStringContainsString( 'Used for:', $html );
 		$this->assertStringContainsString( 'OpenAI: Text', $html );
 		$this->assertStringContainsString( 'Anthropic: Image', $html );
 		$this->assertStringNotContainsString( 'acme/acme.php', $html );

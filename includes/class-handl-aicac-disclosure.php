@@ -32,9 +32,9 @@ final class Disclosure {
 
 	public const POST_DETAIL = 'handl_aicac_disclosure_detail';
 
-	public const HEADING = 'AI activity on this site';
+	public const HEADING = 'How this site uses AI';
 
-	public const MODE_GATED = 'This site\'s AI access control checks the requests it handles before they run.';
+	public const MODE_GATED = 'This site checks AI calls before they run.';
 
 	public const MODE_OBSERVE = 'This site\'s AI access control is set to watch requests without blocking them.';
 
@@ -42,9 +42,9 @@ final class Disclosure {
 
 	public const EMPTY = 'No AI activity is available to show in this disclosure.';
 
-	public const PROVIDERS_PREFIX = 'AI services in the activity log: ';
+	public const PROVIDERS_PREFIX = 'AI companies used: ';
 
-	public const FAMILIES_PREFIX = 'Request types: ';
+	public const FAMILIES_PREFIX = 'Used for: ';
 
 	public const FOOTNOTE = 'Based on this site\'s AI access settings and saved activity log. Entries may include blocked requests and checks for available AI features. This is not a complete history of AI use.';
 
