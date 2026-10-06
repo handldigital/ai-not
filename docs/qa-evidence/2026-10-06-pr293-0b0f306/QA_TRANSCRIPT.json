@@ -1,0 +1,82 @@
+{
+    "sha": "0b0f3061078a12e39934544959bc1bef91a6bee5",
+    "class": "HandL\\AICAC\\Incident",
+    "checks": {
+        "empty_log": {
+            "incidents": 0,
+            "pass": true
+        },
+        "combined_incident": {
+            "incident_count": 1,
+            "event_count": 5,
+            "reasons": [
+                "freeze_started",
+                "policy_save",
+                "retry_storm"
+            ],
+            "plugins": [
+                "acme/acme.php"
+            ],
+            "unrelated_excluded": true,
+            "pass": true
+        },
+        "export": {
+            "json_has_retry_storm": true,
+            "json_has_freeze": true,
+            "json_has_policy": true,
+            "text_has_retry_storm": true,
+            "text_has_freeze": true,
+            "text_has_policy": true,
+            "json_event_count": 5,
+            "pass": true
+        }
+    },
+    "sample_text": "Incident inc_ae25c3f711c7\nStarted: 2023-11-14T22:13:20Z\nEnded: 2023-11-14T22:15:50Z\nPlugins: acme/acme.php\nDetection: Panic freeze started; Policy saved or restored; Retry storm\n\nTimeline:\n2023-11-14T22:13:20Z Allow acme/acme.php\n2023-11-14T22:13:50Z Retry storm acme/acme.php\n2023-11-14T22:14:50Z Panic freeze started\n2023-11-14T22:15:20Z Policy saved or restored\n2023-11-14T22:15:50Z Deny acme/acme.php\n",
+    "sample_json": {
+        "id": "inc_ae25c3f711c7",
+        "started_ts": 1700000000,
+        "ended_ts": 1700000150,
+        "plugins": [
+            "acme/acme.php"
+        ],
+        "reasons": [
+            "freeze_started",
+            "policy_save",
+            "retry_storm"
+        ],
+        "events": [
+            {
+                "ts": 1700000000,
+                "plugin": "acme/acme.php",
+                "decision": "allow",
+                "event_type": "allow"
+            },
+            {
+                "ts": 1700000030,
+                "plugin": "acme/acme.php",
+                "decision": "deny",
+                "retry_storm": true,
+                "event_type": "retry_storm"
+            },
+            {
+                "ts": 1700000090,
+                "decision": "freeze_started",
+                "channel": "freeze",
+                "event_type": "freeze_started"
+            },
+            {
+                "ts": 1700000120,
+                "decision": "policy_restored",
+                "channel": "policy_restore",
+                "event_type": "policy_save"
+            },
+            {
+                "ts": 1700000150,
+                "plugin": "acme/acme.php",
+                "decision": "deny",
+                "event_type": "deny"
+            }
+        ]
+    },
+    "all_pass": true
+}
