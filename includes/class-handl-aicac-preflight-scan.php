@@ -868,7 +868,7 @@ final class Preflight_Scan {
 		}
 
 		if ( empty( $hits ) ) {
-			echo '<p>' . esc_html__( 'No AI provider references found.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p>' . esc_html__( 'No AI provider references to show.', 'handl-ai-connector-access-control' ) . '</p>';
 			return;
 		}
 

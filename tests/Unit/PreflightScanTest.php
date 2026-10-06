@@ -420,7 +420,9 @@ final class PreflightScanTest extends TestCase {
 		ob_start();
 		Preflight_Scan::render_policy_tools_section();
 		$html = (string) ob_get_clean();
-		$this->assertStringContainsString( 'No AI provider references found.', $html );
+		$this->assertStringContainsString( 'No AI provider references to show.', $html );
+		$cli = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php' );
+		$this->assertStringContainsString( 'No AI provider references found.', $cli );
 		$this->assertStringNotContainsString( 'handl-aicac-scan-all-results', $html );
 	}
 
