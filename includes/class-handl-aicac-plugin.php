@@ -108,6 +108,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-adminbar.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-disclosure.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-privacy-hooks.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-preflight-scan.php';
 
 		Policy::instance()->init();
