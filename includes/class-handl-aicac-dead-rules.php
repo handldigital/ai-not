@@ -526,7 +526,7 @@ final class Dead_Rules {
 		if ( $flagged && $days > 0 ) {
 			$label = sprintf(
 				/* translators: %d: unused window in days */
-				__( 'No matches in %dd', 'handl-ai-connector-access-control' ),
+				__( 'No recorded matches in %d days', 'handl-ai-connector-access-control' ),
 				$days
 			);
 		}
@@ -591,11 +591,11 @@ final class Dead_Rules {
 				'changes' => array(
 					sprintf(
 						/* translators: %s: plugin basename */
-						__( 'Retired unused Allow (%s)', 'handl-ai-connector-access-control' ),
+						__( 'Removed Allow rule (%s)', 'handl-ai-connector-access-control' ),
 						$basename
 					),
 				),
-				'summary' => sprintf( 'Retired unused Allow (%s)', $basename ),
+				'summary' => sprintf( 'Removed Allow rule (%s)', $basename ),
 			)
 		);
 
@@ -613,6 +613,28 @@ final class Dead_Rules {
 	 */
 	public static function undo_retire(): array {
 		return Policy_Snapshots::restore_latest();
+	}
+
+	/**
+	 * Empty-list CLI notice. days=0 must not look like an all-clear.
+	 */
+	public static function cmd_list_empty_notice( int $days ): string {
+		if ( $days <= 0 ) {
+			return __( 'Unused-rule checks are off.', 'handl-ai-connector-access-control' );
+		}
+
+		return __( 'No Allow rules flagged for review.', 'handl-ai-connector-access-control' );
+	}
+
+	/**
+	 * Display value for last_matched in CLI rows.
+	 */
+	public static function cmd_list_last_matched_label( int $ts ): string {
+		if ( $ts > 0 ) {
+			return (string) $ts;
+		}
+
+		return __( 'not recorded', 'handl-ai-connector-access-control' );
 	}
 
 	/**
@@ -645,13 +667,27 @@ final class Dead_Rules {
 		}
 
 		$snap = self::snapshot( Policy::get_policy() );
+		if ( (int) $snap['days'] <= 0 ) {
+			\WP_CLI::log( self::cmd_list_empty_notice( (int) $snap['days'] ) );
+			if ( 'json' === $format ) {
+				\WP_CLI::print_value(
+					array(
+						'days'    => $snap['days'],
+						'flagged' => 0,
+						'total'   => $snap['total'],
+						'rows'    => array(),
+					),
+					array( 'format' => 'json' )
+				);
+			}
+			return;
+		}
+
 		$rows = array();
 		foreach ( $snap['rows'] as $row ) {
 			$rows[] = array(
 				'plugin'       => (string) $row['basename'],
-				'last_matched' => (int) $row['last_matched'] > 0
-					? (string) (int) $row['last_matched']
-					: 'never',
+				'last_matched' => self::cmd_list_last_matched_label( (int) $row['last_matched'] ),
 				'allow_since'  => (string) (int) $row['allow_since'],
 				'age_days'     => (string) (int) $row['age_days'],
 			);
@@ -671,7 +707,7 @@ final class Dead_Rules {
 		}
 
 		if ( empty( $rows ) ) {
-			\WP_CLI::log( sprintf( 'No Allow rules unused for %d days.', (int) $snap['days'] ) );
+			\WP_CLI::log( self::cmd_list_empty_notice( (int) $snap['days'] ) );
 			return;
 		}
 

@@ -302,7 +302,34 @@ final class DeadRulesTest extends TestCase {
 		Dead_Rules::put_allow_since( array( 'a/a.php' => $now - ( 90 * DAY_IN_SECONDS ) ) );
 		$status = Dead_Rules::status_for( 'a/a.php', $policy, $now );
 		$this->assertTrue( $status['flagged'] );
-		$this->assertStringContainsString( '60', $status['label'] );
+		$this->assertSame( 'No recorded matches in 60 days', $status['label'] );
+	}
+
+	public function test_retire_history_uses_removed_allow_copy(): void {
+		Policy::save_policy(
+			array(
+				'plugins'     => array( 'die/die.php' => 'allow' ),
+				'default'     => 'observe',
+				'log_enabled' => true,
+			)
+		);
+		Dead_Rules::retire( 'die/die.php' );
+		$history = Policy_Snapshots::history();
+		$found   = false;
+		foreach ( $history as $row ) {
+			if ( 'Removed Allow rule (die/die.php)' === (string) ( $row['summary'] ?? '' ) ) {
+				$found = true;
+				$this->assertSame( array( 'Removed Allow rule (die/die.php)' ), $row['changes'] );
+			}
+		}
+		$this->assertTrue( $found );
+	}
+
+	public function test_cmd_list_notices_avoid_false_all_clear(): void {
+		$this->assertSame( 'Unused-rule checks are off.', Dead_Rules::cmd_list_empty_notice( 0 ) );
+		$this->assertSame( 'No Allow rules flagged for review.', Dead_Rules::cmd_list_empty_notice( 60 ) );
+		$this->assertSame( 'not recorded', Dead_Rules::cmd_list_last_matched_label( 0 ) );
+		$this->assertSame( '1700000000', Dead_Rules::cmd_list_last_matched_label( 1_700_000_000 ) );
 	}
 
 	public function test_list_rows_shape_for_cli(): void {
