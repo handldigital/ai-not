@@ -104,6 +104,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-share.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-adminbar.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-threat-feed.php';
 
 		Policy::instance()->init();
 		Break_Glass::init();
@@ -134,6 +135,7 @@ final class Plugin {
 		Dashboard_Widget::instance()->init();
 		Plugin_Chips::instance()->init();
 		Adminbar::instance()->init();
+		Threat_Feed::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
