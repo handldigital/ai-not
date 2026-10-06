@@ -566,6 +566,53 @@ if ( ! function_exists( 'add_filter' ) ) {
 	}
 }
 
+if ( ! function_exists( 'add_shortcode' ) ) {
+	/**
+	 * @param string   $tag      Shortcode tag.
+	 * @param callable $callback Render callback.
+	 */
+	function add_shortcode( $tag, $callback ): void {
+		unset( $callback );
+		if ( ! isset( $GLOBALS['handl_aicac_test_shortcodes'] ) || ! is_array( $GLOBALS['handl_aicac_test_shortcodes'] ) ) {
+			$GLOBALS['handl_aicac_test_shortcodes'] = array();
+		}
+		$GLOBALS['handl_aicac_test_shortcodes'][] = (string) $tag;
+	}
+}
+
+if ( ! function_exists( 'register_block_type' ) ) {
+	/**
+	 * @param string              $name Block name.
+	 * @param array<string,mixed> $args Args.
+	 */
+	function register_block_type( $name, $args = array() ): void {
+		unset( $args );
+		if ( ! isset( $GLOBALS['handl_aicac_test_blocks'] ) || ! is_array( $GLOBALS['handl_aicac_test_blocks'] ) ) {
+			$GLOBALS['handl_aicac_test_blocks'] = array();
+		}
+		$GLOBALS['handl_aicac_test_blocks'][] = (string) $name;
+	}
+}
+
+if ( ! function_exists( 'is_privacy_policy' ) ) {
+	function is_privacy_policy(): bool {
+		return ! empty( $GLOBALS['handl_aicac_test_is_privacy_policy'] );
+	}
+}
+
+if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
+	/**
+	 * @param string $plugin_name Plugin name.
+	 * @param string $content     Suggested text.
+	 */
+	function wp_add_privacy_policy_content( $plugin_name, $content ): void {
+		$GLOBALS['handl_aicac_test_privacy_guide'][] = array(
+			'plugin'  => (string) $plugin_name,
+			'content' => (string) $content,
+		);
+	}
+}
+
 if ( ! function_exists( 'apply_filters' ) ) {
 	/**
 	 * @param string $hook Hook name.
@@ -701,6 +748,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-model-force.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-spend-threshold.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-budget.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rate-cap.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-soft-deny.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-forecast.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-governance-coverage.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-usage-trends.php';
@@ -712,6 +760,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-anomaly.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-drift.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-went-ai.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-retry-storm.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-incident.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-siem.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-analytics.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-email-template.php';
@@ -897,6 +946,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-keyscan.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-temp-allow.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rule-notes.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-review-due.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-version-watch.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-new-plugin.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quiet-hours.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-break-glass.php';
@@ -935,5 +985,6 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rest.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-share.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-adminbar.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-disclosure.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-preflight-scan.php';
 require_once __DIR__ . '/stubs/namespace-filter-input.php';
