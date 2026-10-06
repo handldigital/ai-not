@@ -331,6 +331,9 @@ final class Siem {
 	 * @param array<string,mixed> $policy
 	 */
 	public static function observe( array $event, array $policy ): bool {
+		if ( class_exists( Demo_Mode::class ) && Demo_Mode::skip_emitters( $event ) ) {
+			return false;
+		}
 		$policy = self::normalize_policy( $policy );
 		if ( ! self::is_enabled( $policy ) ) {
 			return false;

@@ -162,6 +162,9 @@ final class Alerts {
 		if ( class_exists( Selftest::class ) && Selftest::is_synthetic_row( $event ) ) {
 			return;
 		}
+		if ( class_exists( Demo_Mode::class ) && Demo_Mode::skip_emitters( $event ) ) {
+			return;
+		}
 		if ( empty( $policy['alert_on_deny'] ) ) {
 			return;
 		}

@@ -43,6 +43,7 @@ function handl_aicac_uninstall_cron_hooks(): array {
 		'handl_aicac_prune_activity_log',
 		'handl_aicac_send_governance_digest',
 		'handl_aicac_send_policy_backup',
+		'handl_aicac_demo_expire',
 	);
 }
 

@@ -116,6 +116,9 @@ final class Audit_Export {
 			if ( ! is_array( $row ) ) {
 				continue;
 			}
+			if ( class_exists( Demo_Mode::class ) && Demo_Mode::skip_emitters( $row ) ) {
+				continue;
+			}
 			if ( ! self::row_matches_filters( $row, $filters ) ) {
 				continue;
 			}

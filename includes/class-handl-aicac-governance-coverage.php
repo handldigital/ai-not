@@ -236,6 +236,9 @@ final class Governance_Coverage {
 			if ( ! is_array( $row ) ) {
 				continue;
 			}
+			if ( class_exists( Demo_Mode::class ) && Demo_Mode::skip_emitters( $row ) ) {
+				continue;
+			}
 			if ( isset( $row['channel'] ) && 'direct_http' === (string) $row['channel'] ) {
 				continue;
 			}
@@ -263,6 +266,9 @@ final class Governance_Coverage {
 		$totals = array();
 		foreach ( $log as $row ) {
 			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			if ( class_exists( Demo_Mode::class ) && Demo_Mode::skip_emitters( $row ) ) {
 				continue;
 			}
 			if ( isset( $row['channel'] ) && 'direct_http' === (string) $row['channel'] ) {
