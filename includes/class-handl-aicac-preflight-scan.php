@@ -761,19 +761,22 @@ final class Preflight_Scan {
 
 	/**
 	 * Scan every installed plugin and theme. Read-only: never writes rules.
-	 * One aggregate Activity row. No admin notices, no mail.
+	 * When $record is true, stores last_run and writes one aggregate Activity row.
 	 *
 	 * @return array{ts:int,scanned:int,hit_count:int,hits:list<array<string,mixed>>,batch_count:int,batch_size:int}
 	 */
-	public static function scan_all(): array {
+	public static function scan_all( bool $record = true ): array {
 		$targets    = self::inventory();
 		$batch_size = self::SCAN_ALL_BATCH;
 		$batches    = 0;
 		$scanned    = 0;
 		$hits       = array();
-		$state      = self::get_state();
-		if ( ! isset( $state['items'] ) || ! is_array( $state['items'] ) ) {
-			$state['items'] = array();
+		$state      = array( 'items' => array() );
+		if ( $record ) {
+			$state = self::get_state();
+			if ( ! isset( $state['items'] ) || ! is_array( $state['items'] ) ) {
+				$state['items'] = array();
+			}
 		}
 
 		$chunks = array_chunk( $targets, max( 1, $batch_size ) );
@@ -784,19 +787,21 @@ final class Preflight_Scan {
 				$kind = (string) $target['kind'];
 				$id   = (string) $target['id'];
 				$hit  = self::scan_directory( (string) $target['dir'] );
-				$entry = array(
-					'kind'       => $kind,
-					'id'         => $id,
-					'providers'  => $hit['providers'],
-					'file_count' => (int) $hit['file_count'],
-					'files'      => array_slice( $hit['files'], 0, 20 ),
-					'scanned_at' => time(),
-					'action'     => 'scan_all',
-				);
-				if ( ! isset( $state['items'][ $kind ] ) || ! is_array( $state['items'][ $kind ] ) ) {
-					$state['items'][ $kind ] = array();
+				if ( $record ) {
+					$entry = array(
+						'kind'       => $kind,
+						'id'         => $id,
+						'providers'  => $hit['providers'],
+						'file_count' => (int) $hit['file_count'],
+						'files'      => array_slice( $hit['files'], 0, 20 ),
+						'scanned_at' => time(),
+						'action'     => 'scan_all',
+					);
+					if ( ! isset( $state['items'][ $kind ] ) || ! is_array( $state['items'][ $kind ] ) ) {
+						$state['items'][ $kind ] = array();
+					}
+					$state['items'][ $kind ][ $id ] = $entry;
 				}
-				$state['items'][ $kind ][ $id ] = $entry;
 				if ( empty( $hit['providers'] ) ) {
 					continue;
 				}
@@ -822,9 +827,11 @@ final class Preflight_Scan {
 			'batch_count' => $batches,
 			'batch_size'  => $batch_size,
 		);
-		$state['last_run'] = $run;
-		self::save_state( $state );
-		self::log_scan_all_activity( $run );
+		if ( $record ) {
+			$state['last_run'] = $run;
+			self::save_state( $state );
+			self::log_scan_all_activity( $run );
+		}
 
 		return $run;
 	}
