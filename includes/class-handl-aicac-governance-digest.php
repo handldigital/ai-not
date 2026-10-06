@@ -155,6 +155,9 @@ final class Governance_Digest {
 		$subject = self::build_subject( $stats );
 		$body    = self::build_body( $stats );
 		$ok      = Alerts::safe_wp_mail( $to, $subject, $body );
+		if ( class_exists( Chat_Notify::class ) ) {
+			Chat_Notify::maybe_deliver_report( Chat_Notify::REPORT_DIGEST, $stats, $policy );
+		}
 		if ( ! $ok ) {
 			$base['status'] = 'mail_failed';
 			return $base;

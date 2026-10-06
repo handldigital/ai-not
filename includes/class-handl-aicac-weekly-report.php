@@ -127,7 +127,8 @@ final class Weekly_Report {
 		}
 
 		$to = self::resolve_email( $policy );
-		if ( '' === $to ) {
+		$chat_on = class_exists( Chat_Notify::class ) && Chat_Notify::report_enabled( Chat_Notify::REPORT_WEEKLY );
+		if ( '' === $to && ! $chat_on ) {
 			return;
 		}
 
@@ -144,7 +145,12 @@ final class Weekly_Report {
 		$subject = self::build_subject( $stats );
 		$body    = self::build_body( $stats, $policy );
 
-		Alerts::safe_wp_mail( $to, $subject, $body );
+		if ( '' !== $to ) {
+			Alerts::safe_wp_mail( $to, $subject, $body );
+		}
+		if ( class_exists( Chat_Notify::class ) ) {
+			Chat_Notify::maybe_deliver_report( Chat_Notify::REPORT_WEEKLY, $stats, $policy );
+		}
 	}
 
 	/**

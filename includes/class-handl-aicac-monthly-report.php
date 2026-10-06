@@ -195,6 +195,10 @@ final class Monthly_Report {
 			$body = self::build_skip_body( $summary );
 			$ok   = Alerts::safe_wp_mail( $to, $subject, $body );
 
+			if ( class_exists( Chat_Notify::class ) ) {
+				Chat_Notify::maybe_deliver_report( Chat_Notify::REPORT_MONTHLY, $summary, $policy );
+			}
+
 			return array(
 				'ok'      => $ok,
 				'status'  => $ok ? 'no_activity' : 'failed',
@@ -220,6 +224,10 @@ final class Monthly_Report {
 		if ( '' !== $attachment && is_string( $attachment ) ) {
 			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- best-effort temp cleanup.
 			@unlink( $attachment );
+		}
+
+		if ( class_exists( Chat_Notify::class ) ) {
+			Chat_Notify::maybe_deliver_report( Chat_Notify::REPORT_MONTHLY, $summary, $policy );
 		}
 
 		return array(
