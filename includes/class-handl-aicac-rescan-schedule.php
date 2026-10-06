@@ -252,7 +252,7 @@ final class Rescan_Schedule {
 			$tests['direct'] = array();
 		}
 		$tests['direct'][ self::SITE_HEALTH_SLUG ] = array(
-			'label' => __( 'Weekly AI plugin re-scan', 'handl-ai-connector-access-control' ),
+			'label' => __( 'Weekly AI scan of plugins and themes', 'handl-ai-connector-access-control' ),
 			'test'  => array( self::class, 'run_site_health' ),
 		);
 
@@ -296,7 +296,7 @@ final class Rescan_Schedule {
 		$line = self::site_health_line( $snap );
 
 		return array(
-			'label'       => __( 'Weekly AI plugin re-scan', 'handl-ai-connector-access-control' ),
+			'label'       => __( 'Weekly AI scan of plugins and themes', 'handl-ai-connector-access-control' ),
 			'status'      => 'good',
 			'badge'       => array(
 				'label' => __( 'Security', 'handl-ai-connector-access-control' ),
@@ -313,7 +313,7 @@ final class Rescan_Schedule {
 	 */
 	public static function site_health_line( array $snap ): string {
 		if ( ! empty( $snap['disabled'] ) ) {
-			return __( 'Weekly plugin re-scan is turned off.', 'handl-ai-connector-access-control' );
+			return __( 'Weekly scan of plugins and themes is turned off.', 'handl-ai-connector-access-control' );
 		}
 		$when = (int) ( $snap['last_run_at'] ?? 0 );
 		$n    = (int) ( $snap['new_findings'] ?? 0 );

@@ -228,7 +228,7 @@ final class RescanScheduleTest extends TestCase {
 		$snap = Rescan_Schedule::site_health_snapshot();
 		$this->assertTrue( $snap['disabled'] );
 		$line = Rescan_Schedule::site_health_line( $snap );
-		$this->assertSame( 'Weekly plugin re-scan is turned off.', $line );
+		$this->assertSame( 'Weekly scan of plugins and themes is turned off.', $line );
 		$this->assertSame( $reads, Rescan_Schedule::option_reads() );
 	}
 
@@ -248,7 +248,7 @@ final class RescanScheduleTest extends TestCase {
 		$this->assertStringContainsString( 'Last scan:', $line );
 		$this->assertStringContainsString( '1 new finding.', $line );
 		$html = Rescan_Schedule::format_site_health_result( $snap );
-		$this->assertSame( 'Weekly AI plugin re-scan', $html['label'] );
+		$this->assertSame( 'Weekly AI scan of plugins and themes', $html['label'] );
 		$this->assertStringContainsString( '1 new finding.', $html['description'] );
 	}
 
