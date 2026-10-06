@@ -91,6 +91,57 @@ final class Rest {
 				)
 			);
 		}
+
+		$this->register_disclosure_route();
+	}
+
+	/**
+	 * Public GET /disclosure when the JSON toggle is on. Absent when off.
+	 */
+	public function register_disclosure_route(): void {
+		$policy = class_exists( Policy::class ) ? Policy::get_policy() : array();
+		if ( ! class_exists( Disclosure::class ) || ! Disclosure::is_json_enabled( is_array( $policy ) ? $policy : array() ) ) {
+			return;
+		}
+
+		$permission = function_exists( '__return_true' ) ? '__return_true' : static function () {
+			return true;
+		};
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/disclosure',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'get_disclosure' ),
+				'permission_callback' => $permission,
+			)
+		);
+	}
+
+	/**
+	 * GET /disclosure — same redacted dataset as /.well-known/ai.json.
+	 *
+	 * @param mixed $request Unused.
+	 * @return array<string,mixed>|\WP_REST_Response
+	 */
+	public function get_disclosure( $request = null ) {
+		unset( $request );
+		$policy = Policy::get_policy();
+		$log    = Disclosure::public_log_readonly();
+		$freeze = class_exists( Freeze::class ) && Freeze::is_active();
+		$doc    = Disclosure::build_machine_document( is_array( $policy ) ? $policy : array(), is_array( $log ) ? $log : array(), (bool) $freeze );
+
+		if ( class_exists( '\WP_REST_Response' ) ) {
+			$response = new \WP_REST_Response( $doc, 200 );
+			foreach ( Ai_Json::cache_headers() as $name => $value ) {
+				$response->header( $name, $value );
+			}
+
+			return $response;
+		}
+
+		return $doc;
 	}
 
 	/**

@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace HandL\AICAC\Tests\Unit;
 
+use HandL\AICAC\Disclosure;
+use HandL\AICAC\Plugin;
 use HandL\AICAC\Rest;
 use HandL\AICAC\Site_Health;
 use PHPUnit\Framework\TestCase;
@@ -231,5 +233,51 @@ final class RestApiTest extends TestCase {
 		$this->assertTrue( $rest->permission_check() );
 
 		unset( $GLOBALS['handl_aicac_test_current_user_can'] );
+	}
+
+	public function test_disclosure_route_absent_when_toggle_off(): void {
+		$GLOBALS['handl_aicac_test_rest_routes'] = array();
+		$GLOBALS['handl_aicac_test_options']     = array(
+			Plugin::OPTION_KEY => array(),
+		);
+		Rest::instance()->register_routes();
+		$paths = array();
+		foreach ( $GLOBALS['handl_aicac_test_rest_routes'] as $row ) {
+			$paths[] = $row['route'];
+		}
+		$this->assertContains( '/policy', $paths );
+		$this->assertNotContains( '/disclosure', $paths );
+	}
+
+	public function test_disclosure_route_public_when_toggle_on(): void {
+		$GLOBALS['handl_aicac_test_rest_routes'] = array();
+		$GLOBALS['handl_aicac_test_options']     = array(
+			Plugin::OPTION_KEY => array( Disclosure::POLICY_JSON_KEY => true ),
+			'handl_aicac_recent_calls' => array(
+				array(
+					'ts'                => 1_700_000_000,
+					'provider'          => 'openai',
+					'capability_family' => 'text',
+					'decision'          => 'allow',
+				),
+			),
+		);
+		Rest::instance()->register_routes();
+		$found = null;
+		foreach ( $GLOBALS['handl_aicac_test_rest_routes'] as $row ) {
+			if ( '/disclosure' === $row['route'] ) {
+				$found = $row;
+				break;
+			}
+		}
+		$this->assertNotNull( $found );
+		$this->assertSame( 'GET', $found['args']['methods'] );
+		$perm = $found['args']['permission_callback'];
+		$this->assertTrue( is_callable( $perm ) ? (bool) call_user_func( $perm ) : false );
+
+		$payload = Rest::instance()->get_disclosure();
+		$this->assertIsArray( $payload );
+		$this->assertSame( 'OpenAI', $payload['providers'][0]['label'] );
+		$this->assertSame( array( 'Text' ), $payload['used_for'] );
 	}
 }
