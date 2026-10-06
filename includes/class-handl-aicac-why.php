@@ -26,6 +26,11 @@ final class Why {
 
 	public const LINK_COPY = 'Open this setting';
 
+	/**
+	 * Activity filter bucket for rows with no decision_source stamp.
+	 */
+	public const FILTER_NONE = 'none';
+
 	/** @var bool */
 	private static $registered = false;
 
@@ -390,5 +395,79 @@ final class Why {
 			return Admin::screen_url( 'rules' );
 		}
 		return '';
+	}
+
+	/**
+	 * Dropdown choices for the Activity decision-source filter.
+	 *
+	 * @return array<string,string> bucket => label
+	 */
+	public static function filter_choices(): array {
+		return array(
+			'rule'           => __( 'Explicit rule', 'handl-ai-connector-access-control' ),
+			'role'           => __( 'Role', 'handl-ai-connector-access-control' ),
+			'rate_cap'       => __( 'Rate cap', 'handl-ai-connector-access-control' ),
+			'budget'         => __( 'Budget', 'handl-ai-connector-access-control' ),
+			'freeze'         => __( 'Freeze', 'handl-ai-connector-access-control' ),
+			'kill_switch'    => __( 'Emergency stop', 'handl-ai-connector-access-control' ),
+			'newcomer_hold'  => __( 'Newcomer hold', 'handl-ai-connector-access-control' ),
+			'quiet_hours'    => __( 'Quiet hours', 'handl-ai-connector-access-control' ),
+			'temp_allow'     => __( 'Temporary Allow', 'handl-ai-connector-access-control' ),
+			'default'        => __( 'Site default', 'handl-ai-connector-access-control' ),
+			self::FILTER_NONE => __( 'No explanation recorded', 'handl-ai-connector-access-control' ),
+		);
+	}
+
+	public static function sanitize_filter( string $raw ): string {
+		$choices = self::filter_choices();
+		return isset( $choices[ $raw ] ) ? $raw : '';
+	}
+
+	/**
+	 * Compact bucket for a stamped source, or FILTER_NONE for legacy rows.
+	 *
+	 * @param array<string,mixed> $row
+	 */
+	public static function bucket_for_row( array $row ): string {
+		if ( ! array_key_exists( 'decision_source', $row ) ) {
+			return self::FILTER_NONE;
+		}
+		$source = is_string( $row['decision_source'] ) ? (string) $row['decision_source'] : '';
+		if ( '' === $source ) {
+			return self::FILTER_NONE;
+		}
+
+		return self::bucket_for_source( $source );
+	}
+
+	public static function bucket_for_source( string $source ): string {
+		if ( '' === $source ) {
+			return self::FILTER_NONE;
+		}
+		if ( 0 === strpos( $source, 'rule:' ) ) {
+			return 'rule';
+		}
+		if ( 0 === strpos( $source, 'rate_cap:' ) ) {
+			return 'rate_cap';
+		}
+		if ( 0 === strpos( $source, 'budget:' ) ) {
+			return 'budget';
+		}
+		if ( 0 === strpos( $source, 'default:' ) ) {
+			return 'default';
+		}
+
+		return $source;
+	}
+
+	/**
+	 * @param array<string,mixed> $row
+	 */
+	public static function row_matches_source( array $row, string $filter ): bool {
+		if ( '' === $filter ) {
+			return true;
+		}
+
+		return self::bucket_for_row( $row ) === $filter;
 	}
 }
