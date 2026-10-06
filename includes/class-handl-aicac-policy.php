@@ -1649,6 +1649,10 @@ final class Policy {
 
 		update_option( Plugin::OPTION_KEY, $policy, false );
 		Review_Due::stamp_on_rule_changes( $policy, is_array( $raw_before ) ? $raw_before : array() );
+		// AICAC-DEAD-RULES (#290): allow_since on Allow create/change (outside evaluate zone).
+		if ( class_exists( Dead_Rules::class, false ) ) {
+			Dead_Rules::stamp_on_rule_changes( $policy, is_array( $raw_before ) ? $raw_before : array() );
+		}
 		Alerts::maybe_schedule( $policy );
 		Temp_Allow::maybe_schedule( $policy );
 		// maybe_schedule needs preference + log/learn from this save; not the stripped store shape.
@@ -1932,6 +1936,9 @@ final class Policy {
 		if ( ! $is_selftest_early && class_exists( Siem::class ) && Siem::is_enabled( $policy ) ) {
 			Siem::observe( $event, $policy );
 		}
+		if ( ! $is_selftest_early && class_exists( Chat_Notify::class ) ) {
+			Chat_Notify::observe( $event, $policy );
+		}
 
 		if ( empty( $policy['log_enabled'] ) && empty( $policy['audit_only'] ) ) {
 			return;
@@ -1975,6 +1982,10 @@ final class Policy {
 		if ( ! $is_direct_http && ! $is_selftest ) {
 			Drift::observe( $event, $policy, true );
 			Went_AI::observe( $event, $policy );
+			// AICAC-DEAD-RULES (#290): stamp last_matched for the matched Allow rule.
+			if ( class_exists( Dead_Rules::class, false ) ) {
+				Dead_Rules::observe( $event, $policy );
+			}
 		}
 
 		// AICAC-RETRY-STORM: collapse deny floods after threshold (observability only).

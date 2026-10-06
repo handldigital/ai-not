@@ -69,6 +69,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rule-notes.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-review-due.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-version-watch.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dead-rules.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-new-plugin.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quiet-hours.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-break-glass.php';
@@ -110,6 +111,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-disclosure.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-privacy-hooks.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-preflight-scan.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-chat-notify.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-threat-feed.php';
 
 		Policy::instance()->init();
@@ -119,6 +121,7 @@ final class Plugin {
 		New_Plugin::instance()->init();
 		Soft_Deny::instance()->init();
 		Version_Watch::init();
+		Dead_Rules::init();
 		Alerts::instance()->init();
 		Inbox_Actions::instance()->init();
 		Access_Request::instance()->init();
@@ -145,6 +148,7 @@ final class Plugin {
 		Plugin_Chips::instance()->init();
 		Adminbar::instance()->init();
 		Disclosure::instance()->init();
+		Chat_Notify::init();
 		Threat_Feed::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
