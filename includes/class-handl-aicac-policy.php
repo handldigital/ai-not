@@ -1936,6 +1936,9 @@ final class Policy {
 		if ( ! $is_selftest_early && class_exists( Siem::class ) && Siem::is_enabled( $policy ) ) {
 			Siem::observe( $event, $policy );
 		}
+		if ( ! $is_selftest_early && class_exists( Chat_Notify::class ) ) {
+			Chat_Notify::observe( $event, $policy );
+		}
 
 		if ( empty( $policy['log_enabled'] ) && empty( $policy['audit_only'] ) ) {
 			return;
