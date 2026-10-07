@@ -109,6 +109,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dashboard-widget.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-adminbar.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-disclosure.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-badge.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-ai-json.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-privacy-hooks.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-preflight-scan.php';
@@ -152,6 +153,7 @@ final class Plugin {
 		Plugin_Chips::instance()->init();
 		Adminbar::instance()->init();
 		Disclosure::instance()->init();
+		Badge::instance()->init();
 		Ai_Json::instance()->init();
 		Chat_Notify::init();
 		Threat_Feed::init();
