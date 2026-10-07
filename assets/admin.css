@@ -848,7 +848,17 @@
  * ===================================================================== */
 
 .handl-aicac-screen-header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 12px 24px;
 	margin: 4px 0 24px;
+}
+
+.handl-aicac-screen-header__text {
+	flex: 1 1 16rem;
+	min-width: 0;
 }
 
 .handl-aicac-screen-header .handl-aicac-screen-title {
@@ -864,6 +874,73 @@
 	font-size: 14px;
 	line-height: 1.5;
 	color: #50575e;
+}
+
+/* AICAC-FIND (#198): settings type-ahead */
+.handl-aicac-settings-search {
+	position: relative;
+	flex: 0 1 18rem;
+	min-width: 12rem;
+	max-width: 22rem;
+}
+
+.handl-aicac-settings-search__input {
+	width: 100%;
+	max-width: 100%;
+}
+
+.handl-aicac-settings-search__list {
+	position: absolute;
+	z-index: 100;
+	top: calc(100% + 2px);
+	left: 0;
+	right: 0;
+	margin: 0;
+	padding: 4px 0;
+	list-style: none;
+	background: #fff;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+	max-height: 16rem;
+	overflow: auto;
+}
+
+.handl-aicac-settings-search__option,
+.handl-aicac-settings-search__empty {
+	margin: 0;
+	padding: 6px 10px;
+	font-size: 13px;
+	line-height: 1.4;
+	cursor: pointer;
+}
+
+.handl-aicac-settings-search__empty {
+	color: #646970;
+	cursor: default;
+}
+
+.handl-aicac-settings-search__option.is-active,
+.handl-aicac-settings-search__option:hover {
+	background: #f0f6fc;
+	color: #1d2327;
+}
+
+.handl-aicac-settings-search-target {
+	outline: 2px solid #2271b1;
+	outline-offset: 3px;
+	animation: handl-aicac-search-pulse 2.2s ease-out 1;
+}
+
+@keyframes handl-aicac-search-pulse {
+	0% {
+		outline-color: #2271b1;
+		background-color: #f0f6fc;
+	}
+	100% {
+		outline-color: transparent;
+		background-color: transparent;
+	}
 }
 
 /* 1200px reading measure on the non-table screens. Rules and Activity opt
