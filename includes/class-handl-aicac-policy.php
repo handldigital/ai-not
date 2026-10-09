@@ -2017,6 +2017,11 @@ final class Policy {
 
 		update_option( Plugin::LOG_OPTION_KEY, $log, false );
 
+		// AICAC-FIRST-DENY (#326): one-time explainer after a real deny is retained.
+		if ( ! $is_direct_http && ! $is_selftest && class_exists( First_Deny::class, false ) ) {
+			First_Deny::observe( $event, $policy );
+		}
+
 		if ( ! $is_direct_http && ! $is_selftest ) {
 			Drift::flush_deferred_alerts();
 		}
