@@ -258,6 +258,12 @@ final class Admin {
 				'before'
 			);
 		}
+
+		// AICAC-FIND (#198): type-ahead jump across registered settings.
+		if ( class_exists( Settings_Search::class ) ) {
+			$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( (string) $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen id.
+			Settings_Search::enqueue( self::screen_from_page_slug( $page ) );
+		}
 	}
 
 	/**
@@ -536,8 +542,13 @@ final class Admin {
 			return;
 		}
 		echo '<div class="handl-aicac-screen-header">';
+		echo '<div class="handl-aicac-screen-header__text">';
 		echo '<h2 class="handl-aicac-screen-title">' . esc_html( $meta['title'] ) . '</h2>';
 		echo '<p class="handl-aicac-screen-purpose">' . esc_html( $meta['purpose'] ) . '</p>';
+		echo '</div>';
+		if ( class_exists( Settings_Search::class ) ) {
+			Settings_Search::render_box();
+		}
 		echo '</div>';
 	}
 
