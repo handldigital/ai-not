@@ -307,13 +307,13 @@ final class First_Deny {
 		echo esc_html(
 			sprintf(
 				/* translators: 1: plugin (and optional caller), 2: reason label */
-				__( '%1$s tried to use AI and was blocked by %2$s. Nothing else on the site changed — only that AI call was stopped.', 'handl-ai-connector-access-control' ),
+				__( 'An AI call from %1$s was blocked by %2$s.', 'handl-ai-connector-access-control' ),
 				$who,
 				$reason
 			)
 		);
 		echo '</p>';
-		echo '<p><a href="' . esc_url( $act_url ) . '">' . esc_html__( 'See this block in Activity (with explanation)', 'handl-ai-connector-access-control' ) . '</a></p>';
+		echo '<p><a href="' . esc_url( $act_url ) . '">' . esc_html__( 'View blocked calls in Activity', 'handl-ai-connector-access-control' ) . '</a></p>';
 		echo '<p>';
 		printf(
 			'<a class="button button-primary" href="%s">%s</a> ',
@@ -326,7 +326,7 @@ final class First_Deny {
 					admin_url( 'admin-post.php' )
 				)
 			),
-			esc_html__( 'Temporarily allow', 'handl-ai-connector-access-control' )
+			esc_html__( 'Allow plugin for 24 hours', 'handl-ai-connector-access-control' )
 		);
 		printf(
 			'<a class="button" href="%s">%s</a>',

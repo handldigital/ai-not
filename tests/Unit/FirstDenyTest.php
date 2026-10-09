@@ -157,7 +157,7 @@ final class FirstDenyTest extends TestCase {
 		$this->assertStringContainsString( 'Explicit rule', $html );
 		$this->assertStringContainsString( 'handl_aicac_log_decision=deny', $html );
 		$this->assertStringContainsString( 'handl_aicac_log_plugin=seo%2Fseo.php', $html );
-		$this->assertStringContainsString( 'Temporarily allow', $html );
+		$this->assertStringContainsString( 'Allow plugin for 24 hours', $html );
 		$this->assertStringContainsString( 'Keep blocking', $html );
 		$this->assertStringContainsString( First_Deny::ACTION_TEMP_ALLOW, $html );
 		$this->assertStringContainsString( First_Deny::ACTION_DISMISS, $html );
