@@ -213,7 +213,8 @@ final class ReviewNudgeTest extends TestCase {
 		$html = (string) ob_get_clean();
 
 		$this->assertStringContainsString( 'handl-aicac-review-nudge', $html );
-		$this->assertStringContainsString( 'AI Not has governed', $html );
+		$this->assertStringContainsString( 'Your saved Activity log shows', $html );
+		$this->assertStringContainsString( 'calls blocked by AI Not', $html );
 		$this->assertStringContainsString( 'Leave a review', $html );
 		$this->assertStringContainsString( 'Maybe later', $html );
 		$this->assertStringContainsString( 'Don&#039;t ask again', $html );

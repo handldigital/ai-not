@@ -353,8 +353,8 @@ final class Review_Nudge {
 		echo '<p>';
 		echo esc_html(
 			sprintf(
-				/* translators: 1: governed AI call count, 2: blocked policy violation count */
-				__( 'AI Not has governed %1$s AI calls and blocked %2$s policy violations on this site.', 'handl-ai-connector-access-control' ),
+				/* translators: 1: retained Activity entry count, 2: blocked call count (collapsed denys expanded) */
+				__( 'Your saved Activity log shows %1$s AI call entries and %2$s calls blocked by AI Not.', 'handl-ai-connector-access-control' ),
 				number_format_i18n( $calls ),
 				number_format_i18n( $denies )
 			)
