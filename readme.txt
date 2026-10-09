@@ -202,6 +202,7 @@ Yes. With WP-CLI available and this plugin active:
 * Optional machine-readable AI disclosure at /.well-known/ai.json (and a REST copy for sites without pretty permalinks). Same facts as the public disclosure page. Off by default.
 * Quick setup includes an optional scan of installed plugins and themes for known AI endpoints. You can finish setup without scanning or after a read error. Results remain available in Policy Tools.
 * Public AI disclosure badge with a copyable HTML snippet. Inline SVG, no outside requests. Shortcode and block badges hide when disclosure is off; pasted HTML must be removed manually.
+* After real value (30+ days and enough governed calls or blocks), AI Access Control may ask once or twice for a WordPress.org review — only on its own screens, with Maybe later or Don't ask again.
 
 = 1.7.0 =
 * Optional retry-storm detector collapses rapid deny loops from the same plugin into one Activity row and one hourly alert (`wp handl-aicac retry-storm`). On by default at a 30-second window and threshold of 5; turn off to restore per-deny rows and emails.

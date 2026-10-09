@@ -118,6 +118,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-threat-feed.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-demo-mode.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-why.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-review-nudge.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rescan-schedule.php';
 
 		Policy::instance()->init();
@@ -126,6 +127,7 @@ final class Plugin {
 		Temp_Allow::instance()->init();
 		New_Plugin::instance()->init();
 		Soft_Deny::instance()->init();
+		Review_Nudge::instance()->init();
 		Version_Watch::init();
 		Dead_Rules::init();
 		Alerts::instance()->init();

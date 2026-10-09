@@ -35,12 +35,15 @@ register_activation_hook(
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-freeze.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-canary.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-caps.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-clock.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-review-nudge.php';
 		\HandL\AICAC\Onboarding::ensure_initialized();
 		\HandL\AICAC\Whats_New::ensure_seen_version_seeded();
 		\HandL\AICAC\Tamper::on_activate();
 		\HandL\AICAC\Freeze::on_activate();
 		\HandL\AICAC\Canary::ensure_seeded();
 		\HandL\AICAC\Caps::ensure_registered();
+		\HandL\AICAC\Review_Nudge::ensure_activated_at();
 	}
 );
 
