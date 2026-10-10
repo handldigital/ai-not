@@ -118,6 +118,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-threat-feed.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-demo-mode.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-why.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-first-deny.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-review-nudge.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rescan-schedule.php';
 
@@ -126,6 +127,7 @@ final class Plugin {
 		Freeze::init();
 		Temp_Allow::instance()->init();
 		New_Plugin::instance()->init();
+		First_Deny::instance()->init();
 		Soft_Deny::instance()->init();
 		Review_Nudge::instance()->init();
 		Version_Watch::init();
@@ -177,6 +179,7 @@ final class Plugin {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-residency.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rate-cap.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rescan.php';
+			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-threat-feed.php';
 			CLI::register();
 			CLI_Audit::register();
 			CLI_Policy_Apply::register();
@@ -189,6 +192,7 @@ final class Plugin {
 			CLI_Residency::register();
 			CLI_Rate_Cap::register();
 			CLI_Rescan::register();
+			CLI_Threat_Feed::register();
 		}
 	}
 
