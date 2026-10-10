@@ -2015,10 +2015,14 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		// #248: the remaining tools are secondary disclosures. Each one opens
 		// automatically while it is showing a preview, confirmation, or result
 		// so an action state is never hidden behind a closed summary.
-		$template_open = $show_pack_preview || $pack_backup_needed || $show_preset_preview;
+		$show_switch_preview = isset( $_GET['handl_aicac_switch_preview'] ) && '1' === (string) $_GET['handl_aicac_switch_preview']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$template_open       = $show_pack_preview || $pack_backup_needed || $show_preset_preview || $show_switch_preview;
 		$this->disclosure_open( __( 'Start from a template', 'handl-ai-connector-access-control' ), $template_open, 'handl-aicac-tools-template' );
 		$this->render_policy_packs_section( $policy, $show_pack_preview, $pack_backup_needed );
 		$this->render_presets_section( $policy, $show_preset_preview );
+		if ( class_exists( Switch_Import::class, false ) ) {
+			Switch_Import::render_policy_tools_section( $policy, $show_switch_preview );
+		}
 		$this->disclosure_close();
 
 		$backup_open = $show_restore_preview || '' !== $restore_status || $show_import_preview || $show_compare_preview;
