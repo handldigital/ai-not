@@ -219,7 +219,26 @@ ROBOTS;
 		// Ralph routing: README-FREE for #330 — no Unreleased bullet in this PR.
 		$readme = file_get_contents( HANDL_AICAC_DIR . '/readme.txt' );
 		$this->assertNotFalse( $readme );
-		$this->assertStringNotContainsString( 'Import existing AI blocks', $readme );
+		$this->assertStringNotContainsString( 'Create a policy from existing AI blocks', $readme );
 		$this->assertStringNotContainsString( 'SWITCH-IMPORT', $readme );
+	}
+
+	public function test_krusty_copy_strings_present(): void {
+		$src = file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-switch-import.php' );
+		$this->assertNotFalse( $src );
+		$this->assertStringContainsString( 'Create a policy from existing AI blocks', $src );
+		$this->assertStringContainsString( 'Scan robots.txt and Block AI Crawlers settings, then review suggested AI Not settings.', $src );
+		$this->assertStringContainsString( 'Scan robots.txt and Block AI Crawlers', $src );
+		$this->assertStringContainsString( 'Crawler rules are shown for reference.', $src );
+		$this->assertStringContainsString( 'Unrecognized crawlers', $src );
+		$this->assertStringContainsString( 'These crawlers are not in our AI list.', $src );
+		$this->assertStringContainsString( 'No supported AI block rules found. Your policy is unchanged.', $src );
+		$this->assertStringContainsString( 'Cancel (keep current policy)', $src );
+		$this->assertStringContainsString( 'Disallow rule found', $src );
+		$this->assertStringContainsString( 'No site-wide Disallow rule found', $src );
+		$this->assertStringContainsString( 'Queued alerts', $src );
+		$this->assertStringContainsString( 'Not set', $src );
+		$this->assertStringNotContainsString( "'blocked'", $src );
+		$this->assertStringNotContainsString( "'allowed'", $src );
 	}
 }

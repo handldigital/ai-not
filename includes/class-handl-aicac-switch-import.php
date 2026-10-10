@@ -603,10 +603,30 @@ final class Switch_Import {
 	private static function format_value( string $key, $raw ): string {
 		switch ( $key ) {
 			case 'default':
+				if ( null === $raw || '' === $raw ) {
+					return __( 'Not set', 'handl-ai-connector-access-control' );
+				}
+				return ( 'deny' === $raw )
+					? __( 'Deny', 'handl-ai-connector-access-control' )
+					: __( 'Allow', 'handl-ai-connector-access-control' );
 			case 'unknown_operation':
+				if ( null === $raw || '' === $raw ) {
+					return __( 'Not set', 'handl-ai-connector-access-control' );
+				}
+				if ( 'deny' === $raw ) {
+					return __( 'Deny', 'handl-ai-connector-access-control' );
+				}
+				if ( 'allow' === $raw ) {
+					return __( 'Allow', 'handl-ai-connector-access-control' );
+				}
+				return __( 'Inherit', 'handl-ai-connector-access-control' );
 			case 'alert_mode':
-				$v = (string) ( $raw ?? '' );
-				return '' === $v ? '—' : $v;
+				if ( null === $raw || '' === $raw ) {
+					return __( 'Not set', 'handl-ai-connector-access-control' );
+				}
+				return ( 'queue' === $raw )
+					? __( 'Queued alerts', 'handl-ai-connector-access-control' )
+					: __( 'Immediate alerts', 'handl-ai-connector-access-control' );
 			case 'audit_only':
 			case 'log_enabled':
 			case 'kill_switch':
@@ -618,11 +638,13 @@ final class Switch_Import {
 					? __( 'On', 'handl-ai-connector-access-control' )
 					: __( 'Off', 'handl-ai-connector-access-control' );
 			default:
-				if ( null === $raw ) {
-					return '—';
+				if ( null === $raw || '' === $raw ) {
+					return __( 'Not set', 'handl-ai-connector-access-control' );
 				}
 				if ( is_bool( $raw ) ) {
-					return $raw ? 'On' : 'Off';
+					return $raw
+						? __( 'On', 'handl-ai-connector-access-control' )
+						: __( 'Off', 'handl-ai-connector-access-control' );
 				}
 				return (string) $raw;
 		}
@@ -635,14 +657,14 @@ final class Switch_Import {
 	 */
 	public static function render_policy_tools_section( array $policy, bool $show_preview ): void {
 		echo '<div id="handl-aicac-switch-import" class="handl-aicac-switch-import" style="margin:0 0 1.5em;">';
-		echo '<h2>' . esc_html__( 'Import existing AI blocks', 'handl-ai-connector-access-control' ) . '</h2>';
-		echo '<p class="description">' . esc_html__( 'Read this site’s robots.txt and Block AI Crawlers settings, then review a draft policy. Nothing is saved until you apply. Your original robots.txt and other plugins stay untouched.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<h2>' . esc_html__( 'Create a policy from existing AI blocks', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<p class="description">' . esc_html__( 'Scan robots.txt and Block AI Crawlers settings, then review suggested AI Not settings. Nothing changes until you apply. Original files and plugin settings stay unchanged.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( self::user_can_manage() ) {
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="margin:0 0 1em;">';
 			wp_nonce_field( self::ACTION_SCAN );
 			echo '<input type="hidden" name="action" value="' . esc_attr( self::ACTION_SCAN ) . '" />';
-			submit_button( __( 'Scan robots.txt and AI-block plugins', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+			submit_button( __( 'Scan robots.txt and Block AI Crawlers', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
 			echo '</form>';
 		}
 
@@ -671,9 +693,10 @@ final class Switch_Import {
 	private static function render_review( array $policy, array $draft ): void {
 		echo '<div class="handl-aicac-switch-preview" style="border:1px solid #c3c4c7;padding:12px 16px;background:#fff;max-width:52em;margin-top:0.5em;">';
 		echo '<h3 class="handl-aicac-autofocus" tabindex="-1">' . esc_html__( 'Import preview', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<p class="description">' . esc_html__( 'Crawler rules are shown for reference. Applying this draft changes AI Not settings for outgoing AI connections; it does not copy individual crawler rules.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( empty( $draft['has_import'] ) ) {
-			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Nothing to import. No blocked AI crawlers were found in robots.txt, and Block AI Crawlers is not offering a block list.', 'handl-ai-connector-access-control' ) . '</p></div>';
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'No supported AI block rules found. Your policy is unchanged.', 'handl-ai-connector-access-control' ) . '</p></div>';
 			self::render_cancel_form();
 			echo '</div>';
 			return;
@@ -693,8 +716,8 @@ final class Switch_Import {
 					continue;
 				}
 				$state = ! empty( $row['disallow'] )
-					? __( 'blocked', 'handl-ai-connector-access-control' )
-					: __( 'allowed', 'handl-ai-connector-access-control' );
+					? __( 'Disallow rule found', 'handl-ai-connector-access-control' )
+					: __( 'No site-wide Disallow rule found', 'handl-ai-connector-access-control' );
 				echo '<li><code>' . esc_html( (string) ( $row['agent'] ?? '' ) ) . '</code> — ' . esc_html( (string) ( $row['label'] ?? '' ) ) . ' (' . esc_html( $state ) . ')</li>';
 			}
 			echo '</ul>';
@@ -702,16 +725,16 @@ final class Switch_Import {
 
 		$unmapped = isset( $draft['unmapped'] ) && is_array( $draft['unmapped'] ) ? $draft['unmapped'] : array();
 		if ( ! empty( $unmapped ) ) {
-			echo '<h4>' . esc_html__( 'Unmapped user-agents', 'handl-ai-connector-access-control' ) . '</h4>';
-			echo '<p class="description">' . esc_html__( 'These agents appear in robots.txt but are not in the built-in AI list. They are listed here and not dropped.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<h4>' . esc_html__( 'Unrecognized crawlers', 'handl-ai-connector-access-control' ) . '</h4>';
+			echo '<p class="description">' . esc_html__( 'These crawlers are not in our AI list. Shown for reference; their rules are not imported.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '<ul style="margin:0.25em 0 1em 1.25em;">';
 			foreach ( $unmapped as $row ) {
 				if ( ! is_array( $row ) ) {
 					continue;
 				}
 				$state = ! empty( $row['disallow'] )
-					? __( 'blocked', 'handl-ai-connector-access-control' )
-					: __( 'allowed', 'handl-ai-connector-access-control' );
+					? __( 'Disallow rule found', 'handl-ai-connector-access-control' )
+					: __( 'No site-wide Disallow rule found', 'handl-ai-connector-access-control' );
 				echo '<li><code>' . esc_html( (string) ( $row['agent'] ?? '' ) ) . '</code> (' . esc_html( $state ) . ')</li>';
 			}
 			echo '</ul>';
@@ -724,27 +747,27 @@ final class Switch_Import {
 				$count = count( isset( $competitor['blocked_agents'] ) && is_array( $competitor['blocked_agents'] ) ? $competitor['blocked_agents'] : array() );
 				echo esc_html(
 					sprintf(
-						/* translators: %d: number of blocked agents */
-						__( 'active — %d known AI crawlers blocked.', 'handl-ai-connector-access-control' ),
+						/* translators: %d: number of known AI crawlers with Disallow rules */
+						__( 'active — Disallow rules found for %d known AI crawlers.', 'handl-ai-connector-access-control' ),
 						$count
 					)
 				);
 			} else {
-				echo esc_html__( 'active — nothing to import from its settings.', 'handl-ai-connector-access-control' );
+				echo esc_html__( 'active — no supported AI block rules found in its settings.', 'handl-ai-connector-access-control' );
 			}
 			echo '</p>';
 		}
 
 		$patch = isset( $draft['patch'] ) && is_array( $draft['patch'] ) ? $draft['patch'] : array();
 		$rows  = self::diff_rows( $policy, $patch );
-		echo '<h4>' . esc_html__( 'Draft policy changes', 'handl-ai-connector-access-control' ) . '</h4>';
+		echo '<h4>' . esc_html__( 'Suggested AI Not settings', 'handl-ai-connector-access-control' ) . '</h4>';
 		if ( empty( $rows ) ) {
 			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Your policy already matches this draft. Applying will not change settings.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		} else {
 			echo '<table class="widefat striped" style="max-width:40em;"><thead><tr>';
 			echo '<th scope="col">' . esc_html__( 'Setting', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '<th scope="col">' . esc_html__( 'Current', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th scope="col">' . esc_html__( 'After import', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'After apply', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '</tr></thead><tbody>';
 			foreach ( $rows as $row ) {
 				echo '<tr>';
@@ -755,8 +778,6 @@ final class Switch_Import {
 			}
 			echo '</tbody></table>';
 		}
-
-		echo '<p class="description">' . esc_html__( 'Apply writes only AI Not policy settings. robots.txt and other plugins are not modified.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( self::user_can_manage() ) {
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline-block;margin:0 8px 0 0;">';
@@ -777,7 +798,7 @@ final class Switch_Import {
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline-block;margin:0;">';
 		wp_nonce_field( self::ACTION_CANCEL );
 		echo '<input type="hidden" name="action" value="' . esc_attr( self::ACTION_CANCEL ) . '" />';
-		submit_button( __( 'Cancel — leave policy unchanged', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
+		submit_button( __( 'Cancel (keep current policy)', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
 		echo '</form>';
 	}
 
