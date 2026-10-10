@@ -231,16 +231,19 @@ final class Weekly_Report {
 		}
 
 		return array(
-			'coverage'           => $coverage,
-			'deny_n'             => $deny_n,
-			'est_any'            => $est_any,
-			'est_total'          => $est_total,
-			'top_plugins'        => $top,
-			'has_pins'           => $has_pins,
-			'pin'                => $pin,
-			'unforced'           => $unforced,
-			'using_default_rates'=> Cost::using_default_rates( $policy ),
-			'window_label'       => self::format_window_label(
+			'coverage'             => $coverage,
+			'deny_n'               => $deny_n,
+			'est_any'              => $est_any,
+			'est_total'            => $est_total,
+			'top_plugins'          => $top,
+			'has_pins'             => $has_pins,
+			'pin'                  => $pin,
+			'unforced'             => $unforced,
+			'using_default_rates'  => Cost::using_default_rates( $policy ),
+			'top_deny_reason_line' => class_exists( Why::class, false )
+				? Why::top_deny_reason_report_line( $log )
+				: '',
+			'window_label'         => self::format_window_label(
 				(int) ( $coverage['min_ts'] ?? 0 ),
 				(int) ( $coverage['max_ts'] ?? 0 )
 			),
@@ -380,6 +383,11 @@ final class Weekly_Report {
 			_n( '%d blocked call in this log window.', '%d blocked calls in this log window.', $deny_n, 'handl-ai-connector-access-control' ),
 			$deny_n
 		);
+		// AICAC-WHY-INSIGHTS (#322): top reason only when at least one deny exists.
+		$top_reason_line = isset( $stats['top_deny_reason_line'] ) ? (string) $stats['top_deny_reason_line'] : '';
+		if ( '' !== $top_reason_line ) {
+			$lines[] = $top_reason_line;
+		}
 		$lines[] = '';
 
 		// --- Spend (estimated, not billing) ---

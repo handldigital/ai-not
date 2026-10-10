@@ -470,4 +470,120 @@ final class Why {
 
 		return self::bucket_for_row( $row ) === $filter;
 	}
+
+	/**
+	 * AICAC-WHY-INSIGHTS (#322): deny-side decision_source counts for Insights.
+	 *
+	 * Allow rows are excluded. Legacy (unstamped) denies roll into FILTER_NONE.
+	 * Labels match {@see filter_choices()}. Sorted by count desc, then filter order.
+	 *
+	 * @param array<int,mixed> $log
+	 * @return list<array{bucket:string,label:string,count:int}>
+	 */
+	public static function aggregate_deny_reasons( array $log ): array {
+		$choices = self::filter_choices();
+		$counts  = array();
+
+		foreach ( $log as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			if ( class_exists( Demo_Mode::class, false ) && Demo_Mode::skip_emitters( $row ) ) {
+				continue;
+			}
+			if ( 'deny' !== (string) ( $row['decision'] ?? '' ) ) {
+				continue;
+			}
+
+			$bucket = self::bucket_for_row( $row );
+			if ( ! isset( $choices[ $bucket ] ) ) {
+				// Unknown stamps still surface under No explanation recorded.
+				$bucket = self::FILTER_NONE;
+			}
+			$weight = isset( $row['count'] ) ? (int) $row['count'] : 1;
+			if ( $weight < 1 ) {
+				$weight = 1;
+			}
+			if ( ! isset( $counts[ $bucket ] ) ) {
+				$counts[ $bucket ] = 0;
+			}
+			$counts[ $bucket ] += $weight;
+		}
+
+		if ( empty( $counts ) ) {
+			return array();
+		}
+
+		$order = array_keys( $choices );
+		$rank  = array_flip( $order );
+		uksort(
+			$counts,
+			static function ( string $a, string $b ) use ( $counts, $rank ): int {
+				$by_count = $counts[ $b ] <=> $counts[ $a ];
+				if ( 0 !== $by_count ) {
+					return $by_count;
+				}
+				return ( $rank[ $a ] ?? PHP_INT_MAX ) <=> ( $rank[ $b ] ?? PHP_INT_MAX );
+			}
+		);
+
+		$out = array();
+		foreach ( $counts as $bucket => $count ) {
+			$out[] = array(
+				'bucket' => $bucket,
+				'label'  => (string) $choices[ $bucket ],
+				'count'  => (int) $count,
+			);
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Top deny-reason row, or null when the log has no deny rows.
+	 *
+	 * @param array<int,mixed> $log
+	 * @return array{bucket:string,label:string,count:int}|null
+	 */
+	public static function top_deny_reason( array $log ): ?array {
+		$rows = self::aggregate_deny_reasons( $log );
+		return $rows[0] ?? null;
+	}
+
+	/**
+	 * One weekly-report line for the top deny reason, or empty when none.
+	 *
+	 * @param array<int,mixed> $log
+	 */
+	public static function top_deny_reason_report_line( array $log ): string {
+		$top = self::top_deny_reason( $log );
+		if ( null === $top ) {
+			return '';
+		}
+
+		return sprintf(
+			/* translators: 1: block reason label, 2: deny count */
+			__( 'Top block reason: %1$s (%2$s).', 'handl-ai-connector-access-control' ),
+			(string) $top['label'],
+			number_format_i18n( (int) $top['count'] )
+		);
+	}
+
+	/**
+	 * Activity URL pre-filtered to a decision-source bucket (deny rows).
+	 */
+	public static function activity_url_for_source( string $bucket ): string {
+		$bucket = self::sanitize_filter( $bucket );
+		if ( '' === $bucket || ! class_exists( Admin::class, false ) ) {
+			return class_exists( Admin::class, false ) ? Admin::screen_url( 'activity' ) : '';
+		}
+
+		return Admin::screen_url(
+			'activity',
+			array(
+				'handl_aicac_log_decision' => 'deny',
+				'handl_aicac_log_source'   => $bucket,
+			)
+		) . '#handl-aicac-log-wrap';
+	}
 }

@@ -3983,6 +3983,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 			echo '</div>';
 		}
 
+		// AICAC-WHY-INSIGHTS (#322): why blocks happen, not only what was blocked.
+		$this->render_insights_top_block_reasons( $log );
+
 		$forecast = Spend_Forecast::compute( $log, $policy );
 		$daily_trends = Daily_Trends::compute( $log, $policy, $plugins );
 
@@ -4060,6 +4063,63 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$this->render_insights_provider_map( $log, $policy, $plugins );
 		$this->render_insights_cost_receipt( $log, $policy, $plugins );
 
+		echo '</div>';
+	}
+
+	/**
+	 * AICAC-WHY-INSIGHTS (#322): Top block reasons card on Insights.
+	 *
+	 * @param array<int,mixed> $log
+	 */
+	private function render_insights_top_block_reasons( array $log ): void {
+		$rows  = Why::aggregate_deny_reasons( $log );
+		$total = 0;
+		foreach ( $rows as $row ) {
+			$total += (int) $row['count'];
+		}
+
+		echo '<div class="handl-aicac-insights-top-reasons" style="margin:1.5em 0;">';
+		echo '<h3>' . esc_html__( 'Top block reasons', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<p class="description">';
+		echo esc_html__( 'Why calls were blocked in the saved log. Counts use the same explanations as the Activity filter.', 'handl-ai-connector-access-control' );
+		echo '</p>';
+
+		if ( empty( $rows ) || $total < 1 ) {
+			$this->render_empty_state( __( 'No blocked calls in the saved log yet.', 'handl-ai-connector-access-control' ) );
+			echo '</div>';
+			return;
+		}
+
+		echo '<table class="widefat striped handl-aicac-insights-top-reasons-table">';
+		echo '<thead><tr>';
+		echo '<th scope="col">' . esc_html__( 'Reason', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-num">' . esc_html__( 'Blocked', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th scope="col" class="column-num">' . esc_html__( 'Share', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '</tr></thead><tbody>';
+
+		foreach ( $rows as $row ) {
+			$bucket = (string) $row['bucket'];
+			$label  = (string) $row['label'];
+			$count  = (int) $row['count'];
+			$pct    = (int) round( 100 * $count / max( 1, $total ) );
+			$url    = Why::activity_url_for_source( $bucket );
+
+			echo '<tr><td>';
+			echo '<a href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a>';
+			echo '</td>';
+			echo '<td class="column-num">' . esc_html( number_format_i18n( $count ) ) . '</td>';
+			echo '<td class="column-num">';
+			echo esc_html(
+				sprintf(
+					/* translators: %s: percentage of blocked calls */
+					__( '%s%%', 'handl-ai-connector-access-control' ),
+					number_format_i18n( $pct )
+				)
+			);
+			echo '</td></tr>';
+		}
+
+		echo '</tbody></table>';
 		echo '</div>';
 	}
 
