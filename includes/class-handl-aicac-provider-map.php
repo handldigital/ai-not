@@ -456,12 +456,12 @@ final class Provider_Map {
 	public const FILTER_SIGNATURES = 'handl_aicac_preflight_signatures';
 
 	/**
-	 * Known AI API hosts and SDK strings. Single source of truth for preflight.
+	 * Bundled AI API hosts and SDK strings. Remote signature-feed rows never replace these.
 	 *
 	 * @return array<string,array{label:string,hosts:list<string>,needles:list<string>}>
 	 */
-	public static function endpoint_signatures(): array {
-		$map = array(
+	public static function bundled_endpoint_signatures(): array {
+		return array(
 			'openai'     => array(
 				'label'   => 'OpenAI',
 				'hosts'   => array( 'api.openai.com' ),
@@ -523,6 +523,25 @@ final class Provider_Map {
 				'needles' => array(),
 			),
 		);
+	}
+
+	/**
+	 * Known AI API hosts and SDK strings. Single source of truth for preflight.
+	 * Bundled rows plus verified remote additions (air-gap drops the remote layer).
+	 *
+	 * @return array<string,array{label:string,hosts:list<string>,needles:list<string>}>
+	 */
+	public static function endpoint_signatures(): array {
+		$map = self::bundled_endpoint_signatures();
+		if ( class_exists( Threat_Feed::class, false ) ) {
+			foreach ( Threat_Feed::remote_signatures() as $id => $row ) {
+				$id = Cost::normalize_provider_id( (string) $id );
+				if ( '' === $id || isset( $map[ $id ] ) || ! is_array( $row ) ) {
+					continue;
+				}
+				$map[ $id ] = $row;
+			}
+		}
 
 		$filtered = apply_filters( self::FILTER_SIGNATURES, $map );
 		if ( ! is_array( $filtered ) ) {

@@ -49,6 +49,21 @@ final class Threat_Feed {
 
 	public const APPLIED_CAP = 200;
 
+	/** AICAC-SIGNATURE-FEED (#318): additive provider-map rows, layered on the bundled table. */
+	public const SIGNATURE_OPTION_KEY = 'handl_aicac_signature_feed';
+
+	public const SIGNATURE_CAP = 50;
+
+	public const HOSTS_PER = 10;
+
+	public const NEEDLES_PER = 10;
+
+	public const NEEDLE_MAX = 120;
+
+	public const HOST_MAX = 253;
+
+	public const LABEL_MAX = 80;
+
 	/** @var bool */
 	private static $registered = false;
 
@@ -64,6 +79,7 @@ final class Threat_Feed {
 	public static function reset_for_tests(): void {
 		self::$registered = false;
 		delete_option( self::OPTION_KEY );
+		delete_option( self::SIGNATURE_OPTION_KEY );
 		unset( $GLOBALS['handl_aicac_threat_feed_http'] );
 	}
 
@@ -173,12 +189,19 @@ final class Threat_Feed {
 		$verified = self::verify_body( $http['body'] );
 		if ( ! $verified['ok'] ) {
 			self::record_failure( $state, $now, $verified['error'] );
+			if ( in_array( $verified['error'], array( 'invalid_signature', 'invalid_json' ), true ) ) {
+				self::log_health( $now, $verified['error'] );
+			}
 			$empty['error'] = $verified['error'];
 			return $empty;
 		}
 
 		self::record_success( $state, $now, $http['etag'] );
 		$empty['fetched'] = true;
+
+		if ( ! empty( $verified['signatures_present'] ) ) {
+			self::apply_remote_signatures( $verified['signatures'], $now );
+		}
 
 		$applied_ids = isset( $state['applied_ids'] ) && is_array( $state['applied_ids'] )
 			? $state['applied_ids']
@@ -266,13 +289,15 @@ final class Threat_Feed {
 	}
 
 	/**
-	 * @return array{ok:bool,advisories:list<array<string,mixed>>,error:string}
+	 * @return array{ok:bool,advisories:list<array<string,mixed>>,signatures:list<array<string,mixed>>,signatures_present:bool,error:string}
 	 */
 	public static function verify_body( string $body ): array {
 		$fail = array(
-			'ok'         => false,
-			'advisories' => array(),
-			'error'      => 'invalid_signature',
+			'ok'                 => false,
+			'advisories'         => array(),
+			'signatures'         => array(),
+			'signatures_present' => false,
+			'error'              => 'invalid_signature',
 		);
 		$decoded = json_decode( $body, true );
 		if ( ! is_array( $decoded ) ) {
@@ -308,10 +333,27 @@ final class Threat_Feed {
 			}
 		}
 
+		$signatures         = array();
+		$signatures_present = array_key_exists( 'signatures', $payload ) && is_array( $payload['signatures'] );
+		if ( $signatures_present ) {
+			foreach ( $payload['signatures'] as $row ) {
+				$item = self::sanitize_signature_row( $row );
+				if ( null === $item ) {
+					continue;
+				}
+				$signatures[] = $item;
+				if ( count( $signatures ) >= self::SIGNATURE_CAP ) {
+					break;
+				}
+			}
+		}
+
 		return array(
-			'ok'         => true,
-			'advisories' => $advisories,
-			'error'      => '',
+			'ok'                 => true,
+			'advisories'         => $advisories,
+			'signatures'         => $signatures,
+			'signatures_present' => $signatures_present,
+			'error'              => '',
 		);
 	}
 
@@ -346,6 +388,165 @@ final class Threat_Feed {
 			'severity'  => $severity,
 			'url'       => $url,
 		);
+	}
+
+	/**
+	 * Stored remote signature rows. Empty when the air-gap is on (stored set is ignored, not deleted).
+	 *
+	 * @return array<string,array{label:string,hosts:list<string>,needles:list<string>}>
+	 */
+	public static function remote_signatures(): array {
+		if ( self::is_fetch_disabled() ) {
+			return array();
+		}
+
+		return self::stored_signatures();
+	}
+
+	/**
+	 * @return array<string,array{label:string,hosts:list<string>,needles:list<string>}>
+	 */
+	public static function stored_signatures(): array {
+		$raw = get_option( self::SIGNATURE_OPTION_KEY, array() );
+		if ( ! is_array( $raw ) ) {
+			return array();
+		}
+		$list = isset( $raw['items'] ) && is_array( $raw['items'] ) ? $raw['items'] : $raw;
+		$out  = array();
+		foreach ( $list as $id => $row ) {
+			if ( is_array( $row ) && ! isset( $row['id'] ) ) {
+				$row['id'] = is_string( $id ) ? $id : '';
+			}
+			$item = self::sanitize_signature_row( $row );
+			if ( null === $item ) {
+				continue;
+			}
+			$out[ $item['id'] ] = array(
+				'label'   => $item['label'],
+				'hosts'   => $item['hosts'],
+				'needles' => $item['needles'],
+			);
+			if ( count( $out ) >= self::SIGNATURE_CAP ) {
+				break;
+			}
+		}
+
+		return $out;
+	}
+
+	/**
+	 * @param list<array<string,mixed>> $rows
+	 */
+	public static function apply_remote_signatures( array $rows, int $now ): void {
+		$bundled = array();
+		if ( class_exists( Provider_Map::class, false ) ) {
+			foreach ( array_keys( Provider_Map::bundled_endpoint_signatures() ) as $bid ) {
+				$bundled[ (string) $bid ] = true;
+			}
+		}
+		$items = array();
+		foreach ( $rows as $row ) {
+			$item = self::sanitize_signature_row( $row );
+			if ( null === $item ) {
+				continue;
+			}
+			$id = $item['id'];
+			if ( isset( $bundled[ $id ] ) ) {
+				self::log_health( $now, 'signature_collision', $id );
+				continue;
+			}
+			if ( count( $items ) >= self::SIGNATURE_CAP ) {
+				break;
+			}
+			$items[ $id ] = array(
+				'label'   => $item['label'],
+				'hosts'   => $item['hosts'],
+				'needles' => $item['needles'],
+			);
+		}
+		update_option(
+			self::SIGNATURE_OPTION_KEY,
+			array(
+				'updated_at' => max( 0, $now ),
+				'items'      => $items,
+			),
+			false
+		);
+	}
+
+	/**
+	 * @param mixed $raw
+	 * @return array{id:string,label:string,hosts:list<string>,needles:list<string>}|null
+	 */
+	public static function sanitize_signature_row( $raw ): ?array {
+		if ( ! is_array( $raw ) ) {
+			return null;
+		}
+		$id = Cost::normalize_provider_id( (string) ( $raw['id'] ?? $raw['provider'] ?? '' ) );
+		if ( '' === $id ) {
+			return null;
+		}
+		$label = sanitize_text_field( (string) ( $raw['label'] ?? $id ) );
+		if ( strlen( $label ) > self::LABEL_MAX ) {
+			$label = substr( $label, 0, self::LABEL_MAX );
+		}
+		if ( '' === $label ) {
+			$label = $id;
+		}
+		$hosts = array();
+		foreach ( array_slice( (array) ( $raw['hosts'] ?? array() ), 0, self::HOSTS_PER ) as $host ) {
+			$norm = self::normalize_host( (string) $host );
+			if ( '' === $norm || strlen( $norm ) > self::HOST_MAX ) {
+				continue;
+			}
+			if ( ! in_array( $norm, $hosts, true ) ) {
+				$hosts[] = $norm;
+			}
+		}
+		$needles = array();
+		foreach ( array_slice( (array) ( $raw['needles'] ?? array() ), 0, self::NEEDLES_PER ) as $needle ) {
+			$needle = trim( (string) $needle );
+			if ( '' === $needle ) {
+				continue;
+			}
+			if ( strlen( $needle ) > self::NEEDLE_MAX ) {
+				$needle = substr( $needle, 0, self::NEEDLE_MAX );
+			}
+			if ( ! in_array( $needle, $needles, true ) ) {
+				$needles[] = $needle;
+			}
+		}
+		if ( empty( $hosts ) && empty( $needles ) ) {
+			return null;
+		}
+
+		return array(
+			'id'      => $id,
+			'label'   => $label,
+			'hosts'   => $hosts,
+			'needles' => $needles,
+		);
+	}
+
+	/**
+	 * One Activity health row. Never fatal.
+	 */
+	public static function log_health( int $now, string $reason, string $provider = '' ): void {
+		$reason = sanitize_key( $reason );
+		if ( '' === $reason ) {
+			return;
+		}
+		$event = array(
+			'ts'            => $now > 0 ? $now : time(),
+			'decision'      => 'observe',
+			'channel'       => self::ALERT_KIND,
+			'operation'     => 'threat_feed',
+			'denial_reason' => $reason,
+		);
+		if ( '' !== $provider ) {
+			$event['provider'] = Cost::normalize_provider_id( $provider );
+		}
+		Policy::append_log_event( $event );
 	}
 
 	/**
