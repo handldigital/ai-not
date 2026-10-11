@@ -1,0 +1,19 @@
+{
+  "pull_request": 752,
+  "issue": 748,
+  "repository": "handldigital/handlwp.com-frontend",
+  "head": "655e8639fd3db31c14cb0d35b5e9cc7b615f146f",
+  "tested_at": "2026-10-11T11:01:50Z",
+  "runner": "AWS CloudFront test-function, isolated DEVELOPMENT function",
+  "runtime": "cloudfront-js-2.0",
+  "source": "EmergencyUrlRewriteFunction extracted directly from the exact PR head template.yaml",
+  "cases": [
+    {"input":"/wp-dental-plugin-privacy","output":"/wp-dental-plugin-privacy/index.html","criterion":"New generic privacy route rewrites"},
+    {"input":"/wp-therapy-plugin-privacy/","output":"/wp-therapy-plugin-privacy/index.html","criterion":"Existing family member retains its rewrite behavior"},
+    {"input":"/wp-plugin-privacy/contact-form-7","output":"/wp-plugin-privacy/contact-form-7/index.html","criterion":"Existing prefix-family route remains unchanged"},
+    {"input":"/wp-forms-privacy","output":"/wp-forms-privacy/index.html","criterion":"Non-family listed route remains unchanged"},
+    {"input":"/this-page-does-not-exist","output":"/this-page-does-not-exist","criterion":"Unknown-path control is not rewritten"}
+  ],
+  "function_errors": [],
+  "size_guard_bytes": {"EmergencyUrlRewriteFunction":6211,"budget":9728,"hard_cap":10240}
+}
