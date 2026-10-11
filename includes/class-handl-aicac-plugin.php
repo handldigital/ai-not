@@ -85,6 +85,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-checklist.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-leads.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-transfer.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-switch-import.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-presets.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-packs.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-backup.php';
@@ -146,6 +147,7 @@ final class Plugin {
 		Canary::instance()->init();
 		Keyscan::instance()->init();
 		Preflight_Scan::instance()->init();
+		Switch_Import::instance()->init();
 		Admin::instance()->init();
 		Whats_New::instance()->init();
 		Network_Admin::instance()->init();

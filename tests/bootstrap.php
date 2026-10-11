@@ -1142,6 +1142,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-checklist.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-whats-new.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-leads.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-transfer.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-switch-import.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-presets.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-packs.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-policy-backup.php';
