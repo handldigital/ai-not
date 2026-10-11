@@ -29,6 +29,7 @@ final class Alert_Routing {
 		'budget',
 		'drift',
 		'anomaly',
+		'latency',
 		'shadow',
 		'expiry',
 		'digest',
