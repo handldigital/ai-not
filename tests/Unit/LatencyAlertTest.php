@@ -126,6 +126,46 @@ final class LatencyAlertTest extends TestCase {
 		$this->assertCount( 1, self::$mails, 'dedupe: one alert per provider per window' );
 	}
 
+	public function test_recovery_then_recross_within_hour_does_not_refire(): void {
+		$now    = 1_700_000_000;
+		$policy = array(
+			'log_enabled'              => true,
+			'latency_alert_enabled'    => true,
+			'latency_p95_threshold_ms' => 10000,
+			'latency_min_samples'      => 5,
+			'alert_email'              => 'admin@example.com',
+		);
+		update_option( Plugin::OPTION_KEY, $policy, false );
+
+		// Breach.
+		for ( $i = 0; $i < 5; $i++ ) {
+			Latency::record_sample( 'openai', 20000, $now + $i );
+		}
+		Latency::maybe_evaluate( Policy::get_policy(), $now + 10 );
+		$this->assertCount( 1, self::$mails );
+
+		// Recover: wipe samples so stats drop below minimum (no clear of fire key).
+		delete_option( Latency::SAMPLES_OPTION_KEY );
+		Latency::maybe_evaluate( Policy::get_policy(), $now + 20 );
+		$this->assertCount( 1, self::$mails );
+
+		// Re-cross within the same hour.
+		for ( $i = 0; $i < 5; $i++ ) {
+			Latency::record_sample( 'openai', 25000, $now + 30 + $i );
+		}
+		Latency::maybe_evaluate( Policy::get_policy(), $now + 40 );
+		$this->assertCount( 1, self::$mails, 'recovery + re-cross within hour must not re-fire' );
+
+		// After dedupe window, a new breach may alert again (fresh samples in window).
+		$later = $now + 40 + Latency::DEDUPE_SECONDS;
+		delete_option( Latency::SAMPLES_OPTION_KEY );
+		for ( $i = 0; $i < 5; $i++ ) {
+			Latency::record_sample( 'openai', 25000, $later - 5 + $i );
+		}
+		Latency::maybe_evaluate( Policy::get_policy(), $later );
+		$this->assertCount( 2, self::$mails );
+	}
+
 	public function test_below_min_samples_never_fires(): void {
 		$now = 1_700_000_000;
 		Latency::record_sample( 'openai', 50000, $now );

@@ -256,27 +256,27 @@ final class Latency {
 		echo '<input type="hidden" name="' . esc_attr( self::POST_PRESENT ) . '" value="1" />';
 		echo '<label for="handl-aicac-latency-alert-enabled">';
 		echo '<input type="checkbox" name="' . esc_attr( self::POST_ENABLED ) . '" id="handl-aicac-latency-alert-enabled" value="1"' . ( $enabled ? ' checked="checked"' : '' ) . ' /> ';
-		echo esc_html__( 'Email me when a provider’s AI calls get unusually slow', 'handl-ai-connector-access-control' );
+		echo esc_html__( 'Send email alerts for slow AI calls', 'handl-ai-connector-access-control' );
 		echo '</label>';
-		echo '<p class="description">' . esc_html__( 'Measures how long each AI Client call takes and watches the last hour per provider. When the 95th percentile stays above the threshold (and enough calls were timed), one alert is sent for that provider for the hour. Uses the blocked-call alert email. Alerts do not block calls. Calls without a measured duration are skipped.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Uses timed AI Client calls from the last hour, grouped by provider. An alert is sent when p95 reaches the threshold and enough calls have been timed. P95 is the call duration at the 95th percentile. Requires activity logging or audit-only mode. Sends to the configured alert email address. Alerts do not block calls.', 'handl-ai-connector-access-control' ) . '</p>';
 
-		echo '<p><label for="handl-aicac-latency-threshold">' . esc_html__( 'Alert when p95 exceeds (milliseconds)', 'handl-ai-connector-access-control' ) . '</label><br />';
+		echo '<p><label for="handl-aicac-latency-threshold">' . esc_html__( 'Slow-call threshold (milliseconds)', 'handl-ai-connector-access-control' ) . '</label><br />';
 		echo '<input type="number" step="100" min="100" max="600000" class="small-text" id="handl-aicac-latency-threshold" name="' . esc_attr( self::POST_THRESHOLD ) . '" value="' . esc_attr( (string) $threshold ) . '" /> ';
-		echo '<span class="description">' . esc_html__( 'Default: 10000 (10 seconds).', 'handl-ai-connector-access-control' ) . '</span></p>';
+		echo '<span class="description">' . esc_html__( 'Default: 10,000 ms (10 seconds).', 'handl-ai-connector-access-control' ) . '</span></p>';
 
-		echo '<p><label for="handl-aicac-latency-min-samples">' . esc_html__( 'Minimum timed calls in the last hour before an alert', 'handl-ai-connector-access-control' ) . '</label><br />';
+		echo '<p><label for="handl-aicac-latency-min-samples">' . esc_html__( 'Minimum timed calls per provider in the last hour', 'handl-ai-connector-access-control' ) . '</label><br />';
 		echo '<input type="number" step="1" min="1" max="10000" class="small-text" id="handl-aicac-latency-min-samples" name="' . esc_attr( self::POST_MIN_SAMPLES ) . '" value="' . esc_attr( (string) $min_samples ) . '" /> ';
 		echo '<span class="description">' . esc_html__( 'Default: 5.', 'handl-ai-connector-access-control' ) . '</span></p>';
 
 		if ( empty( $stats ) ) {
-			echo '<p class="description"><em>' . esc_html__( 'No timed calls yet.', 'handl-ai-connector-access-control' ) . '</em></p>';
+			echo '<p class="description"><em>' . esc_html__( 'No timed calls in the last hour.', 'handl-ai-connector-access-control' ) . '</em></p>';
 		} else {
 			echo '<p style="margin-top:12px;"><strong>' . esc_html__( 'Last hour (timed calls)', 'handl-ai-connector-access-control' ) . '</strong></p>';
 			echo '<table class="widefat striped" style="max-width:36em;"><thead><tr>';
 			echo '<th scope="col">' . esc_html__( 'Provider', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th scope="col">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th scope="col">' . esc_html__( 'p50 (ms)', 'handl-ai-connector-access-control' ) . '</th>';
-			echo '<th scope="col">' . esc_html__( 'p95 (ms)', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'Timed calls', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( 'Median (ms)', 'handl-ai-connector-access-control' ) . '</th>';
+			echo '<th scope="col">' . esc_html__( '95th percentile (ms)', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '</tr></thead><tbody>';
 			foreach ( $stats as $row ) {
 				echo '<tr>';
@@ -407,8 +407,9 @@ final class Latency {
 		foreach ( self::provider_stats( $now ) as $row ) {
 			$count = (int) $row['count'];
 			$p95   = (int) $row['p95'];
+			// Hard one-alert-per-provider-per-hour: do not clear the suppression key
+			// when stats recover. Re-crossing within DEDUPE_SECONDS must not re-fire.
 			if ( $count < $min_samples || $p95 < $threshold ) {
-				self::clear_fire_key( self::fire_key( (string) $row['provider'] ) );
 				continue;
 			}
 			self::maybe_fire(
@@ -580,15 +581,6 @@ final class Latency {
 			'at'        => $now,
 			'threshold' => $threshold,
 		);
-		update_option( self::FIRED_OPTION_KEY, $state, false );
-	}
-
-	private static function clear_fire_key( string $key ): void {
-		$state = get_option( self::FIRED_OPTION_KEY, array() );
-		if ( ! is_array( $state ) || ! isset( $state[ $key ] ) ) {
-			return;
-		}
-		unset( $state[ $key ] );
 		update_option( self::FIRED_OPTION_KEY, $state, false );
 	}
 
