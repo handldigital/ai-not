@@ -1170,6 +1170,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-adminbar.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-disclosure.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-badge.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-ai-json.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-llms-txt.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-privacy-hooks.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-preflight-scan.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-chat-notify.php';
