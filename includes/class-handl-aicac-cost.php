@@ -62,8 +62,10 @@ final class Cost {
 	/**
 	 * Resolve rates for an optional provider id.
 	 *
-	 * Unknown/missing provider → global fallback. Known provider with no
-	 * configured pair → global fallback. Configured pair → that pair only.
+	 * Priority (estimates only — never Allow/Deny):
+	 * 1. Admin per-provider override
+	 * 2. Signed rates feed (#334) when the threat-feed air-gap is off
+	 * 3. Global policy fallback / built-in defaults (bundled when feed is off)
 	 *
 	 * @param array<string,mixed> $policy
 	 * @param string|null         $provider Log-row provider id (may be empty).
@@ -77,11 +79,18 @@ final class Cost {
 		}
 
 		$map = self::sanitize_provider_rates( $policy['est_usd_provider_rates'] ?? array() );
-		if ( ! isset( $map[ $id ] ) ) {
-			return $fallback;
+		if ( isset( $map[ $id ] ) ) {
+			return $map[ $id ];
 		}
 
-		return $map[ $id ];
+		if ( class_exists( Rates_Feed::class, false ) ) {
+			$feed = Rates_Feed::active_provider_rates();
+			if ( isset( $feed[ $id ] ) ) {
+				return $feed[ $id ];
+			}
+		}
+
+		return $fallback;
 	}
 
 	/**

@@ -205,6 +205,7 @@ Yes. With WP-CLI available and this plugin active:
 * Insights Top block reasons: counts blocked calls by explanation (same labels as the Activity filter), with links to the matching Activity view. Weekly report includes the top reason when any blocks exist.
 * After real value (30+ days and enough governed calls or blocks), AI Access Control may ask once or twice for a WordPress.org review — only on its own screens, with Maybe later or Don't ask again.
 * Slow AI call tracking: records duration on timed AI Client calls, watches per-provider p50/p95 over the last hour, and can email once per provider when p95 stays above a threshold (`wp aicac latency list`).
+* Signed cost rate table: the same advisory feed that updates AI host signatures can refresh estimated $/1M-token rates between releases (`wp handl-aicac threat-feed status`). Feed off uses bundled rates; your saved overrides still win. Estimates only — not billing.
 
 = 1.7.0 =
 * Optional retry-storm detector collapses rapid deny loops from the same plugin into one Activity row and one hourly alert (`wp handl-aicac retry-storm`). On by default at a 30-second window and threshold of 5; turn off to restore per-deny rows and emails.

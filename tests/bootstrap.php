@@ -1174,6 +1174,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-privacy-hooks.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-preflight-scan.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-chat-notify.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-threat-feed.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rates-feed.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-demo-mode.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-why.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-first-deny.php';
