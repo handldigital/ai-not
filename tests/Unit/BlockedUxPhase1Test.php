@@ -59,8 +59,8 @@ final class BlockedUxPhase1Test extends TestCase {
 		);
 
 		$cells = Audit_Export::format_row( $row, array(), array(), array() );
-		$this->assertSame( $context, $cells[12] );
-		$this->assertSame( $error, $cells[13] );
+		$this->assertSame( $context, $cells[13] );
+		$this->assertSame( $error, $cells[14] );
 
 		$csv = Audit_Export::build_csv( array( $row ), array(
 			'decision'  => '',

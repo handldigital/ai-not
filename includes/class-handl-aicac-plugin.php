@@ -45,6 +45,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-log-storage.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-log-retention.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-anomaly.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-latency.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-drift.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-went-ai.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-retry-storm.php';
@@ -124,6 +125,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rescan-schedule.php';
 
 		Policy::instance()->init();
+		Latency::instance()->init();
 		Break_Glass::init();
 		Freeze::init();
 		Temp_Allow::instance()->init();
@@ -182,6 +184,7 @@ final class Plugin {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rate-cap.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rescan.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-threat-feed.php';
+			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-latency.php';
 			CLI::register();
 			CLI_Audit::register();
 			CLI_Policy_Apply::register();
@@ -195,6 +198,7 @@ final class Plugin {
 			CLI_Rate_Cap::register();
 			CLI_Rescan::register();
 			CLI_Threat_Feed::register();
+			CLI_Latency::register();
 		}
 	}
 

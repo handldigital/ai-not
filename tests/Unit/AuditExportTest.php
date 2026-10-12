@@ -39,6 +39,7 @@ final class AuditExportTest extends TestCase {
 				'Model',
 				'Input tokens',
 				'Output tokens',
+				'Duration (ms)',
 				'Est. $',
 				'Plugin',
 				'Prompt',
@@ -97,14 +98,15 @@ final class AuditExportTest extends TestCase {
 		$this->assertSame( '', $cells[1] ); // Decision
 		$this->assertSame( '', $cells[5] ); // Input tokens
 		$this->assertSame( '', $cells[6] ); // Output tokens
-		$this->assertSame( '', $cells[7] ); // Est. $
-		$this->assertSame( '', $cells[8] ); // Plugin
-		$this->assertSame( '', $cells[9] ); // Prompt
-		$this->assertSame( '', $cells[10] ); // User
-		$this->assertSame( '', $cells[11] ); // URI
-		$this->assertSame( 'unknown', $cells[12] ); // Request context (legacy)
-		$this->assertSame( '', $cells[13] ); // Returned error
-		$this->assertSame( '0', $cells[14] ); // retry_storm_count
+		$this->assertSame( '', $cells[7] ); // Duration (ms) — never guessed
+		$this->assertSame( '', $cells[8] ); // Est. $
+		$this->assertSame( '', $cells[9] ); // Plugin
+		$this->assertSame( '', $cells[10] ); // Prompt
+		$this->assertSame( '', $cells[11] ); // User
+		$this->assertSame( '', $cells[12] ); // URI
+		$this->assertSame( 'unknown', $cells[13] ); // Request context (legacy)
+		$this->assertSame( '', $cells[14] ); // Returned error
+		$this->assertSame( '0', $cells[15] ); // retry_storm_count
 
 		$csv = Audit_Export::build_csv( array( $row ), $this->empty_filters(), array(), array() );
 		$this->assertStringNotContainsString( 'null', strtolower( $csv ) );
@@ -128,8 +130,8 @@ final class AuditExportTest extends TestCase {
 		$normal_cells = Audit_Export::format_row( $normal, array(), array(), array() );
 		$storm_cells  = Audit_Export::format_row( $storm, array(), array(), array() );
 
-		$this->assertSame( '0', $normal_cells[14] );
-		$this->assertSame( '4', $storm_cells[14] );
+		$this->assertSame( '0', $normal_cells[15] );
+		$this->assertSame( '4', $storm_cells[15] );
 
 		$csv = Audit_Export::build_csv( array( $normal, $storm ), $this->empty_filters(), array(), array() );
 		$this->assertStringContainsString( 'retry_storm_count', $csv );

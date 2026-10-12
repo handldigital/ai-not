@@ -33,6 +33,7 @@ final class Audit_Export {
 			'Model',
 			'Input tokens',
 			'Output tokens',
+			'Duration (ms)',
 			'Est. $',
 			'Plugin',
 			'Prompt',
@@ -186,6 +187,8 @@ final class Audit_Export {
 
 		$input_tokens  = array_key_exists( 'input_tokens', $row ) ? (string) (int) $row['input_tokens'] : '';
 		$output_tokens = array_key_exists( 'output_tokens', $row ) ? (string) (int) $row['output_tokens'] : '';
+		// AICAC-LATENCY (#302): blank when the call was never timed — never invent a value.
+		$duration_ms = array_key_exists( 'duration_ms', $row ) ? (string) (int) $row['duration_ms'] : '';
 
 		$est = '';
 		$in  = array_key_exists( 'input_tokens', $row ) ? (int) $row['input_tokens'] : null;
@@ -219,6 +222,7 @@ final class Audit_Export {
 			$model,
 			$input_tokens,
 			$output_tokens,
+			$duration_ms,
 			$est,
 			$plugin_cell,
 			$prompt,

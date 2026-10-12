@@ -134,6 +134,10 @@ final class Policy {
 		if ( ! $prevent && self::is_generating_operation( $operation ) ) {
 			$event['log_key'] = self::generate_log_key();
 			self::$pending_token_log_keys[] = $event['log_key'];
+			// AICAC-LATENCY (#302): start high-resolution timer for duration_ms.
+			if ( class_exists( Latency::class, false ) ) {
+				Latency::mark_start( $event['log_key'] );
+			}
 		}
 
 		// F4 experimental: per-plugin force on allowed *generating* prompts only,
@@ -2006,7 +2010,7 @@ final class Policy {
 				Drift::flush_deferred_alerts();
 			}
 			$channel = isset( $event['channel'] ) ? (string) $event['channel'] : '';
-			if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget', 'selftest', 'pii' ), true ) ) {
+			if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget', 'selftest', 'pii', 'latency' ), true ) ) {
 				Anomaly::maybe_evaluate( $policy );
 			}
 			return;
@@ -2041,7 +2045,7 @@ final class Policy {
 
 		// AICAC-ANOMALY: re-check after new retained rows (skip our own audit rows).
 		$channel = isset( $event['channel'] ) ? (string) $event['channel'] : '';
-		if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget', 'selftest', 'pii' ), true ) ) {
+		if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget', 'selftest', 'pii', 'latency' ), true ) ) {
 			Anomaly::maybe_evaluate( $policy );
 		}
 	}
@@ -2169,9 +2173,11 @@ final class Policy {
 	}
 
 	/**
-	 * @param array<string,int> $patch
+	 * Merge fields onto a retained row identified by log_key (newest match wins).
+	 *
+	 * @param array<string,mixed> $patch
 	 */
-	private static function patch_log_entry( string $log_key, array $patch ): bool {
+	public static function patch_log_entry( string $log_key, array $patch ): bool {
 		if ( '' === $log_key ) {
 			return false;
 		}
