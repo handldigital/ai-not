@@ -113,7 +113,7 @@ final class Exit_Interview {
 					'title'       => __( 'Before you go — what made you deactivate?', 'handl-ai-connector-access-control' ),
 					'skip'        => __( 'Skip & deactivate', 'handl-ai-connector-access-control' ),
 					'send'        => __( 'Send feedback & deactivate', 'handl-ai-connector-access-control' ),
-					'otherLabel'  => __( 'Short details (optional)', 'handl-ai-connector-access-control' ),
+					'otherLabel'  => __( 'Short details', 'handl-ai-connector-access-control' ),
 					'otherHint'   => __( 'Required when Other is selected.', 'handl-ai-connector-access-control' ),
 					'closeLabel'  => __( 'Close', 'handl-ai-connector-access-control' ),
 					'reasons'     => self::reason_labels(),
