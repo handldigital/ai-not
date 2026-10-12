@@ -950,6 +950,7 @@ final class Alerts {
 				$ok,
 				$ok ? '' : 'wp_mail returned false'
 			);
+			if ( $ok && function_exists( 'do_action' ) ) { do_action( 'handl_aicac_alert_sent', $subject, array( 'ts' => time() ) ); } // AICAC-NOISE (#405) sanctioned one-line hook.
 			return $ok;
 		} catch ( \Throwable $e ) {
 			Alert_Health::record_result(
