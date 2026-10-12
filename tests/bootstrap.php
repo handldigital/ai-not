@@ -1181,4 +1181,5 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-review-nudge.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rescan-schedule.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rescan.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-threat-feed.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-circuit-breaker.php';
 require_once __DIR__ . '/stubs/namespace-filter-input.php';
