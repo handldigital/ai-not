@@ -50,7 +50,7 @@ final class Admin {
 	 * ~11 so a future chrome field does not re-enable a dead 100 option on
 	 * default PHP max_input_vars=1000.
 	 */
-	public const RULES_MATRIX_FIXED_INPUT_VARS = 16;
+	public const RULES_MATRIX_FIXED_INPUT_VARS = 17;
 
 	/** Default Activity log rows per page (read-only table; not max_input_vars gated). */
 	public const ACTIVITY_DEFAULT_PER_PAGE = 50;
@@ -1032,6 +1032,7 @@ final class Admin {
 		if ( $this->rules_save_truncated ) {
 			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Rules were not saved because the page was too large for your server to process. Nothing was changed. Choose a smaller page size or increase the PHP max_input_vars setting.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
+		Save_Guard::maybe_render_conflict_notice();
 		if ( $saved ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Saved.', 'handl-ai-connector-access-control' ) . '</p></div>';
 		}
@@ -1495,6 +1496,8 @@ final class Admin {
 		echo '<input type="hidden" name="handl_aicac_action" id="handl-aicac-action" value="" />';
 		// Early sentinel: must arrive even when the matrix is truncated.
 		echo '<input type="hidden" name="handl_aicac_rules_expected" id="handl-aicac-rules-expected" value="' . esc_attr( (string) $rules_expected ) . '" />';
+		// AICAC-SAVE-CONFLICT (#217): opaque revision token for detect-and-refuse.
+		Save_Guard::render_token_field();
 		echo '<script>';
 		echo '(function(){var form=document.getElementById(' . wp_json_encode( $rules_form_id ) . ');';
 		echo 'var action=document.getElementById("handl-aicac-action");if(!form||!action)return;';
@@ -5873,6 +5876,11 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 
 	private function handle_save_rules(): bool {
 		$this->require_admin_mutation( 'handl_aicac_save_policy' );
+
+		// AICAC-SAVE-CONFLICT (#217): refuse stale pages before any write.
+		if ( ! Save_Guard::check_posted_token() ) {
+			return false;
+		}
 
 		$expected     = filter_input( INPUT_POST, 'handl_aicac_rules_expected', FILTER_VALIDATE_INT );
 		$posted_rules = filter_input( INPUT_POST, 'handl_aicac_rule', FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
