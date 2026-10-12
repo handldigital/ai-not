@@ -66,6 +66,7 @@ function handl_aicac_uninstall_legacy_option_keys(): array {
  */
 function handl_aicac_uninstall_purge(): void {
 	handl_aicac_uninstall_remove_mu_guard_stub();
+	handl_aicac_uninstall_remove_legal_holds();
 
 	// Canary honeytoken is stored under a provider-looking option name, not
 	// the handl_aicac_ prefix. Read the registry before prefixed options go.
@@ -148,6 +149,51 @@ function handl_aicac_run_uninstall(): void {
 		return;
 	}
 	handl_aicac_uninstall_purge();
+}
+
+/**
+ * Remove uploads/handl-aicac/legal-holds/ snapshot bundles when present.
+ */
+function handl_aicac_uninstall_remove_legal_holds(): void {
+	if ( ! function_exists( 'wp_upload_dir' ) ) {
+		return;
+	}
+	$uploads = wp_upload_dir();
+	if ( ! is_array( $uploads ) || ! empty( $uploads['error'] ) || empty( $uploads['basedir'] ) ) {
+		return;
+	}
+	$dir = rtrim( (string) $uploads['basedir'], '/\\' ) . '/handl-aicac/legal-holds';
+	if ( ! is_dir( $dir ) ) {
+		return;
+	}
+	handl_aicac_uninstall_rm_rf( $dir );
+}
+
+/**
+ * Recursively delete a directory tree (uninstall cleanup only).
+ */
+function handl_aicac_uninstall_rm_rf( string $dir ): void {
+	if ( ! is_dir( $dir ) ) {
+		return;
+	}
+	$items = scandir( $dir );
+	if ( ! is_array( $items ) ) {
+		return;
+	}
+	foreach ( $items as $item ) {
+		if ( '.' === $item || '..' === $item ) {
+			continue;
+		}
+		$path = $dir . '/' . $item;
+		if ( is_dir( $path ) ) {
+			handl_aicac_uninstall_rm_rf( $path );
+			continue;
+		}
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- uninstall cleanup.
+		@unlink( $path );
+	}
+	// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- uninstall cleanup.
+	@rmdir( $dir );
 }
 
 /**

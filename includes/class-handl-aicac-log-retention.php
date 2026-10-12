@@ -270,6 +270,7 @@ final class Log_Retention {
 
 		// Also apply entry-count cap after time prune.
 		$kept = Policy::apply_log_retention( $kept, $policy, $now );
+		$kept = apply_filters( 'handl_aicac_log_retention_kept_rows', $kept, $log, $policy, $now );
 		update_option( Plugin::LOG_OPTION_KEY, $kept, false );
 		self::save_meta( array( 'last_prune_ts' => $now ) );
 		self::maybe_schedule( $policy );
