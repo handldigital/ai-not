@@ -1,0 +1,34 @@
+PR341 / #328 exit-interview email proof @ cec0c3b
+
+{
+  "ok": true,
+  "sha": "cec0c3b07985c46efbde37680ef94797c2595dc0",
+  "payload": {
+    "reason": "other",
+    "other": "QA opt-in email proof for PR341 at cec0c3b",
+    "user": "haktanaicac-exit-interview@handldigital.com",
+    "site": "https://handl-sandbox/",
+    "ts": 1791818356
+  },
+  "stored_last": {
+    "reason": "other",
+    "other": "QA opt-in email proof for PR341 at cec0c3b",
+    "user": "haktanaicac-exit-interview@handldigital.com",
+    "site": "https://handl-sandbox/",
+    "ts": 1791818356
+  },
+  "submissions": 1,
+  "inbox_const": "support@handldigital.com",
+  "mails": [
+    {
+      "to": "support@utmgrabber.com",
+      "subject": "[HandL UTM Grabber - Sandbox] HandL AI Access deactivation feedback",
+      "plain_excerpt": "HandL AI Connector Access Control \u2014 deactivation feedback\n\nReason: Other\nDetails: QA opt-in email proof for PR341 at cec0c3b\nUser: haktanaicac-exit-interview@handldigital.com\nSite: https://handl-sandbox/\nWhen: 2026-10-12 15:19:16 UTC\n\nSent only because Send feedback & deactivate was clicked. Skip transmits nothing."
+    },
+    {
+      "to": "support@handldigital.com",
+      "subject": "[HandL UTM Grabber - Sandbox] HandL AI Access deactivation feedback",
+      "plain_excerpt": "HandL AI Connector Access Control \u2014 deactivation feedback\n\nReason: Other\nDetails: QA opt-in email proof for PR341 at cec0c3b\nUser: haktanaicac-exit-interview@handldigital.com\nSite: https://handl-sandbox/\nWhen: 2026-10-12 15:19:16 UTC\n\nSent only because Send feedback & deactivate was clicked. Skip transmits nothing."
+    }
+  ]
+}
