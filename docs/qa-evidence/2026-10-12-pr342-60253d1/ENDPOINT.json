@@ -1,0 +1,6 @@
+{
+  "status": 200,
+  "ctype": "text/plain; charset=UTF-8",
+  "body_len": 1543,
+  "body_head": "# HandL UTM Grabber - Sandbox\n\n> This site gates outgoing AI API calls with HandL AI Connector Access Control. Crawler preferences below mirror live robots.txt.\n\n## Outgoing AI access\n- Default for unknown plugins: Allow\n- Mode: Enforce\n- Panic freeze: Off\n- Explicit allow rules: 19\n- Explicit deny rules: 3\n- Demo mode: Off\n\n## AI crawlers\n- GPTBot (OpenAI training crawler): Allow (not listed in r"
+}
