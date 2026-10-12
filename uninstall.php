@@ -66,6 +66,7 @@ function handl_aicac_uninstall_legacy_option_keys(): array {
  */
 function handl_aicac_uninstall_purge(): void {
 	handl_aicac_uninstall_remove_mu_guard_stub();
+	handl_aicac_uninstall_remove_rollback_watermark();
 
 	// Canary honeytoken is stored under a provider-looking option name, not
 	// the handl_aicac_ prefix. Read the registry before prefixed options go.
@@ -148,6 +149,32 @@ function handl_aicac_run_uninstall(): void {
 		return;
 	}
 	handl_aicac_uninstall_purge();
+}
+
+/**
+ * Remove uploads/handl-aicac/rollback-watermark.json (and mu-plugins mirror) when present.
+ */
+function handl_aicac_uninstall_remove_rollback_watermark(): void {
+	$paths = array();
+	if ( function_exists( 'wp_upload_dir' ) ) {
+		$uploads = wp_upload_dir();
+		if ( is_array( $uploads ) && empty( $uploads['error'] ) && ! empty( $uploads['basedir'] ) ) {
+			$paths[] = rtrim( (string) $uploads['basedir'], '/\\' ) . '/handl-aicac/rollback-watermark.json';
+		}
+	}
+	$dir = defined( 'WPMU_PLUGIN_DIR' ) ? (string) WPMU_PLUGIN_DIR : '';
+	if ( '' === $dir && defined( 'WP_CONTENT_DIR' ) ) {
+		$dir = rtrim( (string) WP_CONTENT_DIR, '/\\' ) . '/mu-plugins';
+	}
+	if ( '' !== $dir ) {
+		$paths[] = rtrim( $dir, '/\\' ) . '/rollback-watermark.json';
+	}
+	foreach ( array_unique( $paths ) as $path ) {
+		if ( is_string( $path ) && '' !== $path && is_file( $path ) ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- uninstall cleanup.
+			@unlink( $path );
+		}
+	}
 }
 
 /**
