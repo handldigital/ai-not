@@ -1,0 +1,32 @@
+{
+	"$schema": "https://playground.wordpress.net/blueprint-schema.json",
+	"landingPage": "/wp-admin/admin.php?page=handl-aicac",
+	"preferredVersions": {
+		"php": "8.2",
+		"wp": "latest"
+	},
+	"features": {
+		"networking": true
+	},
+	"steps": [
+		{
+			"step": "login",
+			"username": "admin",
+			"password": "password"
+		},
+		{
+			"step": "installPlugin",
+			"pluginData": {
+				"resource": "wordpress.org/plugins",
+				"slug": "handl-ai-connector-access-control"
+			},
+			"options": {
+				"activate": true
+			}
+		},
+		{
+			"step": "runPHP",
+			"code": "<?php\nrequire_once '/wordpress/wp-load.php';\n\n// Mark onboarding complete so Live Preview skips the wizard.\nupdate_option(\n\t'handl_aicac_onboard',\n\tarray(\n\t\t'status'        => 'complete',\n\t\t'eligible'      => true,\n\t\t'step'          => 4,\n\t\t'mode'          => 'observe',\n\t\t'observe_days'  => 14,\n\t\t'review_due_ts' => 0,\n\t\t'leads_consent' => false,\n\t\t'scan_status'   => 'skipped',\n\t),\n\tfalse\n);\n\n// Enable Activity logging (direct option write \u2014 avoids save_policy side effects).\n$policy = get_option( 'handl_aicac_policy', array() );\nif ( ! is_array( $policy ) ) {\n\t$policy = array();\n}\n$policy['log_enabled'] = true;\nupdate_option( 'handl_aicac_policy', $policy, false );\n\n// Seed labeled demo Activity rows via the plugin API when available.\nif ( class_exists( '\\HandL\\AICAC\\Demo_Mode' ) ) {\n\t\\HandL\\AICAC\\Demo_Mode::seed();\n}\n"
+		}
+	]
+}
