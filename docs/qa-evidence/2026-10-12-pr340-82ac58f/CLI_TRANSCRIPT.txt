@@ -1,0 +1,16 @@
+=== CLI threat-feed status @ 82ac58f961f06174fd0831d8ee2ac56440ade94f ===
+--- backup ---
+{"ok":true,"phase":"backup","rates":null,"threat":{"etag":"\"sig-newai\"","backoff_until":0,"last_fetch_at":1791545339,"last_error":"","consecutive_failures":0,"applied_ids":[]},"sig":null}
+--- empty ---
+{"ok":true,"phase":"empty","stored":{"version":"","updated_at":0,"providers":[]}}
+No remote signatures stored.
+Cost rate table: no remote rates stored (bundled fallback).
+--- seeded ---
+{"ok":true,"phase":"seed_version","stored":{"version":"2026-10-12-qa","updated_at":1791817200,"providers":{"openai":{"input_per_m":2.5,"output_per_m":10}}}}
+No remote signatures stored.
+Cost rate table: version 2026-10-12-qa, updated 2026-10-12 15:00:00 UTC, 1 providers.
+--- airgap (temp mu) ---
+Threat feed is turned off.
+Cost rate table: feed off — bundled rates only.
+--- restore ---
+{"ok":true,"phase":"restore","restored":true}
