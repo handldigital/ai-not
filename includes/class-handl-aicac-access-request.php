@@ -354,6 +354,12 @@ final class Access_Request {
 
 		self::save_map( $map );
 
+		// AICAC-REQUEST-CHAT (#321): notify chat only for brand-new request ids
+		// (collapse of an existing pending row within 24h must not re-card).
+		if ( null === $pending && class_exists( __NAMESPACE__ . '\\Request_Chat' ) ) {
+			Request_Chat::on_created( $map[ $id ], $now );
+		}
+
 		Policy::append_log_event(
 			array(
 				'ts'       => $now,
