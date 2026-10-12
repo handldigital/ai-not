@@ -984,6 +984,53 @@ if ( ! function_exists( 'delete_user_meta' ) ) {
 		return true;
 	}
 }
+if ( ! function_exists( 'get_post_meta' ) ) {
+	/**
+	 * @param int    $post_id Post id.
+	 * @param string $key     Meta key.
+	 * @param bool   $single  Single.
+	 * @return mixed
+	 */
+	function get_post_meta( $post_id, $key = '', $single = false ) {
+		$store = $GLOBALS['handl_aicac_test_post_meta'] ?? array();
+		$pid   = (string) (int) $post_id;
+		$k     = (string) $key;
+		if ( ! isset( $store[ $pid ] ) || ! is_array( $store[ $pid ] ) || ! array_key_exists( $k, $store[ $pid ] ) ) {
+			return $single ? '' : array();
+		}
+		return $single ? $store[ $pid ][ $k ] : array( $store[ $pid ][ $k ] );
+	}
+}
+if ( ! function_exists( 'update_post_meta' ) ) {
+	/**
+	 * @param int    $post_id Post id.
+	 * @param string $key     Meta key.
+	 * @param mixed  $value   Value.
+	 */
+	function update_post_meta( $post_id, $key, $value, $prev = '' ): bool {
+		unset( $prev );
+		if ( ! isset( $GLOBALS['handl_aicac_test_post_meta'] ) || ! is_array( $GLOBALS['handl_aicac_test_post_meta'] ) ) {
+			$GLOBALS['handl_aicac_test_post_meta'] = array();
+		}
+		$pid = (string) (int) $post_id;
+		if ( ! isset( $GLOBALS['handl_aicac_test_post_meta'][ $pid ] ) || ! is_array( $GLOBALS['handl_aicac_test_post_meta'][ $pid ] ) ) {
+			$GLOBALS['handl_aicac_test_post_meta'][ $pid ] = array();
+		}
+		$GLOBALS['handl_aicac_test_post_meta'][ $pid ][ (string) $key ] = $value;
+		return true;
+	}
+}
+if ( ! function_exists( 'delete_post_meta' ) ) {
+	function delete_post_meta( $post_id, $key, $meta_value = '' ): bool {
+		unset( $meta_value );
+		$pid = (string) (int) $post_id;
+		$k   = (string) $key;
+		if ( isset( $GLOBALS['handl_aicac_test_post_meta'][ $pid ] ) && is_array( $GLOBALS['handl_aicac_test_post_meta'][ $pid ] ) ) {
+			unset( $GLOBALS['handl_aicac_test_post_meta'][ $pid ][ $k ] );
+		}
+		return true;
+	}
+}
 if ( ! function_exists( 'get_plugins' ) ) {
 	/**
 	 * @return array<string,array<string,mixed>>
@@ -1179,6 +1226,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-why.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-first-deny.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-review-nudge.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rescan-schedule.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-embargo.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rescan.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-threat-feed.php';
 require_once __DIR__ . '/stubs/namespace-filter-input.php';
