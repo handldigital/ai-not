@@ -1,0 +1,32 @@
+{
+  "ok": true,
+  "sha_hint": "cec0c3b",
+  "payload": {
+    "reason": "other",
+    "other": "QA opt-in email proof for PR341 at cec0c3b",
+    "user": "haktanaicac-exit-interview@handldigital.com",
+    "site": "https://handl-sandbox/",
+    "ts": 1791818356
+  },
+  "stored_last": {
+    "reason": "other",
+    "other": "QA opt-in email proof for PR341 at cec0c3b",
+    "user": "haktanaicac-exit-interview@handldigital.com",
+    "site": "https://handl-sandbox/",
+    "ts": 1791818356
+  },
+  "submissions": 1,
+  "mails": [
+    {
+      "to": "support@utmgrabber.com",
+      "subject": "[HandL UTM Grabber - Sandbox] HandL AI Access deactivation feedback",
+      "message": "--handl_aicac_6805f019e7f89dc2b7ea5339c54e2d2b\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\nHandL AI Connector Access Control\nSite: HandL UTM Grabber - Sandbox\n\nThis message is from HandL AI Connector Access Control on your WordPress site.\n\n=== HandL message ===\nHandL AI Connector Access Control \u2014 deactivation feedback\n\nReason: Other\nDetails: QA opt-in email proof for PR341 at cec0c3b\nUser: haktanaicac-exit-interview@handldigital.com\nSite: https://handl-sandbox/\nWhen: 2026-10-12 15:19:16 UTC\n\nSent only because Send feedback & deactivate was clicked. Skip transmits nothing.\n=== End HandL message ===\n\nYou received this because alerts or reports are turned on for this site.\nManage HandL AI Connector Access Control settings:\nhttps://handl-sandbox/wp-admin/admin.php?page=handl-aicac\n\r\n--handl_aicac_6805f019e7f89dc2b7ea5339c54e2d2b\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n<!DOCTYPE html><html><body style=\"font-family:sans-serif;font-size:14px;line-height:1.45;color:#111;\"><p><strong>HandL AI Connector Access Control</strong><br />Site: HandL UTM Grabber - Sandbox</p><p>This message is from HandL AI Connector Access Control on your WordPress site.</p><hr /><div>HandL AI Connector Access Control \u2014 deactivation feedback<br>\n<br>\nReason: Other<br>\nDetails: QA opt-in email proof for PR341 at cec0c3b<br>\nUser: haktanaicac-exit-interview@handldigital.com<br>\nSite: https://handl-sandbox/<br>\nWhen: 2026-10-12 15:19:16 UTC<br>\n<br>\nSent only because Send feedback &amp; deactivate was clicked. Skip transmits nothing.</div><hr /><p>You received this because alerts or reports are turned on for this site.</p><p>Manage HandL AI Connector Access Control settings:</p><p><a href=\"https://handl-sandbox/wp-admin/admin.php?page=handl-aicac\">https://handl-sandbox/wp-admin/admin.php?page=handl-aicac</a></p></body></html>\r\n--handl_aicac_6805f019e7f89dc2b7ea5339c54e2d2b--\r\n"
+    },
+    {
+      "to": "support@handldigital.com",
+      "subject": "[HandL UTM Grabber - Sandbox] HandL AI Access deactivation feedback",
+      "message": "--handl_aicac_54854d889d5904a609c4666d04bd61c0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\nHandL AI Connector Access Control\nSite: HandL UTM Grabber - Sandbox\n\nThis message is from HandL AI Connector Access Control on your WordPress site.\n\n=== HandL message ===\nHandL AI Connector Access Control \u2014 deactivation feedback\n\nReason: Other\nDetails: QA opt-in email proof for PR341 at cec0c3b\nUser: haktanaicac-exit-interview@handldigital.com\nSite: https://handl-sandbox/\nWhen: 2026-10-12 15:19:16 UTC\n\nSent only because Send feedback & deactivate was clicked. Skip transmits nothing.\n=== End HandL message ===\n\nYou received this because alerts or reports are turned on for this site.\nManage HandL AI Connector Access Control settings:\nhttps://handl-sandbox/wp-admin/admin.php?page=handl-aicac\n\r\n--handl_aicac_54854d889d5904a609c4666d04bd61c0\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n<!DOCTYPE html><html><body style=\"font-family:sans-serif;font-size:14px;line-height:1.45;color:#111;\"><p><strong>HandL AI Connector Access Control</strong><br />Site: HandL UTM Grabber - Sandbox</p><p>This message is from HandL AI Connector Access Control on your WordPress site.</p><hr /><div>HandL AI Connector Access Control \u2014 deactivation feedback<br>\n<br>\nReason: Other<br>\nDetails: QA opt-in email proof for PR341 at cec0c3b<br>\nUser: haktanaicac-exit-interview@handldigital.com<br>\nSite: https://handl-sandbox/<br>\nWhen: 2026-10-12 15:19:16 UTC<br>\n<br>\nSent only because Send feedback &amp; deactivate was clicked. Skip transmits nothing.</div><hr /><p>You received this because alerts or reports are turned on for this site.</p><p>Manage HandL AI Connector Access Control settings:</p><p><a href=\"https://handl-sandbox/wp-admin/admin.php?page=handl-aicac\">https://handl-sandbox/wp-admin/admin.php?page=handl-aicac</a></p></body></html>\r\n--handl_aicac_54854d889d5904a609c4666d04bd61c0--\r\n"
+    }
+  ],
+  "inbox_const": "support@handldigital.com"
+}
