@@ -114,6 +114,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-disclosure.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-badge.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-ai-json.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-user-quota.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-privacy-hooks.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-preflight-scan.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-chat-notify.php';
@@ -164,6 +165,7 @@ final class Plugin {
 		Disclosure::instance()->init();
 		Badge::instance()->init();
 		Ai_Json::instance()->init();
+		User_Quota::instance()->init();
 		Chat_Notify::init();
 		Threat_Feed::init();
 		Demo_Mode::init();
@@ -185,6 +187,7 @@ final class Plugin {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rescan.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-threat-feed.php';
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-latency.php';
+			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-user-quota.php';
 			CLI::register();
 			CLI_Audit::register();
 			CLI_Policy_Apply::register();
@@ -199,6 +202,7 @@ final class Plugin {
 			CLI_Rescan::register();
 			CLI_Threat_Feed::register();
 			CLI_Latency::register();
+			CLI_User_Quota::register();
 		}
 	}
 
