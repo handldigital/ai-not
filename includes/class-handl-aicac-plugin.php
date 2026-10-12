@@ -123,6 +123,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-first-deny.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-review-nudge.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rescan-schedule.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-friction.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -169,6 +170,7 @@ final class Plugin {
 		Demo_Mode::init();
 		Why::init();
 		Rescan_Schedule::init();
+		Friction::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
