@@ -122,6 +122,23 @@ if ( ! function_exists( 'sanitize_key' ) ) {
 	}
 }
 
+if ( ! function_exists( 'sanitize_user' ) ) {
+	/**
+	 * Minimal stand-in for WordPress sanitize_user().
+	 *
+	 * @param string $username Raw username.
+	 * @param bool   $strict   Unused in the stub.
+	 */
+	function sanitize_user( $username, $strict = false ): string {
+		unset( $strict );
+		$username = (string) $username;
+		$username = strip_tags( $username );
+		$username = preg_replace( '/[^a-zA-Z0-9 _.\-@]/', '', $username ) ?? $username;
+
+		return trim( $username );
+	}
+}
+
 if ( ! function_exists( 'sanitize_email' ) ) {
 	/**
 	 * @param string $email Raw email.
@@ -1179,6 +1196,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-why.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-first-deny.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-review-nudge.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rescan-schedule.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-exit-interview.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rescan.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-threat-feed.php';
 require_once __DIR__ . '/stubs/namespace-filter-input.php';
