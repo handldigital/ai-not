@@ -5733,6 +5733,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '<th scope="row">' . esc_html__( 'Estimated spend rates', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<td>';
 		echo '<p class="description" style="margin-top:0;">' . esc_html__( 'Enter approximate USD prices per 1 million tokens to calculate the Estimated $ column. These values are for estimates only, not billing or enforcement.', 'handl-ai-connector-access-control' ) . '</p>';
+		$this->render_rates_feed_status();
 		echo '<p><strong>' . esc_html__( 'Default rates', 'handl-ai-connector-access-control' ) . '</strong></p>';
 		echo '<label for="handl-aicac-est-in">' . esc_html__( 'Input tokens ($ per 1M)', 'handl-ai-connector-access-control' ) . '</label> ';
 		echo '<input type="number" step="0.01" min="0" max="10000" class="small-text" id="handl-aicac-est-in" name="handl_aicac_est_usd_input_per_m" value="' . esc_attr( (string) $rates['input_per_m'] ) . '" /> ';
@@ -8890,6 +8891,35 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		}
 
 		return $html;
+	}
+
+	/**
+	 * AICAC-RATES-FEED (#334): signed rate-table version/date under Estimated spend.
+	 */
+	private function render_rates_feed_status(): void {
+		if ( ! class_exists( Rates_Feed::class, false ) ) {
+			return;
+		}
+		if ( class_exists( Threat_Feed::class, false ) && Threat_Feed::is_fetch_disabled() ) {
+			echo '<p class="description handl-aicac-rates-feed-status">' . esc_html__( 'Signed cost rate table: feed is off. Estimates use your saved rates or the bundled placeholders.', 'handl-ai-connector-access-control' ) . '</p>';
+			return;
+		}
+		$stored = Rates_Feed::stored_rates();
+		if ( '' === $stored['version'] && empty( $stored['providers'] ) ) {
+			echo '<p class="description handl-aicac-rates-feed-status">' . esc_html__( 'Signed cost rate table: none stored yet. Estimates use your saved rates or the bundled placeholders.', 'handl-ai-connector-access-control' ) . '</p>';
+			return;
+		}
+		$when = $stored['updated_at'] > 0
+			? gmdate( 'Y-m-d H:i', $stored['updated_at'] ) . ' UTC'
+			: __( 'unknown time', 'handl-ai-connector-access-control' );
+		echo '<p class="description handl-aicac-rates-feed-status">' . esc_html(
+			sprintf(
+				/* translators: 1: rate table version, 2: UTC timestamp */
+				__( 'Signed cost rate table: version %1$s (updated %2$s). Your overrides above still win. Estimates only — not billing.', 'handl-ai-connector-access-control' ),
+				'' !== $stored['version'] ? $stored['version'] : __( '(none)', 'handl-ai-connector-access-control' ),
+				$when
+			)
+		) . '</p>';
 	}
 
 	/**

@@ -80,6 +80,9 @@ final class Threat_Feed {
 		self::$registered = false;
 		delete_option( self::OPTION_KEY );
 		delete_option( self::SIGNATURE_OPTION_KEY );
+		if ( class_exists( Rates_Feed::class, false ) ) {
+			Rates_Feed::reset_for_tests();
+		}
 		unset( $GLOBALS['handl_aicac_threat_feed_http'] );
 	}
 
@@ -203,6 +206,10 @@ final class Threat_Feed {
 			self::apply_remote_signatures( $verified['signatures'], $now );
 		}
 
+		if ( ! empty( $verified['rates_present'] ) && class_exists( Rates_Feed::class, false ) ) {
+			Rates_Feed::apply_remote_rates( $verified['rates'], $now );
+		}
+
 		$applied_ids = isset( $state['applied_ids'] ) && is_array( $state['applied_ids'] )
 			? $state['applied_ids']
 			: array();
@@ -289,7 +296,15 @@ final class Threat_Feed {
 	}
 
 	/**
-	 * @return array{ok:bool,advisories:list<array<string,mixed>>,signatures:list<array<string,mixed>>,signatures_present:bool,error:string}
+	 * @return array{
+	 *   ok:bool,
+	 *   advisories:list<array<string,mixed>>,
+	 *   signatures:list<array<string,mixed>>,
+	 *   signatures_present:bool,
+	 *   rates:array{version:string,providers:array<string,array{input_per_m:float,output_per_m:float}>},
+	 *   rates_present:bool,
+	 *   error:string
+	 * }
 	 */
 	public static function verify_body( string $body ): array {
 		$fail = array(
@@ -297,6 +312,11 @@ final class Threat_Feed {
 			'advisories'         => array(),
 			'signatures'         => array(),
 			'signatures_present' => false,
+			'rates'              => array(
+				'version'   => '',
+				'providers' => array(),
+			),
+			'rates_present'      => false,
 			'error'              => 'invalid_signature',
 		);
 		$decoded = json_decode( $body, true );
@@ -348,11 +368,25 @@ final class Threat_Feed {
 			}
 		}
 
+		$rates         = array(
+			'version'   => '',
+			'providers' => array(),
+		);
+		$rates_present = array_key_exists( 'rates', $payload );
+		if ( $rates_present && class_exists( Rates_Feed::class, false ) ) {
+			$block = Rates_Feed::sanitize_rates_block( $payload['rates'] );
+			if ( null !== $block ) {
+				$rates = $block;
+			}
+		}
+
 		return array(
 			'ok'                 => true,
 			'advisories'         => $advisories,
 			'signatures'         => $signatures,
 			'signatures_present' => $signatures_present,
+			'rates'              => $rates,
+			'rates_present'      => $rates_present,
 			'error'              => '',
 		);
 	}
