@@ -1,0 +1,21 @@
+PR434 / #429 exact-SHA evidence at dbbef58625b140e406b9f67197beb63c81b3b4fd
+
+RENDER
+{
+  "ok": true,
+  "bytes": 5316,
+  "findings": 2,
+  "sleepwalking": 1,
+  "alarm_fatigued": 1,
+  "has_census_h2": true,
+  "has_findings_h2": true,
+  "has_cannot_fire": true,
+  "has_5000": true,
+  "has_38": true,
+  "has_sleepwalking": true,
+  "has_alarm_fatigued": true,
+  "verdicts": [
+    "sleepwalking",
+    "alarm_fatigued"
+  ]
+}
