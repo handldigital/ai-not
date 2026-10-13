@@ -1,0 +1,38 @@
+PR432 / #427 exact-SHA evidence at 4d6e2d787d98a17e46d3764acd80dd7c336e6f19
+
+SEED
+{
+  "phase": "seed",
+  "enabled": true,
+  "outbound": true,
+  "findings": 16,
+  "unacknowledged": 16,
+  "inventory": 13,
+  "summary_sample": "Deny alert email emails deny reasons to a @gmail.com inbox.",
+  "subject": "[HandL UTM Grabber - Sandbox] [POSTCARD] New outbound exposure: 16 pairing(s) (deny reasons, site URLs, spend amounts)",
+  "body": "AI Access Control found outbound senders that can leave this site with sensitive content categories. Destinations are shown as domains/hosts only — no sample content is included.\n\nCategories involved: deny reasons, site URLs, spend amounts\n\n- Deny alert email emails deny reasons to a @gmail.com inbox.\n- Deny alert email emails site URLs to a @gmail.com inbox.\n- Deny alert webhook POST deny reasons to webhook host hooks.example-automation.com.\n- Deny alert webhook POST site URLs to webhook host hooks.example-automation.com.\n- Denial digest email emails deny reasons to a @gmail.com inbox.\n- Denial digest email emails site URLs to a @gmail.com inbox.\n- Denial digest webhook POST deny reasons to webhook host hooks.example-automation.com.\n- Denial digest webhook POST site URLs to webhook host hooks.example-automation.com.\n- Governance digest email emails spend amounts to a @gmail.com inbox weekly.\n- Governance digest email emails site URLs to a @gmail.com inbox weekly.\n- Weekly report email emails spend amounts to a @gmail.com inbox weekly.\n- Weekly report email emails deny reasons to a @gmail.com inbox weekly.\n- Monthly report email emails spend amounts to a @gmail.com inbox monthly.\n- Monthly report email emails site URLs to a @gmail.com inbox monthly.\n- Latency p95 alert email / webhook emails site URLs to a @gmail.com inbox.\n- Latency p95 alert email / webhook POST site URLs to webhook host hooks.example-automation.com.\n\nSuggestion only: Postcard never edits a sender, recipient, or webhook. Acknowledge pairings you accept, or change the owning control.\n\nOpen postcard: https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-postcard",
+  "has_full_email": false,
+  "has_full_webhook": false,
+  "has_gmail_domain": true,
+  "has_webhook_host": true
+}
+
+RENDER
+{
+  "ok": true,
+  "admin_bytes": 12204,
+  "alert_bytes": 2699,
+  "findings": 16,
+  "has_exhaust": true,
+  "has_findings_h2": true,
+  "has_gmail_domain": true,
+  "has_webhook_host": true,
+  "has_full_email": false,
+  "has_full_webhook": false,
+  "has_postcard_tag": true,
+  "has_categories": true,
+  "subject": "[HandL UTM Grabber - Sandbox] [POSTCARD] New outbound exposure: 16 pairing(s) (deny reasons, site URLs, spend amounts)"
+}
+
+ALERT SUBJECT
+[HandL UTM Grabber - Sandbox] [POSTCARD] New outbound exposure: 16 pairing(s) (deny reasons, site URLs, spend amounts)
