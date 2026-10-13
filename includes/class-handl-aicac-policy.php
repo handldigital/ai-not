@@ -495,7 +495,7 @@ final class Policy {
 		}
 
 		$instance = self::instance();
-		return $instance->decide_detailed( $policy, $plugin_basename, $operation, $armed_tools ?? array(), $capability_family, $now );
+		return apply_filters( 'handl_aicac_evaluate_result', $instance->decide_detailed( $policy, $plugin_basename, $operation, $armed_tools ?? array(), $capability_family, $now ), $policy, $plugin_basename ); // AICAC-ENV-POLICY (#363) sanctioned one-line hook.
 	}
 
 	/**
