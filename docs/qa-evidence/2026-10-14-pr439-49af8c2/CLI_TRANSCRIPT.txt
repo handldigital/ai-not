@@ -1,0 +1,13 @@
+PR439 / #437 exact-SHA evidence at 49af8c20999389af43a0457008b50f365f261533
+
+RENDER
+{
+  "ok": true,
+  "key": "21|plugin",
+  "has_candidates_h2": true,
+  "has_preview_h2": true,
+  "has_send_button": true,
+  "has_sent_notice": true,
+  "has_quiet": true,
+  "composed_ok": true
+}
