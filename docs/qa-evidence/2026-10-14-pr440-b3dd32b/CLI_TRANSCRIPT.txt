@@ -1,0 +1,4 @@
+PR440 / #438 exact-SHA evidence at b3dd32b2e35d1cd84bfa3a6f7914cd98c1f3f9f0
+
+RENDER
+{"ok":true,"qualifies":false,"has_welcome_notice":true,"has_open_catchup":true,"has_catchup_h2":true,"has_while_away":true,"has_settings_changes":true,"has_source_unavail":true,"has_traffic_unavail":true,"notice_bytes":1591,"brief_bytes":2450,"unavail_bytes":2434}
