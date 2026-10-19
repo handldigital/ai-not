@@ -259,14 +259,14 @@ final class Audit_Export {
 				break;
 			}
 		}
-		fputcsv( $fh, self::column_headers( $include_rule_note ) );
+		fputcsv( $fh, self::column_headers( $include_rule_note ), ',', '"', '' );
 
 		foreach ( $filtered as $row ) {
 			$cells = self::format_row( $row, $plugins, $policy, $user_labels );
 			if ( $include_rule_note ) {
 				$cells[] = Rule_Notes::from_activity_row( $row );
 			}
-			fputcsv( $fh, $cells );
+			fputcsv( $fh, $cells, ',', '"', '' );
 		}
 
 		rewind( $fh );
