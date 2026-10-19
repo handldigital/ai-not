@@ -1,0 +1,38 @@
+{
+  "sha": "96dbcdf9c1f3e04576f8fc955d59be9999900dea",
+  "base": "http://127.0.0.1:4176",
+  "proof": {
+    "title": "WordPress calculator plugin privacy | HandL WP",
+    "pathname": "/wp-calculator-plugin-privacy",
+    "trackerSources": [
+      "http://127.0.0.1:4176/utm.js?license=61c3e0b3a9a6417ca711231a66723836"
+    ],
+    "externalTrackerSources": [],
+    "firstPartyResponses": [
+      {
+        "url": "http://127.0.0.1:4176/utm.js?license=61c3e0b3a9a6417ca711231a66723836",
+        "status": 200,
+        "contentLength": null
+      }
+    ]
+  },
+  "directChromeUaGet": {
+    "withoutReferer": {
+      "status": 200,
+      "contentLength": null
+    },
+    "withReferer": {
+      "status": 200,
+      "contentLength": null
+    }
+  },
+  "expected": {
+    "path": "/wp-calculator-plugin-privacy",
+    "trackerSource": "/utm.js?license=61c3e0b3a9a6417ca711231a66723836",
+    "externalTrackerSources": [],
+    "directChromeUaGet": {
+      "withoutReferer": 200,
+      "withReferer": 200
+    }
+  }
+}
