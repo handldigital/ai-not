@@ -1,0 +1,32 @@
+{
+  "sha": "73b6731d268faf6c77cd1c2a1ba9bf7c03ea5613",
+  "proof": {
+    "title": "WordPress midwife plugin privacy | HandL WP",
+    "path": "/wp-midwife-plugin-privacy",
+    "rows": [
+      "BookingPress – Appointment Booking Calendar",
+      "KiviCare – Clinic & Patient Management System (EHR)",
+      "HIPAAtizer"
+    ],
+    "verdicts": [
+      "local-first",
+      "local-first",
+      "vendor-connector"
+    ],
+    "cta": "/ad-attribution-leak-finder?utm_source=wp-midwife-plugin-privacy&utm_content=scan-cta"
+  },
+  "expected": {
+    "path": "/wp-midwife-plugin-privacy",
+    "rows": [
+      "BookingPress – Appointment Booking Calendar",
+      "KiviCare – Clinic & Patient Management System (EHR)",
+      "HIPAAtizer"
+    ],
+    "verdicts": [
+      "local-first",
+      "local-first",
+      "vendor-connector"
+    ],
+    "cta": "/ad-attribution-leak-finder?utm_source=wp-midwife-plugin-privacy&utm_content=scan-cta"
+  }
+}
