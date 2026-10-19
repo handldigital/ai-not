@@ -1,0 +1,58 @@
+{
+  "sha": "539ca4a6d256f20c893515aea76194a9b69e91d1",
+  "base": "http://127.0.0.1:4175",
+  "proof": {
+    "title": "WordPress optometry plugin privacy | HandL WP",
+    "path": "/wp-optometry-plugin-privacy",
+    "rowCount": 4,
+    "rowNames": [
+      "CNX Medical Lite – Clinic EHR & AppointmentsDocumented self-hosted clinic EHR (plugin version 0.19.6). Patient records can include national ID, demographics, allergies, current medication, emergency contact, visit history, prescriptions, and attached images. The listing states all patient and clinical data stays in WordPress tables (prefix cnxmedical_) with no third-party API, trackers, or analytics, and fonts are bundled. Only logged-in WordPress users can open the clinic app at /cnxmedical/. Eye-exam, glasses-prescription, or insurance fields depend on what the clinic enters; they are not documented as optometry-specific defaults. Retention is not specified as a default purge. Public booking-form browser hosts are unverified.",
+      "DocBooker – Doctor Appointment Booking & Hospital Management SystemDocumented clinic booking suite (version 2.1.1) that lists eye-care practices among intended uses. Free-version patient records store name, email, and phone with each booking in WordPress. The listing describes a front-end multi-step booking form and wp-admin booking management. Clinic maps use Leaflet/OpenStreetMap; visitor-browser map hosts are unverified. Confirmation emails use the site mail path. Pro features such as a patient portal, OTP login, date of birth, address, and lab reports were not assessed as free-version behavior. Exam-history or prescription fields are not documented defaults in the free listing.",
+      "GO Eyewear Try-OnConnects WooCommerce to the GO service. After a shopper clicks Try-on on a product with try-on enabled, the storefront loads the try-on widget from media.glasses4u.io and sends the frame public model id. The listing states face detection and rendering happen in the shopper browser and the camera image is not uploaded. Connecting the store from wp-admin sends site URL, site name, administrator email, and locale to glasson.sk-global.biz; that is an admin path, not a visitor exam record. Optional pupillary-distance measurement is a paid plan and was not assessed. Review access and retention in the GO account.",
+      "SpecFit | Try & Shop – AI Virtual Try-On for WooCommerceVirtual try-on for eyeglasses, sunglasses, and optical frames on WooCommerce product pages, powered by TrynShop (plugin version 10.0.46). Setup collects an email address and OTP, then links the shop. Camera or webcam try-on and 3D processing run through TrynShop. The listing does not name a visitor-browser host for the try-on widget. A camera session is not an eye exam or prescription record. Review access and retention in the TrynShop account. Browser hosts for the product-page widget are unverified."
+    ],
+    "verdicts": [
+      "local-first",
+      "local-first",
+      "vendor-connector",
+      "vendor-connector"
+    ],
+    "ranked": [
+      "true",
+      "true",
+      "true",
+      "true"
+    ],
+    "goHost": true,
+    "cta": "/ad-attribution-leak-finder?utm_source=wp-optometry-plugin-privacy&utm_content=scan-cta",
+    "methodology": "This is a documentation review, not a test of your site. Eye-exam notes, glasses prescriptions, or insurance details often depend on the fields or free-text notes you configure. A camera try-on is not an eye exam. Consent timing, access controls, and retention have not been tested. This page describes storage paths only. Review stored records, connected services, exports, notification emails, and backups.",
+    "related": [
+      "/wp-chiropractic-plugin-privacy",
+      "/wp-therapy-plugin-privacy",
+      "/wp-pharmacy-plugin-privacy",
+      "/wp-plugin-privacy#industries"
+    ],
+    "sourceLinks": [
+      "https://wordpress.org/plugins/cnxmedical/",
+      "https://plugins.svn.wordpress.org/cnxmedical/tags/0.19.6/readme.txt",
+      "https://wordpress.org/plugins/doc-booker/",
+      "https://docbooker.wpdreamers.com/documentation",
+      "https://wordpress.org/plugins/go-eyewear-try-on/",
+      "https://plugins.svn.wordpress.org/go-eyewear-try-on/tags/0.1.0/readme.txt",
+      "https://glasson.io/privacy.html",
+      "https://wordpress.org/plugins/try-on-for-woocommerce/",
+      "https://plugins.svn.wordpress.org/try-on-for-woocommerce/tags/10.0.46/readme.txt"
+    ]
+  },
+  "expected": {
+    "path": "/wp-optometry-plugin-privacy",
+    "rowCount": 4,
+    "verdicts": [
+      "local-first",
+      "local-first",
+      "vendor-connector",
+      "vendor-connector"
+    ],
+    "cta": "/ad-attribution-leak-finder?utm_source=wp-optometry-plugin-privacy&utm_content=scan-cta"
+  }
+}
