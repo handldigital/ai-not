@@ -1,0 +1,31 @@
+{
+  "pr": 770,
+  "issue": 692,
+  "head": "41016a0fd7cf0ba784531ae64f9c20329f4126e5",
+  "route": "/wp-dermatology-plugin-privacy",
+  "method": "exact-head production build/prerender plus Chrome browser and Puppeteer capture",
+  "checks": {
+    "production_build_and_prerender": "passed: 470 routes",
+    "merge_state": "CLEAN / MERGEABLE",
+    "size_guard": "SUCCESS",
+    "template_yaml_changed": false,
+    "corpus_order": [
+      "Dermatriq – Dermatology Clinic Management System",
+      "Medical Before After Gallery",
+      "Dermaself AI Beauty Agent"
+    ],
+    "groups": "two local-first rows followed by Dermaself vendor connector",
+    "cta": "/ad-attribution-leak-finder?utm_source=wp-dermatology-plugin-privacy&utm_content=scan-cta",
+    "related_routes": [
+      "/wp-fertility-plugin-privacy",
+      "/wp-therapy-plugin-privacy",
+      "/wp-pharmacy-plugin-privacy",
+      "/wp-plugin-privacy#industries"
+    ],
+    "source_urls_http_200": 7
+  },
+  "evidence": {
+    "dermatology-hero-41016a0.png": "Rendered route hero, disclaimer, CTA, and storage-path framing.",
+    "dermatology-table-41016a0.png": "Rendered three-row documented corpus, ordering, visitor-browser host, and source columns."
+  }
+}
