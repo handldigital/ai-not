@@ -1,0 +1,31 @@
+{
+  "pr": 392,
+  "issue": 389,
+  "name": "AICAC-TRAIN-EXPOSURE",
+  "exact_sha": "7ee73afe4f7a66d0862fc55b174253209adda60e",
+  "captured_at": "2026-10-22T22:12:36.313Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 7ee73af (ai-not-pr392); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-defaults-off.png",
+      "bytes": 87809,
+      "heading": "AC1 defaults off; feature off skips alerts"
+    },
+    {
+      "file": "02-exposure-attest.png",
+      "bytes": 111211,
+      "heading": "AC2 exposure roster; attestation clears exposure"
+    },
+    {
+      "file": "03-history-alert.png",
+      "bytes": 111767,
+      "heading": "AC3 attestation history append-only; alert once"
+    },
+    {
+      "file": "04-csv-page.png",
+      "bytes": 109915,
+      "heading": "AC4 CSV and page assertion framing"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"7ee73afe4f7a66d0862fc55b174253209adda60e\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

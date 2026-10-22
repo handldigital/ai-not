@@ -1,0 +1,31 @@
+{
+  "pr": 388,
+  "issue": 385,
+  "name": "AICAC-VOLUME",
+  "exact_sha": "1f417d9f74a7933cb23b09edbeebc851799403f8",
+  "captured_at": "2026-10-22T22:12:35.228Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 1f417d9 (ai-not-pr388); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-defaults-off.png",
+      "bytes": 98564,
+      "heading": "AC1 defaults off; body_bytes counts only"
+    },
+    {
+      "file": "02-ai-host-accumulate.png",
+      "bytes": 104772,
+      "heading": "AC2 AI host accumulates; never stores content"
+    },
+    {
+      "file": "03-spike-ceiling.png",
+      "bytes": 114582,
+      "heading": "AC3 10x spike and ceiling alert once per plugin+day"
+    },
+    {
+      "file": "04-roster-csv.png",
+      "bytes": 96307,
+      "heading": "AC4 roster and CSV"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"1f417d9f74a7933cb23b09edbeebc851799403f8\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

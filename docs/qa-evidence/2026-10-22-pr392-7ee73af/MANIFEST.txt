@@ -1,0 +1,12 @@
+exact_sha=7ee73afe4f7a66d0862fc55b174253209adda60e
+short_sha=7ee73af
+captured_at=2026-10-22T22:12:36.313Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 7ee73af (ai-not-pr392); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.
+files:
+  01-defaults-off.png (87809 B)
+  02-exposure-attest.png (111211 B)
+  03-history-alert.png (111767 B)
+  04-csv-page.png (109915 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

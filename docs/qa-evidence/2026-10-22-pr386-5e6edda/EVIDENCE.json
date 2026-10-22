@@ -1,0 +1,31 @@
+{
+  "pr": 386,
+  "issue": 383,
+  "name": "AICAC-LEGAL-HOLD",
+  "exact_sha": "5e6edda364f768daf7e04c3ad2926bcefc4862c6",
+  "captured_at": "2026-10-22T22:12:34.694Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 5e6edda (ai-not-pr386); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-inert-prune.png",
+      "bytes": 93705,
+      "heading": "AC1 inert with zero holds; prune removes expired"
+    },
+    {
+      "file": "02-create-survives.png",
+      "bytes": 110691,
+      "heading": "AC2 create hold; user scope survives prune"
+    },
+    {
+      "file": "03-release-restores.png",
+      "bytes": 101850,
+      "heading": "AC3 release restores purge"
+    },
+    {
+      "file": "04-csv-reason.png",
+      "bytes": 96403,
+      "heading": "AC4 roster CSV and reason required"
+    }
+  ],
+  "export_stdout": "Deprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 262\n\nDeprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 269\n\nDeprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 262\n\nDeprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 269\n\nDeprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 262\n\nDeprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-legal-hold.php on line 826\n\nDeprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-legal-hold.php on line 831\n{\n    \"head\": \"5e6edda364f768daf7e04c3ad2926bcefc4862c6\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

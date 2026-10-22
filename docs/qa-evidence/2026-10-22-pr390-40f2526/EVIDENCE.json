@@ -1,0 +1,31 @@
+{
+  "pr": 390,
+  "issue": 387,
+  "name": "AICAC-CARBON",
+  "exact_sha": "40f25261f996c3b9ebf2bed5e08b450ddf123ce9",
+  "captured_at": "2026-10-22T22:12:35.781Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 40f2526 (ai-not-pr390); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-defaults-energy.png",
+      "bytes": 99535,
+      "heading": "AC1 defaults off; energy uses model factor"
+    },
+    {
+      "file": "02-rollups-roster.png",
+      "bytes": 103770,
+      "heading": "AC2 rollups roster with estimate framing"
+    },
+    {
+      "file": "03-page-framing.png",
+      "bytes": 103454,
+      "heading": "AC3 off page prompt; enabled estimate framing"
+    },
+    {
+      "file": "04-filter-stale.png",
+      "bytes": 95820,
+      "heading": "AC4 filter override and factor staleness"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"40f25261f996c3b9ebf2bed5e08b450ddf123ce9\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

@@ -1,0 +1,21 @@
+
+Deprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 262
+
+Deprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 269
+
+Deprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 262
+
+Deprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 269
+
+Deprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 262
+
+Deprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-legal-hold.php on line 826
+
+Deprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-legal-hold.php on line 831
+{
+    "head": "5e6edda364f768daf7e04c3ad2926bcefc4862c6",
+    "ac1": true,
+    "ac2": true,
+    "ac3": true,
+    "ac4": true
+}
