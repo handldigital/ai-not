@@ -1,0 +1,36 @@
+{
+  "pr": 362,
+  "issue": 359,
+  "name": "AICAC-RECERT",
+  "exact_sha": "9feb424442bc4f0f9cf4e7d97cd627bf04e86760",
+  "captured_at": "2026-10-22T21:53:01.390Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 9feb424 (ai-not-pr362); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-defaults-inventory.png",
+      "bytes": 120775,
+      "heading": "AC1 defaults off with inventory of standing grants"
+    },
+    {
+      "file": "02-digest-links.png",
+      "bytes": 242769,
+      "heading": "AC2 cycle digest email with confirm and revoke links"
+    },
+    {
+      "file": "03-confirm-revoke-audit.png",
+      "bytes": 107377,
+      "heading": "AC3 confirm and revoke audit-logged via owning APIs"
+    },
+    {
+      "file": "04-grace-flagged.png",
+      "bytes": 112889,
+      "heading": "AC4 grace flags unattested; auto-suspend off keeps grants"
+    },
+    {
+      "file": "05-noop-save.png",
+      "bytes": 106219,
+      "heading": "AC5 untouched settings save is byte-identical noop"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"9feb424442bc4f0f9cf4e7d97cd627bf04e86760\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true,\n    \"ac5\": true\n}"
+}

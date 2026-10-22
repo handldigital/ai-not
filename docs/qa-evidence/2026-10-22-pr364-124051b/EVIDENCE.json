@@ -1,0 +1,36 @@
+{
+  "pr": 364,
+  "issue": 361,
+  "name": "AICAC-CIRCUIT-BREAKER",
+  "exact_sha": "124051b5b2710436225cd64ff4359ab6d6d9360d",
+  "captured_at": "2026-10-22T21:53:02.205Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 124051b (ai-not-pr364); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-trip-deny.png",
+      "bytes": 107730,
+      "heading": "AC1 consecutive failures trip and deny with circuit-open reason"
+    },
+    {
+      "file": "02-alert-dedupe.png",
+      "bytes": 102312,
+      "heading": "AC2 one Circuit open alert per trip window"
+    },
+    {
+      "file": "03-half-open-probe.png",
+      "bytes": 116158,
+      "heading": "AC3 half-open probe success closes; failure re-opens"
+    },
+    {
+      "file": "04-manual-trip-reset.png",
+      "bytes": 96315,
+      "heading": "AC4 manual trip and reset audit-logged"
+    },
+    {
+      "file": "05-off-default-noop.png",
+      "bytes": 101844,
+      "heading": "AC5 off by default; identical save is noop"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"124051b5b2710436225cd64ff4359ab6d6d9360d\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true,\n    \"ac5\": true\n}"
+}

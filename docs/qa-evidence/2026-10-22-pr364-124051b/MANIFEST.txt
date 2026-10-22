@@ -1,0 +1,13 @@
+exact_sha=124051b5b2710436225cd64ff4359ab6d6d9360d
+short_sha=124051b
+captured_at=2026-10-22T21:53:02.205Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 124051b (ai-not-pr364); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.
+files:
+  01-trip-deny.png (107730 B)
+  02-alert-dedupe.png (102312 B)
+  03-half-open-probe.png (116158 B)
+  04-manual-trip-reset.png (96315 B)
+  05-off-default-noop.png (101844 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

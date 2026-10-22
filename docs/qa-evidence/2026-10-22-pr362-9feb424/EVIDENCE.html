@@ -1,0 +1,17 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR362 evidence</title></head><body><p id="aicac-qa-stamp">SHA 9feb424442bc4f0f9cf4e7d97cd627bf04e86760 · PR362 / #359 AICAC-RECERT</p><section><h2>AC1 defaults off with inventory of standing grants</h2><dl><dt>enabled / cycle_days / auto_suspend</dt><dd>false / 90 / false</dd><dt>grant ids</dt><dd>temp_allow:perm/perm.php, temp_allow:temp/temp.php, role_gate:editor, role_gate:author</dd><dt>expired gone excluded</dt><dd>yes</dd></dl><p class="pass">AC1 pass</p></section><section><h2>AC2 cycle digest email with confirm and revoke links</h2><dl><dt>started / sent</dt><dd>true / true</dd><dt>email to</dt><dd>haktan+aicac-recert@handldigital.com</dd><dt>confirm link count</dt><dd>8</dd><dt>revoke link count</dt><dd>8</dd><dt>open hook</dt><dd>handl_aicac_recert_open</dd><dt>body excerpt</dt><dd><pre>--handl_aicac_a85049dbf07b2804e7f3056178f6c288
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+HandL AI Connector Access Control
+Site: Test Site
+
+This message is from HandL AI Connector Access Control on your WordPress site.
+
+=== HandL message ===
+4 standing AI access grants need recertification.
+Confirm each grant is still needed, or revoke it. Grants left unattested for 14 days after this email are flagged.
+Links require you to be logged in as an administrator, are single-use, and expire in 48 hours. Opening a link changes nothing until you confirm on the next screen.
+
+- [temp_allow] perm/perm.php
+  Expires: no expiry | Last used: no recent activity
+  Confirm s</pre></dd></dl><p class="pass">AC2 pass</p></section><section><h2>AC3 confirm and revoke audit-logged via owning APIs</h2><dl><dt>confirm / revoke</dt><dd>true / true</dd><dt>decisions</dt><dd>[&quot;recert_confirm&quot;,&quot;recert_revoke&quot;]</dd><dt>temp/temp.php after revoke</dt><dd>gone</dd></dl><p class="pass">AC3 pass</p></section><section><h2>AC4 grace flags unattested; auto-suspend off keeps grants</h2><dl><dt>inside grace flagged</dt><dd>0</dd><dt>after grace flagged / suspended</dt><dd>3 / 0</dd><dt>perm status / editor status</dt><dd>flagged / ok</dd><dt>auto_suspend</dt><dd>false</dd></dl><p class="pass">AC4 pass</p></section><section><h2>AC5 untouched settings save is byte-identical noop</h2><dl><dt>empty save wrote option</dt><dd>false</dd><dt>defaults absent before enable</dt><dd>yes</dd><dt>identical re-save wrote</dt><dd>false</dd></dl><p class="pass">AC5 pass</p></section></body></html>

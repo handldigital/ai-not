@@ -1,0 +1,31 @@
+{
+  "pr": 366,
+  "issue": 335,
+  "name": "AICAC-KEY-CUSTODY",
+  "exact_sha": "9a88becadf37e492e87d18580c0da5347ab99973",
+  "captured_at": "2026-10-22T21:53:02.924Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 9a88bec (ai-not-pr366); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-vault-mask.png",
+      "bytes": 105832,
+      "heading": "AC1 vault encrypts at rest and masks suffix"
+    },
+    {
+      "file": "02-inject-custody.png",
+      "bytes": 103247,
+      "heading": "AC2 enabled injects key with key_source custody"
+    },
+    {
+      "file": "03-revoke-policy-block.png",
+      "bytes": 121906,
+      "heading": "AC3 revoke and policy deny block handoff"
+    },
+    {
+      "file": "04-disabled-selftest-noop.png",
+      "bytes": 113616,
+      "heading": "AC4 disabled and selftest skip; noop save leaves defaults absent"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"9a88becadf37e492e87d18580c0da5347ab99973\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}
