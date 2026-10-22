@@ -1,0 +1,25 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR398 04-csv-revisit.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA 7b37bf8b3ef2789c7593bd40e9fbe60b5e67686d · PR398 / #395 AICAC-FRICTION · 04-csv-revisit.png</p>
+<section>
+<h2>AC4 CSV revisit framing matches roster</h2>
+<dl>
+<dt>CSV framing</dt><dd>revisit_only_never_auto_relax</dd>
+<dt>AC4 pass</dt><dd class="pass">yes</dd>
+</dl>
+<pre>window_days,plugin,user_id,denies,streak_denies,streak_days,streak_threshold,streak_active,top_reason,reason_mix,age_days,deep_link,access_request,shadow_ai_later,framing
+30,epsilon/epsilon.php,1,11,11,7,10,yes,rule,rule=11,0,https://example.test/wp-admin/admin.php?page=handl-aicac-rules,no,no,revisit_only_never_auto_relax
+90,epsilon/epsilon.php,1,11,11,7,10,yes,rule,rule=11,0,https://example.test/wp-admin/admin.php?page=handl-aicac-rules,no,no,revisit_only_never_auto_relax
+</pre>
+<div class="ui"><div class="wrap"><h1>AI deny friction</h1><p class="description">Measure what saying no costs. A deny that fires once is governance; the same deny forty times a week is friction. Revisit the owning rule — never auto-relax. Informational; off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_friction_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_friction_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable deny-friction report</th><td><label><input type="checkbox" name="handl_aicac_friction_enabled" value="1"  checked="checked" /> Aggregate denied pairs and alert on repeat-deny streaks</label></td></tr><tr><th scope="row"><label for="handl-aicac-friction-threshold">Streak threshold (denies / 7 days)</label></th><td><input name="handl_aicac_friction_streak_threshold" id="handl-aicac-friction-threshold" type="number" min="2" max="1000" step="1" value="10" class="small-text" /><p class="description">Alert once per pair+window when denies for that plugin+user reach this count inside a rolling 7 days. Default 10. Revisit only — never auto-relaxes.</p></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save friction settings" /></form><p><strong>Revisit only — never auto-relaxes.</strong> Hotspots come from the activity log. Deep links open the owning Rules or Protections screen so you can reconsider the decision; this feature never changes rules.</p><h2>30-day summary</h2><ul><li>Denied calls: 11 — active streaks: 0</li></ul><h2>90-day summary</h2><ul><li>Denied calls: 11 — active streaks: 0</li></ul><p><a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-friction&handl_aicac_friction_csv=1&_wpnonce=test-nonce-54be5aa891e83b48174b30f37ddd8a43">Download CSV</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-friction&handl_aicac_friction_print=1&_wpnonce=test-nonce-0f01f673ff9394f4bceabcfa44d0d56c" target="_blank" rel="noopener noreferrer">Print / PDF view</a></p><h2>Friction hotspots</h2><table class="widefat striped"><thead><tr><th>Window</th><th>Plugin</th><th>User</th><th>Denies</th><th>Streak (7d)</th><th>Reason mix</th><th>Age (days)</th><th>Flags</th><th>Revisit</th></tr></thead><tbody><tr><td>30</td><td><code>epsilon/epsilon.php</code></td><td>1</td><td>11</td><td>0</td><td>rule=11</td><td>10</td><td>—</td><td><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-rules">Open owning screen</a></td></tr><tr><td>90</td><td><code>epsilon/epsilon.php</code></td><td>1</td><td>11</td><td>0</td><td>rule=11</td><td>10</td><td>—</td><td><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-rules">Open owning screen</a></td></tr></tbody></table></div></div>
+</section>
+</body></html>

@@ -1,0 +1,31 @@
+{
+  "pr": 398,
+  "issue": 395,
+  "name": "AICAC-FRICTION",
+  "exact_sha": "7b37bf8b3ef2789c7593bd40e9fbe60b5e67686d",
+  "captured_at": "2026-10-22T22:02:10.900Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 7b37bf8 (ai-not-pr398); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-streak-alert.png",
+      "bytes": 336828,
+      "heading": "AC1 streak pair listed and one alert"
+    },
+    {
+      "file": "02-below-threshold-off.png",
+      "bytes": 451802,
+      "heading": "AC2 below-threshold listed; off removes screen"
+    },
+    {
+      "file": "03-noop-save.png",
+      "bytes": 277597,
+      "heading": "AC3 no-op save byte-identical"
+    },
+    {
+      "file": "04-csv-revisit.png",
+      "bytes": 381527,
+      "heading": "AC4 CSV revisit framing matches roster"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"7b37bf8b3ef2789c7593bd40e9fbe60b5e67686d\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true,\n    \"mails\": 2\n}"
+}

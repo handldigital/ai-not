@@ -1,0 +1,25 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR396 03-alert-once.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA 90bf3038af19164a935a48bb9d0853e3d4f07b27 · PR396 / #393 AICAC-CONCENTRATION · 03-alert-once.png</p>
+<section>
+<h2>AC3 alert fires once per provider+window</h2>
+<p>First maybe_fire_alerts mails; second is empty and mail count stays put.</p>
+<dl>
+<dt>first fire count</dt><dd>2</dd>
+<dt>mails after first</dt><dd>2</dd>
+<dt>second fire count</dt><dd>0</dd>
+<dt>mails after second</dt><dd>2</dd>
+<dt>AC3 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>AI concentration</h1><p class="description">See when one provider quietly becomes most of your AI traffic. Circuit-breaker watches outages; this watches monopoly risk. Estimate from logged traffic, not a bill. Informational; off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_concentration_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_concentration_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable concentration watch</th><td><label><input type="checkbox" name="handl_aicac_concentration_enabled" value="1"  checked="checked" /> Compute provider shares and alert on concentration crossings</label></td></tr><tr><th scope="row"><label for="handl-aicac-concentration-threshold">Alert threshold (%)</label></th><td><input name="handl_aicac_concentration_threshold_pct" id="handl-aicac-concentration-threshold" type="number" min="1" max="99" step="1" value="80" class="small-text" /><p class="description">Alert once per provider+window when call share or estimated spend share reaches this percent. Default 80.</p></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save concentration settings" /></form><p><strong>Estimate from logged traffic, not a bill.</strong> Shares and the HHI-style index are computed from the activity log. Spend uses the same directional USD estimates as Cost — not an invoice.</p><h2>30-day summary</h2><ul><li>Top provider: openai — calls 90.0% — spend (est.) 90.0%</li><li>HHI (0–10,000): calls 8,200 — spend 8,200</li><li><strong>Above alert threshold.</strong></li></ul><h2>90-day summary</h2><ul><li>Top provider: openai — calls 90.0% — spend (est.) 90.0%</li><li>HHI (0–10,000): calls 8,200 — spend 8,200</li><li><strong>Above alert threshold.</strong></li></ul><p><a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-concentration&handl_aicac_concentration_csv=1&_wpnonce=test-nonce-2c72038754ac375d46a6a64fe4c72214">Download CSV</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-concentration&handl_aicac_concentration_print=1&_wpnonce=test-nonce-9c055786197c0a51706c9f2a36675ab9" target="_blank" rel="noopener noreferrer">Print / PDF view</a></p><h2>Provider shares</h2><table class="widefat striped"><thead><tr><th>Window</th><th>Provider</th><th>Calls</th><th>Call share</th><th>Spend (est.)</th><th>Spend share</th></tr></thead><tbody><tr><td>30</td><td><code>openai</code></td><td>9</td><td>90.0%</td><td>&lt;$0.01</td><td>90.0%</td></tr><tr><td>30</td><td><code>anthropic</code></td><td>1</td><td>10.0%</td><td>&lt;$0.01</td><td>10.0%</td></tr><tr><td>90</td><td><code>openai</code></td><td>9</td><td>90.0%</td><td>&lt;$0.01</td><td>90.0%</td></tr><tr><td>90</td><td><code>anthropic</code></td><td>1</td><td>10.0%</td><td>&lt;$0.01</td><td>10.0%</td></tr></tbody></table><h2>Divorce roster (30d — no observed alternate)</h2><p class="description">Plugins that talked to only one provider in the window — what actually breaks in a divorce.</p><table class="widefat striped"><thead><tr><th>Plugin</th><th>Only provider</th><th>Calls</th></tr></thead><tbody><tr><td><code>alpha/alpha.php</code></td><td>openai</td><td>9</td></tr><tr><td><code>beta/beta.php</code></td><td>anthropic</td><td>1</td></tr></tbody></table></div></div>
+</section>
+</body></html>

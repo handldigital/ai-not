@@ -1,0 +1,8 @@
+{
+    "head": "7b37bf8b3ef2789c7593bd40e9fbe60b5e67686d",
+    "ac1": true,
+    "ac2": true,
+    "ac3": true,
+    "ac4": true,
+    "mails": 2
+}

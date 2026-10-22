@@ -1,0 +1,12 @@
+exact_sha=90bf3038af19164a935a48bb9d0853e3d4f07b27
+short_sha=90bf303
+captured_at=2026-10-22T22:02:10.108Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 90bf303 (ai-not-pr396); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.
+files:
+  01-defaults-off.png (207755 B)
+  02-shares-divorce.png (447551 B)
+  03-alert-once.png (424092 B)
+  04-csv-estimate.png (518015 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

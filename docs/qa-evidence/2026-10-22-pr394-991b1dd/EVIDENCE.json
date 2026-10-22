@@ -1,0 +1,31 @@
+{
+  "pr": 394,
+  "issue": 391,
+  "name": "AICAC-AI-ACT",
+  "exact_sha": "991b1dde81bfd2924744887f78454e7c7ccfe89a",
+  "captured_at": "2026-10-22T22:02:09.301Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 991b1dd (ai-not-pr394); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-defaults-off.png",
+      "bytes": 177885,
+      "heading": "AC1 defaults off + off-page copy"
+    },
+    {
+      "file": "02-live-config-statuses.png",
+      "bytes": 705253,
+      "heading": "AC2 live config statuses and deep links"
+    },
+    {
+      "file": "03-filter-stale.png",
+      "bytes": 331245,
+      "heading": "AC3 filter override and 120-day staleness"
+    },
+    {
+      "file": "04-csv-inventory.png",
+      "bytes": 858932,
+      "heading": "AC4 CSV framing matches screen"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"991b1dde81bfd2924744887f78454e7c7ccfe89a\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

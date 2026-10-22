@@ -1,0 +1,9 @@
+{
+    "head": "90bf3038af19164a935a48bb9d0853e3d4f07b27",
+    "ac1": true,
+    "ac2": true,
+    "ac3": true,
+    "ac4": true,
+    "top": "openai",
+    "mails": 2
+}

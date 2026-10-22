@@ -1,0 +1,23 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR394 03-filter-stale.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA 991b1dde81bfd2924744887f78454e7c7ccfe89a · PR394 / #391 AICAC-AI-ACT · 03-filter-stale.png</p>
+<section>
+<h2>AC3 filter override and 120-day staleness</h2>
+<p>handl_aicac_ai_act_obligations replaces the bundled table with Custom. Shipped 2026-01-01 is stale at 2026-10-22.</p>
+<dl>
+<dt>filter shipped</dt><dd>2026-01-01</dd>
+<dt>stale at now</dt><dd>yes</dd>
+<dt>AC3 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>AI Act readiness</h1><p class="description">Inventory of plugin controls that may evidence EU AI Act deployer-shaped duties (Art. 26 / Art. 50). Not legal advice. Informational only; off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_ai_act_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_ai_act_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable AI Act readiness inventory</th><td><label><input type="checkbox" name="handl_aicac_ai_act_enabled" value="1"  checked="checked" /> Show the deployer obligation map over controls already configured on this site</label></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save AI Act settings" /></form><div class="notice notice-info"><p><strong>Inventory, not legal advice.</strong> Statuses are computed from live plugin configuration only. They do not certify legal compliance. Override the obligation table with the handl_aicac_ai_act_obligations filter when counsel supplies a site-specific map.</p></div><p class="description">Obligation table age: 2026-01-01 (stale — refresh or override recommended). Met: 0. Partial: 0. Not configured: 1. Total: 1.</p><div class="notice notice-warning"><p>The obligation table is older than 120 days. Confirm mappings against current guidance or override via handl_aicac_ai_act_obligations.</p></div><p><a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-ai-act&handl_aicac_ai_act_csv=1&_wpnonce=test-nonce-66b356701b0ad5e7c8db5e6a2858b624">Download CSV</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-ai-act&handl_aicac_ai_act_print=1&_wpnonce=test-nonce-8a779d54c5ee593b894090b0c263b15d" target="_blank" rel="noopener noreferrer">Print / PDF view</a></p><h2>Obligation readiness</h2><table class="widefat striped"><thead><tr><th>Article</th><th>Obligation</th><th>Status</th><th>Evidence</th><th>Detail</th><th>Open</th></tr></thead><tbody><tr><td>26</td><td><strong>Custom</strong><br><span class="description">Custom row</span></td><td>Not configured</td><td>Alert email</td><td>Save an alert email so monitoring signals can reach someone.</td><td><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-alerts">Alerts</a></td></tr></tbody></table><h2>Gaps (not configured)</h2><ul><li><strong>Custom</strong> — Save an alert email so monitoring signals can reach someone. <a href="https://example.test/wp-admin/admin.php?page=handl-aicac-alerts">Alerts</a></li></ul></div></div>
+</section>
+</body></html>
