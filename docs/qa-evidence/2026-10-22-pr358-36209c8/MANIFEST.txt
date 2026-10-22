@@ -1,0 +1,12 @@
+exact_sha=36209c8769f7f94255a53f9c544c56cfeafde446
+short_sha=36209c8
+captured_at=2026-10-22T21:46:02.283Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 36209c8 (ai-not-pr358); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.
+files:
+  01-template-byte-identical.png (126499 B)
+  02-create-grant-audit.png (133046 B)
+  03-role-templated-vs-quiet.png (110837 B)
+  04-no-templates-quiet.png (92930 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

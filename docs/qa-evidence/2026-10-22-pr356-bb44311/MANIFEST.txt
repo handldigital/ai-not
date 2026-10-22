@@ -1,0 +1,12 @@
+exact_sha=bb4431172974ce91ed8cf4b7a730a08f1b65e1ec
+short_sha=bb44311
+captured_at=2026-10-22T21:46:01.701Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA bb44311 (ai-not-pr356); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.
+files:
+  01-idle-suspend-audit.png (139057 B)
+  02-window-zero-active.png (101493 B)
+  03-lifts-audited.png (105793 B)
+  04-idempotent-sweep.png (99441 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

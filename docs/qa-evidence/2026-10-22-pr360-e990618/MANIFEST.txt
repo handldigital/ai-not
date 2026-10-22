@@ -1,0 +1,12 @@
+exact_sha=e99061825ac6de0a048a5763aeccc9347f0e3a41
+short_sha=e990618
+captured_at=2026-10-22T21:46:02.883Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA e990618 (ai-not-pr360); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.
+files:
+  01-statement-screen.png (249918 B)
+  02-csv-export.png (128204 B)
+  03-email-off-then-send.png (135295 B)
+  04-zero-omitted-removed.png (108081 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

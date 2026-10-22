@@ -1,0 +1,10 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR358 evidence</title></head><body><p id="aicac-qa-stamp">SHA 36209c8769f7f94255a53f9c544c56cfeafde446 · PR358 / #355 AICAC-PROVISION</p><section><h2>AC1 template save byte-identical on untouched re-save</h2><dl><dt>first save wrote</dt><dd>true</dd><dt>second save wrote</dt><dd>false</dd><dt>option byte-identical</dt><dd>yes</dd><dt>stored templates</dt><dd><pre>{
+    &quot;templates&quot;: {
+        &quot;editor&quot;: {
+            &quot;mode&quot;: &quot;allow&quot;,
+            &quot;plugins&quot;: [
+                &quot;openai\/openai.php&quot;
+            ]
+        }
+    }
+}</pre></dd></dl><p class="pass">AC1 pass</p></section><section><h2>AC2 templated create grants live access and one audit</h2><dl><dt>applied / role_added</dt><dd>true / true</dd><dt>summary</dt><dd>alice provisioned as editor: 1 plugin temp-allow, role gate</dd><dt>plugin allow</dt><dd>allow</dd><dt>temp-allow expires_at</dt><dd>1700086400</dd><dt>role_gate_should_prevent</dt><dd>false</dd><dt>provision audits</dt><dd>1 via register</dd></dl><p class="pass">AC2 pass</p></section><section><h2>AC3 set_user_role templated applies; untemplated quiet</h2><dl><dt>subscriber applied</dt><dd>false</dd><dt>subscriber log rows</dt><dd>0</dd><dt>editor role applied</dt><dd>true</dd><dt>editor plugins</dt><dd>[&quot;blocked\/plugin.php&quot;]</dd></dl><p class="pass">AC3 pass</p></section><section><h2>AC4 no templates means quiet on user create</h2><dl><dt>applied</dt><dd>false</dd><dt>log rows</dt><dd>0</dd><dt>option writes</dt><dd>none</dd></dl><p class="pass">AC4 pass</p></section></body></html>

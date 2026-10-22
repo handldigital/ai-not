@@ -1,0 +1,31 @@
+{
+  "pr": 358,
+  "issue": 355,
+  "name": "AICAC-PROVISION",
+  "exact_sha": "36209c8769f7f94255a53f9c544c56cfeafde446",
+  "captured_at": "2026-10-22T21:46:02.283Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 36209c8 (ai-not-pr358); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-template-byte-identical.png",
+      "bytes": 126499,
+      "heading": "AC1 template save byte-identical on untouched re-save"
+    },
+    {
+      "file": "02-create-grant-audit.png",
+      "bytes": 133046,
+      "heading": "AC2 templated create grants live access and one audit"
+    },
+    {
+      "file": "03-role-templated-vs-quiet.png",
+      "bytes": 110837,
+      "heading": "AC3 set_user_role templated applies; untemplated quiet"
+    },
+    {
+      "file": "04-no-templates-quiet.png",
+      "bytes": 92930,
+      "heading": "AC4 no templates means quiet on user create"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"36209c8769f7f94255a53f9c544c56cfeafde446\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

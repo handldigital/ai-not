@@ -1,0 +1,31 @@
+{
+  "pr": 356,
+  "issue": 353,
+  "name": "AICAC-DORMANT",
+  "exact_sha": "bb4431172974ce91ed8cf4b7a730a08f1b65e1ec",
+  "captured_at": "2026-10-22T21:46:01.701Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA bb44311 (ai-not-pr356); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-idle-suspend-audit.png",
+      "bytes": 139057,
+      "heading": "AC1 idle user suspended with audit and notice"
+    },
+    {
+      "file": "02-window-zero-active.png",
+      "bytes": 101493,
+      "heading": "AC2 window zero and active user never touched"
+    },
+    {
+      "file": "03-lifts-audited.png",
+      "bytes": 105793,
+      "heading": "AC3 admin and access-request lifts audited"
+    },
+    {
+      "file": "04-idempotent-sweep.png",
+      "bytes": 99441,
+      "heading": "AC4 sweep idempotent one suspend audit"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"bb4431172974ce91ed8cf4b7a730a08f1b65e1ec\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}
