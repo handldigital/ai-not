@@ -1,0 +1,12 @@
+exact_sha=3c9054ed6b09d98902b88be7a45632081b02dd47
+short_sha=3c9054e
+captured_at=2026-10-22T22:10:30.726Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 3c9054e (ai-not-pr400); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.
+files:
+  01-scorecard-alert.png (362858 B)
+  02-ack-followup.png (338568 B)
+  03-dead-end-off.png (245219 B)
+  04-csv-history.png (407218 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

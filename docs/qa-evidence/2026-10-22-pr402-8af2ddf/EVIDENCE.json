@@ -1,0 +1,31 @@
+{
+  "pr": 402,
+  "issue": 399,
+  "name": "AICAC-KEY-AGE",
+  "exact_sha": "8af2ddfb02e49fb08372add9a92936788bf6e7c4",
+  "captured_at": "2026-10-22T22:10:31.304Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 8af2ddf (ai-not-pr402); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-defaults-off.png",
+      "bytes": 245792,
+      "heading": "AC1 defaults off + off-page copy"
+    },
+    {
+      "file": "02-hash-tiers.png",
+      "bytes": 355761,
+      "heading": "AC2 hash not material and age tiers"
+    },
+    {
+      "file": "03-alert-rearm.png",
+      "bytes": 307730,
+      "heading": "AC3 alert fires once and rearms on rotation"
+    },
+    {
+      "file": "04-csv-informational.png",
+      "bytes": 339054,
+      "heading": "AC4 CSV informational never blocks"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"8af2ddfb02e49fb08372add9a92936788bf6e7c4\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

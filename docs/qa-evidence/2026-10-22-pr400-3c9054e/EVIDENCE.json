@@ -1,0 +1,31 @@
+{
+  "pr": 400,
+  "issue": 397,
+  "name": "AICAC-DRILL",
+  "exact_sha": "3c9054ed6b09d98902b88be7a45632081b02dd47",
+  "captured_at": "2026-10-22T22:10:30.726Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 3c9054e (ai-not-pr400); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-scorecard-alert.png",
+      "bytes": 362858,
+      "heading": "AC1 scorecard fire vs dead-end and one drill alert"
+    },
+    {
+      "file": "02-ack-followup.png",
+      "bytes": 338568,
+      "heading": "AC2 ack time-to-ack and one follow-up"
+    },
+    {
+      "file": "03-dead-end-off.png",
+      "bytes": 245219,
+      "heading": "AC3 all-dead-end no mutation and off copy"
+    },
+    {
+      "file": "04-csv-history.png",
+      "bytes": 407218,
+      "heading": "AC4 CSV matches history"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"3c9054ed6b09d98902b88be7a45632081b02dd47\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

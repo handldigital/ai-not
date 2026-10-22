@@ -1,0 +1,24 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR402 03-alert-rearm.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA 8af2ddfb02e49fb08372add9a92936788bf6e7c4 · PR402 / #399 AICAC-KEY-AGE · 03-alert-rearm.png</p>
+<section>
+<h2>AC3 alert fires once and rearms on rotation</h2>
+<p>Fixture: haktan+aicac-key-age@handldigital.com. First fire openai; second fire count 0; rotate clears alerted; age past limit fires again.</p>
+<dl>
+<dt>first fire</dt><dd>openai</dd>
+<dt>second fire count</dt><dd>0</dd>
+<dt>mails after rearm</dt><dd>2</dd>
+<dt>AC3 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>AI key age</h1><p class="description">Key rotation hygiene. Age is measured from the last rotation this plugin observed — a salted fingerprint of the key changing, never the key itself. Informational; off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_key_age_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_key_age_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable key-age tracking</th><td><label><input type="checkbox" name="handl_aicac_key_age_enabled" value="1"  checked="checked" /> Track observed key rotations and alert once when a key is overdue</label></td></tr><tr><th scope="row"><label for="handl-aicac-key-age-max">Maximum key age (days)</label></th><td><input name="handl_aicac_key_age_max_days" id="handl-aicac-key-age-max" type="number" min="7" max="3650" step="1" value="90" class="small-text" /><p class="description">Default 90. Keys become &quot;due&quot; during the last 14 days before this limit and &quot;overdue&quot; at the limit.</p></td></tr><tr><th scope="row"><label for="handl-aicac-key-age-openai">OpenAI override (days)</label></th><td><input name="handl_aicac_key_age_provider_openai" id="handl-aicac-key-age-openai" type="number" min="7" max="3650" step="1" value="" class="small-text" /><span class="description"> Leave blank to use the maximum above.</span></td></tr><tr><th scope="row"><label for="handl-aicac-key-age-anthropic">Anthropic override (days)</label></th><td><input name="handl_aicac_key_age_provider_anthropic" id="handl-aicac-key-age-anthropic" type="number" min="7" max="3650" step="1" value="" class="small-text" /><span class="description"> Leave blank to use the maximum above.</span></td></tr><tr><th scope="row"><label for="handl-aicac-key-age-google">Google AI override (days)</label></th><td><input name="handl_aicac_key_age_provider_google" id="handl-aicac-key-age-google" type="number" min="7" max="3650" step="1" value="" class="small-text" /><span class="description"> Leave blank to use the maximum above.</span></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save key-age settings" /></form><p><strong>Informational — never blocks, rotates, or revokes.</strong> A key first seen after you enable tracking starts its age clock at first sight. Keys Keyscan finds in plugins without a custody entry are listed as unmanaged.</p><p><a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-key-age&handl_aicac_key_age_csv=1&_wpnonce=test-nonce-9b7a69506f4610a2bd39cca638d00849">Download CSV</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-key-age&handl_aicac_key_age_print=1&_wpnonce=test-nonce-022879ec7b790ada0b58fe2ca1bc302d" target="_blank" rel="noopener noreferrer">Print / PDF view</a></p><h2>Key roster</h2><table class="widefat striped"><thead><tr><th>Provider</th><th>Status</th><th>Age (days)</th><th>Limit (days)</th><th>Last rotation</th><th>Source</th><th>Custody</th></tr></thead><tbody><tr><td>OpenAI</td><td>ok</td><td>0</td><td>90</td><td>2026-10-22</td><td>option</td><td>—</td></tr></tbody></table></div></div>
+</section>
+</body></html>
