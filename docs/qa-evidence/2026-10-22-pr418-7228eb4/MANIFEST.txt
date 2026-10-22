@@ -1,0 +1,12 @@
+exact_sha=7228eb4cd7d7e8a4cd6d0042c9fcc250f1274b1d
+short_sha=7228eb4
+captured_at=2026-10-22T22:45:26.773Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 7228eb4 (ai-not-pr418); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out. Cron_Pulse::set_test_now(1791800000) so render_page overdue-by matches harness.
+files:
+  01-defaults-off.png (202675 B)
+  02-overdue-roster.png (322165 B)
+  03-alert-rearm.png (405599 B)
+  04-csv-framing.png (415806 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

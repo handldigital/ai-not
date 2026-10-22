@@ -1,0 +1,31 @@
+{
+  "pr": 418,
+  "issue": 415,
+  "name": "AICAC-CRON-PULSE",
+  "exact_sha": "7228eb4cd7d7e8a4cd6d0042c9fcc250f1274b1d",
+  "captured_at": "2026-10-22T22:45:26.773Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 7228eb4 (ai-not-pr418); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out. Cron_Pulse::set_test_now(1791800000) so render_page overdue-by matches harness.",
+  "shots": [
+    {
+      "file": "01-defaults-off.png",
+      "bytes": 202675,
+      "heading": "AC1 defaults off + off-page copy"
+    },
+    {
+      "file": "02-overdue-roster.png",
+      "bytes": 322165,
+      "heading": "AC2 overdue hourly roster"
+    },
+    {
+      "file": "03-alert-rearm.png",
+      "bytes": 405599,
+      "heading": "AC3 cron-pulse alert once and rearm"
+    },
+    {
+      "file": "04-csv-framing.png",
+      "bytes": 415806,
+      "heading": "AC4 CSV roster framing"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"7228eb4cd7d7e8a4cd6d0042c9fcc250f1274b1d\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

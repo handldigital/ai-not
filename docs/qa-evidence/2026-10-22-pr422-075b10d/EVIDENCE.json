@@ -1,0 +1,31 @@
+{
+  "pr": 422,
+  "issue": 419,
+  "name": "AICAC-WITNESS",
+  "exact_sha": "075b10ddd936f5a39c3fd0601d21aa95343a5081",
+  "captured_at": "2026-10-22T22:45:28.233Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 075b10d (ai-not-pr422); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out. Witness::set_test_now(1791800000) so checkpoint timestamps match harness.",
+  "shots": [
+    {
+      "file": "01-defaults-off.png",
+      "bytes": 177875,
+      "heading": "AC1 defaults off + off-page copy"
+    },
+    {
+      "file": "02-unsanctioned-drop.png",
+      "bytes": 346281,
+      "heading": "AC2 unsanctioned drop 8 to 5"
+    },
+    {
+      "file": "03-alert-rearm.png",
+      "bytes": 383850,
+      "heading": "AC3 witness alert once and rearm"
+    },
+    {
+      "file": "04-csv-framing.png",
+      "bytes": 486597,
+      "heading": "AC4 CSV checkpoints framing"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"075b10ddd936f5a39c3fd0601d21aa95343a5081\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

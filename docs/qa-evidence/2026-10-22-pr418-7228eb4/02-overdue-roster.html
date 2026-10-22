@@ -1,0 +1,23 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR418 02-overdue-roster.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA 7228eb4cd7d7e8a4cd6d0042c9fcc250f1274b1d · PR418 / #415 AICAC-CRON-PULSE · 02-overdue-roster.png</p>
+<section>
+<h2>AC2 overdue hourly roster</h2>
+<p>Test registry: hourly next-due NOW-7201 (beyond 2×3600 grace) overdue; weekly healthy. Overdue jobs oldest first.</p>
+<dl>
+<dt>overdue count</dt><dd>1</dd>
+<dt>oldest hook</dt><dd>handl_test_hourly_job</dd>
+<dt>AC2 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Cron pulse</h1><p class="description">Watch whether the scheduled jobs this plugin depends on are still running. Report only — never runs or reschedules jobs. Checks run on admin page loads, not on cron. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_cron_pulse_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_cron_pulse_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable cron pulse</th><td><label><input type="checkbox" name="handl_aicac_cron_pulse_enabled" value="1"  checked="checked" /> Track when each scheduled job last fired and alert when one is overdue</label></td></tr><tr><th scope="row"><label for="handl-aicac-cron-pulse-grace">Grace multiplier</label></th><td><input name="handl_aicac_cron_pulse_grace_multiplier" id="handl-aicac-cron-pulse-grace" type="number" min="1" max="10" step="0.1" value="2" class="small-text" /><p class="description">Default 2.0. A job is overdue when it is later than its schedule interval times this value (never less than 15 minutes).</p></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save cron pulse settings" /></form><p><strong>Report only — never runs or reschedules jobs.</strong></p><ul><li>Overdue: 1 of 2 watched jobs (grace x2, min 15 minutes)</li></ul><p><a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-cron-pulse&handl_aicac_cron_pulse_csv=1&_wpnonce=test-nonce-54513acadbb457aabff9bbbaffa08bf9">Download CSV</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-cron-pulse&handl_aicac_cron_pulse_print=1&_wpnonce=test-nonce-6a69733f2d0d5fe23541426acfe5f4ad" target="_blank" rel="noopener noreferrer">Print / PDF view</a></p><h2>Overdue jobs (oldest first)</h2><table class="widefat striped"><thead><tr><th>Job</th><th>Hook</th><th>Schedule</th><th>Last fired (UTC)</th><th>Next due (UTC)</th><th>Overdue by</th><th>Status</th></tr></thead><tbody><tr><td>Hourly job</td><td><code>handl_test_hourly_job</code></td><td>hourly</td><td>—</td><td>2026-10-12 08:13:19 UTC</td><td>2h</td><td>overdue</td></tr></tbody></table><h2>All watched jobs</h2><table class="widefat striped"><thead><tr><th>Job</th><th>Hook</th><th>Schedule</th><th>Last fired (UTC)</th><th>Next due (UTC)</th><th>Overdue by</th><th>Status</th></tr></thead><tbody><tr><td>Hourly job</td><td><code>handl_test_hourly_job</code></td><td>hourly</td><td>—</td><td>2026-10-12 08:13:19 UTC</td><td>2h</td><td>overdue</td></tr><tr><td>Weekly job</td><td><code>handl_test_weekly_job</code></td><td>weekly</td><td>—</td><td>2026-10-12 10:15:00 UTC</td><td>—</td><td>ok</td></tr></tbody></table></div></div>
+</section>
+</body></html>

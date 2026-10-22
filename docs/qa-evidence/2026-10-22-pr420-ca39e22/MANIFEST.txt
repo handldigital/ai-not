@@ -1,0 +1,12 @@
+exact_sha=ca39e224b2a2232688bb6ea191cff1a8452e0aa3
+short_sha=ca39e22
+captured_at=2026-10-22T22:45:27.508Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA ca39e22 (ai-not-pr420); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out. Sundial::set_test_now(1791800000) so PHP/DB skew matches harness.
+files:
+  01-defaults-off.png (222584 B)
+  02-php-fast-skew.png (365251 B)
+  03-alert-rearm.png (394480 B)
+  04-csv-framing.png (550126 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

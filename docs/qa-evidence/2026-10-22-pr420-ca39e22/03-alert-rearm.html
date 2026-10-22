@@ -1,0 +1,26 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR420 03-alert-rearm.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA ca39e224b2a2232688bb6ea191cff1a8452e0aa3 · PR420 / #417 AICAC-SUNDIAL · 03-alert-rearm.png</p>
+<section>
+<h2>AC3 sundial alert once and rearm</h2>
+<p>Fixture: haktan+aicac-sundial@handldigital.com. 500s PHP-fast fires one [SUNDIAL]; second fire count 0; clocks aligned rearms; Europe/Paris timezone fires again.</p>
+<dl>
+<dt>first fire</dt><dd>yes</dd>
+<dt>mail subject</dt><dd>[Test Site] [SUNDIAL] 1 clock-sanity finding(s) (first: php_db_skew)</dd>
+<dt>second fire count</dt><dd>0</dd>
+<dt>rearmed</dt><dd>yes</dd>
+<dt>mails after rearm</dt><dd>2</dd>
+<dt>AC3 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Sundial</h1><p class="description">Cross-check the clock that time-based controls trust: PHP vs database, timezone settings, and ledger timestamps. Report only — never adjusts any clock. Checks run on admin page loads, not on cron. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_sundial_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_sundial_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable sundial</th><td><label><input type="checkbox" name="handl_aicac_sundial_enabled" value="1"  checked="checked" /> Check the clock and alert when it looks wrong</label></td></tr><tr><th scope="row"><label for="handl-aicac-sundial-skew">Skew threshold (seconds)</label></th><td><input name="handl_aicac_sundial_skew_threshold" id="handl-aicac-sundial-skew" type="number" min="30" max="3600" step="1" value="120" class="small-text" /><p class="description">Default 120. Flag when PHP and the database clock differ by at least this many seconds.</p></td></tr><tr><th scope="row"><label for="handl-aicac-sundial-future">Future-row tolerance (seconds)</label></th><td><input name="handl_aicac_sundial_future_tolerance" id="handl-aicac-sundial-future" type="number" min="0" max="3600" step="1" value="60" class="small-text" /><p class="description">Default 60. Ledger rows dated further ahead than this are flagged.</p></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save sundial settings" /></form><p><strong>Report only — never adjusts any clock, timestamp, or setting.</strong></p><ul><li>PHP time: 2026-10-12 10:13:20 UTC</li><li>Database time: 2026-10-12 10:05:00 UTC</li><li>Skew (PHP minus database): 500s</li><li>Findings: 1</li></ul><p><a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-sundial&handl_aicac_sundial_csv=1&_wpnonce=test-nonce-92b31688f63b1201ff54fd15154fbc1b">Download CSV</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-sundial&handl_aicac_sundial_print=1&_wpnonce=test-nonce-05c7bab5cc13183f7e7fa1ea5e4184cd" target="_blank" rel="noopener noreferrer">Print / PDF view</a></p><h2>Findings</h2><table class="widefat striped"><thead><tr><th>Finding</th><th>Direction</th><th>What it means</th><th>Controls affected</th></tr></thead><tbody><tr><td><strong>PHP clock is 500s ahead of the database clock (threshold 120s).</strong><br /><code>php_db_skew</code></td><td>php_fast</td><td>The PHP clock is ahead of the database clock. Time-limited controls fire early: temporary allows, freezes and break-glass windows can expire too soon, and recertifications can come due prematurely. PHP and the database disagree about the time, so ledger ordering is untrustworthy: rows written from the two clocks cannot be reliably sequenced.</td><td>Temp_Allow, Freeze, Break_Glass, Log_Retention, Recert</td></tr></tbody></table></div></div>
+</section>
+</body></html>

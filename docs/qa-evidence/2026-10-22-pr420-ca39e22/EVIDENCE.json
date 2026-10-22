@@ -1,0 +1,31 @@
+{
+  "pr": 420,
+  "issue": 417,
+  "name": "AICAC-SUNDIAL",
+  "exact_sha": "ca39e224b2a2232688bb6ea191cff1a8452e0aa3",
+  "captured_at": "2026-10-22T22:45:27.508Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA ca39e22 (ai-not-pr420); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out. Sundial::set_test_now(1791800000) so PHP/DB skew matches harness.",
+  "shots": [
+    {
+      "file": "01-defaults-off.png",
+      "bytes": 222584,
+      "heading": "AC1 defaults off + off-page copy"
+    },
+    {
+      "file": "02-php-fast-skew.png",
+      "bytes": 365251,
+      "heading": "AC2 php-fast vs database skew"
+    },
+    {
+      "file": "03-alert-rearm.png",
+      "bytes": 394480,
+      "heading": "AC3 sundial alert once and rearm"
+    },
+    {
+      "file": "04-csv-framing.png",
+      "bytes": 550126,
+      "heading": "AC4 CSV findings framing"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"ca39e224b2a2232688bb6ea191cff1a8452e0aa3\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR422 witness 075b10ddd936f5a39c3fd0601d21aa95343a5081</title><style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+.sha{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace;background:#fff;border:1px solid #ddd;padding:10px}
+.pass{color:#0a7a28;font-weight:700}
+</style></head><body>
+<h1>PR422 / #419 AICAC-WITNESS</h1>
+<p class="sha">SHA 075b10ddd936f5a39c3fd0601d21aa95343a5081</p>
+<p>In-memory Witness at this SHA. Four QA ACs: off by default; unsanctioned 8-to-5 drop; one [WITNESS] then rearm; CSV framing with no log bodies. Fixture clock Witness::set_test_now(1791800000).</p>
+<section>
+<h2>AC1 defaults off + off-page copy</h2>
+<dl>
+<dt>Enabled</dt><dd>no</dd>
+<dt>option byte-identical</dt><dd>yes</dd>
+<dt>Save defaults deleted option</dt><dd>yes</dd>
+<dt>Off copy</dt><dd>Witness is off</dd>
+<dt>AC1 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Witness</h1><p class="description">Keeps salted fingerprints of the activity log and explains any shrinkage: expected retention, or rows that vanished without a reason. Report only — never writes, repairs or restores the log. Checks run on admin page loads, not on cron. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_witness_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_witness_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable witness</th><td><label><input type="checkbox" name="handl_aicac_witness_enabled" value="1"  /> Fingerprint the activity log and alert on unexplained shrinkage</label></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save witness settings" /></form><p>Witness is off. Enable it to attest activity-log continuity.</p></div></div>
+</section>
+<section>
+<h2>AC2 unsanctioned drop 8 to 5</h2>
+<p>Baseline 8 rows then 5 remain with no prune recorded → rows_removed_unexplained. State stores no prompt bodies.</p>
+<dl>
+<dt>code</dt><dd>rows_removed_unexplained</dd>
+<dt>row_delta</dt><dd>-3</dd>
+<dt>bodies in state</dt><dd>no</dd>
+<dt>AC2 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Witness</h1><p class="description">Keeps salted fingerprints of the activity log and explains any shrinkage: expected retention, or rows that vanished without a reason. Report only — never writes, repairs or restores the log. Checks run on admin page loads, not on cron. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_witness_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_witness_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable witness</th><td><label><input type="checkbox" name="handl_aicac_witness_enabled" value="1"  checked="checked" /> Fingerprint the activity log and alert on unexplained shrinkage</label></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save witness settings" /></form><p><strong>Report only — never writes, repairs or restores the log.</strong></p><ul><li>Unsanctioned findings (open): 1</li><li>Sanctioned findings: 0</li><li>Last check: 2026-10-12 10:18:20 UTC</li></ul><p><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-activity">Open retention settings</a></p><p><a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-witness&handl_aicac_witness_csv=1&_wpnonce=test-nonce-756cfd8bb47a43830528dcea38f2f3bf">Download CSV</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-witness&handl_aicac_witness_print=1&_wpnonce=test-nonce-cd281c2f571f777cdec0986f8c4505ad" target="_blank" rel="noopener noreferrer">Print / PDF view</a></p><h2>Findings</h2><table class="widefat striped"><thead><tr><th>Finding</th><th>Verdict</th><th>Row change</th><th>Window</th></tr></thead><tbody><tr><td><strong>Between 2026-10-12 10:13:20 UTC and 2026-10-12 10:18:20 UTC the log lost 3 row(s) (8 to 5 rows) and no retention prune or log-limit rollover explains it.</strong><br /><code>rows_removed_unexplained</code></td><td>unsanctioned</td><td>-3</td><td>2026-10-12 10:13:20 UTC → 2026-10-12 10:18:20 UTC</td></tr></tbody></table><h2>Checkpoint ledger</h2><table class="widefat striped"><thead><tr><th>Checkpoint</th><th>Rows</th><th>Oldest</th><th>Newest</th><th>Digest</th></tr></thead><tbody><tr><td>2026-10-12 10:18:20 UTC</td><td>5</td><td>2026-10-12 10:08:20 UTC</td><td>2026-10-12 10:12:20 UTC</td><td><code>10680e8a7d3765c2</code></td></tr><tr><td>2026-10-12 10:13:20 UTC</td><td>8</td><td>2026-10-12 10:05:20 UTC</td><td>2026-10-12 10:12:20 UTC</td><td><code>1548cfdf02bf8f35</code></td></tr></tbody></table></div></div>
+</section>
+<section>
+<h2>AC3 witness alert once and rearm</h2>
+<p>Fixture: haktan+aicac-witness@handldigital.com. Unsanctioned drop fires one [WITNESS]; second fire count 0 while latched; findings age out of the open window then a new drop fires again.</p>
+<dl>
+<dt>first fire</dt><dd>yes</dd>
+<dt>mail subject</dt><dd>[Test Site] [WITNESS] 1 unsanctioned activity-log change(s) (first: rows_removed_unexplained)</dd>
+<dt>second fire count</dt><dd>0</dd>
+<dt>rearmed</dt><dd>yes</dd>
+<dt>mails after rearm</dt><dd>2</dd>
+<dt>AC3 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Witness</h1><p class="description">Keeps salted fingerprints of the activity log and explains any shrinkage: expected retention, or rows that vanished without a reason. Report only — never writes, repairs or restores the log. Checks run on admin page loads, not on cron. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_witness_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_witness_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable witness</th><td><label><input type="checkbox" name="handl_aicac_witness_enabled" value="1"  checked="checked" /> Fingerprint the activity log and alert on unexplained shrinkage</label></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save witness settings" /></form><p><strong>Report only — never writes, repairs or restores the log.</strong></p><ul><li>Unsanctioned findings (open): 1</li><li>Sanctioned findings: 0</li><li>Last check: 2026-10-12 10:18:20 UTC</li></ul><p><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-activity">Open retention settings</a></p><p><a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-witness&handl_aicac_witness_csv=1&_wpnonce=test-nonce-756cfd8bb47a43830528dcea38f2f3bf">Download CSV</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-witness&handl_aicac_witness_print=1&_wpnonce=test-nonce-cd281c2f571f777cdec0986f8c4505ad" target="_blank" rel="noopener noreferrer">Print / PDF view</a></p><h2>Findings</h2><table class="widefat striped"><thead><tr><th>Finding</th><th>Verdict</th><th>Row change</th><th>Window</th></tr></thead><tbody><tr><td><strong>Between 2026-10-12 10:13:20 UTC and 2026-10-12 10:18:20 UTC the log lost 2 row(s) (10 to 8 rows) and no retention prune or log-limit rollover explains it.</strong><br /><code>rows_removed_unexplained</code></td><td>unsanctioned</td><td>-2</td><td>2026-10-12 10:13:20 UTC → 2026-10-12 10:18:20 UTC</td></tr></tbody></table><h2>Checkpoint ledger</h2><table class="widefat striped"><thead><tr><th>Checkpoint</th><th>Rows</th><th>Oldest</th><th>Newest</th><th>Digest</th></tr></thead><tbody><tr><td>2026-10-12 10:18:20 UTC</td><td>8</td><td>2026-10-12 10:05:20 UTC</td><td>2026-10-12 10:12:20 UTC</td><td><code>1548cfdf02bf8f35</code></td></tr><tr><td>2026-10-12 10:13:20 UTC</td><td>10</td><td>2026-10-12 10:03:20 UTC</td><td>2026-10-12 10:12:20 UTC</td><td><code>88fb152639161d4b</code></td></tr></tbody></table></div></div>
+</section>
+<section>
+<h2>AC4 CSV checkpoints framing</h2>
+<p>CSV carries finding,rows_removed_unexplained,unsanctioned and report_only_never_repairs_log. No TOP SECRET bodies. Screen has Download CSV.</p>
+<dl>
+<dt>CSV framing</dt><dd>report_only_never_repairs_log</dd>
+<dt>CSV unsanctioned finding</dt><dd>yes</dd>
+<dt>AC4 pass</dt><dd class="pass">yes</dd>
+</dl>
+<pre>section,code,classification,ts,window_start,window_end,row_count,row_delta,newest_ts,oldest_ts,digest,summary,retention_url,framing
+summary,,,2026-10-12 10:13:20 UTC,,,4,,,,,checkpoints=2 findings=1 unsanctioned=1 sanctioned=0,,report_only_never_repairs_log
+checkpoint,,,2026-10-12 10:13:20 UTC,,,6,,2026-10-12 10:12:20 UTC,2026-10-12 10:07:20 UTC,9a070a116e79aed1ff0490afbc8bd1024f2ad1b06fd87ea4319cda62025ffbbb,,,report_only_never_repairs_log
+checkpoint,,,2026-10-12 10:18:20 UTC,,,4,,2026-10-12 10:12:20 UTC,2026-10-12 10:09:20 UTC,803aed7e4f6895987b971595a6ab825e9e9cebb1f96965c78e7019a179c27660,,,report_only_never_repairs_log
+finding,rows_removed_unexplained,unsanctioned,2026-10-12 10:18:20 UTC,2026-10-12 10:13:20 UTC,2026-10-12 10:18:20 UTC,,-2,,,,Between 2026-10-12 10:13:20 UTC and 2026-10-12 10:18:20 UTC the log lost 2 row(s) (6 to 4 rows) and no retention prune or log-limit rollover ex</pre>
+<div class="ui"><div class="wrap"><h1>Witness</h1><p class="description">Keeps salted fingerprints of the activity log and explains any shrinkage: expected retention, or rows that vanished without a reason. Report only — never writes, repairs or restores the log. Checks run on admin page loads, not on cron. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_witness_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_witness_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable witness</th><td><label><input type="checkbox" name="handl_aicac_witness_enabled" value="1"  checked="checked" /> Fingerprint the activity log and alert on unexplained shrinkage</label></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save witness settings" /></form><p><strong>Report only — never writes, repairs or restores the log.</strong></p><ul><li>Unsanctioned findings (open): 1</li><li>Sanctioned findings: 0</li><li>Last check: 2026-10-12 10:18:20 UTC</li></ul><p><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-activity">Open retention settings</a></p><p><a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-witness&handl_aicac_witness_csv=1&_wpnonce=test-nonce-756cfd8bb47a43830528dcea38f2f3bf">Download CSV</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-witness&handl_aicac_witness_print=1&_wpnonce=test-nonce-cd281c2f571f777cdec0986f8c4505ad" target="_blank" rel="noopener noreferrer">Print / PDF view</a></p><h2>Findings</h2><table class="widefat striped"><thead><tr><th>Finding</th><th>Verdict</th><th>Row change</th><th>Window</th></tr></thead><tbody><tr><td><strong>Between 2026-10-12 10:13:20 UTC and 2026-10-12 10:18:20 UTC the log lost 2 row(s) (6 to 4 rows) and no retention prune or log-limit rollover explains it.</strong><br /><code>rows_removed_unexplained</code></td><td>unsanctioned</td><td>-2</td><td>2026-10-12 10:13:20 UTC → 2026-10-12 10:18:20 UTC</td></tr></tbody></table><h2>Checkpoint ledger</h2><table class="widefat striped"><thead><tr><th>Checkpoint</th><th>Rows</th><th>Oldest</th><th>Newest</th><th>Digest</th></tr></thead><tbody><tr><td>2026-10-12 10:18:20 UTC</td><td>4</td><td>2026-10-12 10:09:20 UTC</td><td>2026-10-12 10:12:20 UTC</td><td><code>803aed7e4f689598</code></td></tr><tr><td>2026-10-12 10:13:20 UTC</td><td>6</td><td>2026-10-12 10:07:20 UTC</td><td>2026-10-12 10:12:20 UTC</td><td><code>9a070a116e79aed1</code></td></tr></tbody></table></div></div>
+</section>
+</body></html>
