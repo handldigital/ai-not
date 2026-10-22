@@ -1,0 +1,8 @@
+{
+    "head": "d57f14c336b06fc44bd2bf15030970cd56c3e48a",
+    "ac1": true,
+    "ac2": true,
+    "ac3": true,
+    "ac4": true,
+    "land_count": 25
+}

@@ -1,0 +1,12 @@
+exact_sha=d57f14c336b06fc44bd2bf15030970cd56c3e48a
+short_sha=d57f14c
+captured_at=2026-10-22T21:44:50.905Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA d57f14c (ai-not-442-dividend); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.
+files:
+  01-perplexity-unrelated.png (208681 B)
+  02-landing-caps.png (257310 B)
+  03-give-vs-get.png (340683 B)
+  04-noop-save.png (196415 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

@@ -1,0 +1,25 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR439 01-defaults-off.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA 49af8c20999389af43a0457008b50f365f261533 · PR439 / #437 AICAC-COACH · 01-defaults-off.png</p>
+<section>
+<h2>AC1 defaults off + no-op save</h2>
+<dl>
+<dt>Enabled</dt><dd>no</dd>
+<dt>Save defaults wrote</dt><dd>no</dd>
+<dt>Stored options byte-identical</dt><dd>yes</dd>
+<dt>FRAMING</dt><dd>admin_initiated_never_auto_sends</dd>
+<dt>Off-by-default copy</dt><dd>yes</dd>
+<dt>AC1 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Coach</h1><p class="description">Finds users who hit the same deny rule repeatedly and lets you send a plain-language explainer. Never emails anyone unless you click Send. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_coach_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_coach_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable coach</th><td><label><input type="checkbox" name="handl_aicac_coach_enabled" value="1"  /> Scan for repeat-deny coaching candidates on admin page loads</label></td></tr><tr><th scope="row">Streak threshold</th><td><input type="number" min="2" max="100" name="handl_aicac_coach_threshold" value="5" /> <p class="description">Denies per user+rule in the last 14 days before a row appears. Default 5.</p></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save coach settings" /></form><p>Coach is off. Enable it to list repeat-deny candidates.</p></div></div>
+</section>
+</body></html>

@@ -1,0 +1,9 @@
+{
+    "head": "49af8c20999389af43a0457008b50f365f261533",
+    "ac1": true,
+    "ac2": true,
+    "ac3": true,
+    "ac4": true,
+    "cands5": 1,
+    "rearm": "7|role"
+}

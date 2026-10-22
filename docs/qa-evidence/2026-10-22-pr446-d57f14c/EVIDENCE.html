@@ -1,0 +1,61 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR446 dividend d57f14c336b06fc44bd2bf15030970cd56c3e48a</title><style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+.sha{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+</style></head><body>
+<h1>PR446 / #442 AICAC-DIVIDEND</h1>
+<p class="sha">SHA d57f14c336b06fc44bd2bf15030970cd56c3e48a</p>
+<p>In-memory AI referral dividend at this SHA. Four QA ACs: Perplexity referrer increments and unrelated referrer is byte-identical; landing/ledger caps; admin sources+trend with give-vs-get only when botwatch is present; no-op save and crawler UA excluded.</p>
+<section>
+<h2>AC1 Perplexity referrer increments; unrelated is byte-identical</h2>
+<dl>
+<dt>Perplexity hits</dt><dd>1</dd>
+<dt>Week bucket</dt><dd>2026-W42</dd>
+<dt>Unrelated referrer byte-identical</dt><dd>yes</dd>
+<dt>Landing</dt><dd>/pricing</dd>
+<dt>AC1 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>AI referral dividend</h1><p>Human visits that arrive from AI tools after they crawl or cite this site. Referrer host and landing path only — no cookies, no PII, no per-visitor tracking.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_dividend_save" /><input type="hidden" name="handl_aicac_dividend_present" value="1" /><input type="hidden" name="_wpnonce" value="testnonce" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Recording</th><td><label><input type="checkbox" name="handl_aicac_dividend_enabled" value="1" checked="checked" /> Record AI-tool referral visits</label></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save changes" /></form><h2>Sources</h2><table class="widefat striped"><thead><tr><th>Source</th><th>Visits</th><th>Last seen</th><th>Sample landings</th></tr></thead><tbody><tr><td>Perplexity</td><td>1</td><td>2026-10-16 15:37</td><td><code>/pricing</code></td></tr></tbody></table><h2>Weekly trend</h2><table class="widefat striped"><thead><tr><th>Week</th><th>Visits</th></tr></thead><tbody><tr><td>2026-W42</td><td>1</td></tr></tbody></table><p class="description">Caps: at most 40 sources, 25 landing samples per source, 26 week buckets.</p></div></div>
+</section>
+<section>
+<h2>AC2 landing and ledger caps</h2>
+<p>40 ChatGPT hits stored; landings truncated to MAX_LANDINGS_PER_SOURCE (25).</p>
+<dl>
+<dt>Hits</dt><dd>40</dd>
+<dt>Landing samples stored</dt><dd>25</dd>
+<dt>MAX_LANDINGS_PER_SOURCE</dt><dd>25</dd>
+<dt>MAX_SOURCES</dt><dd>40</dd>
+<dt>MAX_WEEK_BUCKETS</dt><dd>26</dd>
+<dt>AC2 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>AI referral dividend</h1><p>Human visits that arrive from AI tools after they crawl or cite this site. Referrer host and landing path only — no cookies, no PII, no per-visitor tracking.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_dividend_save" /><input type="hidden" name="handl_aicac_dividend_present" value="1" /><input type="hidden" name="_wpnonce" value="testnonce" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Recording</th><td><label><input type="checkbox" name="handl_aicac_dividend_enabled" value="1" checked="checked" /> Record AI-tool referral visits</label></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save changes" /></form><h2>Sources</h2><table class="widefat striped"><thead><tr><th>Source</th><th>Visits</th><th>Last seen</th><th>Sample landings</th></tr></thead><tbody><tr><td>ChatGPT</td><td>40</td><td>2026-10-16 15:38</td><td><code>/land/15, /land/16, /land/17, /land/18, /land/19, /land/20, /land/21, /land/22, /land/23, /land/24, /land/25, /land/26, /land/27, /land/28, /land/29, /land/30, /land/31, /land/32, /land/33, /land/34, /land/35, /land/36, /land/37, /land/38, /land/39</code></td></tr></tbody></table><h2>Weekly trend</h2><table class="widefat striped"><thead><tr><th>Week</th><th>Visits</th></tr></thead><tbody><tr><td>2026-W42</td><td>40</td></tr></tbody></table><p class="description">Caps: at most 40 sources, 25 landing samples per source, 26 week buckets.</p></div></div>
+</section>
+<section>
+<h2>AC3 sources+trend; give-vs-get only when botwatch present</h2>
+<p>Empty privacy copy when no referrals. Give vs get appears only with botwatch ledger; deleting botwatch silently drops the block.</p>
+<dl>
+<dt>give_vs_get absent</dt><dd>yes</dd>
+<dt>crawl_hits / referral_hits</dt><dd>12 / 1</dd>
+<dt>give_vs_get after botwatch delete</dt><dd>yes</dd>
+<dt>Empty copy</dt><dd>No AI-tool referrals recorded yet.</dd>
+<dt>AC3 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>AI referral dividend</h1><p>Human visits that arrive from AI tools after they crawl or cite this site. Referrer host and landing path only — no cookies, no PII, no per-visitor tracking.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_dividend_save" /><input type="hidden" name="handl_aicac_dividend_present" value="1" /><input type="hidden" name="_wpnonce" value="testnonce" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Recording</th><td><label><input type="checkbox" name="handl_aicac_dividend_enabled" value="1" checked="checked" /> Record AI-tool referral visits</label></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save changes" /></form><h2>Sources</h2><p>No AI-tool referrals recorded yet.</p><h2>Weekly trend</h2><p>No week buckets yet.</p><p class="description">Caps: at most 40 sources, 25 landing samples per source, 26 week buckets.</p></div></div>
+<div class="ui"><div class="wrap"><h1>AI referral dividend</h1><p>Human visits that arrive from AI tools after they crawl or cite this site. Referrer host and landing path only — no cookies, no PII, no per-visitor tracking.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_dividend_save" /><input type="hidden" name="handl_aicac_dividend_present" value="1" /><input type="hidden" name="_wpnonce" value="testnonce" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Recording</th><td><label><input type="checkbox" name="handl_aicac_dividend_enabled" value="1" checked="checked" /> Record AI-tool referral visits</label></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save changes" /></form><h2>Give vs get</h2><p>AI crawlers recorded 12 hits; AI tools sent back 1 human referral visits.</p><h2>Sources</h2><table class="widefat striped"><thead><tr><th>Source</th><th>Visits</th><th>Last seen</th><th>Sample landings</th></tr></thead><tbody><tr><td>Claude</td><td>1</td><td>2026-10-16 15:37</td><td><code>/</code></td></tr></tbody></table><h2>Weekly trend</h2><table class="widefat striped"><thead><tr><th>Week</th><th>Visits</th></tr></thead><tbody><tr><td>2026-W42</td><td>1</td></tr></tbody></table><p class="description">Caps: at most 40 sources, 25 landing samples per source, 26 week buckets.</p></div></div>
+</section>
+<section>
+<h2>AC4 no-op save + crawler UA excluded</h2>
+<dl>
+<dt>Enabled by default</dt><dd>yes</dd>
+<dt>Repeat disabled save byte-identical</dt><dd>yes</dd>
+<dt>Save defaults deletes option</dt><dd>yes</dd>
+<dt>GPTBot UA wrote ledger</dt><dd>no</dd>
+<dt>AC4 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>AI referral dividend</h1><p>Human visits that arrive from AI tools after they crawl or cite this site. Referrer host and landing path only — no cookies, no PII, no per-visitor tracking.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_dividend_save" /><input type="hidden" name="handl_aicac_dividend_present" value="1" /><input type="hidden" name="_wpnonce" value="testnonce" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Recording</th><td><label><input type="checkbox" name="handl_aicac_dividend_enabled" value="1" checked="checked" /> Record AI-tool referral visits</label></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save changes" /></form><h2>Sources</h2><p>No AI-tool referrals recorded yet.</p><h2>Weekly trend</h2><p>No week buckets yet.</p><p class="description">Caps: at most 40 sources, 25 landing samples per source, 26 week buckets.</p></div></div>
+</section>
+</body></html>

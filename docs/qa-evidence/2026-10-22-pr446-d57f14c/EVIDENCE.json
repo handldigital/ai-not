@@ -1,0 +1,31 @@
+{
+  "pr": 446,
+  "issue": 442,
+  "name": "AICAC-DIVIDEND",
+  "exact_sha": "d57f14c336b06fc44bd2bf15030970cd56c3e48a",
+  "captured_at": "2026-10-22T21:44:50.905Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA d57f14c (ai-not-442-dividend); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-perplexity-unrelated.png",
+      "bytes": 208681,
+      "heading": "AC1 Perplexity referrer increments; unrelated is byte-identical"
+    },
+    {
+      "file": "02-landing-caps.png",
+      "bytes": 257310,
+      "heading": "AC2 landing and ledger caps"
+    },
+    {
+      "file": "03-give-vs-get.png",
+      "bytes": 340683,
+      "heading": "AC3 sources+trend; give-vs-get only when botwatch present"
+    },
+    {
+      "file": "04-noop-save.png",
+      "bytes": 196415,
+      "heading": "AC4 no-op save + crawler UA excluded"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"d57f14c336b06fc44bd2bf15030970cd56c3e48a\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true,\n    \"land_count\": 25\n}"
+}

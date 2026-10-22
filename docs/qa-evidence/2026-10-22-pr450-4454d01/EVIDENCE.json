@@ -1,0 +1,31 @@
+{
+  "pr": 450,
+  "issue": 447,
+  "name": "AICAC-WEATHER",
+  "exact_sha": "4454d01e23c34f67dcefc2e9e2b859221e70fed3",
+  "captured_at": "2026-10-22T21:44:51.521Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 4454d01 (ai-not-447-weather); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-ok-to-major.png",
+      "bytes": 142985,
+      "heading": "AC1 ok→major opens one notice; recovery clears"
+    },
+    {
+      "file": "02-fetch-failure.png",
+      "bytes": 165796,
+      "heading": "AC2 fetch failure does not change state or open a notice"
+    },
+    {
+      "file": "03-screen-indicators.png",
+      "bytes": 187048,
+      "heading": "AC3 screen lists indicator and last change"
+    },
+    {
+      "file": "04-noop-save.png",
+      "bytes": 147694,
+      "heading": "AC4 defaults off + no-op save"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"4454d01e23c34f67dcefc2e9e2b859221e70fed3\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true,\n    \"changed_stamp\": \"2026-10-20 17:34\",\n    \"repeat_notices\": 0\n}"
+}
