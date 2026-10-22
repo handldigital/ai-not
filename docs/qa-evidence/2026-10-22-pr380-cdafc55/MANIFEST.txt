@@ -1,0 +1,12 @@
+exact_sha=cdafc55ad9d375e9bb6245d1cda4f568c5742369
+short_sha=cdafc55
+captured_at=2026-10-22T22:08:34.774Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA cdafc55 (ai-not-pr380); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.
+files:
+  01-defaults-off.png (93746 B)
+  02-seed-reseed.png (99634 B)
+  03-rewind-fires-once.png (132778 B)
+  04-reseed-purge.png (99174 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

@@ -1,0 +1,12 @@
+exact_sha=406d24b93adb74eda6f042814881b89a6d32f628
+short_sha=406d24b
+captured_at=2026-10-22T22:08:35.853Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 406d24b (ai-not-pr384); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.
+files:
+  01-sample-idempotent.png (109665 B)
+  02-looks-right.png (95885 B)
+  03-concern-once.png (118262 B)
+  04-ledger-csv-print.png (105394 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

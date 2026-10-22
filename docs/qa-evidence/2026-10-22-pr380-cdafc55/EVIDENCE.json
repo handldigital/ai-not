@@ -1,0 +1,31 @@
+{
+  "pr": 380,
+  "issue": 377,
+  "name": "AICAC-ROLLBACK",
+  "exact_sha": "cdafc55ad9d375e9bb6245d1cda4f568c5742369",
+  "captured_at": "2026-10-22T22:08:34.774Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA cdafc55 (ai-not-pr380); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-defaults-off.png",
+      "bytes": 93746,
+      "heading": "AC1 defaults off; no file writes when disabled"
+    },
+    {
+      "file": "02-seed-reseed.png",
+      "bytes": 99634,
+      "heading": "AC2 first enable seeds; missing file quiet-reseeds"
+    },
+    {
+      "file": "03-rewind-fires-once.png",
+      "bytes": 132778,
+      "heading": "AC3 DB rewind fires once with gaps + rollback=detected"
+    },
+    {
+      "file": "04-reseed-purge.png",
+      "bytes": 99174,
+      "heading": "AC4 reseed clears incident; disable purges files"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"cdafc55ad9d375e9bb6245d1cda4f568c5742369\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

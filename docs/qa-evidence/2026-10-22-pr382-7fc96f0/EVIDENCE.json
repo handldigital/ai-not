@@ -1,0 +1,31 @@
+{
+  "pr": 382,
+  "issue": 379,
+  "name": "AICAC-MODEL-EOL",
+  "exact_sha": "7fc96f0d1f0fbeedeb2a38749097a2fec6756333",
+  "captured_at": "2026-10-22T22:08:35.320Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 7fc96f0 (ai-not-pr382); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-defaults-off.png",
+      "bytes": 83706,
+      "heading": "AC1 defaults off; feature off skips alerts"
+    },
+    {
+      "file": "02-past-eol-roster.png",
+      "bytes": 98703,
+      "heading": "AC2 past EOL flags roster and check failures"
+    },
+    {
+      "file": "03-alerts-dedupe.png",
+      "bytes": 105922,
+      "heading": "AC3 60 and 14 day alerts fire once per threshold"
+    },
+    {
+      "file": "04-pinned-loud-offpage.png",
+      "bytes": 105293,
+      "heading": "AC4 pinned model loud URGENT fail-close; off page prompt"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"7fc96f0d1f0fbeedeb2a38749097a2fec6756333\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}
