@@ -1,0 +1,31 @@
+{
+  "pr": 370,
+  "issue": 367,
+  "name": "AICAC-TOUCHED",
+  "exact_sha": "4294f212db7becc8c65e17d08792410ff47ef385",
+  "captured_at": "2026-10-22T21:58:55.876Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 4294f21 (ai-not-pr370); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-edit-context-records.png",
+      "bytes": 96794,
+      "heading": "AC1 editing context records; unlinkable records nothing"
+    },
+    {
+      "file": "02-column-csv.png",
+      "bytes": 115924,
+      "heading": "AC2 posts column and CSV export"
+    },
+    {
+      "file": "03-badge-off-on.png",
+      "bytes": 97234,
+      "heading": "AC3 badge off by default; on shows provider family"
+    },
+    {
+      "file": "04-channel-history-cap.png",
+      "bytes": 102717,
+      "heading": "AC4 activity channel row and history cap"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"4294f212db7becc8c65e17d08792410ff47ef385\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

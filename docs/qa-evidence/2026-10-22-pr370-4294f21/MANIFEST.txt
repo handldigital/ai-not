@@ -1,0 +1,12 @@
+exact_sha=4294f212db7becc8c65e17d08792410ff47ef385
+short_sha=4294f21
+captured_at=2026-10-22T21:58:55.876Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 4294f21 (ai-not-pr370); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.
+files:
+  01-edit-context-records.png (96794 B)
+  02-column-csv.png (115924 B)
+  03-badge-off-on.png (97234 B)
+  04-channel-history-cap.png (102717 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

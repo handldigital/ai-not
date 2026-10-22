@@ -1,0 +1,31 @@
+{
+  "pr": 372,
+  "issue": 369,
+  "name": "AICAC-AUP-ACK",
+  "exact_sha": "764059097f28b207a1c1d46daa634d1659f6380a",
+  "captured_at": "2026-10-22T21:58:56.476Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 7640590 (ai-not-pr372); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-disabled-empty-noop.png",
+      "bytes": 93809,
+      "heading": "AC1 disabled or empty policy never prevents"
+    },
+    {
+      "file": "02-deny-accept-unlock.png",
+      "bytes": 108927,
+      "heading": "AC2 unaccepted deny aup_not_accepted; accept unlocks"
+    },
+    {
+      "file": "03-version-grace-lock.png",
+      "bytes": 100243,
+      "heading": "AC3 policy edit bumps version; grace then lock"
+    },
+    {
+      "file": "04-roster-csv-reset.png",
+      "bytes": 122174,
+      "heading": "AC4 roster CSV and reset"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"764059097f28b207a1c1d46daa634d1659f6380a\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

@@ -1,0 +1,31 @@
+{
+  "pr": 368,
+  "issue": 365,
+  "name": "AICAC-MYAI",
+  "exact_sha": "134f9a0b2a3d7e2974c7d6c9512d16a4bc3f9ff6",
+  "captured_at": "2026-10-22T21:58:55.225Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 134f9a0 (ai-not-pr368); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-own-calls-denies.png",
+      "bytes": 98323,
+      "heading": "AC1 own calls and denies are self-scoped"
+    },
+    {
+      "file": "02-grants-temp-role.png",
+      "bytes": 110365,
+      "heading": "AC2 grants show temp-allow and role gate; expired omitted"
+    },
+    {
+      "file": "03-panel-readonly.png",
+      "bytes": 208960,
+      "heading": "AC3 panel is read-only and self-scoped"
+    },
+    {
+      "file": "04-shortcode-profile-gate.png",
+      "bytes": 104946,
+      "heading": "AC4 shortcode and profile gate on current user"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"134f9a0b2a3d7e2974c7d6c9512d16a4bc3f9ff6\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}
