@@ -1,0 +1,37 @@
+{
+  "pr": 465,
+  "issue": 464,
+  "name": "AICAC-WAITING-ROOM",
+  "exact_sha": "4a55016bfb0eba69c7fb3d9a54bc31e141558a88",
+  "captured_at": "2026-10-22T22:35:15.914Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 4a55016 (ai-not-464-waiting-room); Playwright local serve of per-AC HTML including Class::render_page() on AC5. Live sandbox plugin was not checked out.",
+  "email": "haktan+aicac-waiting-room@handldigital.com",
+  "shots": [
+    {
+      "file": "01-defaults-noop.png",
+      "bytes": 103815,
+      "heading": "AC1 defaults off; own options; noop save"
+    },
+    {
+      "file": "02-surface-skip.png",
+      "bytes": 101400,
+      "heading": "AC2 surface split; unmeasured skipped"
+    },
+    {
+      "file": "03-grades-invisible.png",
+      "bytes": 103265,
+      "heading": "AC3 grades incl. INVISIBLE heavy cron"
+    },
+    {
+      "file": "04-blocking-alert.png",
+      "bytes": 104139,
+      "heading": "AC4 BLOCKING alert once per plugin+day"
+    },
+    {
+      "file": "05-csv-rendered.png",
+      "bytes": 277306,
+      "heading": "AC5 CSV + rendered Waiting-room page"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"4a55016bfb0eba69c7fb3d9a54bc31e141558a88\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true,\n    \"ac5\": true\n}"
+}

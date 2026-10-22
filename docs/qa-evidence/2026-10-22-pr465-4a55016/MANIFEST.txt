@@ -1,0 +1,13 @@
+exact_sha=4a55016bfb0eba69c7fb3d9a54bc31e141558a88
+short_sha=4a55016
+captured_at=2026-10-22T22:35:15.914Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 4a55016 (ai-not-464-waiting-room); Playwright local serve of per-AC HTML including Class::render_page() on AC5. Live sandbox plugin was not checked out.
+files:
+  01-defaults-noop.png (103815 B)
+  02-surface-skip.png (101400 B)
+  03-grades-invisible.png (103265 B)
+  04-blocking-alert.png (104139 B)
+  05-csv-rendered.png (277306 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md
