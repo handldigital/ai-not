@@ -1,0 +1,65 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR408 noise ae6b36e3afd8c6a011d164c6d1c92545a6d6bb12</title><style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+.sha{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace;background:#fff;border:1px solid #ddd;padding:10px}
+.pass{color:#0a7a28;font-weight:700}
+</style></head><body>
+<h1>PR408 / #405 AICAC-NOISE</h1>
+<p class="sha">SHA ae6b36e3afd8c6a011d164c6d1c92545a6d6bb12</p>
+<p>In-memory Noise at this SHA. Four QA ACs: off by default; wallpaper four consecutive weeks; budget crossing fires one [NOISE] and rearms; CSV framing.</p>
+<section>
+<h2>AC1 defaults off + off-page copy</h2>
+<dl>
+<dt>Enabled</dt><dd>no</dd>
+<dt>option byte-identical</dt><dd>yes</dd>
+<dt>Save defaults deleted option</dt><dd>yes</dd>
+<dt>Off copy</dt><dd>Noise watch is off</dd>
+<dt>AC1 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Alert noise</h1><p class="description">Measure how many alerts this plugin sends each week. Report only — never auto-tunes or suppresses. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_noise_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_noise_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable noise watch</th><td><label><input type="checkbox" name="handl_aicac_noise_enabled" value="1"  /> Track alert volume, flag wallpaper controls, and alert when the weekly budget is exceeded</label></td></tr><tr><th scope="row"><label for="handl-aicac-noise-budget">Weekly alert budget</label></th><td><input name="handl_aicac_noise_budget_per_week" id="handl-aicac-noise-budget" type="number" min="1" max="1000" step="1" value="10" class="small-text" /><p class="description">Default 10 alerts per ISO week. Crossing fires one [NOISE] meta-alert (counted in the ledger).</p></td></tr><tr><th scope="row"><label for="handl-aicac-noise-wallpaper">Wallpaper weeks</label></th><td><input name="handl_aicac_noise_wallpaper_weeks" id="handl-aicac-noise-wallpaper" type="number" min="2" max="12" step="1" value="4" class="small-text" /><p class="description">A control that fires at least once in each of this many consecutive weeks is wallpaper (suggestion only).</p></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save noise settings" /></form><p>Noise watch is off. Enable it to measure weekly alert volume and wallpaper controls.</p></div></div>
+</section>
+<section>
+<h2>AC2 wallpaper four consecutive weeks</h2>
+<p>dormant fired all 4 ISO weeks ending at T0; went_ai one-off is not wallpaper.</p>
+<dl>
+<dt>wallpaper control</dt><dd>dormant</dd>
+<dt>weeks</dt><dd>4</dd>
+<dt>went_ai wallpaper</dt><dd>no</dd>
+<dt>AC2 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Alert noise</h1><p class="description">Measure how many alerts this plugin sends each week. Report only — never auto-tunes or suppresses. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_noise_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_noise_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable noise watch</th><td><label><input type="checkbox" name="handl_aicac_noise_enabled" value="1"  checked="checked" /> Track alert volume, flag wallpaper controls, and alert when the weekly budget is exceeded</label></td></tr><tr><th scope="row"><label for="handl-aicac-noise-budget">Weekly alert budget</label></th><td><input name="handl_aicac_noise_budget_per_week" id="handl-aicac-noise-budget" type="number" min="1" max="1000" step="1" value="100" class="small-text" /><p class="description">Default 10 alerts per ISO week. Crossing fires one [NOISE] meta-alert (counted in the ledger).</p></td></tr><tr><th scope="row"><label for="handl-aicac-noise-wallpaper">Wallpaper weeks</label></th><td><input name="handl_aicac_noise_wallpaper_weeks" id="handl-aicac-noise-wallpaper" type="number" min="2" max="12" step="1" value="4" class="small-text" /><p class="description">A control that fires at least once in each of this many consecutive weeks is wallpaper (suggestion only).</p></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save noise settings" /></form><p><strong>Report only — never auto-tunes or suppresses alerts.</strong></p><ul><li>Week 2026-W42: 2 alerts (budget 100)</li></ul><p><a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-noise&handl_aicac_noise_csv=1&_wpnonce=test-nonce-c60298200273714abd844aff815f0a08">Download CSV</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-noise&handl_aicac_noise_print=1&_wpnonce=test-nonce-0c5bb65a5a5cb579ea04f3737ba43023" target="_blank" rel="noopener noreferrer">Print / PDF view</a></p><h2>Noisiest this week</h2><table class="widefat striped"><thead><tr><th>Control</th><th>Count</th></tr></thead><tbody><tr><td><code>dormant</code></td><td>1</td></tr><tr><td><code>went_ai</code></td><td>1</td></tr></tbody></table><h2>Wallpaper controls</h2><table class="widefat striped"><thead><tr><th>Control</th><th>Weeks</th><th>Review</th></tr></thead><tbody><tr><td><code>dormant</code></td><td>4</td><td><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-dormant">Open settings</a></td></tr></tbody></table></div></div>
+</section>
+<section>
+<h2>AC3 alert fires once and rearms under budget</h2>
+<p>Fixture: haktan+aicac-noise@handldigital.com. Budget 2, three sends this week. Second fire count 0. Drop under budget rearms; over again sends mail 2. [NOISE] self-accounted in ledger.</p>
+<dl>
+<dt>first fire</dt><dd>yes</dd>
+<dt>mail subject</dt><dd>[Test Site] [NOISE] AI Connector alert volume needs attention</dd>
+<dt>second fire count</dt><dd>0</dd>
+<dt>self-accounted noise</dt><dd>yes</dd>
+<dt>mails after rearm</dt><dd>2</dd>
+<dt>AC3 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Alert noise</h1><p class="description">Measure how many alerts this plugin sends each week. Report only — never auto-tunes or suppresses. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_noise_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_noise_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable noise watch</th><td><label><input type="checkbox" name="handl_aicac_noise_enabled" value="1"  checked="checked" /> Track alert volume, flag wallpaper controls, and alert when the weekly budget is exceeded</label></td></tr><tr><th scope="row"><label for="handl-aicac-noise-budget">Weekly alert budget</label></th><td><input name="handl_aicac_noise_budget_per_week" id="handl-aicac-noise-budget" type="number" min="1" max="1000" step="1" value="2" class="small-text" /><p class="description">Default 10 alerts per ISO week. Crossing fires one [NOISE] meta-alert (counted in the ledger).</p></td></tr><tr><th scope="row"><label for="handl-aicac-noise-wallpaper">Wallpaper weeks</label></th><td><input name="handl_aicac_noise_wallpaper_weeks" id="handl-aicac-noise-wallpaper" type="number" min="2" max="12" step="1" value="12" class="small-text" /><p class="description">A control that fires at least once in each of this many consecutive weeks is wallpaper (suggestion only).</p></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save noise settings" /></form><p><strong>Report only — never auto-tunes or suppresses alerts.</strong></p><ul><li>Week 2026-W42: 4 alerts (budget 2)</li><li><strong>Over weekly noise budget.</strong></li></ul><p><a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-noise&handl_aicac_noise_csv=1&_wpnonce=test-nonce-c60298200273714abd844aff815f0a08">Download CSV</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-noise&handl_aicac_noise_print=1&_wpnonce=test-nonce-0c5bb65a5a5cb579ea04f3737ba43023" target="_blank" rel="noopener noreferrer">Print / PDF view</a></p><h2>Noisiest this week</h2><table class="widefat striped"><thead><tr><th>Control</th><th>Count</th></tr></thead><tbody><tr><td><code>drill</code></td><td>1</td></tr><tr><td><code>footprint</code></td><td>1</td></tr><tr><td><code>key_age</code></td><td>1</td></tr><tr><td><code>noise</code></td><td>1</td></tr></tbody></table><h2>Wallpaper controls</h2><p>No wallpaper controls detected.</p></div></div>
+</section>
+<section>
+<h2>AC4 CSV report only never mutates</h2>
+<p>CSV carries section,control,count,weeks,url,framing and report_only_never_mutates. Screen has Download CSV.</p>
+<dl>
+<dt>CSV framing</dt><dd>report_only_never_mutates</dd>
+<dt>CSV has footprint</dt><dd>yes</dd>
+<dt>CSV has drill</dt><dd>yes</dd>
+<dt>AC4 pass</dt><dd class="pass">yes</dd>
+</dl>
+<pre>section,control,count,weeks,url,framing
+noisiest,footprint,2,,,report_only_never_mutates
+noisiest,drill,1,,,report_only_never_mutates
+summary,2026-W42,3,10,under_budget,report_only_never_mutates
+</pre>
+<div class="ui"><div class="wrap"><h1>Alert noise</h1><p class="description">Measure how many alerts this plugin sends each week. Report only — never auto-tunes or suppresses. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_noise_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_noise_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable noise watch</th><td><label><input type="checkbox" name="handl_aicac_noise_enabled" value="1"  checked="checked" /> Track alert volume, flag wallpaper controls, and alert when the weekly budget is exceeded</label></td></tr><tr><th scope="row"><label for="handl-aicac-noise-budget">Weekly alert budget</label></th><td><input name="handl_aicac_noise_budget_per_week" id="handl-aicac-noise-budget" type="number" min="1" max="1000" step="1" value="10" class="small-text" /><p class="description">Default 10 alerts per ISO week. Crossing fires one [NOISE] meta-alert (counted in the ledger).</p></td></tr><tr><th scope="row"><label for="handl-aicac-noise-wallpaper">Wallpaper weeks</label></th><td><input name="handl_aicac_noise_wallpaper_weeks" id="handl-aicac-noise-wallpaper" type="number" min="2" max="12" step="1" value="4" class="small-text" /><p class="description">A control that fires at least once in each of this many consecutive weeks is wallpaper (suggestion only).</p></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save noise settings" /></form><p><strong>Report only — never auto-tunes or suppresses alerts.</strong></p><ul><li>Week 2026-W42: 3 alerts (budget 10)</li></ul><p><a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-noise&handl_aicac_noise_csv=1&_wpnonce=test-nonce-c60298200273714abd844aff815f0a08">Download CSV</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-noise&handl_aicac_noise_print=1&_wpnonce=test-nonce-0c5bb65a5a5cb579ea04f3737ba43023" target="_blank" rel="noopener noreferrer">Print / PDF view</a></p><h2>Noisiest this week</h2><table class="widefat striped"><thead><tr><th>Control</th><th>Count</th></tr></thead><tbody><tr><td><code>footprint</code></td><td>2</td></tr><tr><td><code>drill</code></td><td>1</td></tr></tbody></table><h2>Wallpaper controls</h2><p>No wallpaper controls detected.</p></div></div>
+</section>
+</body></html>

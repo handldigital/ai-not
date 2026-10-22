@@ -1,0 +1,31 @@
+{
+  "pr": 408,
+  "issue": 405,
+  "name": "AICAC-NOISE",
+  "exact_sha": "ae6b36e3afd8c6a011d164c6d1c92545a6d6bb12",
+  "captured_at": "2026-10-22T22:27:17.416Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA ae6b36e (ai-not-pr408); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-defaults-off.png",
+      "bytes": 214725,
+      "heading": "AC1 defaults off + off-page copy"
+    },
+    {
+      "file": "02-wallpaper.png",
+      "bytes": 271565,
+      "heading": "AC2 wallpaper four consecutive weeks"
+    },
+    {
+      "file": "03-alert-rearm.png",
+      "bytes": 312608,
+      "heading": "AC3 alert fires once and rearms under budget"
+    },
+    {
+      "file": "04-csv-informational.png",
+      "bytes": 311946,
+      "heading": "AC4 CSV report only never mutates"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"ae6b36e3afd8c6a011d164c6d1c92545a6d6bb12\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

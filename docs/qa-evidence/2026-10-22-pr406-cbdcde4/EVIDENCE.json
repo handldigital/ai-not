@@ -1,0 +1,31 @@
+{
+  "pr": 406,
+  "issue": 403,
+  "name": "AICAC-UNATTENDED",
+  "exact_sha": "cbdcde434c0967970083e20026fbf15d92a8c7df",
+  "captured_at": "2026-10-22T22:27:16.833Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA cbdcde4 (ai-not-pr406); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-defaults-off.png",
+      "bytes": 220131,
+      "heading": "AC1 defaults off + off-page copy"
+    },
+    {
+      "file": "02-roster-login.png",
+      "bytes": 293239,
+      "heading": "AC2 manage login stamps roster"
+    },
+    {
+      "file": "03-alert-rearm.png",
+      "bytes": 335828,
+      "heading": "AC3 unattended alert once and rearm"
+    },
+    {
+      "file": "04-csv-framing.png",
+      "bytes": 327600,
+      "heading": "AC4 CSV roster framing"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"cbdcde434c0967970083e20026fbf15d92a8c7df\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

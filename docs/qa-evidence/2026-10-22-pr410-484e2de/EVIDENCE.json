@@ -1,0 +1,31 @@
+{
+  "pr": 410,
+  "issue": 407,
+  "name": "AICAC-SUCCESSION",
+  "exact_sha": "484e2ded72357af6ddc85bbda17d75b32a7ec689",
+  "captured_at": "2026-10-22T22:27:18.084Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 484e2de (ai-not-pr410); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-defaults-off.png",
+      "bytes": 172612,
+      "heading": "AC1 defaults off + off-page copy"
+    },
+    {
+      "file": "02-spof-audience.png",
+      "bytes": 295488,
+      "heading": "AC2 SPOF one human audience"
+    },
+    {
+      "file": "03-dead-alert.png",
+      "bytes": 348497,
+      "heading": "AC3 dead recipient alert and rearm"
+    },
+    {
+      "file": "04-csv-framing.png",
+      "bytes": 420516,
+      "heading": "AC4 CSV never rewrites recipients"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"484e2ded72357af6ddc85bbda17d75b32a7ec689\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

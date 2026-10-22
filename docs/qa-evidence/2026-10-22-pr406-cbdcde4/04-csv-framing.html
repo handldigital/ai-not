@@ -1,0 +1,26 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR406 04-csv-framing.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA cbdcde434c0967970083e20026fbf15d92a8c7df · PR406 / #403 AICAC-UNATTENDED · 04-csv-framing.png</p>
+<section>
+<h2>AC4 CSV roster framing</h2>
+<p>CSV carries user_id,login,last_seen_ts,last_seen_utc,source,framing and report_only_never_mutates_policy. Screen has Download CSV.</p>
+<dl>
+<dt>CSV framing</dt><dd>report_only_never_mutates_policy</dd>
+<dt>CSV has ops</dt><dd>yes</dd>
+<dt>AC4 pass</dt><dd class="pass">yes</dd>
+</dl>
+<pre>user_id,login,last_seen_ts,last_seen_utc,source,framing
+5,ops,1791799900,2026-10-12 10:11:40 UTC,login,report_only_never_mutates_policy
+</pre>
+<div class="ui"><div class="wrap"><h1>Unattended site</h1><p class="description">Detect when no manage-capable admin has attended while AI traffic continued. Report only — never changes policy. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_unattended_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_unattended_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable unattended watch</th><td><label><input type="checkbox" name="handl_aicac_unattended_enabled" value="1"  checked="checked" /> Alert when no qualifying admin attention is seen for N days while AI traffic continues</label></td></tr><tr><th scope="row"><label for="handl-aicac-unattended-days">Absence threshold (days)</label></th><td><input name="handl_aicac_unattended_days" id="handl-aicac-unattended-days" type="number" min="1" max="365" step="1" value="21" class="small-text" /><p class="description">Default 21. Quiet sites (no AI activity) never alert.</p></td></tr><tr><th scope="row"><label for="handl-aicac-unattended-backup">Backup email</label></th><td><input name="handl_aicac_unattended_backup_email" id="handl-aicac-unattended-backup" type="email" value="haktan+aicac-unattended@handldigital.com" class="regular-text" /><p class="description">Where to send the [UNATTENDED] alert when the site owner may be away. Falls back to the WordPress admin email.</p></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save unattended settings" /></form><p><strong>Report only — never changes policy.</strong></p><ul><li>Days since attention: 0 (threshold 21)</li><li>AI activity in window: 0 calls, 0 denies, 0 providers</li><li>Alert destination: haktan+aicac-unattended@handldigital.com</li></ul><p><a href="https://example.test/wp-admin/admin.php?page=handl-aicac">Activity log</a> <a href="https://example.test/wp-admin/admin.php?page=handl-aicac-protections">Rules / protections</a> </p><p><a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-unattended&handl_aicac_unattended_csv=1&_wpnonce=test-nonce-a56b0c4b01c69414e6b414726e2f7347">Download CSV</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-unattended&handl_aicac_unattended_print=1&_wpnonce=test-nonce-438fe7d118321d05c5ac2ad4fbad810b" target="_blank" rel="noopener noreferrer">Print / PDF view</a></p><h2>Attention roster</h2><table class="widefat striped"><thead><tr><th>User ID</th><th>Login</th><th>Display name</th><th>Last seen (UTC)</th><th>Source</th></tr></thead><tbody><tr><td>5</td><td><code>ops</code></td><td>Ops Person</td><td>2026-10-12 10:11:40 UTC</td><td>login</td></tr></tbody></table></div></div>
+</section>
+</body></html>

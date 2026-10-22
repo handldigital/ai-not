@@ -1,0 +1,23 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR410 02-spof-audience.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA 484e2ded72357af6ddc85bbda17d75b32a7ec689 · PR410 / #407 AICAC-SUCCESSION · 02-spof-audience.png</p>
+<section>
+<h2>AC2 SPOF one human audience</h2>
+<p>Entire suite routes to haktan+aicac-succession@handldigital.com. Distinct humans 1, match=user, denial in controls.</p>
+<dl>
+<dt>distinct humans</dt><dd>1</dd>
+<dt>SPOF</dt><dd>yes</dd>
+<dt>AC2 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Alert succession</h1><p class="description">Count how many distinct humans receive AI Connector governance alerts. Report only — never rewrites recipients. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_succession_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_succession_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable succession census</th><td><label><input type="checkbox" name="handl_aicac_succession_enabled" value="1"  checked="checked" /> Census alert recipients, flag a single point of failure, and alert on dead destinations</label></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save succession settings" /></form><p><strong>Report only — never rewrites recipients on other controls.</strong></p><ul><li>Distinct humans: 1</li><li><strong>Single point of failure — add a second destination on at least one control.</strong></li></ul><p><a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-succession&handl_aicac_succession_csv=1&_wpnonce=test-nonce-017cd24477091eed0fd9d54476705226">Download CSV</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-succession&handl_aicac_succession_print=1&_wpnonce=test-nonce-042b81d05f5e42a84b07f0b85811eb2f" target="_blank" rel="noopener noreferrer">Print / PDF view</a></p><h2>Audience</h2><table class="widefat striped"><thead><tr><th>Email</th><th>Match</th><th>Controls</th><th>Review</th></tr></thead><tbody><tr><td>haktan+aicac-succession@handldigital.com</td><td>user</td><td><code>denial, routing_budget, routing_drift, routing_anomaly, routing_latency, routing_shadow, routing_expiry, routing_digest, routing_webhook_failure, routing_canary, unattended, drill, key_age, footprint, noise, friction, dormant, chargeback, recert, went_ai, temp_allow</code></td><td><a href="https://example.test/wp-admin/admin.php?page=handl-aicac">Open settings</a></td></tr></tbody></table><h2>Dead recipients</h2><p>No dead recipients detected.</p></div></div>
+</section>
+</body></html>
