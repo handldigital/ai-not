@@ -1,0 +1,31 @@
+{
+  "pr": 416,
+  "issue": 413,
+  "name": "AICAC-RECONCILE",
+  "exact_sha": "e6c87f161a47f79f60b3fae182c4cf67b07ce24f",
+  "captured_at": "2026-10-22T22:36:28.479Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA e6c87f1 (ai-not-pr416); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out. HANDL_AICAC_TEST_NOW=1791800000 so calendar month 2026-10 matches harness.",
+  "shots": [
+    {
+      "file": "01-defaults-off.png",
+      "bytes": 237345,
+      "heading": "AC1 defaults off + off-page copy"
+    },
+    {
+      "file": "02-variance-below.png",
+      "bytes": 327562,
+      "heading": "AC2 variance below bill unmetered"
+    },
+    {
+      "file": "03-alert-rearm.png",
+      "bytes": 363460,
+      "heading": "AC3 reconcile alert once and rearm"
+    },
+    {
+      "file": "04-csv-framing.png",
+      "bytes": 376351,
+      "heading": "AC4 CSV roster framing"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"e6c87f161a47f79f60b3fae182c4cf67b07ce24f\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

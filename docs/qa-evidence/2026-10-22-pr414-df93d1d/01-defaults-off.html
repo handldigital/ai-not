@@ -1,0 +1,25 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR414 01-defaults-off.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA df93d1d9a37e6a7c9b234cc6b6e2ebb54c572d5a · PR414 / #411 AICAC-LIMBO · 01-defaults-off.png</p>
+<section>
+<h2>AC1 defaults off + off-page copy</h2>
+<dl>
+<dt>Enabled</dt><dd>no</dd>
+<dt>SLA default</dt><dd>7</dd>
+<dt>option byte-identical</dt><dd>yes</dd>
+<dt>Save defaults deleted option</dt><dd>yes</dd>
+<dt>Off copy</dt><dd>Limbo meter is off</dd>
+<dt>AC1 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Request limbo</h1><p class="description">Measure how long AI access requests wait for a human decision. Report only — never decides, reminds, or changes request rows. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_limbo_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_limbo_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable limbo meter</th><td><label><input type="checkbox" name="handl_aicac_limbo_enabled" value="1"  /> Track pending access-request age and alert when any request exceeds the decision SLA</label></td></tr><tr><th scope="row"><label for="handl-aicac-limbo-sla">Decision SLA (days)</label></th><td><input name="handl_aicac_limbo_sla_days" id="handl-aicac-limbo-sla" type="number" min="1" max="365" step="1" value="7" class="small-text" /><p class="description">Default 7. Pending requests older than this become stale findings.</p></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save limbo settings" /></form><p>Limbo meter is off. Enable it to measure how long access requests wait for a decision.</p></div></div>
+</section>
+</body></html>

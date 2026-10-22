@@ -1,0 +1,29 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR414 04-csv-framing.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA df93d1d9a37e6a7c9b234cc6b6e2ebb54c572d5a · PR414 / #411 AICAC-LIMBO · 04-csv-framing.png</p>
+<section>
+<h2>AC4 CSV roster framing</h2>
+<p>CSV carries slow/slow.php, pending, decided, stats, and report_only_never_decides. Screen has Download CSV.</p>
+<dl>
+<dt>CSV framing</dt><dd>report_only_never_decides</dd>
+<dt>CSV has slow/slow.php</dt><dd>yes</dd>
+<dt>AC4 pass</dt><dd class="pass">yes</dd>
+</dl>
+<pre>section,id,plugin,status,days_in_limbo,created_utc,decided_utc,duration_days,user_login,stale,url,framing
+summary,,,,,,,,,1,,report_only_never_decides
+stats,median_days,,,5,,,5,n=1,,,report_only_never_decides
+pending,,slow/slow.php,pending,9,2026-10-03 10:13:20 UTC,,,editor,yes,https://example.test/wp-admin/admin.php?page=handl-aicac-protections#handl-aicac-access-request-inbox,report_only_never_decides
+decided,,demo/demo.php,approved,,2026-09-22 10:13:20 UTC,2026-09-27 10:13:20 UTC,5,editor,,,report_only_never_decides
+</pre>
+<div class="ui"><div class="wrap"><h1>Request limbo</h1><p class="description">Measure how long AI access requests wait for a human decision. Report only — never decides, reminds, or changes request rows. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_limbo_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_limbo_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable limbo meter</th><td><label><input type="checkbox" name="handl_aicac_limbo_enabled" value="1"  checked="checked" /> Track pending access-request age and alert when any request exceeds the decision SLA</label></td></tr><tr><th scope="row"><label for="handl-aicac-limbo-sla">Decision SLA (days)</label></th><td><input name="handl_aicac_limbo_sla_days" id="handl-aicac-limbo-sla" type="number" min="1" max="365" step="1" value="7" class="small-text" /><p class="description">Default 7. Pending requests older than this become stale findings.</p></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save limbo settings" /></form><p><strong>Report only — never decides, reminds, or changes request rows.</strong></p><ul><li>Pending: 1 — over SLA: 1 (SLA 7 days)</li><li>Time-to-decision: median 5 days, worst 5 days (n=1)</li><li><strong>Oldest over-SLA: slow/slow.php (9 days)</strong></li></ul><p><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-protections#handl-aicac-access-request-inbox">Open pending inbox</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-limbo&handl_aicac_limbo_csv=1&_wpnonce=test-nonce-690f089950e68d1df5b46c7d70d59b9b">Download CSV</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-limbo&handl_aicac_limbo_print=1&_wpnonce=test-nonce-5e3ec6b62b1526522358076714dba548" target="_blank" rel="noopener noreferrer">Print / PDF view</a></p><h2>Aging roster (oldest first)</h2><table class="widefat striped"><thead><tr><th>Plugin</th><th>Requested by</th><th>Days in limbo</th><th>Created (UTC)</th><th>Stale</th><th>Inbox</th></tr></thead><tbody><tr><td><code>slow/slow.php</code></td><td>editor</td><td>9</td><td>2026-10-03 10:13:20 UTC</td><td>Yes</td><td><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-protections#handl-aicac-access-request-inbox">Open</a></td></tr></tbody></table></div></div>
+</section>
+</body></html>

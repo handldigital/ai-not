@@ -1,0 +1,31 @@
+{
+  "pr": 414,
+  "issue": 411,
+  "name": "AICAC-LIMBO",
+  "exact_sha": "df93d1d9a37e6a7c9b234cc6b6e2ebb54c572d5a",
+  "captured_at": "2026-10-22T22:36:27.879Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA df93d1d (ai-not-pr414); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out. HANDL_AICAC_TEST_NOW=1791800000 so render_page days_in_limbo matches harness.",
+  "shots": [
+    {
+      "file": "01-defaults-off.png",
+      "bytes": 194269,
+      "heading": "AC1 defaults off + off-page copy"
+    },
+    {
+      "file": "02-aging-roster.png",
+      "bytes": 304499,
+      "heading": "AC2 aging roster oldest first stale"
+    },
+    {
+      "file": "03-alert-rearm.png",
+      "bytes": 312461,
+      "heading": "AC3 limbo alert once and rearm"
+    },
+    {
+      "file": "04-csv-framing.png",
+      "bytes": 359243,
+      "heading": "AC4 CSV roster framing"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"df93d1d9a37e6a7c9b234cc6b6e2ebb54c572d5a\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

@@ -1,0 +1,22 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR412 02-spend-threshold.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA 3a4f15c240ae3f28da129991fb69c173c2a4bbaa · PR412 / #409 AICAC-CROSSCHECK · 02-spend-threshold.png</p>
+<section>
+<h2>AC2 spend-threshold vs budget finding</h2>
+<p>Fixture: plugin_budgets demo/demo.php = 10, spend_threshold_plugins = 12. Finding spend_threshold_vs_budget with Findings table and report-only framing.</p>
+<dl>
+<dt>finding id</dt><dd>spend_threshold_vs_budget</dd>
+<dt>AC2 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Settings crosscheck</h1><p class="description">Find combinations of AI Connector settings that defeat themselves. Report only — never auto-fixes. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_crosscheck_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_crosscheck_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable crosscheck</th><td><label><input type="checkbox" name="handl_aicac_crosscheck_enabled" value="1"  checked="checked" /> Lint settings combinations, list contradictions, and alert when a new one appears</label></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save crosscheck settings" /></form><p><strong>Report only — never auto-fixes settings on other controls.</strong></p><ul><li>Contradictions: 1</li><li>Errors: 1 · Warnings: 0</li></ul><p><a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-crosscheck&handl_aicac_crosscheck_csv=1&_wpnonce=test-nonce-169155657b050926cb5b4862d6161ca2">Download CSV</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-crosscheck&handl_aicac_crosscheck_print=1&_wpnonce=test-nonce-e7f3073ec83ee8b0304181527eda0134" target="_blank" rel="noopener noreferrer">Print / PDF view</a></p><h2>Findings</h2><table class="widefat striped"><thead><tr><th>Severity</th><th>Class</th><th>Finding</th><th>Open</th></tr></thead><tbody><tr><td>error</td><td>threshold_ordering</td><td>A soft-warn spend threshold is at or above its hard plugin budget, so the warn never precedes the cap.</td><td><a href="https://example.test/wp-admin/admin.php?page=handl-aicac">Settings</a></td></tr></tbody></table></div></div>
+</section>
+</body></html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR414 limbo df93d1d9a37e6a7c9b234cc6b6e2ebb54c572d5a</title><style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+.sha{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace;background:#fff;border:1px solid #ddd;padding:10px}
+.pass{color:#0a7a28;font-weight:700}
+</style></head><body>
+<h1>PR414 / #411 AICAC-LIMBO</h1>
+<p class="sha">SHA df93d1d9a37e6a7c9b234cc6b6e2ebb54c572d5a</p>
+<p>In-memory Limbo at this SHA. Four QA ACs: off by default; aging roster oldest-first with stale over SLA; one [LIMBO] then rearm; CSV framing. Fixture clock HANDL_AICAC_TEST_NOW=1791800000 (2026-10-12) so render_page days_in_limbo matches harness.</p>
+<section>
+<h2>AC1 defaults off + off-page copy</h2>
+<dl>
+<dt>Enabled</dt><dd>no</dd>
+<dt>SLA default</dt><dd>7</dd>
+<dt>option byte-identical</dt><dd>yes</dd>
+<dt>Save defaults deleted option</dt><dd>yes</dd>
+<dt>Off copy</dt><dd>Limbo meter is off</dd>
+<dt>AC1 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Request limbo</h1><p class="description">Measure how long AI access requests wait for a human decision. Report only — never decides, reminds, or changes request rows. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_limbo_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_limbo_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable limbo meter</th><td><label><input type="checkbox" name="handl_aicac_limbo_enabled" value="1"  /> Track pending access-request age and alert when any request exceeds the decision SLA</label></td></tr><tr><th scope="row"><label for="handl-aicac-limbo-sla">Decision SLA (days)</label></th><td><input name="handl_aicac_limbo_sla_days" id="handl-aicac-limbo-sla" type="number" min="1" max="365" step="1" value="7" class="small-text" /><p class="description">Default 7. Pending requests older than this become stale findings.</p></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save limbo settings" /></form><p>Limbo meter is off. Enable it to measure how long access requests wait for a decision.</p></div></div>
+</section>
+<section>
+<h2>AC2 aging roster oldest first stale</h2>
+<p>Three pending: 10d old/old.php stale first, 7d edge/edge.php stale, 3d new/new.php not stale. SLA 7.</p>
+<dl>
+<dt>oldest plugin</dt><dd>old/old.php</dd>
+<dt>stale count</dt><dd>2</dd>
+<dt>AC2 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Request limbo</h1><p class="description">Measure how long AI access requests wait for a human decision. Report only — never decides, reminds, or changes request rows. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_limbo_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_limbo_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable limbo meter</th><td><label><input type="checkbox" name="handl_aicac_limbo_enabled" value="1"  checked="checked" /> Track pending access-request age and alert when any request exceeds the decision SLA</label></td></tr><tr><th scope="row"><label for="handl-aicac-limbo-sla">Decision SLA (days)</label></th><td><input name="handl_aicac_limbo_sla_days" id="handl-aicac-limbo-sla" type="number" min="1" max="365" step="1" value="7" class="small-text" /><p class="description">Default 7. Pending requests older than this become stale findings.</p></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save limbo settings" /></form><p><strong>Report only — never decides, reminds, or changes request rows.</strong></p><ul><li>Pending: 3 — over SLA: 2 (SLA 7 days)</li><li>Time-to-decision: median — days, worst — days (n=0)</li><li><strong>Oldest over-SLA: old/old.php (10 days)</strong></li></ul><p><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-protections#handl-aicac-access-request-inbox">Open pending inbox</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-limbo&handl_aicac_limbo_csv=1&_wpnonce=test-nonce-690f089950e68d1df5b46c7d70d59b9b">Download CSV</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-limbo&handl_aicac_limbo_print=1&_wpnonce=test-nonce-5e3ec6b62b1526522358076714dba548" target="_blank" rel="noopener noreferrer">Print / PDF view</a></p><h2>Aging roster (oldest first)</h2><table class="widefat striped"><thead><tr><th>Plugin</th><th>Requested by</th><th>Days in limbo</th><th>Created (UTC)</th><th>Stale</th><th>Inbox</th></tr></thead><tbody><tr><td><code>old/old.php</code></td><td>editor</td><td>10</td><td>2026-10-02 10:13:20 UTC</td><td>Yes</td><td><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-protections#handl-aicac-request-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb">Open</a></td></tr><tr><td><code>edge/edge.php</code></td><td>editor</td><td>7</td><td>2026-10-05 10:13:20 UTC</td><td>Yes</td><td><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-protections#handl-aicac-request-cccccccccccccccccccccccccccccccc">Open</a></td></tr><tr><td><code>new/new.php</code></td><td>editor</td><td>3</td><td>2026-10-09 10:13:20 UTC</td><td>No</td><td><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-protections#handl-aicac-request-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa">Open</a></td></tr></tbody></table></div></div>
+</section>
+<section>
+<h2>AC3 limbo alert once and rearm</h2>
+<p>Fixture: haktan+aicac-limbo@handldigital.com. 12d stuck/stuck.php fires one [LIMBO]; second fire count 0; fresh pending rearms; again/again.php fires again.</p>
+<dl>
+<dt>first fire</dt><dd>yes</dd>
+<dt>mail subject</dt><dd>[Test Site] [LIMBO] 1 access request(s) waiting past SLA (oldest 12 days)</dd>
+<dt>second fire count</dt><dd>0</dd>
+<dt>rearmed</dt><dd>yes</dd>
+<dt>mails after rearm</dt><dd>2</dd>
+<dt>AC3 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Request limbo</h1><p class="description">Measure how long AI access requests wait for a human decision. Report only — never decides, reminds, or changes request rows. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_limbo_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_limbo_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable limbo meter</th><td><label><input type="checkbox" name="handl_aicac_limbo_enabled" value="1"  checked="checked" /> Track pending access-request age and alert when any request exceeds the decision SLA</label></td></tr><tr><th scope="row"><label for="handl-aicac-limbo-sla">Decision SLA (days)</label></th><td><input name="handl_aicac_limbo_sla_days" id="handl-aicac-limbo-sla" type="number" min="1" max="365" step="1" value="7" class="small-text" /><p class="description">Default 7. Pending requests older than this become stale findings.</p></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save limbo settings" /></form><p><strong>Report only — never decides, reminds, or changes request rows.</strong></p><ul><li>Pending: 1 — over SLA: 1 (SLA 7 days)</li><li>Time-to-decision: median — days, worst — days (n=0)</li><li><strong>Oldest over-SLA: stuck/stuck.php (12 days)</strong></li></ul><p><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-protections#handl-aicac-access-request-inbox">Open pending inbox</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-limbo&handl_aicac_limbo_csv=1&_wpnonce=test-nonce-690f089950e68d1df5b46c7d70d59b9b">Download CSV</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-limbo&handl_aicac_limbo_print=1&_wpnonce=test-nonce-5e3ec6b62b1526522358076714dba548" target="_blank" rel="noopener noreferrer">Print / PDF view</a></p><h2>Aging roster (oldest first)</h2><table class="widefat striped"><thead><tr><th>Plugin</th><th>Requested by</th><th>Days in limbo</th><th>Created (UTC)</th><th>Stale</th><th>Inbox</th></tr></thead><tbody><tr><td><code>stuck/stuck.php</code></td><td>editor</td><td>12</td><td>2026-09-30 10:13:20 UTC</td><td>Yes</td><td><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-protections#handl-aicac-request-dddddddddddddddddddddddddddddddd">Open</a></td></tr></tbody></table></div></div>
+</section>
+<section>
+<h2>AC4 CSV roster framing</h2>
+<p>CSV carries slow/slow.php, pending, decided, stats, and report_only_never_decides. Screen has Download CSV.</p>
+<dl>
+<dt>CSV framing</dt><dd>report_only_never_decides</dd>
+<dt>CSV has slow/slow.php</dt><dd>yes</dd>
+<dt>AC4 pass</dt><dd class="pass">yes</dd>
+</dl>
+<pre>section,id,plugin,status,days_in_limbo,created_utc,decided_utc,duration_days,user_login,stale,url,framing
+summary,,,,,,,,,1,,report_only_never_decides
+stats,median_days,,,5,,,5,n=1,,,report_only_never_decides
+pending,,slow/slow.php,pending,9,2026-10-03 10:13:20 UTC,,,editor,yes,https://example.test/wp-admin/admin.php?page=handl-aicac-protections#handl-aicac-access-request-inbox,report_only_never_decides
+decided,,demo/demo.php,approved,,2026-09-22 10:13:20 UTC,2026-09-27 10:13:20 UTC,5,editor,,,report_only_never_decides
+</pre>
+<div class="ui"><div class="wrap"><h1>Request limbo</h1><p class="description">Measure how long AI access requests wait for a human decision. Report only — never decides, reminds, or changes request rows. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_limbo_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_limbo_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable limbo meter</th><td><label><input type="checkbox" name="handl_aicac_limbo_enabled" value="1"  checked="checked" /> Track pending access-request age and alert when any request exceeds the decision SLA</label></td></tr><tr><th scope="row"><label for="handl-aicac-limbo-sla">Decision SLA (days)</label></th><td><input name="handl_aicac_limbo_sla_days" id="handl-aicac-limbo-sla" type="number" min="1" max="365" step="1" value="7" class="small-text" /><p class="description">Default 7. Pending requests older than this become stale findings.</p></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save limbo settings" /></form><p><strong>Report only — never decides, reminds, or changes request rows.</strong></p><ul><li>Pending: 1 — over SLA: 1 (SLA 7 days)</li><li>Time-to-decision: median 5 days, worst 5 days (n=1)</li><li><strong>Oldest over-SLA: slow/slow.php (9 days)</strong></li></ul><p><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-protections#handl-aicac-access-request-inbox">Open pending inbox</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-limbo&handl_aicac_limbo_csv=1&_wpnonce=test-nonce-690f089950e68d1df5b46c7d70d59b9b">Download CSV</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-limbo&handl_aicac_limbo_print=1&_wpnonce=test-nonce-5e3ec6b62b1526522358076714dba548" target="_blank" rel="noopener noreferrer">Print / PDF view</a></p><h2>Aging roster (oldest first)</h2><table class="widefat striped"><thead><tr><th>Plugin</th><th>Requested by</th><th>Days in limbo</th><th>Created (UTC)</th><th>Stale</th><th>Inbox</th></tr></thead><tbody><tr><td><code>slow/slow.php</code></td><td>editor</td><td>9</td><td>2026-10-03 10:13:20 UTC</td><td>Yes</td><td><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-protections#handl-aicac-access-request-inbox">Open</a></td></tr></tbody></table></div></div>
+</section>
+</body></html>

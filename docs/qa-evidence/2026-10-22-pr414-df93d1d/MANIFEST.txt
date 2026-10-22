@@ -1,0 +1,12 @@
+exact_sha=df93d1d9a37e6a7c9b234cc6b6e2ebb54c572d5a
+short_sha=df93d1d
+captured_at=2026-10-22T22:36:27.879Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA df93d1d (ai-not-pr414); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out. HANDL_AICAC_TEST_NOW=1791800000 so render_page days_in_limbo matches harness.
+files:
+  01-defaults-off.png (194269 B)
+  02-aging-roster.png (304499 B)
+  03-alert-rearm.png (312461 B)
+  04-csv-framing.png (359243 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

@@ -1,0 +1,31 @@
+{
+  "pr": 412,
+  "issue": 409,
+  "name": "AICAC-CROSSCHECK",
+  "exact_sha": "3a4f15c240ae3f28da129991fb69c173c2a4bbaa",
+  "captured_at": "2026-10-22T22:36:27.295Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 3a4f15c (ai-not-pr412); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-defaults-off.png",
+      "bytes": 169592,
+      "heading": "AC1 defaults off + off-page copy"
+    },
+    {
+      "file": "02-spend-threshold.png",
+      "bytes": 240385,
+      "heading": "AC2 spend-threshold vs budget finding"
+    },
+    {
+      "file": "03-alert-rearm.png",
+      "bytes": 288944,
+      "heading": "AC3 crosscheck alert once and rearm"
+    },
+    {
+      "file": "04-csv-framing.png",
+      "bytes": 368076,
+      "heading": "AC4 CSV roster framing"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"3a4f15c240ae3f28da129991fb69c173c2a4bbaa\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}
