@@ -1,0 +1,31 @@
+{
+  "pr": 376,
+  "issue": 373,
+  "name": "AICAC-VISITOR",
+  "exact_sha": "13a1bf62d39f06a2f74ede0ecb1a1f936742922a",
+  "captured_at": "2026-10-22T22:04:27.671Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 13a1bf6 (ai-not-pr376); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-defaults-exempt.png",
+      "bytes": 102752,
+      "heading": "AC1 defaults off; disabled never prevents; logged-in exempt"
+    },
+    {
+      "file": "02-block-cap-deny.png",
+      "bytes": 107874,
+      "heading": "AC2 block-all anonymous_blocked; cap deny visitor_limit"
+    },
+    {
+      "file": "03-soft-warn-once.png",
+      "bytes": 105584,
+      "heading": "AC3 soft-warn once at 80 percent"
+    },
+    {
+      "file": "04-no-raw-ip-roster.png",
+      "bytes": 116492,
+      "heading": "AC4 raw IP never stored; roster and CSV"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"13a1bf62d39f06a2f74ede0ecb1a1f936742922a\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

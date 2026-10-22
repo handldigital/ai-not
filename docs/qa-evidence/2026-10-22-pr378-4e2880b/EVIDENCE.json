@@ -1,0 +1,31 @@
+{
+  "pr": 378,
+  "issue": 375,
+  "name": "AICAC-REGISTER",
+  "exact_sha": "4e2880b693910f359e20275eeb5f2fd56fb6184d",
+  "captured_at": "2026-10-22T22:04:28.242Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 4e2880b (ai-not-pr378); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-defaults-empty.png",
+      "bytes": 90252,
+      "heading": "AC1 defaults off; empty log yields no rows"
+    },
+    {
+      "file": "02-aggregate-fields.png",
+      "bytes": 104825,
+      "heading": "AC2 aggregates traffic and merges admin fields"
+    },
+    {
+      "file": "03-stale-notice-gated.png",
+      "bytes": 124030,
+      "heading": "AC3 stale notice only when enabled on register page"
+    },
+    {
+      "file": "04-prohibited-csv-print.png",
+      "bytes": 130755,
+      "heading": "AC4 prohibited is informational; CSV and print"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"4e2880b693910f359e20275eeb5f2fd56fb6184d\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

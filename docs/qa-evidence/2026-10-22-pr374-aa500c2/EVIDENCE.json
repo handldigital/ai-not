@@ -1,0 +1,31 @@
+{
+  "pr": 374,
+  "issue": 371,
+  "name": "AICAC-EMBARGO",
+  "exact_sha": "aa500c2870daf57d8343bb0bdd959ceb459de2fb",
+  "captured_at": "2026-10-22T22:04:27.141Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA aa500c2 (ai-not-pr374); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-disabled-noop.png",
+      "bytes": 89021,
+      "heading": "AC1 disabled never prevents or annotates"
+    },
+    {
+      "file": "02-warn-annotate.png",
+      "bytes": 103526,
+      "heading": "AC2 warn mode allows with embargo annotation"
+    },
+    {
+      "file": "03-enforce-deny.png",
+      "bytes": 96654,
+      "heading": "AC3 enforce denies with embargoed_content"
+    },
+    {
+      "file": "04-publish-override-nopain.png",
+      "bytes": 107023,
+      "heading": "AC4 publish drops index; override bypasses; no plaintext"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"aa500c2870daf57d8343bb0bdd959ceb459de2fb\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}
