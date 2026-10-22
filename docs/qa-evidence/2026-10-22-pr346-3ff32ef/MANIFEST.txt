@@ -1,0 +1,10 @@
+exact_sha=3ff32efe56005a1c7e8cdfb3134cd3b16e1af861
+short_sha=3ff32ef
+captured_at=2026-10-22T18:55:57.366Z
+note=front-door capture via __aicac_pr346_capture.php (wp-admin FastCGI segfaults on this seat)
+files:
+  01-protections-role-quota.png
+  02-profile-override.png
+  03-users-quota-column.png
+  04-activity-user-quota-deny.png
+  05-activity-soft-deny.png
