@@ -1,0 +1,25 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR433 04-env-badge.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA 2d9a5ccb0d41799c13a6c227b76b3214afc0c4c3 · PR433 / #363 AICAC-ENV-POLICY · 04-env-badge.png</p>
+<section>
+<h2>AC4 Environment screen badge shows the WP environment</h2>
+<p>Rendered Environment page at wp_get_environment_type() = staging, overlays off.</p>
+<dl>
+<dt>This site is staging</dt><dd>yes</dd>
+<dt>Environment policy heading</dt><dd>yes</dd>
+<dt>Extra environment rules are off</dt><dd>yes</dd>
+<dt>Save environment policy</dt><dd>yes</dd>
+<dt>AC4 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Environment policy</h1><p class="description">This site is staging. Extra rules for one environment are off by default. They do not copy the whole policy.</p><p><strong>This site is staging.</strong></p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_env_policy_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_env_policy_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Extra rules per environment</th><td><label><input type="checkbox" name="handl_aicac_env_policy_enabled" value="1"  /> Use extra rules per environment</label></td></tr><tr><th scope="row">Production</th><td><select name="handl_aicac_env_policy_overlay[production]"><option value="inherit" selected="selected">Use the site policy</option><option value="deny">Deny AI calls</option><option value="observe">Allow and log</option></select></td></tr><tr><th scope="row">Staging</th><td><select name="handl_aicac_env_policy_overlay[staging]"><option value="inherit" selected="selected">Use the site policy</option><option value="deny">Deny AI calls</option><option value="observe">Allow and log</option></select></td></tr><tr><th scope="row">Development</th><td><select name="handl_aicac_env_policy_overlay[development]"><option value="inherit" selected="selected">Use the site policy</option><option value="deny">Deny AI calls</option><option value="observe">Allow and log</option></select></td></tr><tr><th scope="row">Local</th><td><select name="handl_aicac_env_policy_overlay[local]"><option value="inherit" selected="selected">Use the site policy</option><option value="deny">Deny AI calls</option><option value="observe">Allow and log</option></select></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save environment policy" /></form><p>Extra environment rules are off. Decisions follow the site policy.</p></div></div>
+</section>
+</body></html>

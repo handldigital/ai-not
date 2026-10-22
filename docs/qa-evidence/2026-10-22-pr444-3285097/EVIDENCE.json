@@ -1,0 +1,41 @@
+{
+  "pr": 444,
+  "issue": 436,
+  "name": "AICAC-CHAMELEON",
+  "exact_sha": "3285097c4c876c8d708beef020d9aa40dea8aa5d",
+  "captured_at": "2026-10-22T21:33:16.175Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 3285097 (ai-not-436-chameleon); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-defaults-off.png",
+      "bytes": 147178,
+      "heading": "AC1 defaults off + no-op save"
+    },
+    {
+      "file": "02-over-granted.png",
+      "bytes": 123552,
+      "heading": "AC2 demotion is OVER-GRANTED with quota numbers"
+    },
+    {
+      "file": "03-under-granted.png",
+      "bytes": 108642,
+      "heading": "AC3 promotion is UNDER-GRANTED"
+    },
+    {
+      "file": "04-ack-rearm.png",
+      "bytes": 96516,
+      "heading": "AC4 ack quiets; second transition re-arms"
+    },
+    {
+      "file": "05-multisite-skip.png",
+      "bytes": 85129,
+      "heading": "AC5 multisite skip cleanly"
+    },
+    {
+      "file": "06-cli-csv.png",
+      "bytes": 220074,
+      "heading": "AC6 CLI exits non-zero on unacked OVER-GRANTED"
+    }
+  ],
+  "export_stdout": "ok 3285097c4c876c8d708beef020d9aa40dea8aa5d"
+}

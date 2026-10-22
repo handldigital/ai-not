@@ -1,0 +1,34 @@
+{
+    "head": "2d9a5ccb0d41799c13a6c227b76b3214afc0c4c3",
+    "ac1": true,
+    "ac2": true,
+    "ac3": true,
+    "ac4": true,
+    "ac1_eval": {
+        "prevent": true,
+        "reason": "plugin",
+        "matched_tools": []
+    },
+    "ac2_staging": {
+        "prevent": false,
+        "reason": "env_policy",
+        "matched_tools": [],
+        "env_overlay": "staging:observe"
+    },
+    "ac2_prod": {
+        "prevent": true,
+        "reason": "plugin",
+        "matched_tools": []
+    },
+    "ac3_staging": {
+        "prevent": true,
+        "reason": "env_policy",
+        "matched_tools": [],
+        "env_overlay": "staging:deny"
+    },
+    "ac3_prod": {
+        "prevent": false,
+        "reason": "",
+        "matched_tools": []
+    }
+}

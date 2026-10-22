@@ -1,0 +1,62 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR443 dossier 23f9d7bc7acc278cb63614826ec89eaa67fdc130</title><style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+.sha{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+</style></head><body>
+<h1>PR443 / #435 AICAC-DOSSIER</h1>
+<p class="sha">SHA 23f9d7bc7acc278cb63614826ec89eaa67fdc130</p>
+<p>In-memory User file at this SHA. ACs: defaults off + no-op save; join with sources absent; join with all sources present; CLI unknown user; redacted mode.</p>
+<section>
+<h2>AC1 defaults off + no-op save</h2>
+<dl>
+<dt>Enabled</dt><dd>no</dd>
+<dt>Save defaults wrote</dt><dd>no</dd>
+<dt>Stored options byte-identical</dt><dd>yes</dd>
+<dt>AC1 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>User file</h1><p class="description">One place to see one user&#039;s AI access, quota, spend, acknowledgements, and open requests. This screen does not change access.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_dossier_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_dossier_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">User files</th><td><label><input type="checkbox" name="handl_aicac_dossier_enabled" value="1"  /> Show user files</label></td></tr><tr><th scope="row">WP-CLI</th><td><label><input type="checkbox" name="handl_aicac_dossier_cli" value="1"  /> Allow WP-CLI</label></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save user file settings" /></form><p>User files are off.</p></div></div>
+</section>
+<section>
+<h2>AC2 join with each source absent</h2>
+<dl>
+<dt>Quota</dt><dd>source unavailable</dd>
+<dt>Activity</dt><dd>source unavailable</dd>
+<dt>AUP</dt><dd>source unavailable</dd>
+<dt>Requests</dt><dd>source unavailable</dd>
+<dt>AC2 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><h2>Jane Editor</h2><h3>Role and grants</h3><ul><li>This user is allowed by role.</li></ul><p><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-activity">Open this setting</a></p><h3>Quota</h3><p>source unavailable</p><h3>Last 90 days</h3><p>source unavailable</p><h3>Acknowledgements</h3><p>source unavailable</p><h3>Open requests</h3><p>source unavailable</p></div>
+</section>
+<section>
+<h2>AC3 join with all sources present</h2>
+<dl>
+<dt>Quota line</dt><dd>Usage (rolling 24h): 12 / 40</dd>
+<dt>Activity line</dt><dd>Allows: 1. Denies: 1. Estimated spend: $2.50</dd>
+<dt>AUP line</dt><dd>Acknowledgement: Current</dd>
+<dt>Requests line</dt><dd>1 open request.</dd>
+<dt>AC3 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><h2>Jane Editor</h2><h3>Role and grants</h3><ul><li>This user is allowed by role.</li></ul><p><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-activity">Open this setting</a></p><h3>Quota</h3><p>Usage (rolling 24h): 12 / 40</p><p><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-activity">Open this setting</a></p><h3>Last 90 days</h3><p>Allows: 1. Denies: 1. Estimated spend: $2.50</p><p><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-activity">Open this setting</a></p><h3>Acknowledgements</h3><p>Acknowledgement: Current</p><p><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-protections">Open this setting</a></p><h3>Open requests</h3><p>1 open request.</p><ul><li>blocked/blocked.php</li></ul><p><a href="https://example.test/wp-admin/admin.php?page=handl-aicac-protections">Open this setting</a></p></div>
+</section>
+<section>
+<h2>AC4 CLI exits non-zero on unknown user</h2>
+<dl>
+<dt>CLI code</dt><dd>1</dd>
+<dt>CLI line</dt><dd>Unknown user</dd>
+<dt>AC4 pass</dt><dd class="pass">yes</dd>
+</dl>
+</section>
+<section>
+<h2>AC5 redacted mode hides names and emails</h2>
+<dl>
+<dt>Display</dt><dd>user#12</dd>
+<dt>Login empty</dt><dd>yes</dd>
+<dt>Email empty</dt><dd>yes</dd>
+<dt>AC5 pass</dt><dd class="pass">yes</dd>
+</dl>
+</section>
+</body></html>

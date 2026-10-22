@@ -1,0 +1,31 @@
+{
+  "pr": 433,
+  "issue": 363,
+  "name": "AICAC-ENV-POLICY",
+  "exact_sha": "2d9a5ccb0d41799c13a6c227b76b3214afc0c4c3",
+  "captured_at": "2026-10-22T21:33:14.708Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 2d9a5cc (ai-not-363-env-policy); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-overlays-off.png",
+      "bytes": 130982,
+      "heading": "AC1 overlays off = site policy unchanged + no-op save"
+    },
+    {
+      "file": "02-staging-observe.png",
+      "bytes": 136848,
+      "heading": "AC2 staging Allow-and-log flips a deny on staging only"
+    },
+    {
+      "file": "03-staging-deny.png",
+      "bytes": 133356,
+      "heading": "AC3 staging Deny flips an allow on staging only"
+    },
+    {
+      "file": "04-env-badge.png",
+      "bytes": 215109,
+      "heading": "AC4 Environment screen badge shows the WP environment"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"2d9a5ccb0d41799c13a6c227b76b3214afc0c4c3\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true,\n    \"ac1_eval\": {\n        \"prevent\": true,\n        \"reason\": \"plugin\",\n        \"matched_tools\": []\n    },\n    \"ac2_staging\": {\n        \"prevent\": false,\n        \"reason\": \"env_policy\",\n        \"matched_tools\": [],\n        \"env_overlay\": \"staging:observe\"\n    },\n    \"ac2_prod\": {\n        \"prevent\": true,\n        \"reason\": \"plugin\",\n        \"matched_tools\": []\n    },\n    \"ac3_staging\": {\n        \"prevent\": true,\n        \"reason\": \"env_policy\",\n        \"matched_tools\": [],\n        \"env_overlay\": \"staging:deny\"\n    },\n    \"ac3_prod\": {\n        \"prevent\": false,\n        \"reason\": \"\",\n        \"matched_tools\": []\n    }\n}"
+}
