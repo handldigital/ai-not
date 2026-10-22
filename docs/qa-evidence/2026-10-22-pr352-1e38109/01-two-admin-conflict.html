@@ -1,0 +1,14 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR352 01-two-admin-conflict.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA 1e38109c7a4cda894fa262316df9308a505766b5 · PR352 / #217 AICAC-SAVE-CONFLICT · 01-two-admin-conflict.png</p>
+<section><h2>AC1 two-admin stale save keeps first writer</h2><dl><dt>Alice deny on openai-plugin</dt><dd>deny</dd><dt>Bob stale check_posted_token</dt><dd>refused</dd><dt>conflict notice</dt><dd class="ui"><div class="notice notice-error is-dismissible"><p>Rules were not saved because Alice Admin saved first (2026-10-22 21:38). Review their changes below, then save again.</p><ul style="list-style:disc;margin-left:1.5em;"><li>Per-plugin rules (openai-plugin/openai.php): Allow → Deny</li></ul></div></dd></dl><p class="pass">AC1 pass · A deny survives · B conflict</p></section>
+</body></html>

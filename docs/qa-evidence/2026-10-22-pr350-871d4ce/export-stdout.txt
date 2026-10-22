@@ -1,0 +1,25 @@
+{
+    "head": "871d4ce9c78490758fb1c8935c14a62362544f6d",
+    "ac1": true,
+    "ac2": true,
+    "ac3": true,
+    "stats": {
+        "ac1": {
+            "jobs": 1,
+            "flips": 1,
+            "alerted": true,
+            "noticed": true
+        },
+        "ac2": {
+            "jobs": 1,
+            "flips": 0,
+            "alerted": false,
+            "noticed": false
+        },
+        "ac3": {
+            "scanned": 1,
+            "flips": [],
+            "http_calls": 0
+        }
+    }
+}

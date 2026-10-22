@@ -1,0 +1,12 @@
+exact_sha=60036ac8413f60792d3e7202e725a4d36b40ec36
+short_sha=60036ac
+captured_at=2026-10-22T21:38:27.264Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 60036ac (ai-not-pr354); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.
+files:
+  01-pending-close-audit.png (152083 B)
+  02-temp-allow-revoke.png (120972 B)
+  03-demotion-gate.png (98922 B)
+  04-orphan-sweep.png (90699 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md
