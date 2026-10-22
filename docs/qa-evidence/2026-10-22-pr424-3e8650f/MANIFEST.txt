@@ -1,0 +1,12 @@
+exact_sha=3e8650f3da8caa91507949f7213585039cf399f1
+short_sha=3e8650f
+captured_at=2026-10-22T22:55:09.429Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 3e8650f (ai-not-pr424); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out. Gatekeeper::set_test_now(1791800000) so render_page first-seen stamps match harness.
+files:
+  01-defaults-off.png (198259 B)
+  02-new-roster.png (355648 B)
+  03-alert-rearm.png (386240 B)
+  04-csv-framing.png (536583 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

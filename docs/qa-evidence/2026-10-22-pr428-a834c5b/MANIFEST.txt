@@ -1,0 +1,12 @@
+exact_sha=a834c5ba2daa509efa4e094b67c4c0202c2a3f74
+short_sha=a834c5b
+captured_at=2026-10-22T22:55:10.816Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA a834c5b (ai-not-pr428); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out. Tombstone::set_test_now(1791800000) so render_page age stamps match harness.
+files:
+  01-defaults-off.png (203054 B)
+  02-dangling-plugin.png (313021 B)
+  03-alert-rearm.png (397546 B)
+  04-csv-framing.png (567288 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

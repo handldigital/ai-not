@@ -1,0 +1,31 @@
+{
+  "pr": 428,
+  "issue": 425,
+  "name": "AICAC-TOMBSTONE",
+  "exact_sha": "a834c5ba2daa509efa4e094b67c4c0202c2a3f74",
+  "captured_at": "2026-10-22T22:55:10.816Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA a834c5b (ai-not-pr428); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out. Tombstone::set_test_now(1791800000) so render_page age stamps match harness.",
+  "shots": [
+    {
+      "file": "01-defaults-off.png",
+      "bytes": 203054,
+      "heading": "AC1 defaults off + off-page copy"
+    },
+    {
+      "file": "02-dangling-plugin.png",
+      "bytes": 313021,
+      "heading": "AC2 dangling plugin allow-rule"
+    },
+    {
+      "file": "03-alert-rearm.png",
+      "bytes": 397546,
+      "heading": "AC3 tombstone alert once and rearm"
+    },
+    {
+      "file": "04-csv-framing.png",
+      "bytes": 567288,
+      "heading": "AC4 CSV findings framing"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"a834c5ba2daa509efa4e094b67c4c0202c2a3f74\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

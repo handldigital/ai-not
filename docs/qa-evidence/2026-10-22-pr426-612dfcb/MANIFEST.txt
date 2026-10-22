@@ -1,0 +1,12 @@
+exact_sha=612dfcbffc60f728d23b425ca87c8ea837d3ac63
+short_sha=612dfcb
+captured_at=2026-10-22T22:55:10.156Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 612dfcb (ai-not-pr426); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out. Doppelganger::set_test_now(1791800000) so render_page baseline stamps match harness.
+files:
+  01-defaults-off.png (240378 B)
+  02-clone-identity.png (615610 B)
+  03-alert-rearm.png (570324 B)
+  04-csv-framing.png (777843 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md
