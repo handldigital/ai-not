@@ -1,0 +1,169 @@
+{
+    "id": "03-webhook-failure",
+    "ac": "Webhook failure leaves request pending/reviewable; webhook health recorded; email/queue path intact",
+    "submit": {
+        "ok": true,
+        "emailed": true,
+        "id": "ebde81707f2de0291a41f65538a6a1e3"
+    },
+    "request_row": {
+        "id": "ebde81707f2de0291a41f65538a6a1e3",
+        "plugin": "demo-request-chat/demo-request-chat.php",
+        "user_id": 20,
+        "user_login": "qa-admin",
+        "reason": "Webhook fail path",
+        "status": "pending",
+        "ts": 1700050000,
+        "emailed_ts": 1700050000
+    },
+    "pending": true,
+    "alert_health": {
+        "email": {
+            "last_success_at": 1792703550,
+            "last_failure_at": null,
+            "last_failure_reason": "",
+            "consecutive_failures": 0
+        },
+        "webhook": {
+            "last_success_at": null,
+            "last_failure_at": 1792703550,
+            "last_failure_reason": "HTTP 404",
+            "consecutive_failures": 2
+        }
+    },
+    "webhook_log": [
+        {
+            "ts": 1792703550,
+            "event": "chat_teams",
+            "http_status": 404,
+            "retries": 0,
+            "ok": false,
+            "error": "HTTP 404"
+        },
+        {
+            "ts": 1792703550,
+            "event": "chat_slack",
+            "http_status": 404,
+            "retries": 0,
+            "ok": false,
+            "error": "HTTP 404"
+        }
+    ],
+    "http_posts": [
+        {
+            "ts": 1792703550,
+            "url": "https://hooks.slack.com/services/T00/B00/XXX",
+            "method": "POST",
+            "body": {
+                "text": "AI access request",
+                "blocks": [
+                    {
+                        "type": "header",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "AI access request",
+                            "emoji": false
+                        }
+                    },
+                    {
+                        "type": "section",
+                        "fields": [
+                            {
+                                "type": "mrkdwn",
+                                "text": "*Plugin*\ndemo-request-chat/demo-request-chat.php"
+                            },
+                            {
+                                "type": "mrkdwn",
+                                "text": "*Provider*\nNot recorded"
+                            },
+                            {
+                                "type": "mrkdwn",
+                                "text": "*Requested*\nWebhook fail path"
+                            },
+                            {
+                                "type": "mrkdwn",
+                                "text": "*Requester*\nqa-admin"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "actions",
+                        "elements": [
+                            {
+                                "type": "button",
+                                "text": {
+                                    "type": "plain_text",
+                                    "text": "Review request",
+                                    "emoji": false
+                                },
+                                "url": "https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-protections"
+                            }
+                        ]
+                    }
+                ],
+                "event": "chat_slack",
+                "type": "handl_aicac_chat_slack"
+            },
+            "bytes": 646
+        },
+        {
+            "ts": 1792703550,
+            "url": "https://outlook.office.com/webhook/aaa/IncomingWebhook/bbb/ccc",
+            "method": "POST",
+            "body": {
+                "@type": "MessageCard",
+                "@context": "https://schema.org/extensions",
+                "summary": "AI access request",
+                "themeColor": "1565C0",
+                "title": "AI access request",
+                "sections": [
+                    {
+                        "facts": [
+                            {
+                                "name": "Plugin",
+                                "value": "demo-request-chat/demo-request-chat.php"
+                            },
+                            {
+                                "name": "Provider",
+                                "value": "Not recorded"
+                            },
+                            {
+                                "name": "Requested",
+                                "value": "Webhook fail path"
+                            },
+                            {
+                                "name": "Requester",
+                                "value": "qa-admin"
+                            }
+                        ]
+                    }
+                ],
+                "event": "chat_teams",
+                "type": "handl_aicac_chat_teams",
+                "potentialAction": [
+                    {
+                        "@type": "OpenUri",
+                        "name": "Review request",
+                        "targets": [
+                            {
+                                "os": "default",
+                                "uri": "https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-protections"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bytes": 603
+        }
+    ],
+    "http_statuses": [
+        {
+            "url": "https://hooks.slack.com/services/T00/B00/XXX",
+            "note": "intercepted as 404"
+        },
+        {
+            "url": "https://outlook.office.com/webhook/aaa/IncomingWebhook/bbb/ccc",
+            "note": "intercepted as 404"
+        }
+    ]
+}

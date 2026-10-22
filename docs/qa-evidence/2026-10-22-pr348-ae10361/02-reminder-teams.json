@@ -1,0 +1,43 @@
+{
+    "@type": "MessageCard",
+    "@context": "https://schema.org/extensions",
+    "summary": "AI access request still pending",
+    "themeColor": "1565C0",
+    "title": "AI access request still pending",
+    "sections": [
+        {
+            "facts": [
+                {
+                    "name": "Plugin",
+                    "value": "demo-request-chat/demo-request-chat.php"
+                },
+                {
+                    "name": "Provider",
+                    "value": "Not recorded"
+                },
+                {
+                    "name": "Requested",
+                    "value": "Need GPT for support replies"
+                },
+                {
+                    "name": "Requester",
+                    "value": "qa-admin"
+                }
+            ]
+        }
+    ],
+    "event": "chat_teams",
+    "type": "handl_aicac_chat_teams",
+    "potentialAction": [
+        {
+            "@type": "OpenUri",
+            "name": "Review request",
+            "targets": [
+                {
+                    "os": "default",
+                    "uri": "https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-protections"
+                }
+            ]
+        }
+    ]
+}

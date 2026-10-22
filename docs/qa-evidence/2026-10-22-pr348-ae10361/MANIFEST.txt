@@ -1,0 +1,10 @@
+exact_sha=ae1036116d1c0dd142f39043f3e68d96305478ee
+short_sha=ae10361
+captured_at=2026-10-22T21:12:43.729Z
+method=live WP bootstrap at force-checkout SHA; pre_http_request intercept (no real Slack/Teams egress)
+files:
+  01-fresh-slack.json / 01-fresh-teams.json / 01-fresh-slack-teams.png
+  02-reminder-slack.json / 02-reminder-teams.json / 02-dedupe-reminder.png
+  03-webhook-failure.json / 03-webhook-failure.png
+  04-disabled.json / 04-disabled.png
+  EVIDENCE.json

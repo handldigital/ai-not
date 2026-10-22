@@ -1,0 +1,16 @@
+{
+    "id": "04-disabled",
+    "ac": "Request-chat disabled \u2192 zero chat posts; empty option deleted (byte-identical absent)",
+    "option_before": {
+        "enabled": true
+    },
+    "option_after": false,
+    "option_deleted": true,
+    "submit_while_off": {
+        "ok": true,
+        "emailed": true,
+        "id": "902d31480646732883272f02e657a455"
+    },
+    "http_posts": [],
+    "post_count": 0
+}

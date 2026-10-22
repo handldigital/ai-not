@@ -1,0 +1,646 @@
+{
+    "sha": "ae1036116d1c0dd142f39043f3e68d96305478ee",
+    "short": "ae10361",
+    "fixture": "haktan+aicac-request-chat@handldigital.com",
+    "captured": "2026-10-22T21:12:30+00:00",
+    "cases": {
+        "01": {
+            "id": "01-fresh-slack-teams",
+            "ac": "Fresh request \u2192 one Slack Block Kit + one Teams MessageCard; request remains reviewable; review URL opens Protections inbox",
+            "submit": {
+                "ok": true,
+                "emailed": true,
+                "id": "662d611de534eb0830fee3d523fbd854"
+            },
+            "request_row": {
+                "id": "662d611de534eb0830fee3d523fbd854",
+                "plugin": "demo-request-chat/demo-request-chat.php",
+                "user_id": 20,
+                "user_login": "qa-admin",
+                "reason": "Need GPT for support replies",
+                "status": "pending",
+                "ts": 1700000000,
+                "emailed_ts": 1700000000
+            },
+            "review_url": "https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-protections",
+            "http_posts": [
+                {
+                    "ts": 1792703550,
+                    "url": "https://hooks.slack.com/services/T00/B00/XXX",
+                    "method": "POST",
+                    "body": {
+                        "text": "AI access request",
+                        "blocks": [
+                            {
+                                "type": "header",
+                                "text": {
+                                    "type": "plain_text",
+                                    "text": "AI access request",
+                                    "emoji": false
+                                }
+                            },
+                            {
+                                "type": "section",
+                                "fields": [
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Plugin*\ndemo-request-chat/demo-request-chat.php"
+                                    },
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Provider*\nNot recorded"
+                                    },
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Requested*\nNeed GPT for support replies"
+                                    },
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Requester*\nqa-admin"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "actions",
+                                "elements": [
+                                    {
+                                        "type": "button",
+                                        "text": {
+                                            "type": "plain_text",
+                                            "text": "Review request",
+                                            "emoji": false
+                                        },
+                                        "url": "https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-protections"
+                                    }
+                                ]
+                            }
+                        ],
+                        "event": "chat_slack",
+                        "type": "handl_aicac_chat_slack"
+                    },
+                    "bytes": 657
+                },
+                {
+                    "ts": 1792703550,
+                    "url": "https://outlook.office.com/webhook/aaa/IncomingWebhook/bbb/ccc",
+                    "method": "POST",
+                    "body": {
+                        "@type": "MessageCard",
+                        "@context": "https://schema.org/extensions",
+                        "summary": "AI access request",
+                        "themeColor": "1565C0",
+                        "title": "AI access request",
+                        "sections": [
+                            {
+                                "facts": [
+                                    {
+                                        "name": "Plugin",
+                                        "value": "demo-request-chat/demo-request-chat.php"
+                                    },
+                                    {
+                                        "name": "Provider",
+                                        "value": "Not recorded"
+                                    },
+                                    {
+                                        "name": "Requested",
+                                        "value": "Need GPT for support replies"
+                                    },
+                                    {
+                                        "name": "Requester",
+                                        "value": "qa-admin"
+                                    }
+                                ]
+                            }
+                        ],
+                        "event": "chat_teams",
+                        "type": "handl_aicac_chat_teams",
+                        "potentialAction": [
+                            {
+                                "@type": "OpenUri",
+                                "name": "Review request",
+                                "targets": [
+                                    {
+                                        "os": "default",
+                                        "uri": "https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-protections"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "bytes": 614
+                }
+            ],
+            "post_count": 2
+        },
+        "02": {
+            "id": "02-dedupe-and-reminder",
+            "ac": "Re-submit inside 24h \u2192 no duplicate card; after 24h \u2192 one reminder only",
+            "resubmit": {
+                "ok": true,
+                "emailed": false,
+                "id": "662d611de534eb0830fee3d523fbd854"
+            },
+            "same_id": true,
+            "direct_redeliver": {
+                "slack": {
+                    "ok": false,
+                    "http_status": null,
+                    "error": ""
+                },
+                "teams": {
+                    "ok": false,
+                    "http_status": null,
+                    "error": ""
+                },
+                "skipped": "deduped"
+            },
+            "early_remind_count": 0,
+            "remind_count": 1,
+            "second_remind": 0,
+            "http_posts": [
+                {
+                    "ts": 1792703550,
+                    "url": "https://hooks.slack.com/services/T00/B00/XXX",
+                    "method": "POST",
+                    "body": {
+                        "text": "AI access request still pending",
+                        "blocks": [
+                            {
+                                "type": "header",
+                                "text": {
+                                    "type": "plain_text",
+                                    "text": "AI access request still pending",
+                                    "emoji": false
+                                }
+                            },
+                            {
+                                "type": "section",
+                                "fields": [
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Plugin*\ndemo-request-chat/demo-request-chat.php"
+                                    },
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Provider*\nNot recorded"
+                                    },
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Requested*\nDuplicate attempt"
+                                    },
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Requester*\nqa-admin"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "actions",
+                                "elements": [
+                                    {
+                                        "type": "button",
+                                        "text": {
+                                            "type": "plain_text",
+                                            "text": "Review request",
+                                            "emoji": false
+                                        },
+                                        "url": "https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-protections"
+                                    }
+                                ]
+                            }
+                        ],
+                        "event": "chat_slack",
+                        "type": "handl_aicac_chat_slack"
+                    },
+                    "bytes": 674
+                },
+                {
+                    "ts": 1792703550,
+                    "url": "https://outlook.office.com/webhook/aaa/IncomingWebhook/bbb/ccc",
+                    "method": "POST",
+                    "body": {
+                        "@type": "MessageCard",
+                        "@context": "https://schema.org/extensions",
+                        "summary": "AI access request still pending",
+                        "themeColor": "1565C0",
+                        "title": "AI access request still pending",
+                        "sections": [
+                            {
+                                "facts": [
+                                    {
+                                        "name": "Plugin",
+                                        "value": "demo-request-chat/demo-request-chat.php"
+                                    },
+                                    {
+                                        "name": "Provider",
+                                        "value": "Not recorded"
+                                    },
+                                    {
+                                        "name": "Requested",
+                                        "value": "Duplicate attempt"
+                                    },
+                                    {
+                                        "name": "Requester",
+                                        "value": "qa-admin"
+                                    }
+                                ]
+                            }
+                        ],
+                        "event": "chat_teams",
+                        "type": "handl_aicac_chat_teams",
+                        "potentialAction": [
+                            {
+                                "@type": "OpenUri",
+                                "name": "Review request",
+                                "targets": [
+                                    {
+                                        "os": "default",
+                                        "uri": "https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-protections"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "bytes": 631
+                }
+            ],
+            "dedupe_post_delta": 0,
+            "remind_post_delta": 2,
+            "final_post_count": 2
+        },
+        "03": {
+            "id": "03-webhook-failure",
+            "ac": "Webhook failure leaves request pending/reviewable; webhook health recorded; email/queue path intact",
+            "submit": {
+                "ok": true,
+                "emailed": true,
+                "id": "ebde81707f2de0291a41f65538a6a1e3"
+            },
+            "request_row": {
+                "id": "ebde81707f2de0291a41f65538a6a1e3",
+                "plugin": "demo-request-chat/demo-request-chat.php",
+                "user_id": 20,
+                "user_login": "qa-admin",
+                "reason": "Webhook fail path",
+                "status": "pending",
+                "ts": 1700050000,
+                "emailed_ts": 1700050000
+            },
+            "pending": true,
+            "alert_health": {
+                "email": {
+                    "last_success_at": 1792703550,
+                    "last_failure_at": null,
+                    "last_failure_reason": "",
+                    "consecutive_failures": 0
+                },
+                "webhook": {
+                    "last_success_at": null,
+                    "last_failure_at": 1792703550,
+                    "last_failure_reason": "HTTP 404",
+                    "consecutive_failures": 2
+                }
+            },
+            "webhook_log": [
+                {
+                    "ts": 1792703550,
+                    "event": "chat_teams",
+                    "http_status": 404,
+                    "retries": 0,
+                    "ok": false,
+                    "error": "HTTP 404"
+                },
+                {
+                    "ts": 1792703550,
+                    "event": "chat_slack",
+                    "http_status": 404,
+                    "retries": 0,
+                    "ok": false,
+                    "error": "HTTP 404"
+                }
+            ],
+            "http_posts": [
+                {
+                    "ts": 1792703550,
+                    "url": "https://hooks.slack.com/services/T00/B00/XXX",
+                    "method": "POST",
+                    "body": {
+                        "text": "AI access request",
+                        "blocks": [
+                            {
+                                "type": "header",
+                                "text": {
+                                    "type": "plain_text",
+                                    "text": "AI access request",
+                                    "emoji": false
+                                }
+                            },
+                            {
+                                "type": "section",
+                                "fields": [
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Plugin*\ndemo-request-chat/demo-request-chat.php"
+                                    },
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Provider*\nNot recorded"
+                                    },
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Requested*\nWebhook fail path"
+                                    },
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Requester*\nqa-admin"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "actions",
+                                "elements": [
+                                    {
+                                        "type": "button",
+                                        "text": {
+                                            "type": "plain_text",
+                                            "text": "Review request",
+                                            "emoji": false
+                                        },
+                                        "url": "https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-protections"
+                                    }
+                                ]
+                            }
+                        ],
+                        "event": "chat_slack",
+                        "type": "handl_aicac_chat_slack"
+                    },
+                    "bytes": 646
+                },
+                {
+                    "ts": 1792703550,
+                    "url": "https://outlook.office.com/webhook/aaa/IncomingWebhook/bbb/ccc",
+                    "method": "POST",
+                    "body": {
+                        "@type": "MessageCard",
+                        "@context": "https://schema.org/extensions",
+                        "summary": "AI access request",
+                        "themeColor": "1565C0",
+                        "title": "AI access request",
+                        "sections": [
+                            {
+                                "facts": [
+                                    {
+                                        "name": "Plugin",
+                                        "value": "demo-request-chat/demo-request-chat.php"
+                                    },
+                                    {
+                                        "name": "Provider",
+                                        "value": "Not recorded"
+                                    },
+                                    {
+                                        "name": "Requested",
+                                        "value": "Webhook fail path"
+                                    },
+                                    {
+                                        "name": "Requester",
+                                        "value": "qa-admin"
+                                    }
+                                ]
+                            }
+                        ],
+                        "event": "chat_teams",
+                        "type": "handl_aicac_chat_teams",
+                        "potentialAction": [
+                            {
+                                "@type": "OpenUri",
+                                "name": "Review request",
+                                "targets": [
+                                    {
+                                        "os": "default",
+                                        "uri": "https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-protections"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "bytes": 603
+                }
+            ],
+            "http_statuses": [
+                {
+                    "url": "https://hooks.slack.com/services/T00/B00/XXX",
+                    "note": "intercepted as 404"
+                },
+                {
+                    "url": "https://outlook.office.com/webhook/aaa/IncomingWebhook/bbb/ccc",
+                    "note": "intercepted as 404"
+                }
+            ]
+        },
+        "04": {
+            "id": "04-disabled",
+            "ac": "Request-chat disabled \u2192 zero chat posts; empty option deleted (byte-identical absent)",
+            "option_before": {
+                "enabled": true
+            },
+            "option_after": false,
+            "option_deleted": true,
+            "submit_while_off": {
+                "ok": true,
+                "emailed": true,
+                "id": "902d31480646732883272f02e657a455"
+            },
+            "http_posts": [],
+            "post_count": 0
+        }
+    },
+    "payloads": {
+        "slack_fresh": {
+            "text": "AI access request",
+            "blocks": [
+                {
+                    "type": "header",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "AI access request",
+                        "emoji": false
+                    }
+                },
+                {
+                    "type": "section",
+                    "fields": [
+                        {
+                            "type": "mrkdwn",
+                            "text": "*Plugin*\ndemo-request-chat/demo-request-chat.php"
+                        },
+                        {
+                            "type": "mrkdwn",
+                            "text": "*Provider*\nNot recorded"
+                        },
+                        {
+                            "type": "mrkdwn",
+                            "text": "*Requested*\nNeed GPT for support replies"
+                        },
+                        {
+                            "type": "mrkdwn",
+                            "text": "*Requester*\nqa-admin"
+                        }
+                    ]
+                },
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "text": "Review request",
+                                "emoji": false
+                            },
+                            "url": "https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-protections"
+                        }
+                    ]
+                }
+            ],
+            "event": "chat_slack",
+            "type": "handl_aicac_chat_slack"
+        },
+        "teams_fresh": {
+            "@type": "MessageCard",
+            "@context": "https://schema.org/extensions",
+            "summary": "AI access request",
+            "themeColor": "1565C0",
+            "title": "AI access request",
+            "sections": [
+                {
+                    "facts": [
+                        {
+                            "name": "Plugin",
+                            "value": "demo-request-chat/demo-request-chat.php"
+                        },
+                        {
+                            "name": "Provider",
+                            "value": "Not recorded"
+                        },
+                        {
+                            "name": "Requested",
+                            "value": "Need GPT for support replies"
+                        },
+                        {
+                            "name": "Requester",
+                            "value": "qa-admin"
+                        }
+                    ]
+                }
+            ],
+            "event": "chat_teams",
+            "type": "handl_aicac_chat_teams",
+            "potentialAction": [
+                {
+                    "@type": "OpenUri",
+                    "name": "Review request",
+                    "targets": [
+                        {
+                            "os": "default",
+                            "uri": "https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-protections"
+                        }
+                    ]
+                }
+            ]
+        },
+        "slack_reminder": {
+            "text": "AI access request still pending",
+            "blocks": [
+                {
+                    "type": "header",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "AI access request still pending",
+                        "emoji": false
+                    }
+                },
+                {
+                    "type": "section",
+                    "fields": [
+                        {
+                            "type": "mrkdwn",
+                            "text": "*Plugin*\ndemo-request-chat/demo-request-chat.php"
+                        },
+                        {
+                            "type": "mrkdwn",
+                            "text": "*Provider*\nNot recorded"
+                        },
+                        {
+                            "type": "mrkdwn",
+                            "text": "*Requested*\nNeed GPT for support replies"
+                        },
+                        {
+                            "type": "mrkdwn",
+                            "text": "*Requester*\nqa-admin"
+                        }
+                    ]
+                },
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "text": "Review request",
+                                "emoji": false
+                            },
+                            "url": "https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-protections"
+                        }
+                    ]
+                }
+            ],
+            "event": "chat_slack",
+            "type": "handl_aicac_chat_slack"
+        },
+        "teams_reminder": {
+            "@type": "MessageCard",
+            "@context": "https://schema.org/extensions",
+            "summary": "AI access request still pending",
+            "themeColor": "1565C0",
+            "title": "AI access request still pending",
+            "sections": [
+                {
+                    "facts": [
+                        {
+                            "name": "Plugin",
+                            "value": "demo-request-chat/demo-request-chat.php"
+                        },
+                        {
+                            "name": "Provider",
+                            "value": "Not recorded"
+                        },
+                        {
+                            "name": "Requested",
+                            "value": "Need GPT for support replies"
+                        },
+                        {
+                            "name": "Requester",
+                            "value": "qa-admin"
+                        }
+                    ]
+                }
+            ],
+            "event": "chat_teams",
+            "type": "handl_aicac_chat_teams",
+            "potentialAction": [
+                {
+                    "@type": "OpenUri",
+                    "name": "Review request",
+                    "targets": [
+                        {
+                            "os": "default",
+                            "uri": "https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-protections"
+                        }
+                    ]
+                }
+            ]
+        },
+        "review_url": "https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-protections"
+    }
+}

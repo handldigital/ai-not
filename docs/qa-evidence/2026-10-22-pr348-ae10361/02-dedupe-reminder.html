@@ -1,0 +1,151 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>PR348 case 02 dedupe/reminder</title>
+<style>
+body{margin:0;background:#1a1d21;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#e8e8e8}
+.banner{font:12px/1.4 monospace;background:#111;color:#0f0;padding:8px 12px}
+.wrap{max-width:720px;margin:24px auto;padding:0 16px 40px}
+h1{font-size:18px;margin:0 0 8px;color:#fff}
+.meta{font-size:12px;color:#9ca3af;margin:0 0 16px}
+.card{background:#fff;color:#1d2327;border-radius:8px;padding:16px 18px;box-shadow:0 8px 24px rgba(0,0,0,.35);margin:0 0 16px}
+.card h2{margin:0 0 12px;font-size:18px}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin:0 0 14px}
+.fact label{display:block;font-size:11px;color:#646970;font-weight:600}
+.fact div{font-size:14px;word-break:break-word}
+.btn{display:inline-block;background:#1565C0;color:#fff;text-decoration:none;padding:8px 14px;border-radius:4px;font-size:13px;font-weight:600}
+.teams{border-left:4px solid #1565C0}
+.slack{border-left:4px solid #4A154B}
+pre{background:#0b1020;color:#d1e7ff;padding:12px;border-radius:6px;overflow:auto;font-size:11px;line-height:1.45}
+.panel{background:#111827;border:1px solid #374151;border-radius:8px;padding:14px;margin:0 0 14px}
+.ok{color:#34d399}.bad{color:#f87171}.label{color:#93c5fd}
+</style></head><body>
+<p class="banner">deployed-SHA: ae1036116d1c0dd142f39043f3e68d96305478ee</p>
+<div class="wrap"><h1>AC2 — Dedupe + single reminder</h1>
+<p class="meta">same_id=true · early_remind=0 · remind=1 · second_remind=0 · remind_post_delta=2</p>
+<div class="card slack"><h2>AI access request still pending <small style="color:#6b7280">(reminder · Slack Block Kit)</small></h2>
+<div class="facts"><div class="fact"><label>Plugin</label><div>demo-request-chat/demo-request-chat.php</div></div><div class="fact"><label>Provider</label><div>Not recorded</div></div><div class="fact"><label>Requested</label><div>Need GPT for support replies</div></div><div class="fact"><label>Requester</label><div>qa-admin</div></div></div>
+<a class="btn" href="https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-protections">Review request</a>
+<p class="meta">type=handl_aicac_chat_slack event=chat_slack</p></div>
+<div class="card teams"><h2>AI access request still pending <small style="color:#6b7280">(reminder · Teams MessageCard)</small></h2>
+<div class="facts"><div class="fact"><label>Plugin</label><div>demo-request-chat/demo-request-chat.php</div></div><div class="fact"><label>Provider</label><div>Not recorded</div></div><div class="fact"><label>Requested</label><div>Need GPT for support replies</div></div><div class="fact"><label>Requester</label><div>qa-admin</div></div></div>
+<a class="btn" href="https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-protections">Review request</a>
+<p class="meta">@type=MessageCard type=handl_aicac_chat_teams</p></div>
+<div class="panel"><div class="label">Direct re-deliver skip</div><pre>{
+  &quot;slack&quot;: {
+    &quot;ok&quot;: false,
+    &quot;http_status&quot;: null,
+    &quot;error&quot;: &quot;&quot;
+  },
+  &quot;teams&quot;: {
+    &quot;ok&quot;: false,
+    &quot;http_status&quot;: null,
+    &quot;error&quot;: &quot;&quot;
+  },
+  &quot;skipped&quot;: &quot;deduped&quot;
+}</pre></div>
+<div class="panel"><div class="label">HTTP transcript (case 2 only)</div><pre>[
+  {
+    &quot;ts&quot;: 1792703550,
+    &quot;url&quot;: &quot;https://hooks.slack.com/services/T00/B00/XXX&quot;,
+    &quot;method&quot;: &quot;POST&quot;,
+    &quot;body&quot;: {
+      &quot;text&quot;: &quot;AI access request still pending&quot;,
+      &quot;blocks&quot;: [
+        {
+          &quot;type&quot;: &quot;header&quot;,
+          &quot;text&quot;: {
+            &quot;type&quot;: &quot;plain_text&quot;,
+            &quot;text&quot;: &quot;AI access request still pending&quot;,
+            &quot;emoji&quot;: false
+          }
+        },
+        {
+          &quot;type&quot;: &quot;section&quot;,
+          &quot;fields&quot;: [
+            {
+              &quot;type&quot;: &quot;mrkdwn&quot;,
+              &quot;text&quot;: &quot;*Plugin*\ndemo-request-chat/demo-request-chat.php&quot;
+            },
+            {
+              &quot;type&quot;: &quot;mrkdwn&quot;,
+              &quot;text&quot;: &quot;*Provider*\nNot recorded&quot;
+            },
+            {
+              &quot;type&quot;: &quot;mrkdwn&quot;,
+              &quot;text&quot;: &quot;*Requested*\nDuplicate attempt&quot;
+            },
+            {
+              &quot;type&quot;: &quot;mrkdwn&quot;,
+              &quot;text&quot;: &quot;*Requester*\nqa-admin&quot;
+            }
+          ]
+        },
+        {
+          &quot;type&quot;: &quot;actions&quot;,
+          &quot;elements&quot;: [
+            {
+              &quot;type&quot;: &quot;button&quot;,
+              &quot;text&quot;: {
+                &quot;type&quot;: &quot;plain_text&quot;,
+                &quot;text&quot;: &quot;Review request&quot;,
+                &quot;emoji&quot;: false
+              },
+              &quot;url&quot;: &quot;https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-protections&quot;
+            }
+          ]
+        }
+      ],
+      &quot;event&quot;: &quot;chat_slack&quot;,
+      &quot;type&quot;: &quot;handl_aicac_chat_slack&quot;
+    },
+    &quot;bytes&quot;: 674
+  },
+  {
+    &quot;ts&quot;: 1792703550,
+    &quot;url&quot;: &quot;https://outlook.office.com/webhook/aaa/IncomingWebhook/bbb/ccc&quot;,
+    &quot;method&quot;: &quot;POST&quot;,
+    &quot;body&quot;: {
+      &quot;@type&quot;: &quot;MessageCard&quot;,
+      &quot;@context&quot;: &quot;https://schema.org/extensions&quot;,
+      &quot;summary&quot;: &quot;AI access request still pending&quot;,
+      &quot;themeColor&quot;: &quot;1565C0&quot;,
+      &quot;title&quot;: &quot;AI access request still pending&quot;,
+      &quot;sections&quot;: [
+        {
+          &quot;facts&quot;: [
+            {
+              &quot;name&quot;: &quot;Plugin&quot;,
+              &quot;value&quot;: &quot;demo-request-chat/demo-request-chat.php&quot;
+            },
+            {
+              &quot;name&quot;: &quot;Provider&quot;,
+              &quot;value&quot;: &quot;Not recorded&quot;
+            },
+            {
+              &quot;name&quot;: &quot;Requested&quot;,
+              &quot;value&quot;: &quot;Duplicate attempt&quot;
+            },
+            {
+              &quot;name&quot;: &quot;Requester&quot;,
+              &quot;value&quot;: &quot;qa-admin&quot;
+            }
+          ]
+        }
+      ],
+      &quot;event&quot;: &quot;chat_teams&quot;,
+      &quot;type&quot;: &quot;handl_aicac_chat_teams&quot;,
+      &quot;potentialAction&quot;: [
+        {
+          &quot;@type&quot;: &quot;OpenUri&quot;,
+          &quot;name&quot;: &quot;Review request&quot;,
+          &quot;targets&quot;: [
+            {
+              &quot;os&quot;: &quot;default&quot;,
+              &quot;uri&quot;: &quot;https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-protections&quot;
+            }
+          ]
+        }
+      ]
+    },
+    &quot;bytes&quot;: 631
+  }
+]</pre></div></div>
+</body></html>

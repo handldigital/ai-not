@@ -1,0 +1,50 @@
+{
+    "text": "AI access request",
+    "blocks": [
+        {
+            "type": "header",
+            "text": {
+                "type": "plain_text",
+                "text": "AI access request",
+                "emoji": false
+            }
+        },
+        {
+            "type": "section",
+            "fields": [
+                {
+                    "type": "mrkdwn",
+                    "text": "*Plugin*\ndemo-request-chat/demo-request-chat.php"
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": "*Provider*\nNot recorded"
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": "*Requested*\nNeed GPT for support replies"
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": "*Requester*\nqa-admin"
+                }
+            ]
+        },
+        {
+            "type": "actions",
+            "elements": [
+                {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "Review request",
+                        "emoji": false
+                    },
+                    "url": "https://handl-sandbox/wp-admin/admin.php?page=handl-aicac-protections"
+                }
+            ]
+        }
+    ],
+    "event": "chat_slack",
+    "type": "handl_aicac_chat_slack"
+}
