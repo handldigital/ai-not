@@ -2,11 +2,13 @@ exact_sha=5e6edda364f768daf7e04c3ad2926bcefc4862c6
 short_sha=5e6edda
 captured_at=2026-10-22T22:12:34.694Z
 method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 5e6edda (ai-not-pr386); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.
+supplement_captured_at=2026-10-22T22:25:40.143Z
 files:
   01-inert-prune.png (93705 B)
   02-create-survives.png (110691 B)
   03-release-restores.png (101850 B)
   04-csv-reason.png (96403 B)
+  05-rendered-page.png (205562 B)
   EVIDENCE.html
   EVIDENCE.json
   PROVENANCE.md

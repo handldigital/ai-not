@@ -25,7 +25,19 @@
       "file": "04-csv-page.png",
       "bytes": 109915,
       "heading": "AC4 CSV and page assertion framing"
+    },
+    {
+      "file": "05-rendered-page.png",
+      "bytes": 304096,
+      "heading": "Rendered admin page (supplement)"
     }
   ],
-  "export_stdout": "{\n    \"head\": \"7ee73afe4f7a66d0862fc55b174253209adda60e\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+  "export_stdout": "{\n    \"head\": \"7ee73afe4f7a66d0862fc55b174253209adda60e\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}",
+  "supplement_rendered_page": {
+    "file": "05-rendered-page.png",
+    "bytes": 304096,
+    "captured_at": "2026-10-22T22:25:40.995Z",
+    "method": "In-memory PHPUnit bootstrap Class::render_page() + Playwright; same force-asserted SHA; live sandbox untouched",
+    "export_stdout": "PR392_RENDER_OK len=4017"
+  }
 }

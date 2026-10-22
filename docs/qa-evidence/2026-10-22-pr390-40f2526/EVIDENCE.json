@@ -25,7 +25,19 @@
       "file": "04-filter-stale.png",
       "bytes": 95820,
       "heading": "AC4 filter override and factor staleness"
+    },
+    {
+      "file": "05-rendered-page.png",
+      "bytes": 274202,
+      "heading": "Rendered admin page (supplement)"
     }
   ],
-  "export_stdout": "{\n    \"head\": \"40f25261f996c3b9ebf2bed5e08b450ddf123ce9\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+  "export_stdout": "{\n    \"head\": \"40f25261f996c3b9ebf2bed5e08b450ddf123ce9\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}",
+  "supplement_rendered_page": {
+    "file": "05-rendered-page.png",
+    "bytes": 274202,
+    "captured_at": "2026-10-22T22:25:40.709Z",
+    "method": "In-memory PHPUnit bootstrap Class::render_page() + Playwright; same force-asserted SHA; live sandbox untouched",
+    "export_stdout": "PR390_RENDER_OK len=2861"
+  }
 }

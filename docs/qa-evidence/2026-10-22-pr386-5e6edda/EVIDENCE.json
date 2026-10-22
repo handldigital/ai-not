@@ -25,7 +25,19 @@
       "file": "04-csv-reason.png",
       "bytes": 96403,
       "heading": "AC4 roster CSV and reason required"
+    },
+    {
+      "file": "05-rendered-page.png",
+      "bytes": 205562,
+      "heading": "Rendered admin page (supplement)"
     }
   ],
-  "export_stdout": "Deprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 262\n\nDeprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 269\n\nDeprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 262\n\nDeprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 269\n\nDeprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 262\n\nDeprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-legal-hold.php on line 826\n\nDeprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-legal-hold.php on line 831\n{\n    \"head\": \"5e6edda364f768daf7e04c3ad2926bcefc4862c6\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+  "export_stdout": "Deprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 262\n\nDeprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 269\n\nDeprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 262\n\nDeprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 269\n\nDeprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 262\n\nDeprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-legal-hold.php on line 826\n\nDeprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-legal-hold.php on line 831\n{\n    \"head\": \"5e6edda364f768daf7e04c3ad2926bcefc4862c6\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}",
+  "supplement_rendered_page": {
+    "file": "05-rendered-page.png",
+    "bytes": 205562,
+    "captured_at": "2026-10-22T22:25:40.143Z",
+    "method": "In-memory PHPUnit bootstrap Class::render_page() + Playwright; same force-asserted SHA; live sandbox untouched",
+    "export_stdout": "Deprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 262\n\nDeprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 269\nPR386_RENDER_OK len=3707"
+  }
 }

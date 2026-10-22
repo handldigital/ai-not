@@ -4,3 +4,4 @@
 - Method: In-memory PHPUnit bootstrap at force-asserted worktree SHA 40f2526 (ai-not-pr390); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.
 - Email fixture: none
 - Artifacts: `01-defaults-energy.png`, `02-rollups-roster.png`, `03-page-framing.png`, `04-filter-stale.png`
+- Supplement: `05-rendered-page.png` — Class::render_page() admin UI at same SHA (2026-10-22T22:25:40.709Z)

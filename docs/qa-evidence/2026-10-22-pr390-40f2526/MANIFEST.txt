@@ -2,11 +2,13 @@ exact_sha=40f25261f996c3b9ebf2bed5e08b450ddf123ce9
 short_sha=40f2526
 captured_at=2026-10-22T22:12:35.781Z
 method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 40f2526 (ai-not-pr390); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.
+supplement_captured_at=2026-10-22T22:25:40.709Z
 files:
   01-defaults-energy.png (99535 B)
   02-rollups-roster.png (103770 B)
   03-page-framing.png (103454 B)
   04-filter-stale.png (95820 B)
+  05-rendered-page.png (274202 B)
   EVIDENCE.html
   EVIDENCE.json
   PROVENANCE.md

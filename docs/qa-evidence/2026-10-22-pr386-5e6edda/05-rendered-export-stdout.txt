@@ -1,0 +1,5 @@
+
+Deprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 262
+
+Deprecated: fputcsv(): the $escape parameter must be provided as its default value will change in /Users/handl/.buzz/REPOS/ai-not-pr386/includes/class-handl-aicac-audit-export.php on line 269
+PR386_RENDER_OK len=3707

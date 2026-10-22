@@ -25,7 +25,19 @@
       "file": "04-roster-csv.png",
       "bytes": 96307,
       "heading": "AC4 roster and CSV"
+    },
+    {
+      "file": "05-rendered-page.png",
+      "bytes": 204293,
+      "heading": "Rendered admin page (supplement)"
     }
   ],
-  "export_stdout": "{\n    \"head\": \"1f417d9f74a7933cb23b09edbeebc851799403f8\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+  "export_stdout": "{\n    \"head\": \"1f417d9f74a7933cb23b09edbeebc851799403f8\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}",
+  "supplement_rendered_page": {
+    "file": "05-rendered-page.png",
+    "bytes": 204293,
+    "captured_at": "2026-10-22T22:25:40.421Z",
+    "method": "In-memory PHPUnit bootstrap Class::render_page() + Playwright; same force-asserted SHA; live sandbox untouched",
+    "export_stdout": "PR388_RENDER_OK len=2668"
+  }
 }
