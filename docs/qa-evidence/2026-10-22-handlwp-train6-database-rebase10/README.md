@@ -1,0 +1,16 @@
+# HandL WP Train 6 — Database rebase 10 QA
+
+Captured 2026-10-22 from exact PR-head production builds. Each image shows the target route. Automated Chromium checks confirmed its exact `x-build-stamp`, page heading, at least three comparison-table rows, source links, and no browser errors. Changed-file ESLint also passed for every PR.
+
+| Issue | PR | Exact head | Screenshot | Acceptance criteria covered |
+| --- | --- | --- | --- | --- |
+| [#1263](https://github.com/handldigital/handlwp.com-frontend/issues/1263) | [#1274](https://github.com/handldigital/handlwp.com-frontend/pull/1274) | `62e7ff4` | [babyproofing](pr1274-babyproofing.jpg) | Route renders with the requested lander content, table, and cited sources. |
+| [#1261](https://github.com/handldigital/handlwp.com-frontend/issues/1261) | [#1275](https://github.com/handldigital/handlwp.com-frontend/pull/1275) | `055f682` | [bee removal](pr1275-bee-removal.jpg) | Route renders with the requested lander content, table, and cited sources. |
+| [#1247](https://github.com/handldigital/handlwp.com-frontend/issues/1247) | [#1278](https://github.com/handldigital/handlwp.com-frontend/pull/1278) | `cd69fa8` | [horse boarding](pr1278-horse-boarding.jpg) | Route renders with the requested lander content, table, and cited sources. |
+| [#1271](https://github.com/handldigital/handlwp.com-frontend/issues/1271) | [#1287](https://github.com/handldigital/handlwp.com-frontend/pull/1287) | `81d0793` | [sleep study](pr1287-sleep-study.jpg) | Route renders with the requested lander content, table, and cited sources. |
+| [#1282](https://github.com/handldigital/handlwp.com-frontend/issues/1282) | [#1290](https://github.com/handldigital/handlwp.com-frontend/pull/1290) | `1abd739` | [tenant screening](pr1290-tenant-screening.jpg) | Route renders with the requested lander content, table, and cited sources. |
+| [#1292](https://github.com/handldigital/handlwp.com-frontend/issues/1292) | [#1295](https://github.com/handldigital/handlwp.com-frontend/pull/1295) | `6e00df2` | [cord blood banking](pr1295-cord-blood-banking.jpg) | Route renders with the requested lander content, table, and cited sources. |
+| [#1298](https://github.com/handldigital/handlwp.com-frontend/issues/1298) | [#1300](https://github.com/handldigital/handlwp.com-frontend/pull/1300) | `9fdc7b1` | [cell phone repair](pr1300-cell-phone-repair.jpg) | Route renders with the requested lander content, table, and cited sources. |
+| [#1302](https://github.com/handldigital/handlwp.com-frontend/issues/1302) | [#1303](https://github.com/handldigital/handlwp.com-frontend/pull/1303) | `74a2df4` | [scrapbooking](pr1303-scrapbooking.jpg) | Route renders with the requested lander content, table, and cited sources. |
+| [#1306](https://github.com/handldigital/handlwp.com-frontend/issues/1306) | [#1307](https://github.com/handldigital/handlwp.com-frontend/pull/1307) | `6996ee0` | [voiceover](pr1307-voiceover.jpg) | Route renders with the requested lander content, table, and cited sources. |
+| [#1310](https://github.com/handldigital/handlwp.com-frontend/issues/1310) | [#1311](https://github.com/handldigital/handlwp.com-frontend/pull/1311) | `fc49524` | [gymnastics](pr1311-gymnastics.jpg) | Route renders with the requested lander content, table, and cited sources. |
