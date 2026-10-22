@@ -1,0 +1,31 @@
+{
+  "pr": 452,
+  "issue": 451,
+  "name": "AICAC-MANNERS",
+  "exact_sha": "20333d8710bf6c51479984f92e7f9df2bf86eb29",
+  "captured_at": "2026-10-22T21:54:17.183Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 20333d8 (ai-not-451-manners); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out.",
+  "shots": [
+    {
+      "file": "01-four-grades.png",
+      "bytes": 274085,
+      "heading": "AC1 four grades from fixtures"
+    },
+    {
+      "file": "02-empty-escaped.png",
+      "bytes": 319494,
+      "heading": "AC2 empty state + escaped table"
+    },
+    {
+      "file": "03-missing-history.png",
+      "bytes": 211130,
+      "heading": "AC3 missing history empty census no writes"
+    },
+    {
+      "file": "04-cache-no-writes.png",
+      "bytes": 218689,
+      "heading": "AC4 cache roundtrip no policy writes"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"20333d8710bf6c51479984f92e7f9df2bf86eb29\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true,\n    \"grades\": {\n        \"hammer\\/plugin.php\": \"HAMMER\",\n        \"persist\\/plugin.php\": \"PERSISTENT\",\n        \"backoff\\/plugin.php\": \"BACKOFF\",\n        \"quiet\\/plugin.php\": \"WENT-QUIET\"\n    }\n}"
+}

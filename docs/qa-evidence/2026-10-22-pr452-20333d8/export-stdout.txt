@@ -1,0 +1,13 @@
+{
+    "head": "20333d8710bf6c51479984f92e7f9df2bf86eb29",
+    "ac1": true,
+    "ac2": true,
+    "ac3": true,
+    "ac4": true,
+    "grades": {
+        "hammer\/plugin.php": "HAMMER",
+        "persist\/plugin.php": "PERSISTENT",
+        "backoff\/plugin.php": "BACKOFF",
+        "quiet\/plugin.php": "WENT-QUIET"
+    }
+}

@@ -1,0 +1,61 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR452 manners 20333d8710bf6c51479984f92e7f9df2bf86eb29</title><style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+.sha{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace;background:#fff;border:1px solid #ddd;padding:10px}
+.pass{color:#0a7a28;font-weight:700}
+</style></head><body>
+<h1>PR452 / #451 AICAC-MANNERS</h1>
+<p class="sha">SHA 20333d8710bf6c51479984f92e7f9df2bf86eb29</p>
+<p>In-memory Manners at this SHA. Four QA ACs: fixture histories produce HAMMER / PERSISTENT / BACKOFF / WENT-QUIET; empty + escaped screen; missing log = empty census and no writes; cache roundtrip leaves policy/log untouched.</p>
+<section>
+<h2>AC1 four grades from fixtures</h2>
+<p>Classifier is a pure function of deny timestamps + now. Single-deny connector once/plugin.php is ignored.</p>
+<dl>
+<dt>hammer/plugin.php</dt><dd>HAMMER</dd>
+<dt>persist/plugin.php</dt><dd>PERSISTENT</dd>
+<dt>backoff/plugin.php</dt><dd>BACKOFF</dd>
+<dt>quiet/plugin.php</dt><dd>WENT-QUIET</dd>
+<dt>once/plugin.php present</dt><dd>no</dd>
+<dt>AC1 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Manners</h1><p class="description">How each AI connector takes “no” after a deny — hammer, grind, back off, or go quiet. Read-only census; never changes allow/deny rules.</p><ul class="ul-disc"><li><strong>HAMMER</strong> — Median retry gap under 10 seconds.</li><li><strong>PERSISTENT</strong> — Steady cadence with no clear backoff.</li><li><strong>BACKOFF</strong> — Gaps grow about 2× or more (polite).</li><li><strong>WENT-QUIET</strong> — At least two denies, then stopped retrying for an hour or more.</li></ul><table class="widefat striped"><thead><tr><th>Connector</th><th>Denies</th><th>Median gap</th><th>Cadence</th><th>Grade</th><th>Last seen</th></tr></thead><tbody><tr><td>hammer/plugin.php</td><td>4</td><td>5s</td><td>flat</td><td>HAMMER</td><td>2026-10-12 10:13</td></tr><tr><td>persist/plugin.php</td><td>4</td><td>1m</td><td>flat</td><td>PERSISTENT</td><td>2026-10-12 10:13</td></tr><tr><td>backoff/plugin.php</td><td>4</td><td>1m</td><td>growing</td><td>BACKOFF</td><td>2026-10-12 10:13</td></tr><tr><td>quiet/plugin.php</td><td>2</td><td>3m</td><td>flat</td><td>WENT-QUIET</td><td>2026-10-12 08:16</td></tr></tbody></table></div></div>
+</section>
+<section>
+<h2>AC2 empty state + escaped table</h2>
+<p>Empty census explains the four grades. Connector evil&lt;script&gt;/x.php is escaped in source.</p>
+<dl>
+<dt>Empty copy</dt><dd>No connectors with two or more denies</dd>
+<dt>Source escaped connector</dt><dd>evil&amp;lt;script&amp;gt;/x.php</dd>
+<dt>Raw script tag in table HTML</dt><dd>no</dd>
+<dt>AC2 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Manners</h1><p class="description">How each AI connector takes “no” after a deny — hammer, grind, back off, or go quiet. Read-only census; never changes allow/deny rules.</p><ul class="ul-disc"><li><strong>HAMMER</strong> — Median retry gap under 10 seconds.</li><li><strong>PERSISTENT</strong> — Steady cadence with no clear backoff.</li><li><strong>BACKOFF</strong> — Gaps grow about 2× or more (polite).</li><li><strong>WENT-QUIET</strong> — At least two denies, then stopped retrying for an hour or more.</li></ul><p>No connectors with two or more denies in the lookback window yet. Grades appear once retry patterns show up in the activity log.</p></div></div>
+<div class="ui"><div class="wrap"><h1>Manners</h1><p class="description">How each AI connector takes “no” after a deny — hammer, grind, back off, or go quiet. Read-only census; never changes allow/deny rules.</p><ul class="ul-disc"><li><strong>HAMMER</strong> — Median retry gap under 10 seconds.</li><li><strong>PERSISTENT</strong> — Steady cadence with no clear backoff.</li><li><strong>BACKOFF</strong> — Gaps grow about 2× or more (polite).</li><li><strong>WENT-QUIET</strong> — At least two denies, then stopped retrying for an hour or more.</li></ul><table class="widefat striped"><thead><tr><th>Connector</th><th>Denies</th><th>Median gap</th><th>Cadence</th><th>Grade</th><th>Last seen</th></tr></thead><tbody><tr><td>evil&lt;script&gt;/x.php</td><td>3</td><td>8s</td><td>shrinking</td><td>HAMMER</td><td>2026-10-12 10:13</td></tr></tbody></table></div></div>
+</section>
+<section>
+<h2>AC3 missing history empty census no writes</h2>
+<p>Soft-read of a missing activity log returns available=false, zero rows, and does not create handl_aicac_recent_calls.</p>
+<dl>
+<dt>log available</dt><dd>no</dd>
+<dt>grade row count</dt><dd>0</dd>
+<dt>recent_calls option wrote</dt><dd>no</dd>
+<dt>AC3 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Manners</h1><p class="description">How each AI connector takes “no” after a deny — hammer, grind, back off, or go quiet. Read-only census; never changes allow/deny rules.</p><ul class="ul-disc"><li><strong>HAMMER</strong> — Median retry gap under 10 seconds.</li><li><strong>PERSISTENT</strong> — Steady cadence with no clear backoff.</li><li><strong>BACKOFF</strong> — Gaps grow about 2× or more (polite).</li><li><strong>WENT-QUIET</strong> — At least two denies, then stopped retrying for an hour or more.</li></ul><p>No connectors with two or more denies in the lookback window yet. Grades appear once retry patterns show up in the activity log.</p></div></div>
+</section>
+<section>
+<h2>AC4 cache roundtrip no policy writes</h2>
+<p>Second snapshot within the hour is cached. Policy and alert options stay byte-identical. Suite-equivalent at this SHA.</p>
+<dl>
+<dt>first snapshot cached</dt><dd>no</dd>
+<dt>second snapshot cached</dt><dd>yes</dd>
+<dt>policy byte-identical</dt><dd>yes</dd>
+<dt>AC4 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Manners</h1><p class="description">How each AI connector takes “no” after a deny — hammer, grind, back off, or go quiet. Read-only census; never changes allow/deny rules.</p><ul class="ul-disc"><li><strong>HAMMER</strong> — Median retry gap under 10 seconds.</li><li><strong>PERSISTENT</strong> — Steady cadence with no clear backoff.</li><li><strong>BACKOFF</strong> — Gaps grow about 2× or more (polite).</li><li><strong>WENT-QUIET</strong> — At least two denies, then stopped retrying for an hour or more.</li></ul><table class="widefat striped"><thead><tr><th>Connector</th><th>Denies</th><th>Median gap</th><th>Cadence</th><th>Grade</th><th>Last seen</th></tr></thead><tbody><tr><td>hammer/plugin.php</td><td>4</td><td>5s</td><td>flat</td><td>HAMMER</td><td>2026-10-12 10:13</td></tr></tbody></table></div></div>
+</section>
+</body></html>

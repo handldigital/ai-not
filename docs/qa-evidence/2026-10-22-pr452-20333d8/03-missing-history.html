@@ -1,0 +1,24 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR452 03-missing-history.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA 20333d8710bf6c51479984f92e7f9df2bf86eb29 · PR452 / #451 AICAC-MANNERS · 03-missing-history.png</p>
+<section>
+<h2>AC3 missing history empty census no writes</h2>
+<p>Soft-read of a missing activity log returns available=false, zero rows, and does not create handl_aicac_recent_calls.</p>
+<dl>
+<dt>log available</dt><dd>no</dd>
+<dt>grade row count</dt><dd>0</dd>
+<dt>recent_calls option wrote</dt><dd>no</dd>
+<dt>AC3 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Manners</h1><p class="description">How each AI connector takes “no” after a deny — hammer, grind, back off, or go quiet. Read-only census; never changes allow/deny rules.</p><ul class="ul-disc"><li><strong>HAMMER</strong> — Median retry gap under 10 seconds.</li><li><strong>PERSISTENT</strong> — Steady cadence with no clear backoff.</li><li><strong>BACKOFF</strong> — Gaps grow about 2× or more (polite).</li><li><strong>WENT-QUIET</strong> — At least two denies, then stopped retrying for an hour or more.</li></ul><p>No connectors with two or more denies in the lookback window yet. Grades appear once retry patterns show up in the activity log.</p></div></div>
+</section>
+</body></html>

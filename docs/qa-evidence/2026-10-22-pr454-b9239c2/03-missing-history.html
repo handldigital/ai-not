@@ -1,0 +1,25 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR454 03-missing-history.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA b9239c20fbe3aa615df0c717ae814636491a28e4 · PR454 / #453 AICAC-DEJA-VU · 03-missing-history.png</p>
+<section>
+<h2>AC3 missing history empty census no writes</h2>
+<p>Soft-read of a missing activity log returns available=false, zero rows, and does not write policy or recent_calls.</p>
+<dl>
+<dt>log available</dt><dd>no</dd>
+<dt>grade row count</dt><dd>0</dd>
+<dt>recent_calls option wrote</dt><dd>no</dd>
+<dt>policy byte-identical</dt><dd>yes</dd>
+<dt>AC3 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Deja vu</h1><p class="description">Connectors that keep asking the same allowed question — a caching opportunity table. Read-only; never changes allow/deny rules. Denied calls are out of scope.</p><ul class="ul-disc"><li><strong>ECHO-CHAMBER</strong> — Repeat share 70% or higher.</li><li><strong>RERUN-HEAVY</strong> — Repeat share 40% or higher.</li><li><strong>VARIED</strong> — Mostly distinct asks.</li></ul><p>No repeated allowed calls in the lookback window yet. Grades appear once connectors reuse the same ask.</p></div></div>
+</section>
+</body></html>

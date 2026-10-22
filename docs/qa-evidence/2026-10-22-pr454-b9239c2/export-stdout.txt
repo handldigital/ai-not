@@ -1,0 +1,13 @@
+{
+    "head": "b9239c20fbe3aa615df0c717ae814636491a28e4",
+    "ac1": true,
+    "ac2": true,
+    "ac3": true,
+    "ac4": true,
+    "echo": {
+        "grade": "ECHO-CHAMBER",
+        "calls": 10,
+        "distinct": 2,
+        "top_count": 8
+    }
+}

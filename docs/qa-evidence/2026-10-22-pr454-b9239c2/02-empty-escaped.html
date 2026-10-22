@@ -1,0 +1,25 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR454 02-empty-escaped.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:980px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA b9239c20fbe3aa615df0c717ae814636491a28e4 · PR454 / #453 AICAC-DEJA-VU · 02-empty-escaped.png</p>
+<section>
+<h2>AC2 empty state + escaped table with percent</h2>
+<p>Empty census explains the three grades. Connector evil&lt;script&gt;/x.php is escaped; repeat share is a percentage.</p>
+<dl>
+<dt>Empty copy</dt><dd>No repeated allowed calls</dd>
+<dt>Source escaped connector</dt><dd>evil&amp;lt;script&amp;gt;/x.php</dd>
+<dt>Raw script tag in table HTML</dt><dd>no</dd>
+<dt>AC2 pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Deja vu</h1><p class="description">Connectors that keep asking the same allowed question — a caching opportunity table. Read-only; never changes allow/deny rules. Denied calls are out of scope.</p><ul class="ul-disc"><li><strong>ECHO-CHAMBER</strong> — Repeat share 70% or higher.</li><li><strong>RERUN-HEAVY</strong> — Repeat share 40% or higher.</li><li><strong>VARIED</strong> — Mostly distinct asks.</li></ul><p>No repeated allowed calls in the lookback window yet. Grades appear once connectors reuse the same ask.</p></div></div>
+<div class="ui"><div class="wrap"><h1>Deja vu</h1><p class="description">Connectors that keep asking the same allowed question — a caching opportunity table. Read-only; never changes allow/deny rules. Denied calls are out of scope.</p><ul class="ul-disc"><li><strong>ECHO-CHAMBER</strong> — Repeat share 70% or higher.</li><li><strong>RERUN-HEAVY</strong> — Repeat share 40% or higher.</li><li><strong>VARIED</strong> — Mostly distinct asks.</li></ul><table class="widefat striped"><thead><tr><th>Connector</th><th>Calls</th><th>Distinct asks</th><th>Repeat share</th><th>Top repeated ask</th><th>Grade</th></tr></thead><tbody><tr><td>evil&lt;script&gt;/x.php</td><td>5</td><td>2</td><td>60%</td><td>evil&lt;script&gt;/x.php|complete|openai|gpt-4 ×4</td><td>RERUN-HEAVY</td></tr></tbody></table></div></div>
+</section>
+</body></html>
