@@ -174,6 +174,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-coach.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-welcome-back.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dossier.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-chameleon.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -270,6 +271,7 @@ final class Plugin {
 		Coach::init();
 		Welcome_Back::init();
 		Dossier::init();
+		Chameleon::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
