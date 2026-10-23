@@ -1,0 +1,11 @@
+{
+    "head": "003df27cf0402eceafb587b36f1ab1d0434c33e5",
+    "ac1": true,
+    "ac2": true,
+    "ac3": true,
+    "ac4": true,
+    "ac5": true,
+    "email": "haktan+aicac-botwatch@handldigital.com",
+    "mails": 2,
+    "paths": 25
+}

@@ -1,0 +1,37 @@
+{
+  "pr": 445,
+  "issue": 441,
+  "name": "AICAC-BOTWATCH",
+  "exact_sha": "003df27cf0402eceafb587b36f1ab1d0434c33e5",
+  "captured_at": "2026-10-23T22:02:36.939Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 003df27 (ai-not-441-botwatch); Playwright local serve of per-AC HTML including Botwatch::render_page() on AC2/AC3/AC4. Live sandbox plugin was not checked out.",
+  "email": "haktan+aicac-botwatch@handldigital.com",
+  "shots": [
+    {
+      "file": "01-match-vs-nonmatch.png",
+      "bytes": 108723,
+      "heading": "AC1 matching crawler hit retained; non-matching UA leaves ledger byte-identical"
+    },
+    {
+      "file": "02-noncompliant.png",
+      "bytes": 232116,
+      "heading": "AC2 robots-disallowed path renders NON-COMPLIANT finding"
+    },
+    {
+      "file": "03-caps.png",
+      "bytes": 236742,
+      "heading": "AC3 bounded roster / path / finding caps"
+    },
+    {
+      "file": "04-alerts.png",
+      "bytes": 262991,
+      "heading": "AC4 default-off email alerts; enabled fixture to haktan+aicac-botwatch@handldigital.com"
+    },
+    {
+      "file": "05-non-frontend.png",
+      "bytes": 93822,
+      "heading": "AC5 non-frontend no-op"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"003df27cf0402eceafb587b36f1ab1d0434c33e5\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true,\n    \"ac5\": true,\n    \"email\": \"haktan+aicac-botwatch@handldigital.com\",\n    \"mails\": 2,\n    \"paths\": 25\n}"
+}
