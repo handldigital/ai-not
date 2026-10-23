@@ -148,6 +148,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-spot-check.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-legal-hold.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-volume.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-carbon.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -218,6 +219,7 @@ final class Plugin {
 		Spot_Check::init();
 		Legal_Hold::init();
 		Volume::init();
+		Carbon::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
