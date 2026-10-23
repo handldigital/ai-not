@@ -1,0 +1,10 @@
+exact_sha=98cc835750847fe156a2f193c3f62749838f5a51
+short_sha=98cc835
+captured_at=2026-10-23T22:33:52.366Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 98cc835 (ai-not-357-deputy); Playwright local serve of per-AC HTML including Deputy::render_page() / render_confirm(). Live sandbox plugin was not checked out. HANDL_AICAC_TEST_NOW=1791800000 so overdue hours match harness.
+files:
+  01-notify-once.png (455121 B)
+  02-approve-deny.png (260918 B)
+  03-auto-expire.png (167792 B)
+  04-default-off.png (267175 B)
+  05-settings.png (302023 B)

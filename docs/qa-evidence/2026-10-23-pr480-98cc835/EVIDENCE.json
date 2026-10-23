@@ -1,0 +1,37 @@
+{
+  "pr": 480,
+  "issue": 357,
+  "name": "AICAC-DEPUTY",
+  "exact_sha": "98cc835750847fe156a2f193c3f62749838f5a51",
+  "captured_at": "2026-10-23T22:33:52.366Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 98cc835 (ai-not-357-deputy); Playwright local serve of per-AC HTML including Deputy::render_page() / render_confirm(). Live sandbox plugin was not checked out. HANDL_AICAC_TEST_NOW=1791800000 so overdue hours match harness.",
+  "email": "haktan+aicac-deputy@handldigital.com",
+  "shots": [
+    {
+      "file": "01-notify-once.png",
+      "bytes": 455121,
+      "heading": "AC1 aged pending → one deputy notification; second sweep deduped"
+    },
+    {
+      "file": "02-approve-deny.png",
+      "bytes": 260918,
+      "heading": "AC2 deputy approve/deny via signed single-request links without manage_options"
+    },
+    {
+      "file": "03-auto-expire.png",
+      "bytes": 167792,
+      "heading": "AC3 auto-expire denies with reason + re-request link"
+    },
+    {
+      "file": "04-default-off.png",
+      "bytes": 267175,
+      "heading": "AC4 default-off no-op"
+    },
+    {
+      "file": "05-settings.png",
+      "bytes": 302023,
+      "heading": "AC5 deputy user/role + SLA settings page"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"98cc835750847fe156a2f193c3f62749838f5a51\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true,\n    \"ac5\": true\n}"
+}
