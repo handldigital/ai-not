@@ -1282,6 +1282,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-reconcile.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cron-pulse.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-sundial.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-witness.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-gatekeeper.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rescan.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-threat-feed.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-user-quota.php';
