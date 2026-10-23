@@ -156,6 +156,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-drill.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-key-age.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-footprint.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-unattended.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -234,6 +235,7 @@ final class Plugin {
 		Drill::init();
 		Key_Age::init();
 		Footprint::init();
+		Unattended::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
