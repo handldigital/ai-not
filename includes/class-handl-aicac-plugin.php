@@ -166,6 +166,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-sundial.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-witness.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-gatekeeper.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-doppelganger.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -254,6 +255,7 @@ final class Plugin {
 		Sundial::init();
 		Witness::init();
 		Gatekeeper::init();
+		Doppelganger::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
