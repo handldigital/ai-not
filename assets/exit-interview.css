@@ -1,0 +1,81 @@
+/**
+ * AICAC-EXIT-INTERVIEW (#328): plugins.php deactivation feedback modal.
+ */
+.handl-aicac-exit-interview {
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+	box-sizing: border-box;
+}
+
+.handl-aicac-exit-interview__backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.45);
+}
+
+.handl-aicac-exit-interview__panel {
+	position: relative;
+	z-index: 1;
+	width: min(420px, 100%);
+	max-height: calc(100vh - 48px);
+	overflow: auto;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+	padding: 20px 22px 18px;
+	box-sizing: border-box;
+}
+
+.handl-aicac-exit-interview__title {
+	margin: 0 0 14px;
+	font-size: 1.15em;
+	line-height: 1.35;
+}
+
+.handl-aicac-exit-interview__reasons {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin: 0 0 14px;
+}
+
+.handl-aicac-exit-interview__reason {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	margin: 0;
+	font-weight: 400;
+	cursor: pointer;
+}
+
+.handl-aicac-exit-interview__reason input {
+	margin-top: 3px;
+}
+
+.handl-aicac-exit-interview__other {
+	margin: 0 0 14px;
+}
+
+.handl-aicac-exit-interview__other label {
+	display: block;
+	margin-bottom: 4px;
+	font-weight: 600;
+}
+
+.handl-aicac-exit-interview__other textarea {
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+.handl-aicac-exit-interview__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 4px;
+}

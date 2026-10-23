@@ -124,6 +124,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-first-deny.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-review-nudge.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rescan-schedule.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-exit-interview.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -134,6 +135,7 @@ final class Plugin {
 		First_Deny::instance()->init();
 		Soft_Deny::instance()->init();
 		Review_Nudge::instance()->init();
+		Exit_Interview::instance()->init();
 		Version_Watch::init();
 		Dead_Rules::init();
 		Alerts::instance()->init();
