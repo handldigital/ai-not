@@ -398,7 +398,7 @@ final class DeputyTest extends TestCase {
 		$html = (string) ob_get_clean();
 		$this->assertStringContainsString( 'Deputy decision', $html );
 		$this->assertStringContainsString( 'this one request', $html );
-		$this->assertStringContainsString( '50h', $html );
+		$this->assertStringContainsString( '50 hours', $html );
 		$this->assertStringContainsString( 'Approve for 24 hours', $html );
 	}
 }

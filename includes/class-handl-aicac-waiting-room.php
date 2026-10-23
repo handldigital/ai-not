@@ -942,7 +942,7 @@ final class Waiting_Room {
 			return;
 		}
 
-		echo '<p class="description">' . esc_html__( 'Grades (front surface p95): INVISIBLE = no front samples · POLITE &lt; 300ms · NOTICEABLE &lt; 2s · BLOCKING ≥ 2s.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Grades (front surface p95): INVISIBLE = no front samples · POLITE < 300ms · NOTICEABLE < 2s · BLOCKING ≥ 2s.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		echo '<h2>' . esc_html__( 'By plugin (front impact)', 'handl-ai-connector-access-control' ) . '</h2>';
 		echo '<p>';

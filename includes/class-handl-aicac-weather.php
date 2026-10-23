@@ -527,7 +527,7 @@ final class Weather {
 		}
 		check_admin_referer( self::ACTION_SAVE );
 		if ( empty( $_POST[ self::POST_PRESENT ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
-			wp_die( esc_html__( 'Invalid form', 'handl-ai-connector-access-control' ) );
+			wp_die( esc_html__( 'Security check failed. Go back, reload the page, and try again.', 'handl-ai-connector-access-control' ) );
 		}
 		self::save_settings(
 			array(

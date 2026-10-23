@@ -1518,7 +1518,7 @@ final class Drill {
 		}
 		check_admin_referer( self::ACTION_SAVE );
 		if ( empty( $_POST[ self::POST_PRESENT ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
-			wp_die( esc_html__( 'Invalid form', 'handl-ai-connector-access-control' ) );
+			wp_die( esc_html__( 'Security check failed. Go back, reload the page, and try again.', 'handl-ai-connector-access-control' ) );
 		}
 		// phpcs:disable WordPress.Security.NonceVerification.Missing
 		$window_raw   = isset( $_POST[ self::POST_WINDOW ] ) ? wp_unslash( (string) $_POST[ self::POST_WINDOW ] ) : '';
