@@ -188,6 +188,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-snowflake.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-handshake.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-wallflower.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-chatterbox.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -298,6 +299,7 @@ final class Plugin {
 		Snowflake::init();
 		Handshake::init();
 		Wallflower::init();
+		Chatterbox::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
