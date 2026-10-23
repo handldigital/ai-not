@@ -168,6 +168,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-gatekeeper.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-doppelganger.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-tombstone.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-postcard.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -258,6 +259,7 @@ final class Plugin {
 		Gatekeeper::init();
 		Doppelganger::init();
 		Tombstone::init();
+		Postcard::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
