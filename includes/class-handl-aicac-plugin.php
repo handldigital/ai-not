@@ -128,6 +128,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rescan-schedule.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-exit-interview.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-request-chat.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-outcome-replay.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -178,6 +179,7 @@ final class Plugin {
 		Demo_Mode::init();
 		Why::init();
 		Rescan_Schedule::init();
+		Outcome_Replay::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
