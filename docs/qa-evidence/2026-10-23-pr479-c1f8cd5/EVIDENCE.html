@@ -1,0 +1,145 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR479 evidence</title></head><body><p id="aicac-qa-stamp">SHA c1f8cd54f18b791671250d500b48af6de6be9d5e · PR479 / #345 AICAC-RATE-SHOCK</p><section><h2>AC1 class + Rates_Feed ACTION_APPLIED + README/cost.php untouched</h2><dl><dt>class / test / wire</dt><dd>present + Rate_Shock::init()</dd><dt>ACTION_APPLIED</dt><dd>handl_aicac_rates_feed_applied</dd><dt>readme.txt / cost.php</dt><dd>untouched</dd></dl><p class="pass">AC1 pass</p></section><section><h2>AC2 used-rate change → one alert with old/new + delta</h2><dl><dt>to</dt><dd>haktan+aicac-rate-shock@handldigital.com</dd><dt>subject</dt><dd>[Test Site] Provider rates changed — about $5.00/mo more for your recent AI use</dd></dl><pre>--handl_aicac_ae85e3bea9b71bf7d6f4a9ec6a5f2d4a
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+HandL AI Connector Access Control
+Site: Test Site
+
+This message is from HandL AI Connector Access Control on your WordPress site.
+
+=== HandL message ===
+A signed rates-feed update changed prices for models you used in the last 30 days.
+
+Feed version: v2
+Your last-30-day usage at old rates $5.00 → new rates $10.00 (delta $+5.00).
+
+Per-provider changes:
+- openai: $5.00/$30.00 per 1M in/out → $10.00/$30.00 (your delta $+5.00)
+
+Estimates only — not a bill. Allow/Deny rules are unchanged.
+
+Activity:
+https://example.test/wp-admin/admin.php?page=handl-aicac-activity
+
+=== End HandL message ===
+
+You received this because alerts or reports are turned on for this site.
+Manage HandL AI Connector Access Control settings:
+https://example.test/wp-admin/admin.php?page=handl-aicac
+
+--handl_aicac_ae85e3bea9b71bf7d6f4a9ec6a5f2d4a
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;body style=&quot;font-family:sans-serif;font-size:14px;line-height:1.45;color:#111;&quot;&gt;&lt;p&gt;&lt;strong&gt;HandL AI Connector Access Control&lt;/strong&gt;&lt;br /&gt;Site: Test Site&lt;/p&gt;&lt;p&gt;This message is from HandL AI Connector Access Control on your WordPress site.&lt;/p&gt;&lt;hr /&gt;&lt;div&gt;A signed rates-feed update changed prices for models you used in the last 30 days.&lt;br&gt;
+&lt;br&gt;
+Feed version: v2&lt;br&gt;
+Your last-30-day usage at old rates $5.00 → new rates $10.00 (delta $+5.00).&lt;br&gt;
+&lt;br&gt;
+Per-provider changes:&lt;br&gt;
+- openai: $5.00/$30.00 per 1M in/out → $10.00/$30.00 (your delta $+5.00)&lt;br&gt;
+&lt;br&gt;
+Estimates only — not a bill. Allow/Deny rules are unchanged.&lt;br&gt;
+&lt;br&gt;
+Activity:&lt;br&gt;
+https://example.test/wp-admin/admin.php?page=handl-aicac-activity&lt;/div&gt;&lt;hr /&gt;&lt;p&gt;You received this because alerts or reports are turned on for this site.&lt;/p&gt;&lt;p&gt;Manage HandL AI Connector Access Control settings:&lt;/p&gt;&lt;p&gt;&lt;a href=&quot;https://example.test/wp-admin/admin.php?page=handl-aicac&quot;&gt;https://example.test/wp-admin/admin.php?page=handl-aicac&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+--handl_aicac_ae85e3bea9b71bf7d6f4a9ec6a5f2d4a--
+</pre><div class="ui"><div class="notice notice-warning is-dismissible"><p>[Test Site] Provider rates changed — about $5.00/mo more for your recent AI use</p></div></div><p class="pass">AC2 pass</p></section><section><h2>AC3 unused / sub-threshold → audit only, no alert</h2><dl><dt>mails</dt><dd>0</dd><dt>material_count</dt><dd>0</dd><dt>notice</dt><dd>absent</dd></dl><p class="pass">AC3 pass</p></section><section><h2>AC4 price-decrease positive framing</h2><dl><dt>subject</dt><dd>[Test Site] Provider rates dropped — about $5.00/mo cheaper for your recent AI use</dd></dl><pre>--handl_aicac_eae41168f13ba8e1a47c9e5a7e68958f
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+HandL AI Connector Access Control
+Site: Test Site
+
+This message is from HandL AI Connector Access Control on your WordPress site.
+
+=== HandL message ===
+Good news: a signed rates-feed update lowered prices for models you actually used.
+
+Feed version: v2
+Your last-30-day usage at old rates $10.00 → new rates $5.00 (delta $-5.00).
+
+Per-provider changes:
+- openai: $10.00/$30.00 per 1M in/out → $5.00/$30.00 (your delta $-5.00)
+
+Estimates only — not a bill. Allow/Deny rules are unchanged.
+
+Activity:
+https://example.test/wp-admin/admin.php?page=handl-aicac-activity
+
+=== End HandL message ===
+
+You received this because alerts or reports are turned on for this site.
+Manage HandL AI Connector Access Control settings:
+https://example.test/wp-admin/admin.php?page=handl-aicac
+
+--handl_aicac_eae41168f13ba8e1a47c9e5a7e68958f
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;body style=&quot;font-family:sans-serif;font-size:14px;line-height:1.45;color:#111;&quot;&gt;&lt;p&gt;&lt;strong&gt;HandL AI Connector Access Control&lt;/strong&gt;&lt;br /&gt;Site: Test Site&lt;/p&gt;&lt;p&gt;This message is from HandL AI Connector Access Control on your WordPress site.&lt;/p&gt;&lt;hr /&gt;&lt;div&gt;Good news: a signed rates-feed update lowered prices for models you actually used.&lt;br&gt;
+&lt;br&gt;
+Feed version: v2&lt;br&gt;
+Your last-30-day usage at old rates $10.00 → new rates $5.00 (delta $-5.00).&lt;br&gt;
+&lt;br&gt;
+Per-provider changes:&lt;br&gt;
+- openai: $10.00/$30.00 per 1M in/out → $5.00/$30.00 (your delta $-5.00)&lt;br&gt;
+&lt;br&gt;
+Estimates only — not a bill. Allow/Deny rules are unchanged.&lt;br&gt;
+&lt;br&gt;
+Activity:&lt;br&gt;
+https://example.test/wp-admin/admin.php?page=handl-aicac-activity&lt;/div&gt;&lt;hr /&gt;&lt;p&gt;You received this because alerts or reports are turned on for this site.&lt;/p&gt;&lt;p&gt;Manage HandL AI Connector Access Control settings:&lt;/p&gt;&lt;p&gt;&lt;a href=&quot;https://example.test/wp-admin/admin.php?page=handl-aicac&quot;&gt;https://example.test/wp-admin/admin.php?page=handl-aicac&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+--handl_aicac_eae41168f13ba8e1a47c9e5a7e68958f--
+</pre><p class="pass">AC4 pass</p></section><section><h2>AC5 budget-cap projection warning</h2><pre>--handl_aicac_369cc913d8a817bd5e9ad3089ac063ac
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+HandL AI Connector Access Control
+Site: Test Site
+
+This message is from HandL AI Connector Access Control on your WordPress site.
+
+=== HandL message ===
+A signed rates-feed update changed prices for models you used in the last 30 days.
+
+Feed version: v2
+Your last-30-day usage at old rates $2.00 → new rates $5.00 (delta $+3.00).
+
+Per-provider changes:
+- openai: $2.00/$30.00 per 1M in/out → $5.00/$30.00 (your delta $+3.00)
+
+Budget early warning — projected spend at the new rates crosses a configured cap:
+- demo/demo.php: projected $5.00 vs budget $3.00 (period 2026-10)
+
+Estimates only — not a bill. Allow/Deny rules are unchanged.
+
+Activity:
+https://example.test/wp-admin/admin.php?page=handl-aicac-activity
+
+=== End HandL message ===
+
+You received this because alerts or reports are turned on for this site.
+Manage HandL AI Connector Access Control settings:
+https://example.test/wp-admin/admin.php?page=handl-aicac
+
+--handl_aicac_369cc913d8a817bd5e9ad3089ac063ac
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;body style=&quot;font-family:sans-serif;font-size:14px;line-height:1.45;color:#111;&quot;&gt;&lt;p&gt;&lt;strong&gt;HandL AI Connector Access Control&lt;/strong&gt;&lt;br /&gt;Site: Test Site&lt;/p&gt;&lt;p&gt;This message is from HandL AI Connector Access Control on your WordPress site.&lt;/p&gt;&lt;hr /&gt;&lt;div&gt;A signed rates-feed update changed prices for models you used in the last 30 days.&lt;br&gt;
+&lt;br&gt;
+Feed version: v2&lt;br&gt;
+Your last-30-day usage at old rates $2.00 → new rates $5.00 (delta $+3.00).&lt;br&gt;
+&lt;br&gt;
+Per-provider changes:&lt;br&gt;
+- openai: $2.00/$30.00 per 1M in/out → $5.00/$30.00 (your delta $+3.00)&lt;br&gt;
+&lt;br&gt;
+Budget early warning — projected spend at the new rates crosses a configured cap:&lt;br&gt;
+- demo/demo.php: projected $5.00 vs budget $3.00 (period 2026-10)&lt;br&gt;
+&lt;br&gt;
+Estimates only — not a bill. Allow/Deny rules are unchanged.&lt;br&gt;
+&lt;br&gt;
+Activity:&lt;br&gt;
+https://example.test/wp-admin/admin.php?page=handl-aicac-activity&lt;/div&gt;&lt;hr /&gt;&lt;p&gt;You received this because alerts or reports are turned on for this site.&lt;/p&gt;&lt;p&gt;Manage HandL AI Connector Access Control settings:&lt;/p&gt;&lt;p&gt;&lt;a href=&quot;https://example.test/wp-admin/admin.php?page=handl-aicac&quot;&gt;https://example.test/wp-admin/admin.php?page=handl-aicac&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+--handl_aicac_369cc913d8a817bd5e9ad3089ac063ac--
+</pre><p class="pass">AC5 pass</p></section><section><h2>AC6 no-op settings save + rendered page</h2><dl><dt>settings option</dt><dd>byte-identical on no-op save</dd></dl><div class="ui"><div class="wrap"><h1>Rate shock</h1><p>When a signed rates-feed update changes prices for models this site used in the last 30 days, AI Not emails the personal cost impact. Unused models and tiny deltas still get an Activity row, but no alert.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_rate_shock_save" /><input type="hidden" name="handl_aicac_rate_shock_present" value="1" /><input type="hidden" name="_wpnonce" value="testnonce" /><table class="form-table" role="presentation"><tbody><tr><th scope="row"><label for="handl_aicac_rate_shock_threshold_usd">Dollar threshold</label></th><td><input name="handl_aicac_rate_shock_threshold_usd" id="handl_aicac_rate_shock_threshold_usd" type="number" min="0" step="0.01" value="2.5" class="small-text" /><p class="description">Alert when the absolute monthly impact is at least this many dollars (default 1).</p></td></tr><tr><th scope="row"><label for="handl_aicac_rate_shock_threshold_pct">Percent threshold</label></th><td><input name="handl_aicac_rate_shock_threshold_pct" id="handl_aicac_rate_shock_threshold_pct" type="number" min="0" step="0.1" value="10" class="small-text" /><p class="description">Or when the absolute impact is at least this percent of the prior estimate (default 5).</p></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save changes" /></form></div></div><p class="pass">AC6 pass</p></section></body></html>

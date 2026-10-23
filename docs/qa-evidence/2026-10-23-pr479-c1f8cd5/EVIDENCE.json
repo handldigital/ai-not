@@ -1,0 +1,42 @@
+{
+  "pr": 479,
+  "issue": 345,
+  "name": "AICAC-RATE-SHOCK",
+  "exact_sha": "c1f8cd54f18b791671250d500b48af6de6be9d5e",
+  "captured_at": "2026-10-23T22:26:36.165Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA c1f8cd5 (ai-not-345-rate-shock); Playwright local serve of per-AC HTML including Rate_Shock::render_page() / notice. Live sandbox plugin was not checked out.",
+  "email": "haktan+aicac-rate-shock@handldigital.com",
+  "shots": [
+    {
+      "file": "01-class-wire.png",
+      "bytes": 116560,
+      "heading": "AC1 class + Rates_Feed ACTION_APPLIED + README/cost.php untouched"
+    },
+    {
+      "file": "02-material-alert.png",
+      "bytes": 515882,
+      "heading": "AC2 used-rate change → one alert with old/new + delta"
+    },
+    {
+      "file": "03-audit-only.png",
+      "bytes": 91763,
+      "heading": "AC3 unused / sub-threshold → audit only, no alert"
+    },
+    {
+      "file": "04-decrease.png",
+      "bytes": 484649,
+      "heading": "AC4 price-decrease positive framing"
+    },
+    {
+      "file": "05-budget.png",
+      "bytes": 529373,
+      "heading": "AC5 budget-cap projection warning"
+    },
+    {
+      "file": "06-settings.png",
+      "bytes": 174140,
+      "heading": "AC6 no-op settings save + rendered page"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"c1f8cd54f18b791671250d500b48af6de6be9d5e\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true,\n    \"ac5\": true,\n    \"ac6\": true\n}"
+}
