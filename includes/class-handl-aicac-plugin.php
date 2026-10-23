@@ -183,6 +183,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dejavu.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-fineprint.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rush-hour.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-stowaway.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -288,6 +289,7 @@ final class Plugin {
 		Dejavu::init();
 		Fineprint::init();
 		Rush_Hour::init();
+		Stowaway::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
