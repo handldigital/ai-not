@@ -173,6 +173,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-sleepwalker.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-coach.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-welcome-back.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dossier.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -268,6 +269,7 @@ final class Plugin {
 		Sleepwalker::init();
 		Coach::init();
 		Welcome_Back::init();
+		Dossier::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
