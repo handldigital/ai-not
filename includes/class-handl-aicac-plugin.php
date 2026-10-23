@@ -162,6 +162,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-crosscheck.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-limbo.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-reconcile.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cron-pulse.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -246,6 +247,7 @@ final class Plugin {
 		Crosscheck::init();
 		Limbo::init();
 		Reconcile::init();
+		Cron_Pulse::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
