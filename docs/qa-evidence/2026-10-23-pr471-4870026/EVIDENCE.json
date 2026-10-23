@@ -1,0 +1,32 @@
+{
+  "pr": 471,
+  "issue": 469,
+  "name": "AICAC-WALLFLOWER",
+  "exact_sha": "48700261dbb5cfff54a21eb0779f252478563d6b",
+  "captured_at": "2026-10-23T20:16:29.917Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 4870026 (ai-not-469-wallflower); Playwright local serve of per-AC HTML including Wallflower::render_page() on AC2/AC3. Live sandbox plugin was not checked out.",
+  "email": "haktan+aicac-wallflower@handldigital.com",
+  "shots": [
+    {
+      "file": "01-class-wire.png",
+      "bytes": 123796,
+      "heading": "AC1 class + test + plugin.php wire (README-FREE)"
+    },
+    {
+      "file": "02-four-flags.png",
+      "bytes": 284566,
+      "heading": "AC2 four flags + empty Scan All CTA"
+    },
+    {
+      "file": "03-readonly.png",
+      "bytes": 229254,
+      "heading": "AC3 read-only on preflight / activity / dead-rules / policy"
+    },
+    {
+      "file": "04-window-defaults.png",
+      "bytes": 98964,
+      "heading": "AC4 window defaults + pin unset"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"48700261dbb5cfff54a21eb0779f252478563d6b\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

@@ -1,0 +1,12 @@
+exact_sha=48700261dbb5cfff54a21eb0779f252478563d6b
+short_sha=4870026
+captured_at=2026-10-23T20:16:29.917Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 4870026 (ai-not-469-wallflower); Playwright local serve of per-AC HTML including Wallflower::render_page() on AC2/AC3. Live sandbox plugin was not checked out.
+files:
+  01-class-wire.png (123796 B)
+  02-four-flags.png (284566 B)
+  03-readonly.png (229254 B)
+  04-window-defaults.png (98964 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md
