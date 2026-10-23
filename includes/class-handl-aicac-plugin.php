@@ -138,6 +138,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-circuit-breaker.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-key-custody.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-my-ai.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-touched.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -198,6 +199,7 @@ final class Plugin {
 		Circuit_Breaker::init();
 		Key_Custody::init();
 		My_AI::init();
+		Touched::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
