@@ -153,6 +153,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-ai-act.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-concentration.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-friction.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-drill.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -228,6 +229,7 @@ final class Plugin {
 		Ai_Act::init();
 		Concentration::init();
 		Friction::init();
+		Drill::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
