@@ -145,6 +145,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-register.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rollback.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-model-eol.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-spot-check.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -212,6 +213,7 @@ final class Plugin {
 		Register::init();
 		Rollback::init();
 		Model_Eol::init();
+		Spot_Check::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';

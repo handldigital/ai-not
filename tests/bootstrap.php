@@ -1264,6 +1264,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-visitor.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-register.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rollback.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-model-eol.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-spot-check.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rescan.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-threat-feed.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-user-quota.php';
