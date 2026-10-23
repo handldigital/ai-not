@@ -1,0 +1,31 @@
+{
+  "pr": 470,
+  "issue": 468,
+  "name": "AICAC-HANDSHAKE",
+  "exact_sha": "e41b6295d6dc7acfed4b11236e001d6957d224bb",
+  "captured_at": "2026-10-23T20:17:17.178Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA e41b629 (ai-not-468-handshake); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out. Handshake::set_test_now(1791800000) so render_page last-seen stamps match harness.",
+  "shots": [
+    {
+      "file": "01-empty.png",
+      "bytes": 157230,
+      "heading": "AC2 empty-state copy"
+    },
+    {
+      "file": "02-grades.png",
+      "bytes": 270482,
+      "heading": "AC2 grades with discriminating facts"
+    },
+    {
+      "file": "03-observer.png",
+      "bytes": 127469,
+      "heading": "AC3 observer read-only + Provider_Map hosts"
+    },
+    {
+      "file": "04-cap-option.png",
+      "bytes": 113323,
+      "heading": "AC4 capped own option"
+    }
+  ],
+  "export_stdout": "wrote /Users/handl/.buzz/.scratch/pr470-export.html\nSHA e41b6295d6dc7acfed4b11236e001d6957d224bb"
+}

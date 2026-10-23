@@ -1,0 +1,12 @@
+exact_sha=e41b6295d6dc7acfed4b11236e001d6957d224bb
+short_sha=e41b629
+captured_at=2026-10-23T20:17:17.178Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA e41b629 (ai-not-468-handshake); Playwright local serve of per-AC HTML. Live sandbox plugin was not checked out. Handshake::set_test_now(1791800000) so render_page last-seen stamps match harness.
+files:
+  01-empty.png (157230 B)
+  02-grades.png (270482 B)
+  03-observer.png (127469 B)
+  04-cap-option.png (113323 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

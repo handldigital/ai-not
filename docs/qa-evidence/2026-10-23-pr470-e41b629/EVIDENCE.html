@@ -1,0 +1,62 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR470 handshake e41b6295d6dc7acfed4b11236e001d6957d224bb</title><style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+.sha{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:1100px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+</style></head><body>
+<h1>PR470 / #468 AICAC-HANDSHAKE</h1>
+<p class="sha">SHA e41b6295d6dc7acfed4b11236e001d6957d224bb</p>
+<p>In-memory Handshake at this SHA. Fixture clock Handshake::set_test_now(1791800000). Live sandbox plugin was not checked out.</p>
+<section>
+<h2>AC1 class + require/init</h2>
+<dl>
+<dt>class</dt><dd>Handshake</dd>
+<dt>filter</dt><dd>http_request_args</dd>
+<dt>FRAMING</dt><dd>report_only_never_mutates_request_args</dd>
+<dt>option</dt><dd>handl_aicac_handshake</dd>
+<dt>AC1 pass</dt><dd class="pass">yes</dd>
+</dl>
+</section>
+<section>
+<h2>AC2 empty-state copy</h2>
+<dl>
+<dt>Empty copy</dt><dd>No AI HTTP calls observed yet.</dd>
+<dt>AC2 empty pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Transport hygiene</h1><p class="description">How AI HTTP calls actually travel: TLS, scheme, timeout. Report only — this screen never changes request arguments.</p><ul class="ul-disc"><li><strong>SECURE</strong> — HTTPS with SSL verification on.</li><li><strong>RISKY</strong> — sslverify disabled or plain HTTP. The discriminating fact is shown per row.</li><li><strong>SLOWPOKE</strong> — Timeout over 30 seconds.</li></ul><p>No AI HTTP calls observed yet.</p></div></div>
+</section>
+<section>
+<h2>AC2 grades with discriminating facts</h2>
+<p>SECURE https+sslverify; RISKY sslverify disabled; RISKY plain HTTP; SLOWPOKE timeout 60s.</p>
+<dl>
+<dt>sslverify fact</dt><dd>sslverify disabled</dd>
+<dt>http fact</dt><dd>plain HTTP</dd>
+<dt>AC2 grades pass</dt><dd class="pass">yes</dd>
+</dl>
+<div class="ui"><div class="wrap"><h1>Transport hygiene</h1><p class="description">How AI HTTP calls actually travel: TLS, scheme, timeout. Report only — this screen never changes request arguments.</p><ul class="ul-disc"><li><strong>SECURE</strong> — HTTPS with SSL verification on.</li><li><strong>RISKY</strong> — sslverify disabled or plain HTTP. The discriminating fact is shown per row.</li><li><strong>SLOWPOKE</strong> — Timeout over 30 seconds.</li></ul><table class="widefat striped"><thead><tr><th>Plugin</th><th>Provider</th><th>Scheme</th><th>SSL verify</th><th>Timeout</th><th>Redirection</th><th>Last seen</th><th>Grade</th><th>Fact</th></tr></thead><tbody><tr><td>risky-ssl/plugin.php</td><td>Anthropic</td><td>https</td><td>off</td><td>5s (≤5s)</td><td>5</td><td>2026-10-12 10:13:20 UTC</td><td>RISKY</td><td>sslverify disabled</td></tr><tr><td>risky-http/plugin.php</td><td>Groq</td><td>http</td><td>on</td><td>5s (≤5s)</td><td>5</td><td>2026-10-12 10:13:20 UTC</td><td>RISKY</td><td>plain HTTP</td></tr><tr><td>slowpoke/plugin.php</td><td>Mistral</td><td>https</td><td>on</td><td>60s (&gt;30s)</td><td>5</td><td>2026-10-12 10:13:20 UTC</td><td>SLOWPOKE</td><td>timeout 60s</td></tr><tr><td>connector/plugin.php</td><td>OpenAI</td><td>https</td><td>on</td><td>5s (≤5s)</td><td>5</td><td>2026-10-12 10:13:20 UTC</td><td>SECURE</td><td>HTTPS, sslverify on</td></tr></tbody></table></div></div>
+</section>
+<section>
+<h2>AC3 observer read-only + Provider_Map hosts</h2>
+<p>wordpress.org and status.openai.com ignored. api.openai.com sampled. args returned unchanged. _probe keep-me.</p>
+<dl>
+<dt>sampled provider</dt><dd>openai</dd>
+<dt>ignored wordpress.org</dt><dd>yes</dd>
+<dt>ignored status.openai.com</dt><dd>yes</dd>
+<dt>args unchanged</dt><dd>yes</dd>
+<dt>AC3 pass</dt><dd class="pass">yes</dd>
+</dl>
+</section>
+<section>
+<h2>AC4 capped own option</h2>
+<p>max_rows=2 drops one/one.php; keeps two/two.php and three/three.php. Policy option untouched.</p>
+<dl>
+<dt>option key</dt><dd>handl_aicac_handshake</dd>
+<dt>dropped</dt><dd>one/one.php</dd>
+<dt>kept</dt><dd>two/two.php three/three.php</dd>
+<dt>AC4 pass</dt><dd class="pass">yes</dd>
+</dl>
+</section>
+</body></html>
