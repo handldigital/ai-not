@@ -1286,6 +1286,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-gatekeeper.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-doppelganger.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-tombstone.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-postcard.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-env-policy.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rescan.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-threat-feed.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-user-quota.php';

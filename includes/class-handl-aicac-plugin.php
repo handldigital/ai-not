@@ -169,6 +169,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-doppelganger.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-tombstone.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-postcard.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-env-policy.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -260,6 +261,7 @@ final class Plugin {
 		Doppelganger::init();
 		Tombstone::init();
 		Postcard::init();
+		Env_Policy::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
