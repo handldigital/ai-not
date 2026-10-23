@@ -277,6 +277,7 @@ final class Policy {
 			$event['returned_error'] = ( $soft_deny || ! self::is_generating_operation( $operation ) )
 				? ''
 				: self::caller_deny_error_message();
+			if ( class_exists( Deny_Receipt::class, false ) ) { Deny_Receipt::stamp( $event ); } // AICAC-DENY-RECEIPT (#430) sanctioned one-line hook.
 		}
 
 		$this->log_event( $event );
