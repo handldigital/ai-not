@@ -170,6 +170,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-tombstone.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-postcard.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-env-policy.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-sleepwalker.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -262,6 +263,7 @@ final class Plugin {
 		Tombstone::init();
 		Postcard::init();
 		Env_Policy::init();
+		Sleepwalker::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
