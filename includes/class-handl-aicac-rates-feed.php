@@ -23,6 +23,9 @@ final class Rates_Feed {
 
 	public const VERSION_MAX = 64;
 
+	/** Fires after a verified rates block is persisted: (before, after, now). */
+	public const ACTION_APPLIED = 'handl_aicac_rates_feed_applied';
+
 	/**
 	 * @var bool
 	 */
@@ -196,6 +199,7 @@ final class Rates_Feed {
 	 * @param array{version?:string,providers?:array<string,array{input_per_m:float,output_per_m:float}>} $block
 	 */
 	public static function apply_remote_rates( array $block, int $now ): void {
+		$before  = self::stored_rates();
 		$version = sanitize_text_field( (string) ( $block['version'] ?? '' ) );
 		if ( strlen( $version ) > self::VERSION_MAX ) {
 			$version = substr( $version, 0, self::VERSION_MAX );
@@ -204,15 +208,21 @@ final class Rates_Feed {
 			? Cost::sanitize_provider_rates( $block['providers'] )
 			: array();
 
-		update_option(
-			self::OPTION_KEY,
-			array(
-				'version'    => $version,
-				'updated_at' => max( 0, $now ),
-				'providers'  => $providers,
-			),
-			false
+		$after = array(
+			'version'    => $version,
+			'updated_at' => max( 0, $now ),
+			'providers'  => $providers,
 		);
+		update_option( self::OPTION_KEY, $after, false );
+
+		/**
+		 * After a verified rates-feed block is stored.
+		 *
+		 * @param array{version:string,updated_at:int,providers:array<string,array{input_per_m:float,output_per_m:float}>} $before Prior stored state.
+		 * @param array{version:string,updated_at:int,providers:array<string,array{input_per_m:float,output_per_m:float}>} $after  New stored state.
+		 * @param int                                                                                                         $now    Apply timestamp.
+		 */
+		do_action( self::ACTION_APPLIED, $before, $after, $now );
 	}
 
 	/**
