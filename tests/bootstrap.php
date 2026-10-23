@@ -1291,6 +1291,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-coach.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-welcome-back.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-botwatch.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dividend.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-coldcase.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rescan.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-threat-feed.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-user-quota.php';
