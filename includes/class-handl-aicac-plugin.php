@@ -161,6 +161,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-succession.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-crosscheck.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-limbo.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-reconcile.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -244,6 +245,7 @@ final class Plugin {
 		Succession::init();
 		Crosscheck::init();
 		Limbo::init();
+		Reconcile::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
