@@ -624,13 +624,15 @@ final class Rate_Shock {
 		}
 		$framing = (string) ( $notice['framing'] ?? 'flat' );
 		$class   = 'decrease' === $framing ? 'notice notice-success' : 'notice notice-warning';
-		$url     = wp_nonce_url(
-			admin_url( 'admin-post.php?action=' . self::ACTION_DISMISS ),
-			self::ACTION_DISMISS
-		);
 		echo '<div class="' . esc_attr( $class ) . ' is-dismissible"><p>';
 		echo esc_html( (string) $notice['subject'] );
-		echo ' <a href="' . esc_url( $url ) . '">' . esc_html__( 'Dismiss', 'handl-ai-connector-access-control' ) . '</a>';
+		if ( function_exists( 'wp_nonce_url' ) && function_exists( 'admin_url' ) ) {
+			$url = wp_nonce_url(
+				admin_url( 'admin-post.php?action=' . self::ACTION_DISMISS ),
+				self::ACTION_DISMISS
+			);
+			echo ' <a href="' . esc_url( $url ) . '">' . esc_html__( 'Dismiss', 'handl-ai-connector-access-control' ) . '</a>';
+		}
 		echo '</p></div>';
 	}
 
