@@ -1,0 +1,10 @@
+exact_sha=c9d2674114aada3e37d9178610eb17b10feffcb8
+short_sha=c9d2674
+captured_at=2026-10-23T22:57:39.757Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA c9d2674 (ai-not-431-relic); Playwright local serve of per-AC HTML including Relic::render_page() / census / alert / CSV / CLI exit. Live sandbox plugin was not checked out. HANDL_AICAC_TEST_NOW=1761220800 (RelicTest NOW).
+files:
+  01-census-relic-aging.png (295373 B)
+  02-ack-quiet.png (225594 B)
+  03-rearm-alert.png (478233 B)
+  04-default-off.png (192403 B)
+  05-queue-csv-cli.png (319855 B)

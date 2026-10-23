@@ -1,0 +1,37 @@
+{
+  "pr": 481,
+  "issue": 431,
+  "name": "AICAC-RELIC",
+  "exact_sha": "c9d2674114aada3e37d9178610eb17b10feffcb8",
+  "captured_at": "2026-10-23T22:57:39.757Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA c9d2674 (ai-not-431-relic); Playwright local serve of per-AC HTML including Relic::render_page() / census / alert / CSV / CLI exit. Live sandbox plugin was not checked out. HANDL_AICAC_TEST_NOW=1761220800 (RelicTest NOW).",
+  "email": "haktan+aicac-relic@handldigital.com",
+  "shots": [
+    {
+      "file": "01-census-relic-aging.png",
+      "bytes": 295373,
+      "heading": "AC1 census RELIC + AGING + insufficient-provenance SKIP"
+    },
+    {
+      "file": "02-ack-quiet.png",
+      "bytes": 225594,
+      "heading": "AC2 per-post acknowledgement stays quiet"
+    },
+    {
+      "file": "03-rearm-alert.png",
+      "bytes": 478233,
+      "heading": "AC3 second EOL model re-arms + one [RELIC] alert"
+    },
+    {
+      "file": "04-default-off.png",
+      "bytes": 192403,
+      "heading": "AC4 default-off no scan beyond option check"
+    },
+    {
+      "file": "05-queue-csv-cli.png",
+      "bytes": 319855,
+      "heading": "AC5 admin queue/settings + CSV + WP-CLI non-zero"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"c9d2674114aada3e37d9178610eb17b10feffcb8\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true,\n    \"ac5\": true\n}"
+}

@@ -1,0 +1,14 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR481 04-default-off.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:1100px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace;background:#f6f8fa;padding:12px}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA c9d2674114aada3e37d9178610eb17b10feffcb8 · PR481 / #431 AICAC-RELIC · 04-default-off.png</p>
+<section><h2>AC4 default-off no scan beyond option check</h2><dl><dt>enabled</dt><dd>false</dd><dt>findings</dt><dd>0</dd><dt>state option</dt><dd>absent</dd><dt>maybe_check</dt><dd>false</dd><dt>readme / policy / admin</dt><dd>untouched</dd></dl><div class="ui"><div class="wrap"><h1>Legacy AI content</h1><p class="description">Finds posts shaped by a model that has already retired (RELIC) or that retires within 90 days (AGING). Ack means you reviewed it and are keeping it as-is; a later touch by another retiring model re-opens the row. Never edits or flags content on the public site. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_relic_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_relic_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable legacy AI census</th><td><label><input type="checkbox" name="handl_aicac_relic_enabled" value="1"  /> Join AI-touched provenance with the model retirement calendar and alert on new unacked findings</label></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save legacy AI content settings" /></form><p>Legacy AI census is off. Enable it to build the re-review queue.</p></div></div><p class="pass">AC4 pass</p></section>
+</body></html>
