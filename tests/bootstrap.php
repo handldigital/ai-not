@@ -1258,6 +1258,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-recert.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-key-custody.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-my-ai.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-touched.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-aup.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rescan.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-threat-feed.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-user-quota.php';

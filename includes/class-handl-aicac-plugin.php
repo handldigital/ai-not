@@ -139,6 +139,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-key-custody.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-my-ai.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-touched.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-aup.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -200,6 +201,7 @@ final class Plugin {
 		Key_Custody::init();
 		My_AI::init();
 		Touched::init();
+		Aup::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
