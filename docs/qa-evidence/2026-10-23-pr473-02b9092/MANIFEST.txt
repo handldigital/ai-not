@@ -1,0 +1,13 @@
+exact_sha=02b9092abc6c870398ab0964f28c27d71ce7334a
+short_sha=02b9092
+captured_at=2026-10-23T20:27:24.163Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 02b9092 (ai-not-472-chatterbox); Playwright local serve of per-AC HTML including Chatterbox::render_page() on AC2/AC3. Live sandbox plugin was not checked out.
+files:
+  01-class-wire.png (130880 B)
+  02-four-grades.png (245668 B)
+  03-burst-clustering.png (99138 B)
+  04-fanout-vs-retry.png (98986 B)
+  05-readonly.png (233750 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md
