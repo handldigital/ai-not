@@ -1207,6 +1207,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-offboard.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dormant.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-provision.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-chargeback.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-recert.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rescan.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-threat-feed.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-user-quota.php';
