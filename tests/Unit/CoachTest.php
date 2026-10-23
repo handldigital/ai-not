@@ -233,4 +233,23 @@ final class CoachTest extends TestCase {
 		$this->assertFalse( $snap['enabled'] );
 		$this->assertSame( 0, $snap['candidate_count'] );
 	}
+
+	public function test_csv_rfc_escapes_backslash_comma_quote(): void {
+		$csv = Coach::csv_for_census(
+			array(
+				array(
+					'key'          => '7|plugin',
+					'user_id'      => 7,
+					'rule'         => 'plugin',
+					'streak'       => 5,
+					'last_deny_ts' => self::NOW,
+					'plugin'       => 'acme, "Inc" \\plugin.php',
+					'status'       => 'ready',
+				),
+			)
+		);
+		$this->assertStringContainsString( 'key,user_id,rule,streak,last_deny_ts,plugin,status', $csv );
+		$this->assertStringContainsString( '"acme, ""Inc"" \plugin.php"', $csv );
+		$this->assertStringNotContainsString( '\\"', $csv );
+	}
 }

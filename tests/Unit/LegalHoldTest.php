@@ -294,6 +294,29 @@ final class LegalHoldTest extends TestCase {
 		$this->assertStringContainsString( 'active', $csv );
 	}
 
+	public function test_csv_rfc_escapes_backslash_comma_quote(): void {
+		$csv = Legal_Hold::csv_for_roster(
+			array(
+				array(
+					'id'            => 'h1',
+					'name'          => 'Acme, "Inc" \hold',
+					'scope'         => Legal_Hold::SCOPE_SITE,
+					'status'        => 'active',
+					'scope_detail'  => 'site',
+					'reason'        => 'path \foo, "bar"',
+					'created_at'    => 1700000500,
+					'created_by'    => 3,
+					'released_at'   => 0,
+					'matched_count' => 0,
+					'snapshot_path' => '',
+				),
+			)
+		);
+		$this->assertStringContainsString( '"Acme, ""Inc"" \hold"', $csv );
+		$this->assertStringContainsString( '"path \foo, ""bar"""', $csv );
+		$this->assertStringNotContainsString( '\\"', $csv );
+	}
+
 	public function test_reason_required(): void {
 		$result = Legal_Hold::create_hold(
 			array(

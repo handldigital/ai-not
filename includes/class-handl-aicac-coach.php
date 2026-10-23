@@ -1101,6 +1101,40 @@ final class Coach {
 		exit;
 	}
 
+	/**
+	 * @param list<array<string,mixed>>|null $rows Census rows.
+	 */
+	public static function csv_for_census( ?array $rows = null ): string {
+		$rows = null !== $rows ? $rows : self::census();
+		$fh   = fopen( 'php://temp', 'r+' );
+		if ( false === $fh ) {
+			return '';
+		}
+		fputcsv( $fh, array( 'key', 'user_id', 'rule', 'streak', 'last_deny_ts', 'plugin', 'status' ), ',', '"', '' );
+		foreach ( $rows as $row ) {
+			fputcsv(
+				$fh,
+				array(
+					(string) ( $row['key'] ?? '' ),
+					(int) ( $row['user_id'] ?? 0 ),
+					(string) ( $row['rule'] ?? '' ),
+					(int) ( $row['streak'] ?? 0 ),
+					(int) ( $row['last_deny_ts'] ?? 0 ),
+					(string) ( $row['plugin'] ?? '' ),
+					(string) ( $row['status'] ?? '' ),
+				),
+				',',
+				'"',
+				''
+			);
+		}
+		rewind( $fh );
+		$csv = stream_get_contents( $fh );
+		fclose( $fh );
+
+		return is_string( $csv ) ? $csv : '';
+	}
+
 	public static function maybe_handle_csv(): void {
 		if ( empty( $_GET['handl_aicac_coach_csv'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			return;
@@ -1113,30 +1147,10 @@ final class Coach {
 			return;
 		}
 		check_admin_referer( 'handl_aicac_coach_csv' );
-		$rows = self::census();
 		nocache_headers();
 		header( 'Content-Type: text/csv; charset=utf-8' );
 		header( 'Content-Disposition: attachment; filename=handl-aicac-coach.csv' );
-		$out = fopen( 'php://output', 'w' );
-		if ( false === $out ) {
-			exit;
-		}
-		fputcsv( $out, array( 'key', 'user_id', 'rule', 'streak', 'last_deny_ts', 'plugin', 'status' ) );
-		foreach ( $rows as $row ) {
-			fputcsv(
-				$out,
-				array(
-					(string) $row['key'],
-					(int) $row['user_id'],
-					(string) $row['rule'],
-					(int) $row['streak'],
-					(int) $row['last_deny_ts'],
-					(string) $row['plugin'],
-					(string) $row['status'],
-				)
-			);
-		}
-		fclose( $out );
+		echo self::csv_for_census(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSV download.
 		exit;
 	}
 
