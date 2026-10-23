@@ -138,6 +138,9 @@ final class MyAiTest extends TestCase {
 	}
 
 	public function test_quota_guard_returns_null_without_user_quota_class(): void {
+		if ( class_exists( \HandL\AICAC\User_Quota::class, false ) ) {
+			$this->markTestSkipped( 'User_Quota is present in this build; the absent-class guard path cannot be exercised in-process.' );
+		}
 		$this->assertFalse( class_exists( \HandL\AICAC\User_Quota::class, false ) );
 		$this->assertNull( My_AI::quota_for_user( 12 ) );
 	}

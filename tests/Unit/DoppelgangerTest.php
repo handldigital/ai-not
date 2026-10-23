@@ -266,7 +266,9 @@ final class DoppelgangerTest extends TestCase {
 		$this->assertTrue( $live['weekly_report'] );
 		$this->assertTrue( $live['monthly_report'] );
 		$this->assertFalse( $live['governance_digest'] );
-		$this->assertArrayNotHasKey( 'drill', $live, 'drill is skipped when its class is absent' );
+		if ( ! class_exists( 'HandL\\AICAC\\Drill', false ) ) {
+			$this->assertArrayNotHasKey( 'drill', $live, 'drill is skipped when its class is absent' );
+		}
 		$this->assertNotEmpty( $snap['checklist'] );
 
 		$keys = array();

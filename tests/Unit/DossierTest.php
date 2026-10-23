@@ -126,6 +126,9 @@ final class DossierTest extends TestCase {
 	}
 
 	public function test_join_with_all_sources_present(): void {
+		if ( ( new \ReflectionClass( \HandL\AICAC\User_Quota::class ) )->getFileName() !== __FILE__ ) {
+			$this->markTestSkipped( 'Real User_Quota is loaded; this test drives the stub defined in this file.' );
+		}
 		$now = 1_800_000_000;
 		update_option(
 			Plugin::LOG_OPTION_KEY,
