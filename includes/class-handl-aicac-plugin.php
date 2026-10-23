@@ -179,6 +179,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dividend.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-coldcase.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-weather.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-manners.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -280,6 +281,7 @@ final class Plugin {
 		Dividend::init();
 		Coldcase::init();
 		Weather::init();
+		Manners::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
