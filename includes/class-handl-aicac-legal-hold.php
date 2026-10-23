@@ -825,7 +825,10 @@ final class Legal_Hold {
 		}
 		fputcsv(
 			$fh,
-			array( 'id', 'name', 'scope', 'status', 'scope_detail', 'reason', 'created_at', 'created_by', 'released_at', 'matched_count', 'snapshot_path' )
+			array( 'id', 'name', 'scope', 'status', 'scope_detail', 'reason', 'created_at', 'created_by', 'released_at', 'matched_count', 'snapshot_path' ),
+			',',
+			'"',
+			''
 		);
 		foreach ( $rows as $row ) {
 			fputcsv(
@@ -842,7 +845,10 @@ final class Legal_Hold {
 					(string) (int) ( $row['released_at'] ?? 0 ),
 					(string) (int) ( $row['matched_count'] ?? 0 ),
 					(string) ( $row['snapshot_path'] ?? '' ),
-				)
+				),
+				',',
+				'"',
+				''
 			);
 		}
 		rewind( $fh );
@@ -857,7 +863,7 @@ final class Legal_Hold {
 		if ( false === $fh ) {
 			return '';
 		}
-		fputcsv( $fh, array( 'ts', 'action', 'hold_id', 'actor', 'reason', 'scope', 'name', 'matched' ) );
+		fputcsv( $fh, array( 'ts', 'action', 'hold_id', 'actor', 'reason', 'scope', 'name', 'matched' ), ',', '"', '' );
 		foreach ( self::get_ledger() as $row ) {
 			fputcsv(
 				$fh,
@@ -870,7 +876,10 @@ final class Legal_Hold {
 					(string) ( $row['scope'] ?? '' ),
 					(string) ( $row['name'] ?? '' ),
 					(string) (int) ( $row['matched'] ?? 0 ),
-				)
+				),
+				',',
+				'"',
+				''
 			);
 		}
 		rewind( $fh );
