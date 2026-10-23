@@ -151,6 +151,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-carbon.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-train-exposure.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-ai-act.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-concentration.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -224,6 +225,7 @@ final class Plugin {
 		Carbon::init();
 		Train_Exposure::init();
 		Ai_Act::init();
+		Concentration::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
