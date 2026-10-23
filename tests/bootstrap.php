@@ -1203,6 +1203,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-exit-interview.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-request-chat.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-outcome-replay.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-save-guard.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-offboard.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rescan.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-threat-feed.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-user-quota.php';
