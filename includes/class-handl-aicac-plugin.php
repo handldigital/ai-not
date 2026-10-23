@@ -132,6 +132,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-save-guard.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-offboard.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dormant.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-provision.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -186,6 +187,7 @@ final class Plugin {
 		Save_Guard::init();
 		Offboard::init();
 		Dormant::init();
+		Provision::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
