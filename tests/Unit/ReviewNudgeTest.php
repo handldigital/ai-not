@@ -202,9 +202,10 @@ final class ReviewNudgeTest extends TestCase {
 
 		ob_start();
 		// should_render uses Clock::now(); seed state already pending + eligible thresholds in log.
-		// Force eligibility by ensuring activated_at is old relative to real Clock::now().
+		// Force eligibility by ensuring activated_at is old relative to the same clock the code reads
+		// (HANDL_AICAC_TEST_NOW when pinned, otherwise time()).
 		$state = Review_Nudge::get_state();
-		$state['activated_at'] = time() - ( 40 * DAY_IN_SECONDS );
+		$state['activated_at'] = \handl_aicac_now() - ( 40 * DAY_IN_SECONDS );
 		$state['pending']      = true;
 		$state['ask_count']    = 1;
 		Review_Nudge::save_state( $state );
@@ -225,7 +226,7 @@ final class ReviewNudgeTest extends TestCase {
 
 	public function test_should_not_render_off_aicac_screens(): void {
 		$state = array(
-			'activated_at' => time() - ( 40 * DAY_IN_SECONDS ),
+			'activated_at' => \handl_aicac_now() - ( 40 * DAY_IN_SECONDS ),
 			'ask_count'    => 0,
 			'pending'      => false,
 		);
