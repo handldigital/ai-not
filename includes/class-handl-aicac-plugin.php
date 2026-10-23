@@ -178,6 +178,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-botwatch.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dividend.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-coldcase.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-weather.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -278,6 +279,7 @@ final class Plugin {
 		Botwatch::init();
 		Dividend::init();
 		Coldcase::init();
+		Weather::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
