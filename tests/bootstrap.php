@@ -1312,4 +1312,5 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-chameleon.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-weather.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rush-hour.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-snowflake.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-deputy.php';
 require_once __DIR__ . '/stubs/namespace-filter-input.php';

@@ -189,6 +189,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-handshake.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-wallflower.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-chatterbox.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-deputy.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -300,6 +301,7 @@ final class Plugin {
 		Handshake::init();
 		Wallflower::init();
 		Chatterbox::init();
+		Deputy::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
