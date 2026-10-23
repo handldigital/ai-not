@@ -141,6 +141,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-touched.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-aup.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-embargo.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-visitor.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -204,6 +205,7 @@ final class Plugin {
 		Touched::init();
 		Aup::init();
 		Embargo::init();
+		Visitor::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
