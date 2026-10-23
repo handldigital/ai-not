@@ -741,6 +741,20 @@ if ( ! function_exists( 'apply_filters' ) ) {
 	}
 }
 
+if ( ! function_exists( 'do_action' ) ) {
+	/**
+	 * @param string $hook Hook name.
+	 * @param mixed  ...$args Hook args.
+	 */
+	function do_action( $hook, ...$args ): void {
+		$map = $GLOBALS['handl_aicac_test_do_actions'] ?? array();
+		$key = (string) $hook;
+		if ( isset( $map[ $key ] ) && is_callable( $map[ $key ] ) ) {
+			call_user_func_array( $map[ $key ], $args );
+		}
+	}
+}
+
 if ( ! function_exists( 'wp_mail' ) ) {
 	/**
 	 * @param string|list<string> $to Recipients.
@@ -1312,4 +1326,5 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-chameleon.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-weather.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rush-hour.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-snowflake.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rate-shock.php';
 require_once __DIR__ . '/stubs/namespace-filter-input.php';
