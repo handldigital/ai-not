@@ -127,6 +127,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-review-nudge.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rescan-schedule.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-exit-interview.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-request-chat.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -172,6 +173,7 @@ final class Plugin {
 		Llms_Txt::instance()->init();
 		User_Quota::instance()->init();
 		Chat_Notify::init();
+		Request_Chat::init();
 		Threat_Feed::init();
 		Demo_Mode::init();
 		Why::init();
