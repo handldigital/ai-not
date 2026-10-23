@@ -1328,5 +1328,6 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rush-hour.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-snowflake.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rate-shock.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-deputy.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-relic.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-deny-receipt.php';
 require_once __DIR__ . '/stubs/namespace-filter-input.php';

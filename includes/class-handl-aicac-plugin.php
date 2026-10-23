@@ -191,6 +191,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-chatterbox.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rate-shock.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-deputy.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-relic.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-deny-receipt.php';
 
 		Policy::instance()->init();
@@ -305,6 +306,7 @@ final class Plugin {
 		Chatterbox::init();
 		Rate_Shock::init();
 		Deputy::init();
+		Relic::init();
 		Deny_Receipt::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
