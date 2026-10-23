@@ -871,6 +871,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-log-storage.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-log-retention.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-anomaly.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-latency.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-waiting-room.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-drift.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-went-ai.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-retry-storm.php';
