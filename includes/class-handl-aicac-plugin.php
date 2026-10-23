@@ -144,6 +144,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-visitor.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-register.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rollback.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-model-eol.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -210,6 +211,7 @@ final class Plugin {
 		Visitor::init();
 		Register::init();
 		Rollback::init();
+		Model_Eol::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
