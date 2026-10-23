@@ -1269,6 +1269,7 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-legal-hold.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-volume.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-carbon.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-train-exposure.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-ai-act.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-rescan.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-threat-feed.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli-user-quota.php';
