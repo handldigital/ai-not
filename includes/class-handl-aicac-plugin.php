@@ -149,6 +149,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-legal-hold.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-volume.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-carbon.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-train-exposure.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -220,6 +221,7 @@ final class Plugin {
 		Legal_Hold::init();
 		Volume::init();
 		Carbon::init();
+		Train_Exposure::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
