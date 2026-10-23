@@ -1,0 +1,1 @@
+sha=ccf4ed0c837980c1a112cfbcd2978c96c5024894 coach=2/2 hold=4/4 ac1=pass ac2=pass ac3=pass

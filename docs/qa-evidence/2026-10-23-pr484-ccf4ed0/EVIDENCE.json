@@ -1,0 +1,27 @@
+{
+  "pr": 484,
+  "issue": 478,
+  "name": "AICAC-CSV-ESCAPE",
+  "exact_sha": "ccf4ed0c837980c1a112cfbcd2978c96c5024894",
+  "captured_at": "2026-10-23T23:22:56.842Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA ccf4ed0 (ai-not-478-csv-escape); Playwright local serve of per-AC HTML showing fputcsv dialect + RFC CSV fixtures. Live sandbox plugin was not checked out.",
+  "email": "haktan+aicac-csv-escape@handldigital.com",
+  "shots": [
+    {
+      "file": "01-fputcsv-args.png",
+      "bytes": 125930,
+      "heading": "AC1 every fputcsv in coach.php and legal-hold.php uses explicit RFC args"
+    },
+    {
+      "file": "02-rfc-fixture.png",
+      "bytes": 154963,
+      "heading": "AC2 RFC fixture with backslash + comma + quote"
+    },
+    {
+      "file": "03-suite-readme-free.png",
+      "bytes": 149328,
+      "heading": "AC3 full suite deprecation-free for fputcsv; README-FREE lane"
+    }
+  ],
+  "export_stdout": "sha=ccf4ed0c837980c1a112cfbcd2978c96c5024894 coach=2/2 hold=4/4 ac1=pass ac2=pass ac3=pass"
+}
