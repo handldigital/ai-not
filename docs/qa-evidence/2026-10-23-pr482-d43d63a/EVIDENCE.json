@@ -1,0 +1,37 @@
+{
+  "pr": 482,
+  "issue": 430,
+  "name": "AICAC-DENY-RECEIPT",
+  "exact_sha": "d43d63a4fe4d009583153946f9f1c2bc1eb929ea",
+  "captured_at": "2026-10-23T22:59:50.733Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA d43d63a (ai-not-430-deny-receipt); Playwright local serve of per-AC HTML including Deny_Receipt::render_page() / lookup. Live sandbox plugin was not checked out. HMAC salt test-salt-deny-receipt-430, log_key aicac_fixed-row-id, ts 1791800000.",
+  "email": "haktan+aicac-deny-receipt@handldigital.com",
+  "shots": [
+    {
+      "file": "01-default-off.png",
+      "bytes": 237592,
+      "heading": "AC1 default-off is a no-op; same-day HMAC is stable"
+    },
+    {
+      "file": "02-message-suffix.png",
+      "bytes": 187209,
+      "heading": "AC2 option-on suffixes Reference on the deny message"
+    },
+    {
+      "file": "03-lookup-why.png",
+      "bytes": 244780,
+      "heading": "AC3 lookup round-trips the stored row with Why expander"
+    },
+    {
+      "file": "04-redacted.png",
+      "bytes": 249217,
+      "heading": "AC4 redacted lookup keeps the code and hides payload"
+    },
+    {
+      "file": "05-settings.png",
+      "bytes": 188696,
+      "heading": "AC5 settings page with both options on"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"d43d63a4fe4d009583153946f9f1c2bc1eb929ea\",\n    \"code\": \"AICAC-54J1-N1JG\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true,\n    \"ac5\": true\n}"
+}

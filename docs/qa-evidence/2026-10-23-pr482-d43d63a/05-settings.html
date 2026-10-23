@@ -1,0 +1,14 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR482 05-settings.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:1100px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace;background:#f6f8fa;padding:12px}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA d43d63a4fe4d009583153946f9f1c2bc1eb929ea · PR482 / #430 AICAC-DENY-RECEIPT · 05-settings.png</p>
+<section><h2>AC5 settings page with both options on</h2><dl><dt>message_enabled</dt><dd>true</dd><dt>lookup_enabled</dt><dd>true</dd><dt>submit</dt><dd>Save deny receipt settings</dd></dl><div class="ui"><div class="wrap"><h1>Deny receipt</h1><p class="description">Give blocked callers a short reference code they can quote. Paste a code here to open the matching Activity row. Off by default. This does not change Allow or Deny rules.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_deny_receipt_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_deny_receipt_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Show code to callers</th><td><label><input type="checkbox" name="handl_aicac_deny_receipt_message" value="1"  checked="checked" /> Add &quot;Reference: AICAC-XXXX-XXXX&quot; to the blocked-call message</label></td></tr><tr><th scope="row">Lookup screen</th><td><label><input type="checkbox" name="handl_aicac_deny_receipt_lookup" value="1"  checked="checked" /> Let admins paste a code to open the matching Activity row</label></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save deny receipt settings" /></form><h2>Look up a code</h2><form method="get" action="https://example.test/wp-admin/admin.php?page=handl-aicac-deny-receipt"><input type="hidden" name="page" value="handl-aicac-deny-receipt" /><p><label for="handl-aicac-deny-receipt-code">Receipt code</label> <input name="receipt" id="handl-aicac-deny-receipt-code" type="text" value="" class="regular-text" placeholder="AICAC-XXXX-XXXX" /></p><p><button type="submit" class="button">Look up</button></p></form></div></div><p class="pass">AC5 pass</p></section>
+</body></html>

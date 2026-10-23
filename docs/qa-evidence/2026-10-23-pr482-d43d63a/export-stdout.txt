@@ -1,0 +1,9 @@
+{
+    "head": "d43d63a4fe4d009583153946f9f1c2bc1eb929ea",
+    "code": "AICAC-54J1-N1JG",
+    "ac1": true,
+    "ac2": true,
+    "ac3": true,
+    "ac4": true,
+    "ac5": true
+}
