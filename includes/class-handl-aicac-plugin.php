@@ -180,6 +180,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-coldcase.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-weather.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-manners.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-dejavu.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -282,6 +283,7 @@ final class Plugin {
 		Coldcase::init();
 		Weather::init();
 		Manners::init();
+		Dejavu::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
