@@ -1435,7 +1435,7 @@ final class Cron_Pulse {
 		}
 		check_admin_referer( self::ACTION_SAVE );
 		if ( empty( $_POST[ self::POST_PRESENT ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
-			wp_die( esc_html__( 'Invalid form', 'handl-ai-connector-access-control' ) );
+			wp_die( esc_html__( 'Security check failed. Go back, reload the page, and try again.', 'handl-ai-connector-access-control' ) );
 		}
 		$grace_raw = isset( $_POST[ self::POST_GRACE_MULTIPLIER ] ) ? wp_unslash( (string) $_POST[ self::POST_GRACE_MULTIPLIER ] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		self::save_settings(

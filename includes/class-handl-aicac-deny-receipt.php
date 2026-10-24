@@ -270,8 +270,8 @@ final class Deny_Receipt {
 		}
 		add_submenu_page(
 			Admin::MENU_SLUG,
-			__( 'Deny receipt', 'handl-ai-connector-access-control' ),
-			__( 'Deny receipt', 'handl-ai-connector-access-control' ),
+			__( 'Deny receipts', 'handl-ai-connector-access-control' ),
+			__( 'Deny receipts', 'handl-ai-connector-access-control' ),
 			Caps::VIEW,
 			self::PAGE_SLUG,
 			array( self::class, 'render_page' )
@@ -287,7 +287,7 @@ final class Deny_Receipt {
 		$code_in    = isset( $_GET['receipt'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['receipt'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__( 'Deny receipt', 'handl-ai-connector-access-control' ) . '</h1>';
+		echo '<h1>' . esc_html__( 'Deny receipts', 'handl-ai-connector-access-control' ) . '</h1>';
 		echo '<p class="description">' . esc_html__( 'Give blocked callers a short reference code they can quote. Paste a code here to open the matching Activity row. Off by default. This does not change Allow or Deny rules.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( $can_manage ) {
@@ -307,7 +307,7 @@ final class Deny_Receipt {
 			echo '<label><input type="checkbox" name="' . esc_attr( self::POST_LOOKUP ) . '" value="1" ' . checked( ! empty( $settings['lookup_enabled'] ), true, false ) . ' /> ';
 			echo esc_html__( 'Let admins paste a code to open the matching Activity row', 'handl-ai-connector-access-control' );
 			echo '</label></td></tr></tbody></table>';
-			submit_button( __( 'Save deny receipt settings', 'handl-ai-connector-access-control' ) );
+			submit_button( __( 'Save deny receipts settings', 'handl-ai-connector-access-control' ) );
 			echo '</form>';
 		}
 
@@ -386,7 +386,7 @@ final class Deny_Receipt {
 		}
 		check_admin_referer( self::ACTION_SAVE );
 		if ( empty( $_POST[ self::POST_PRESENT ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
-			self::halt( __( 'That request is not valid.', 'handl-ai-connector-access-control' ) );
+			self::halt( __( 'Security check failed. Go back, reload the page, and try again.', 'handl-ai-connector-access-control' ) );
 
 			return;
 		}
@@ -409,7 +409,7 @@ final class Deny_Receipt {
 			wp_safe_redirect( $url );
 			exit;
 		}
-		self::halt( __( 'Deny receipt settings saved.', 'handl-ai-connector-access-control' ) );
+		self::halt( __( 'Deny receipts settings saved.', 'handl-ai-connector-access-control' ) );
 	}
 
 	public static function register_cli(): void {

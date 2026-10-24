@@ -632,7 +632,7 @@ final class Dividend {
 		}
 		check_admin_referer( self::ACTION_SAVE );
 		if ( empty( $_POST[ self::POST_PRESENT ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
-			wp_die( esc_html__( 'Invalid form', 'handl-ai-connector-access-control' ) );
+			wp_die( esc_html__( 'Security check failed. Go back, reload the page, and try again.', 'handl-ai-connector-access-control' ) );
 		}
 		self::save_settings(
 			array(
@@ -699,14 +699,26 @@ final class Dividend {
 
 		$gvg = $snap['give_vs_get'];
 		if ( is_array( $gvg ) ) {
+			$crawl = (int) $gvg['crawl_hits'];
+			$refs  = (int) $gvg['referral_hits'];
+			$crawl_phrase = sprintf(
+				/* translators: %d: crawl hit count */
+				_n( '%d hit', '%d hits', $crawl, 'handl-ai-connector-access-control' ),
+				$crawl
+			);
+			$ref_phrase = sprintf(
+				/* translators: %d: human referral visit count */
+				_n( '%d human referral visit', '%d human referral visits', $refs, 'handl-ai-connector-access-control' ),
+				$refs
+			);
 			echo '<h2>' . esc_html__( 'Give vs get', 'handl-ai-connector-access-control' ) . '</h2>';
 			echo '<p>';
 			echo esc_html(
 				sprintf(
-					/* translators: 1: crawl hits, 2: referral hits */
-					__( 'AI crawlers recorded %1$d hits; AI tools sent back %2$d human referral visits.', 'handl-ai-connector-access-control' ),
-					(int) $gvg['crawl_hits'],
-					(int) $gvg['referral_hits']
+					/* translators: 1: crawl hit phrase, 2: referral visit phrase */
+					__( 'AI crawlers recorded %1$s; AI tools sent back %2$s.', 'handl-ai-connector-access-control' ),
+					$crawl_phrase,
+					$ref_phrase
 				)
 			);
 			echo '</p>';

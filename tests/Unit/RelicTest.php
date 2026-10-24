@@ -289,7 +289,8 @@ final class RelicTest extends TestCase {
 
 		$this->assertTrue( Relic::maybe_fire_alerts( self::NOW ) );
 		$this->assertCount( 1, $mails );
-		$this->assertStringContainsString( '[RELIC]', $mails[0]['subject'] );
+		$this->assertStringContainsString( 'Legacy AI content', $mails[0]['subject'] );
+		$this->assertStringContainsString( 'retired-model post needs review', $mails[0]['subject'] );
 		$this->assertFalse( Relic::maybe_fire_alerts( self::NOW ) ); // latched
 
 		Relic::ack_post( 42, null, self::NOW + 1 );

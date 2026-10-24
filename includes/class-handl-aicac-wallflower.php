@@ -555,7 +555,7 @@ final class Wallflower {
 		}
 		check_admin_referer( self::ACTION_SAVE );
 		if ( empty( $_POST[ self::POST_PRESENT ] ) ) {
-			wp_die( esc_html__( 'Invalid form submission.', 'handl-ai-connector-access-control' ) );
+			wp_die( esc_html__( 'Security check failed. Go back, reload the page, and try again.', 'handl-ai-connector-access-control' ) );
 		}
 		$days = self::sanitize_days( wp_unslash( $_POST[ self::POST_DAYS ] ?? self::DEFAULT_DAYS ) );
 		update_option( self::OPTION_KEY, array( 'days' => $days ), false );
