@@ -1,0 +1,146 @@
+[
+  {
+    "pr": 1725,
+    "sha": "ba0701c02df84ba6c0d4decf862756e7b1f329f4",
+    "short": "ba0701c",
+    "path": "/wp-aircraft-hangar-construction-plugin-privacy",
+    "issue": 1699,
+    "slug": "wp-aircraft-hangar-construction-plugin-privacy",
+    "head": "ba0701c02df84ba6c0d4decf862756e7b1f329f4",
+    "file": "pr1725-wp-aircraft-hangar-construction-plugin-privacy-ba0701c.png",
+    "h1": "The hangar quote that parks your tail number, your airstrip, and your net worth on one form",
+    "criteria": {
+      "h1": "The hangar quote that parks your tail number, your airstrip, and your net worth on one form",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A window such as \"pad pour week, hangar dimensions, tail number\" is a booking you create; a service name such as aircraft hangar construction or hangar-home build is a label you configure. Neither is a documented default. Property-address, airstrip-location, aircraft-type, tail-number, hangar-dimensions, budget, owner-name, phone, email, or appointment-date questions are custom fields you add (textarea, select, input, checkbox, or file); they are not documented defaults. A booking is a calendar row, not proof of work - and a CSV export of \"pad pour week + hangar dimensions + tail number\" next to a named owner is still a calendar that answers when the crew is expected. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Aircraft-hangar-construction service bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Property-address, airstrip-location, aircraft-type, tail-number, hangar-dimensions, budget, owner-name, phone, email, or appointment-date questions are fields you add; they are not documented defaults. Optional hangar-plan uploads are files you accept; that file type is not a documented default. An airstrip note is stored text, not a survey of your airpark. A tail number is stored text, not an FAA registry extract. A hangar form is not proof anyone poured a slab. Notification emails can copy field values and file links off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. How long a hangar plan sits after a call that never happened is not a documented default of the plugin. | Tail-number and airstrip answers stored in WordPress; optional hangar-plan uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "Iptanus File UploadDocumented frontend upload form (formerly WordPress File Upload). By default files land inside the wp-content directory of the site; the upload path is configurable. Uploaded files can be added to Media or attached to the current page. FTP and SFTP destinations are documented. The Professional version documents uploads to Google Drive, Dropbox, OneDrive, or Amazon S3. A hangar-plan or site-plan PDF is a file you accept; that file type is not a documented default. An uploaded hangar-plan PDF is a stored file, not a survey of your airpark. Deleting a form entry later does not by itself prove the file was removed from the uploads path or from a cloud destination you enabled. The listing claims GDPR compliance without a tested EXIF-strip or retention length here. Review upload directory, Media attachment, and cloud destinations. Browser hosts for the visitor upload path were not verified for this snapshot. How long a hangar-plan file sits after a call that never happened is not a documented default of the plugin. | Hangar-plan and site-plan uploads stored under the site wp-content path | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listing"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-1699-1700-evidence/qa-evidence/2026-10-25-hwp-1699-1700/pr1725-wp-aircraft-hangar-construction-plugin-privacy-ba0701c.png"
+  },
+  {
+    "pr": 1726,
+    "sha": "e78714178531c35c84daa852d5062f5ba1b4aa61",
+    "short": "e787141",
+    "path": "/wp-vineyard-installation-plugin-privacy",
+    "issue": 1700,
+    "slug": "wp-vineyard-installation-plugin-privacy",
+    "head": "e78714178531c35c84daa852d5062f5ba1b4aa61",
+    "file": "pr1726-wp-vineyard-installation-plugin-privacy-e787141.png",
+    "h1": "The planting consult that surveys your acreage, your water rights, and the hobby you'll be taxed on",
+    "criteria": {
+      "h1": "The planting consult that surveys your acreage, your water rights, and the hobby you'll be taxed on",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A window such as \"plant week, acreage, water rights\" is a booking you create; a service name such as vineyard installation or trellis plant is a label you configure. Neither is a documented default. Property-address, acreage, soil-detail, irrigation-detail, water-rights-status, hobby-vs-commercial-intent, budget, owner-name, phone, email, or appointment-date questions are custom fields you add (textarea, select, input, checkbox, or file); they are not documented defaults. A booking is a calendar row, not proof of work - and a CSV export of \"plant week + acreage + water rights\" next to a named owner is still a calendar that answers when the crew is expected. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Vineyard-installation service bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Property-address, acreage, soil-detail, irrigation-detail, water-rights-status, hobby-vs-commercial-intent, budget, owner-name, phone, email, or appointment-date questions are fields you add; they are not documented defaults. Optional site-plan uploads are files you accept; that file type is not a documented default. A soil note is stored text, not a lab assay. A water-rights answer is stored text, not a deed abstract. A planting form is not proof anyone set a trellis. Notification emails can copy field values and file links off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. How long a site plan sits after a call that never happened is not a documented default of the plugin. | Water-rights and hobby-vs-commercial answers stored in WordPress; optional site-plan uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "Iptanus File UploadDocumented frontend upload form (formerly WordPress File Upload). By default files land inside the wp-content directory of the site; the upload path is configurable. Uploaded files can be added to Media or attached to the current page. FTP and SFTP destinations are documented. The Professional version documents uploads to Google Drive, Dropbox, OneDrive, or Amazon S3. A site-plan or soil-map PDF is a file you accept; that file type is not a documented default. An uploaded site-plan PDF is a stored file, not a survey of your farm. Deleting a form entry later does not by itself prove the file was removed from the uploads path or from a cloud destination you enabled. The listing claims GDPR compliance without a tested EXIF-strip or retention length here. Review upload directory, Media attachment, and cloud destinations. Browser hosts for the visitor upload path were not verified for this snapshot. How long a site-plan file sits after a call that never happened is not a documented default of the plugin. | Site-plan and soil-map uploads stored under the site wp-content path | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listing"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-1699-1700-evidence/qa-evidence/2026-10-25-hwp-1699-1700/pr1726-wp-vineyard-installation-plugin-privacy-e787141.png"
+  }
+]
