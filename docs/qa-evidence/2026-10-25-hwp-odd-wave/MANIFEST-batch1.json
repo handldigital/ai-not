@@ -1,0 +1,854 @@
+[
+  {
+    "pr": 1719,
+    "sha": "5c2676de07eae9e79d456ae51bf3b53b6e80568d",
+    "short": "5c2676d",
+    "path": "/wp-home-chapel-construction-plugin-privacy",
+    "slug": "wp-home-chapel-construction-plugin-privacy",
+    "head": "5c2676de07eae9e79d456ae51bf3b53b6e80568d",
+    "file": "pr1719-wp-home-chapel-construction-plugin-privacy-5c2676d.png",
+    "h1": "The buildout quote that files your faith under your floor plan",
+    "criteria": {
+      "h1": "The buildout quote that files your faith under your floor plan",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A window such as \"frame week, floor plan, tradition note\" is a booking you create; a service name such as home chapel construction or prayer/meditation room build is a label you configure. Neither is a documented default. Floor-plan-photo, room-photo, tradition-note, ablution-note, property-address, owner-name, phone, email, or appointment-date questions are custom fields you add (textarea, select, input, checkbox, or file); they are not documented defaults. A booking is a calendar row, not proof of work - and a CSV export of \"frame week + floor plan + tradition note\" next to a named owner is still a calendar that answers when the crew is expected. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Home-chapel-construction service bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Floor-plan-photo, room-photo, tradition-note, ablution-note, property-address, owner-name, phone, email, or appointment-date questions are fields you add; they are not documented defaults. Optional floor-plan photo uploads are files you accept; that file type is not a documented default. A floor-plan photo is a stored file, not a survey of your household's beliefs. A tradition note is stored text, not a membership record. A chapel form is not proof anyone framed a niche. Notification emails can copy field values and file links off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. How long a floor-plan photo sits after a call that never happened is not a documented default of the plugin. | Tradition and ablution answers stored in WordPress; optional floor-plan-photo uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "Iptanus File UploadDocumented frontend upload form (formerly WordPress File Upload). By default files land inside the wp-content directory of the site; the upload path is configurable. Uploaded files can be added to Media or attached to the current page. FTP and SFTP destinations are documented. The Professional version documents uploads to Google Drive, Dropbox, OneDrive, or Amazon S3. A floor-plan photo or room-plan PDF is a file you accept; that file type is not a documented default. An uploaded floor-plan photo is a stored file, not a survey of your household's beliefs. Deleting a form entry later does not by itself prove the file was removed from the uploads path or from a cloud destination you enabled. The listing claims GDPR compliance without a tested EXIF-strip or retention length here. Review upload directory, Media attachment, and cloud destinations. Browser hosts for the visitor upload path were not verified for this snapshot. How long a floor-plan photo file sits after a call that never happened is not a documented default of the plugin. | Floor-plan-photo and room-plan uploads stored under the site wp-content path | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listing"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch1-evidence/qa-evidence/2026-10-25-database-odd-batch1/pr1719-wp-home-chapel-construction-plugin-privacy-5c2676d.png"
+  },
+  {
+    "pr": 1223,
+    "sha": "7a82fadc836869ade194d3bbeeadc3907b4d1a4c",
+    "short": "7a82fad",
+    "path": "/wp-dry-cleaner-plugin-privacy",
+    "slug": "wp-dry-cleaner-plugin-privacy",
+    "head": "7a82fadc836869ade194d3bbeeadc3907b4d1a4c",
+    "file": "pr1223-wp-dry-cleaner-plugin-privacy-7a82fad.png",
+    "h1": "The rack of clothes with strangers' phone numbers stapled to them",
+    "criteria": {
+      "h1": "The rack of clothes with strangers' phone numbers stapled to them",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A Monday pickup window or a Tuesday delivery slot is a booking you create; a service name such as suit press or garment delivery is a label you configure. Neither is a documented default. Name, phone, garment-description, pickup/delivery-address, route-window, or order-history questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof anyone dropped off a garment or that a route ran — and a CSV export of \"ticket #4412 · Jordan · 555-0142 · navy suit Mon pickup · delivery route Tue 10am · 12 Oak St\" next to a customer name is still a calendar that pairs a queryable ticket rack with a home address. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Dry-cleaner pickup bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Name, phone, garment-description, pickup/delivery-address, route-window, or order-history fields are fields you add; they are not documented defaults. Completing the form can store a name-plus-phone-plus-garment-plus-route stack (\"ticket #4412 · Jordan · 555-0142 · navy suit Mon pickup · delivery route Tue 10am · 12 Oak St\") — typed once so a cleaner can tag a rack and run a route, into the same tables as a \"dry cleaner\" label. A garment or route answer is a form answer or typed note, not a verified routine. A cleaning booking is a calendar row, not proof anyone dropped off a garment — and a staff login can open \"Jordan, 555-0142, navy suit, Mon pickup, Tue 10am delivery, 12 Oak St\" next to everyone else's resume. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | Name, phone, garment, and route answers stored in WordPress; optional uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that a name, phone, garment, or route field was sent. A page request from this script is not proof anyone used a dry cleaner. The page URL can say dry cleaner even when no form is submitted. Consent timing has not been tested. Review which tags you enable on ticket and booking pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch1-evidence/qa-evidence/2026-10-25-database-odd-batch1/pr1223-wp-dry-cleaner-plugin-privacy-7a82fad.png"
+  },
+  {
+    "pr": 1217,
+    "sha": "efb5eaaab2b84cb80bd0da259a594c4e870f06d5",
+    "short": "efb5eaa",
+    "path": "/wp-answering-service-plugin-privacy",
+    "slug": "wp-answering-service-plugin-privacy",
+    "head": "efb5eaaab2b84cb80bd0da259a594c4e870f06d5",
+    "file": "pr1217-wp-answering-service-plugin-privacy-efb5eaa.png",
+    "h1": "The message portal that stores a thousand strangers' worst Tuesdays",
+    "criteria": {
+      "h1": "The message portal that stores a thousand strangers' worst Tuesdays",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A Tuesday callback window or a message-delivery slot is a booking you create; a service name such as after-hours intake or client message is a label you configure. Neither is a documented default. Caller-name, callback-number, reason-for-call, client-account, or message-time questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof anyone called or that a reason is accurate — and a CSV export of \"caller: Jordan · cb: 555-0142 · re: the biopsy results · client: Oak Dental · taken 3/12 2:14pm\" next to a client name is still a calendar that pairs a stranger's worst Tuesday with a business account. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Answering-service message bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Caller-name, callback-number, reason-for-call, client-account, or message-time fields are fields you add; they are not documented defaults. Completing the form can store a caller-plus-callback-plus-reason stack (\"caller: Jordan · cb: 555-0142 · re: the biopsy results · client: Oak Dental · taken 3/12 2:14pm\") — typed once so an answering service can deliver a message, into the same tables as an \"answering service\" label. A caller or reason answer is a form answer or typed note, not a verified crisis. A message booking is a calendar row, not proof anyone called — and a staff login can open \"Jordan, 555-0142, re: biopsy results, Oak Dental, 3/12 2:14pm\" next to everyone else's resume. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | Caller, callback, and reason answers stored in WordPress; optional uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that a caller-name, callback-number, or reason-for-call field was sent. A page request from this script is not proof anyone left a message. The page URL can say answering service even when no form is submitted. Consent timing has not been tested. Review which tags you enable on portal and intake pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch1-evidence/qa-evidence/2026-10-25-database-odd-batch1/pr1217-wp-answering-service-plugin-privacy-efb5eaa.png"
+  },
+  {
+    "pr": 1213,
+    "sha": "625c2ef027da7ee0a2caf98b396a675a134b06a0",
+    "short": "625c2ef",
+    "path": "/wp-furniture-rental-plugin-privacy",
+    "slug": "wp-furniture-rental-plugin-privacy",
+    "head": "625c2ef027da7ee0a2caf98b396a675a134b06a0",
+    "file": "pr1213-wp-furniture-rental-plugin-privacy-625c2ef.png",
+    "h1": "The rent-to-own ledger that schedules your couch's repossession",
+    "criteria": {
+      "h1": "The rent-to-own ledger that schedules your couch's repossession",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A Tuesday delivery window or a repossession-coordination slot is a booking you create; a service name such as sofa delivery or account review is a label you configure. Neither is a documented default. Address, item, payment-flag, delivery-note, or repossession-date questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof anyone missed a payment or that an item will be repossessed — and a CSV export of \"sofa §4 · missed payment 3/12 · living-room delivery note · repo window 4/01 · acct ••••4412 · 12 Oak St\" next to a customer name is still a calendar that pairs a distress arc with a home address. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Furniture-rental delivery and account bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Address, item, payment-flag, delivery-note, or repossession-date fields are fields you add; they are not documented defaults. Completing the form can store an address-plus-item-plus-missed-payment-plus-repo stack (\"sofa §4 · missed payment 3/12 · living-room delivery note · repo window 4/01 · acct ••••4412 · 12 Oak St\") — typed once so a store can bill and schedule recovery, into the same tables as a \"furniture rental\" label. A payment or delivery answer is a form answer or uploaded file, not a verified distress event. A rental booking is a calendar row, not proof anyone missed a payment — and a staff login can open \"Jordan, sofa §4, missed 3/12, repo 4/01, 12 Oak St\" next to everyone else's resume. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | Address, item, payment-flag, and delivery answers stored in WordPress; optional uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that an address, item, payment-flag, or repossession field was sent. A page request from this script is not proof anyone opened a rent-to-own account. The page URL can say furniture rental even when no form is submitted. Consent timing has not been tested. Review which tags you enable on account and delivery pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch1-evidence/qa-evidence/2026-10-25-database-odd-batch1/pr1213-wp-furniture-rental-plugin-privacy-625c2ef.png"
+  },
+  {
+    "pr": 1209,
+    "sha": "607862a168a78b70cefa6ed1369d2b6b4b616950",
+    "short": "607862a",
+    "path": "/wp-water-testing-plugin-privacy",
+    "slug": "wp-water-testing-plugin-privacy",
+    "head": "607862a168a78b70cefa6ed1369d2b6b4b616950",
+    "file": "pr1209-wp-water-testing-plugin-privacy-607862a.png",
+    "h1": "The lab result that records what your family has been drinking",
+    "criteria": {
+      "h1": "The lab result that records what your family has been drinking",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A Tuesday sample-pickup window or a results-review slot is a booking you create; a service name such as well panel or lead/coliform kit is a label you configure. Neither is a documented default. Address, household-roster, panel-selection, sample-date, or result-PDF questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof anyone drank the water or that a result is accurate — and a CSV export of \"12 Oak St · household Jordan + 2 kids · panel lead/coliform/nitrates · sample 3/12 · result: lead 12 ppb\" next to a customer name is still a calendar that pairs a named household with a dated exposure record. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Water-testing sample bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Address, household-roster, panel-selection, sample-date, or result-PDF fields are fields you add; they are not documented defaults. Completing the form can store an address-plus-household-plus-panel-plus-result stack (\"12 Oak St · household Jordan + 2 kids · panel lead/coliform/nitrates · sample 3/12 · result: lead 12 ppb\") — typed once so a lab can invoice and deliver results, into the same tables as a \"water testing\" label. A panel or result answer is a form answer or uploaded file, not a verified exposure. A testing booking is a calendar row, not proof anyone drank the water — and a staff login can open \"Jordan, 12 Oak St, 2 kids, lead 12 ppb, sample 3/12\" next to everyone else's resume. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | Address, household, panel, and result answers stored in WordPress; optional result PDFs in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that an address, household-roster, panel, or result field was sent. A page request from this script is not proof anyone ordered a water test. The page URL can say water testing even when no form is submitted. Consent timing has not been tested. Review which tags you enable on intake and results-portal pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch1-evidence/qa-evidence/2026-10-25-database-odd-batch1/pr1209-wp-water-testing-plugin-privacy-607862a.png"
+  },
+  {
+    "pr": 1205,
+    "sha": "cfcfc9c7d07383e1d236c08994dccb5dd7c7dc73",
+    "short": "cfcfc9c",
+    "path": "/wp-jewelry-repair-plugin-privacy",
+    "slug": "wp-jewelry-repair-plugin-privacy",
+    "head": "cfcfc9c7d07383e1d236c08994dccb5dd7c7dc73",
+    "file": "pr1205-wp-jewelry-repair-plugin-privacy-cfcfc9c.png",
+    "h1": "The repair ticket that appraises the heirloom and staples your address to it",
+    "criteria": {
+      "h1": "The repair ticket that appraises the heirloom and staples your address to it",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A Tuesday 2pm drop-off window or a pickup slot is a booking you create; a service name such as ring resize or clasp repair is a label you configure. Neither is a documented default. Piece-description, photo-upload, declared-value, home-address, engraving, drop-off, or pickup questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof anyone left jewelry or that a piece was repaired — and a CSV export of \"heirloom ring.jpg (hi-res) · declared $8,400 · home 12 Oak St · engraving To E, always, 1987 · drop-off 10/12 · pickup 10/19\" next to a customer name is still a calendar that pairs an heirloom appraisal with a home address. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Jewelry-repair drop-off bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Piece-description, photo-upload, declared-value, home-address, engraving, drop-off, or pickup fields are fields you add; they are not documented defaults. Completing the form can store a photo-plus-value-plus-address-plus-engraving stack (\"heirloom ring.jpg (hi-res) · declared $8,400 · home 12 Oak St · engraving To E, always, 1987 · drop-off 10/12 · pickup 10/19\") — typed once so a jeweler can quote and hold the piece, into the same tables as a \"jewelry repair\" label. A photo or engraving answer is a form answer or uploaded file, not a verified appraisal. A repair booking is a calendar row, not proof anyone left jewelry — and a staff login can open \"Jordan, heirloom-ring.jpg, $8,400, 12 Oak St, To E always 1987, drop-off 10/12\" next to everyone else's resume. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | Piece, photo, value, address, and engraving answers stored in WordPress; optional photos in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that a piece-description, photo, declared-value, home-address, or engraving field was sent. A page request from this script is not proof anyone opened a repair ticket. The page URL can say jewelry repair even when no form is submitted. Consent timing has not been tested. Review which tags you enable on intake and drop-off pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch1-evidence/qa-evidence/2026-10-25-database-odd-batch1/pr1205-wp-jewelry-repair-plugin-privacy-cfcfc9c.png"
+  },
+  {
+    "pr": 1201,
+    "sha": "c08df48197eda65fb91c2ad232d210bb39037aee",
+    "short": "c08df48",
+    "path": "/wp-consignment-shop-plugin-privacy",
+    "slug": "wp-consignment-shop-plugin-privacy",
+    "head": "c08df48197eda65fb91c2ad232d210bb39037aee",
+    "file": "pr1201-wp-consignment-shop-plugin-privacy-c08df48.png",
+    "h1": "The intake that dates each thing you decided to let go",
+    "criteria": {
+      "h1": "The intake that dates each thing you decided to let go",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A Tuesday 2pm drop-off window or a payout-pickup slot is a booking you create; a service name such as consignment intake or designer bags is a label you configure. Neither is a documented default. Item-description, photo-upload, asking-price, payout-account, or intake-date questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof anyone sold or that an item changed hands — and a CSV export of \"wedding dress, crib, golf clubs — photos, $180/$40/$60, payout acct ••••9912, intake 3/12–4/02\" next to a seller name is still a calendar that pairs a letting-go timeline with a payout account. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Consignment drop-off bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Item-description, photo-upload, asking-price, payout-account, or intake-date fields are fields you add; they are not documented defaults. Completing the form can store an item-plus-photo-plus-asking-price-plus-payout stack (\"wedding dress, crib, golf clubs — photos, $180/$40/$60, payout acct ••••9912, intake 3/12–4/02\") — typed once so a boutique can list and pay out, into the same tables as a \"consignment\" label. An item or photo answer is a form answer or uploaded file, not a verified life event. A consignment booking is a calendar row, not proof anyone sold — and a staff login can open \"Jordan, wedding dress.jpg, crib.jpg, payout ••••9912, intake 3/12–4/02\" next to everyone else's resume. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | Item, photo, asking-price, and payout answers stored in WordPress; optional photos in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that an item-description, photo, asking-price, or payout-account field was sent. A page request from this script is not proof anyone consigned goods. The page URL can say consignment shop even when no form is submitted. Consent timing has not been tested. Review which tags you enable on intake and drop-off pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch1-evidence/qa-evidence/2026-10-25-database-odd-batch1/pr1201-wp-consignment-shop-plugin-privacy-c08df48.png"
+  },
+  {
+    "pr": 1197,
+    "sha": "defc363e5161af12460b2d626fd458fe4241b43c",
+    "short": "defc363",
+    "path": "/wp-wine-club-plugin-privacy",
+    "slug": "wp-wine-club-plugin-privacy",
+    "head": "defc363e5161af12460b2d626fd458fe4241b43c",
+    "file": "pr1197-wp-wine-club-plugin-privacy-defc363.png",
+    "h1": "The subscription that logs your habit and your attempts to break it",
+    "criteria": {
+      "h1": "The subscription that logs your habit and your attempts to break it",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A Tuesday 6pm adult-signature delivery window or a monthly Reserve-tier shipment slot is a booking you create; a service name such as wine club or club delivery is a label you configure. Neither is a documented default. Bottle-count, cadence, tier, pause-window, or delivery-address questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof anyone drank or that a signature was valid — and a CSV export of \"Reserve tier, 6 bottles/mo, upgraded March, adult-signature Tue 6pm\" next to a member name is still a calendar that pairs a habit ledger with a home window. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Club shipment bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Bottle-count, shipment-cadence, tier, pause-window, adult-signature-window, or delivery-address fields are fields you add; they are not documented defaults. Completing the form can store a bottle-count-plus-cadence-plus-tier-plus-pause stack (\"Reserve tier, 6 bottles/mo, upgraded March, paused Apr–Jun, adult-signature Tue 6pm\") — typed once so a club can ship, pause, and require a signature, into the same tables as a \"wine club\" label. A pause request is a form answer, not a verified sobriety record. A club booking is a calendar row, not proof anyone drank — and a staff login can open \"Jordan, Reserve tier, 6 bottles/mo, paused Apr–Jun, ID-scan.jpg\" next to everyone else's resume. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | Bottle-count, cadence, tier, pause, and signature answers stored in WordPress; optional ID uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that a bottle-count, cadence, tier, pause-window, or adult-signature field was sent. A page request from this script is not proof anyone joined a club. The page URL can say wine club even when no form is submitted. Consent timing has not been tested. Review which tags you enable on club-join, pause, and adult-signature pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch1-evidence/qa-evidence/2026-10-25-database-odd-batch1/pr1197-wp-wine-club-plugin-privacy-defc363.png"
+  },
+  {
+    "pr": 1193,
+    "sha": "eea7015b249e2c8c5094db76604def29806838d9",
+    "short": "eea7015",
+    "path": "/wp-music-lessons-plugin-privacy",
+    "slug": "wp-music-lessons-plugin-privacy",
+    "head": "eea7015b249e2c8c5094db76604def29806838d9",
+    "file": "pr1193-wp-music-lessons-plugin-privacy-eea7015.png",
+    "h1": "The signup that schedules a stranger at your child's front door",
+    "criteria": {
+      "h1": "The signup that schedules a stranger at your child's front door",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A Thursday 4pm in-home slot or a 30-minute piano package is a booking you create; a service name such as music lessons or in-home piano is a label you configure. Neither is a documented default. Address, room, instrument, student-age, or parent-contact questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof anyone taught or that a minor was home alone — and a CSV export of \"Thu 4pm, 14 Maple St, living-room piano, age 9\" next to a parent name is still a calendar that pairs a child's address with a weekly hour. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Lesson bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Address, lesson-time, room, instrument, student-age, or parent-contact fields are fields you add; they are not documented defaults. Completing the form can store an address-plus-lesson-time-plus-room-plus-recital stack (\"Thu 4pm, 14 Maple St, living-room piano, age 9, recital-clip.mp4\") — typed once so a teacher can find the piano when a parent may not be home, into the same tables as a \"music lessons\" label. A recital upload is a file a parent or teacher attached, not a verified identity document. A lesson booking is a calendar row, not proof anyone taught — and a staff login can open \"Alex, Thu 4pm, 14 Maple St, living-room piano, recital-clip.mp4\" next to everyone else's resume. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | Address, lesson-time, room, and recital answers stored in WordPress; optional recital uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that an address, lesson-time, room, student-age, or recital field was sent. A page request from this script is not proof anyone booked a lesson. The page URL can say music lessons even when no form is submitted. Consent timing has not been tested. Review which tags you enable on in-home lesson signup and recital-upload pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch1-evidence/qa-evidence/2026-10-25-database-odd-batch1/pr1193-wp-music-lessons-plugin-privacy-eea7015.png"
+  },
+  {
+    "pr": 1189,
+    "sha": "585a1131e8a6775abb5a8091ff7d8f6c0e6256f0",
+    "short": "585a113",
+    "path": "/wp-valet-parking-plugin-privacy",
+    "slug": "wp-valet-parking-plugin-privacy",
+    "head": "585a1131e8a6775abb5a8091ff7d8f6c0e6256f0",
+    "file": "pr1189-wp-valet-parking-plugin-privacy-585a113.png",
+    "h1": "The valet ticket that can answer whose car was at the hotel that night",
+    "criteria": {
+      "h1": "The valet ticket that can answer whose car was at the hotel that night",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A Saturday gala valet window or a hotel overnight pre-booking is a booking you create; a service name such as valet parking or event valet is a label you configure. Neither is a documented default. Plate, make, color, timestamp-in, timestamp-out, name, phone, or ticket-ID questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof anyone parked or attended — and a CSV export of \"plate ABC1234, black BMW X5, ticket #4821, in 19:42, out 23:15, Jane 555-0142\" next to a named guest is still a calendar that pairs a presence log with contact details. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Valet pre-bookings and ticket slots stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Plate, make, color, timestamp-in, timestamp-out, name, phone, or ticket-ID fields are fields you add; they are not documented defaults. Completing the form can store a plate-plus-make-plus-color-plus-in-plus-out-plus-name-plus-phone stack (\"plate ABC1234, black BMW X5, ticket #4821, in 19:42, out 23:15, Jane 555-0142\") — typed once so a venue can answer whose car sat where that night, into the same tables as a \"valet parking\" label. A plate, make, or color answer is what a guest typed or a ticket desk wrote, not a DMV record. A valet pre-booking is a calendar row, not proof anyone parked or attended — and a staff login can open \"Jane, plate ABC1234, black BMW X5, in 19:42, out 23:15, license.pdf\" next to everyone else's resume. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | Valet-ticket plate, vehicle, and pre-booking answers stored in WordPress; optional intake uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that a plate, make, color, timestamp-in, timestamp-out, name, phone, or ticket-ID field was sent. A page request from this script is not proof anyone reserved a stall. The page URL can say valet parking even when no form is submitted. Consent timing has not been tested. Review which tags you enable on valet pre-booking pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch1-evidence/qa-evidence/2026-10-25-database-odd-batch1/pr1189-wp-valet-parking-plugin-privacy-585a113.png"
+  },
+  {
+    "pr": 1185,
+    "sha": "a1c4ab0cf299a2fe8ac25cbf204405fe83512042",
+    "short": "a1c4ab0",
+    "path": "/wp-hunting-outfitter-plugin-privacy",
+    "slug": "wp-hunting-outfitter-plugin-privacy",
+    "head": "a1c4ab0cf299a2fe8ac25cbf204405fe83512042",
+    "file": "pr1185-wp-hunting-outfitter-plugin-privacy-a1c4ab0.png",
+    "h1": "The booking that pairs your rifle with the coordinates where you stand alone",
+    "criteria": {
+      "h1": "The booking that pairs your rifle with the coordinates where you stand alone",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A blind-GPS note or a \"guided elk week — 44.912°N 110.438°W blind #7, Oct 12–18\" location answer is a booking you create; a service name such as hunting outfitter or guided hunt is a label you configure. Neither is a documented default. Hunting-license, firearm-make-and-caliber, blind-GPS, empty-house-week, or hunter-ID-photo questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof of presence at a blind — and a CSV export of \"license #H-44821 + Remington .270 + blind GPS + Oct 12–18 house empty\" next to a named hunter is still a calendar that pairs what someone carries with where they stand alone and when nobody is home. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Hunting-outfitter service bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Hunting-license, firearm-make-and-caliber, blind-GPS, empty-house-week, or hunter-ID-photo fields are fields you add; they are not documented defaults. Completing the form can store a license number next to a firearm make and caliber, a blind GPS coordinate, an empty-house week, and a hunter ID photo — typed once so camp staff can seat a hunter and know the house is empty that week, into the same tables as a hunting-outfitter label. A license or firearm answer is an identifier field, not a legal finding. A booking request is a service appointment, not proof of presence at a blind — and a staff login can open \"license #H-44821 + Remington .270 + blind GPS + Oct 12–18 house empty\" next to every other outfitter booking long after the hunt closes. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | License, firearm, blind-GPS, and empty-house answers stored in WordPress; optional hunter-ID-photo uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that a hunting-license, firearm-make-and-caliber, blind-GPS, empty-house-week, or hunter-ID-photo field was sent. A page request from this script is not proof anyone booked a hunt. The page URL can say hunting outfitter even when no form is submitted. Consent timing has not been tested. Review which tags you enable on hunting-outfitter booking pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch1-evidence/qa-evidence/2026-10-25-database-odd-batch1/pr1185-wp-hunting-outfitter-plugin-privacy-a1c4ab0.png"
+  },
+  {
+    "pr": 1181,
+    "sha": "9d6ab64be107ca7ce1782a85358250e286409bc4",
+    "short": "9d6ab64",
+    "path": "/wp-appliance-repair-plugin-privacy",
+    "slug": "wp-appliance-repair-plugin-privacy",
+    "head": "9d6ab64be107ca7ce1782a85358250e286409bc4",
+    "file": "pr1181-wp-appliance-repair-plugin-privacy-9d6ab64.png",
+    "h1": "The booking that asks when you'll be home — and writes down the garage code",
+    "criteria": {
+      "h1": "The booking that asks when you'll be home — and writes down the garage code",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A when-home four-hour window or a \"washer repair — home 9-1, garage code 4471\" access note is a booking you create; a service name such as appliance repair or washer service is a label you configure. Neither is a documented default. When-home-window, access-note, model, serial-number, or photo-of-the-unit questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof of entry — and a CSV export of \"home 9-1 + garage code 4471 + washer SN… + basement\" next to a named homeowner is still a calendar that answers when someone will be home under one service visit. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Appliance-repair service bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. When-home-window, access-note, model, serial-number, or photo-of-the-unit fields are fields you add; they are not documented defaults. Completing the form can store a confirmed four-hour when-home window next to an access note (\"garage code 4471, washer's in the basement\"), a model and serial inventory that dates the kitchen's worth, and a photo of the unit — typed once so the tech does not have to re-ask when someone will be home, into the same tables as an appliance-repair label. An access note is a stored service instruction, not proof anyone used a code. A booking request is a service appointment, not proof of entry — and a staff login can open \"home 9-1 + garage code 4471 + washer SN…\" next to every other access-note booking long after the repair closes. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | When-home and access answers stored in WordPress; optional unit-photo uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that a when-home-window, access-note, model, serial-number, or photo-of-the-unit field was sent. A page request from this script is not proof anyone booked a repair. The page URL can say appliance repair even when no form is submitted. Consent timing has not been tested. Review which tags you enable on appliance-repair booking pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch1-evidence/qa-evidence/2026-10-25-database-odd-batch1/pr1181-wp-appliance-repair-plugin-privacy-9d6ab64.png"
+  }
+]

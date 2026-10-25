@@ -1,0 +1,854 @@
+[
+  {
+    "pr": 1173,
+    "sha": "83541cd8e2847851888b9ece4d135e2a42c9ea9a",
+    "short": "83541cd",
+    "path": "/wp-ice-rink-plugin-privacy",
+    "slug": "wp-ice-rink-plugin-privacy",
+    "head": "83541cd8e2847851888b9ece4d135e2a42c9ea9a",
+    "file": "pr1173-wp-ice-rink-plugin-privacy-83541cd.png",
+    "h1": "The lesson roster that schedules where your child stands at 6am Saturday",
+    "criteria": {
+      "h1": "The lesson roster that schedules where your child stands at 6am Saturday",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A Saturday 6:00am learn-to-skate slot or a rink-entrance access note is a booking you create; a service name such as ice rink or learn-to-skate is a label you configure. Neither is a documented default. Rink/entrance, Saturday-slot, child-name-and-age, skill-level, coach, competition-travel, or emergency-contact questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof a child skates anywhere — and a CSV export of \"North entrance / Sat 6:00am — Snowplow Sam 2 + named aged child\" next to a coach assignment is still a calendar that holds which patch of ice holds which child under one ice-rink reservation. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Ice-rink lesson bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Rink/entrance, Saturday-slot, child-name-and-age, skill-level, coach, competition-travel, or emergency-contact fields are fields you add; they are not documented defaults. Completing the form can store which rink and entrance next to a 6:00am Saturday slot, a named aged child, a Snowplow Sam 2 skill level, a coach assignment, a competition-travel note, and a progress-report upload — typed once so the rink does not have to re-ask which patch of ice holds which child, into the same tables as an ice-rink label. A skill-level answer is a parent or coach label, not a placement exam. A lesson booking is a calendar row, not proof a child skates anywhere — and a staff login can open \"North entrance / Sat 6:00am — Snowplow Sam 2 + named aged child\" next to every other Saturday roster row season after season. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | Learn-to-skate roster answers stored in WordPress; optional progress-report uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that a rink/entrance, Saturday-slot, child-name-and-age, skill-level, coach, or competition-travel field was sent. A page request from this script is not proof anyone enrolled. The page URL can say ice rink even when no form is submitted. Consent timing has not been tested. Review which tags you enable on ice-rink enrollment pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch2-evidence/qa-evidence/2026-10-25-database-odd-batch2/pr1173-wp-ice-rink-plugin-privacy-83541cd.png"
+  },
+  {
+    "pr": 1169,
+    "sha": "0d7649beed66e25af4df5ae0335391aa794b5f93",
+    "short": "0d7649b",
+    "path": "/wp-junk-removal-plugin-privacy",
+    "slug": "wp-junk-removal-plugin-privacy",
+    "head": "0d7649beed66e25af4df5ae0335391aa794b5f93",
+    "file": "pr1169-wp-junk-removal-plugin-privacy-0d7649b.png",
+    "h1": "The quote form that collects photos of the rooms you're ashamed of",
+    "criteria": {
+      "h1": "The quote form that collects photos of the rooms you're ashamed of",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A Saturday haul window or a \"call first\" access note is a booking you create; a service name such as junk removal or junk haul is a label you configure. Neither is a documented default. Shame-room-photo, address, or preferred-haul-date questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof anyone hauled anything — and a CSV export of \"142 Oak — garage + basement JPGs, haul Sat AM\" next to a homeowner contact is still a calendar that holds photos of the rooms people are most ashamed of next to a preferred haul date under one junk-removal quote. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Junk-removal quote and haul bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Shame-room-photo, address, or preferred-haul-date fields are fields you add; they are not documented defaults. Completing the form can store full-resolution photos of the garage, the flooded basement, the post-eviction apartment, or the house after the death in the family next to a street address, a preferred haul date, and a homeowner contact — typed once so the crew does not have to re-ask what to haul, into the same tables as a junk-removal label. A room-photo upload is a client document in a site uploads folder, not a clinical assessment or belongings inventory. A junk-removal quote booking is a calendar row, not proof anyone hauled anything — and a staff login can open \"142 Oak — garage + basement JPGs, haul Sat AM\" next to every other house on the route long after the truck has left. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | Shame-room-photo and haul-note answers stored in WordPress; optional room-photo uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that a shame-room-photo, address, or preferred-haul-date field was sent. A page request from this script is not proof anyone booked a haul. The page URL can say junk removal even when no form is submitted. Consent timing has not been tested. Review which tags you enable on junk-removal quote pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch2-evidence/qa-evidence/2026-10-25-database-odd-batch2/pr1169-wp-junk-removal-plugin-privacy-0d7649b.png"
+  },
+  {
+    "pr": 1165,
+    "sha": "643398eab5e0bc73c1003486140e5335c2ceca64",
+    "short": "643398e",
+    "path": "/wp-petting-zoo-plugin-privacy",
+    "slug": "wp-petting-zoo-plugin-privacy",
+    "head": "643398eab5e0bc73c1003486140e5335c2ceca64",
+    "file": "pr1165-wp-petting-zoo-plugin-privacy-643398e.png",
+    "h1": "The field-trip form that uploads an entire classroom in one click",
+    "criteria": {
+      "h1": "The field-trip form that uploads an entire classroom in one click",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A school field-trip block or a barn visit window is a booking you create; a service name such as petting zoo or field trip is a label you configure. Neither is a documented default. School-name, child-name, age, animal-allergy, or classroom-roster questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof anyone visited — and a CSV export of \"Lincoln Elementary class trip, Maya Chen, age 8, peanut/hay allergy\" next to a teacher contact is still a calendar that holds twenty-five children's allergy flags under one school reservation. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Field-trip and farm bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. School-name, child-name, age, animal-allergy, or classroom-roster fields are fields you add; they are not documented defaults. Completing the form can store a child legal name next to an animal-allergy flag, an age, a school reservation label, a teacher contact, and optional roster uploads — typed once by a teacher so the farm does not have to re-key twenty-five kids, into the same tables as a petting-zoo label. An allergy flag is what a teacher typed or uploaded, not a medical finding. A field-trip booking is a calendar row, not proof anyone visited — and a staff login can open \"Lincoln Elementary — Maya Chen, age 8, peanut/hay allergy\" next to everyone else's classmates. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | Classroom-roster and animal-allergy answers stored in WordPress; optional uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that a school-name, child-name, age, animal-allergy, or classroom-roster field was sent. A page request from this script is not proof anyone toured a barn. The page URL can say petting zoo even when no form is submitted. Consent timing has not been tested. Review which tags you enable on field-trip booking pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch2-evidence/qa-evidence/2026-10-25-database-odd-batch2/pr1165-wp-petting-zoo-plugin-privacy-643398e.png"
+  },
+  {
+    "pr": 1161,
+    "sha": "4593207eb810ae5593d9549192a56aa8535ac59d",
+    "short": "4593207",
+    "path": "/wp-water-park-plugin-privacy",
+    "slug": "wp-water-park-plugin-privacy",
+    "head": "4593207eb810ae5593d9549192a56aa8535ac59d",
+    "file": "pr1161-wp-water-park-plugin-privacy-4593207.png",
+    "h1": "The season pass that keeps a photo diary of your child's summer",
+    "criteria": {
+      "h1": "The season pass that keeps a photo diary of your child's summer",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A season-pass renewal window or a gate check-in block is a booking you create; a service name such as water park or season pass is a label you configure. Neither is a documented default. Season-pass, child-name, birthday, pass-photo, or gate-visit questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof a child entered the park — and a CSV export of \"Jordan Lee, child: Maya DOB 2016-06-12, pass photo on file, gate visits: 47\" next to a contact name is still a calendar that holds a summer attendance diary next to a child photograph. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Season-pass and gate bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Season-pass, child-name, birthday, pass-photo, or gate-visit fields are fields you add; they are not documented defaults. Completing the form can store a parent name next to a child name and birthday, a pass photo upload, a contact name, and optional waiver uploads — typed once so the gate does not have to re-key the pass, into the same tables as a water-park label. A pass photo is a file a parent uploaded, not a school ID. A season-pass booking is a membership row, not proof a child entered the park — and a staff login can open \"Jordan Lee, child Maya DOB 2016-06-12, pass photo, gate visits 47\" next to everyone else's resume. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | Season-pass and pass-photo answers stored in WordPress; optional uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that a season-pass, child-name, birthday, pass-photo, or gate-visit field was sent. A page request from this script is not proof anyone bought a pass. The page URL can say water park even when no form is submitted. Consent timing has not been tested. Review which tags you enable on season-pass pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch2-evidence/qa-evidence/2026-10-25-database-odd-batch2/pr1161-wp-water-park-plugin-privacy-4593207.png"
+  },
+  {
+    "pr": 1157,
+    "sha": "6f4793027daed4be4f27c7c46294cd8239513848",
+    "short": "6f47930",
+    "path": "/wp-food-truck-plugin-privacy",
+    "slug": "wp-food-truck-plugin-privacy",
+    "head": "6f4793027daed4be4f27c7c46294cd8239513848",
+    "file": "pr1157-wp-food-truck-plugin-privacy-6f47930.png",
+    "h1": "The booking that puts your private party on a public calendar",
+    "criteria": {
+      "h1": "The booking that puts your private party on a public calendar",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A Saturday food-truck block or a private-event service window is a booking you create; a service name such as food truck or private catering is a label you configure. Neither is a documented default. Venue-address, event-date, headcount, occasion, or guest-allergy questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof anyone served tacos — and a CSV export of \"Jordan Lee, venue: 14 Maple Ct, date: Sat 6pm, headcount: 40, occasion: retirement, allergies: tree-nut\" next to a contact name is still a calendar that holds a private party's map next to a dietary-medical note that many trucks also mirror onto a public schedule. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Private-event and food-truck bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Venue-address, event-date, headcount, occasion, or guest-allergy fields are fields you add; they are not documented defaults. Completing the form can store a home or venue address next to a Saturday 6pm date, a headcount of forty, a retirement-party occasion, a contact name, guest allergy notes, and optional waiver or menu PDF uploads — typed once so the truck does not have to re-key the stop, into the same tables as a food-truck label that can place a private event on a public calendar. An allergy answer is what a host typed, not a medical record. A food-truck booking is a calendar row, not proof anyone served tacos — and a staff login can open \"Jordan Lee, venue: 14 Maple Ct, date: Sat 6pm, headcount: 40, occasion: retirement, allergies: tree-nut\" next to everyone else's resume. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | Venue and allergy answers stored in WordPress; optional intake uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that a venue-address, date, headcount, occasion, or allergy field was sent. A page request from this script is not proof anyone booked a truck. The page URL can say food truck even when no form is submitted. Consent timing has not been tested. Review which tags you enable on booking pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch2-evidence/qa-evidence/2026-10-25-database-odd-batch2/pr1157-wp-food-truck-plugin-privacy-6f47930.png"
+  },
+  {
+    "pr": 1153,
+    "sha": "9b2c1e43d046c521b9fbcf13094b1c636e1b48dd",
+    "short": "9b2c1e4",
+    "path": "/wp-surf-school-plugin-privacy",
+    "slug": "wp-surf-school-plugin-privacy",
+    "head": "9b2c1e43d046c521b9fbcf13094b1c636e1b48dd",
+    "file": "pr1153-wp-surf-school-plugin-privacy-9b2c1e4.png",
+    "h1": "The signup that records whether your child can actually swim",
+    "criteria": {
+      "h1": "The signup that records whether your child can actually swim",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A Saturday beginner lesson or a north-jetty group block is a booking you create; a service name such as surf school or open-water intro is a label you configure. Neither is a documented default. Swim-ability, child-age, medical-flag, or cove drop-off questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof anyone paddled out — and a CSV export of \"Jordan Lee, swim: weak open water, age: 11, medical: asthma, drop-off: north jetty Sat 9am\" next to a contact name is still a calendar that holds a child's open-water honesty next to a beach logistics note. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Lesson and group bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Swim-ability, child-age, medical-flag, or cove drop-off fields are fields you add; they are not documented defaults. Completing the form can store an open-water swim-ability answer next to a child age, a medical flag, a north-jetty Saturday drop-off note, a contact name, and optional waiver PDF uploads — typed once so the beach desk does not have to re-key the booking, into the same tables as a surf-school label on a seasonal site that gets rebuilt every spring. A swim-ability answer is what a parent typed, not a swim test. A lesson booking is a calendar row, not proof anyone paddled out — and a staff login can open \"Jordan Lee, swim: weak open water, age: 11, medical: asthma, drop-off: north jetty Sat 9am\" next to everyone else's resume. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | Swim-ability and drop-off answers stored in WordPress; optional waiver uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that a swim-ability, age, medical-flag, or drop-off field was sent. A page request from this script is not proof anyone stood on a beach. The page URL can say surf school even when no form is submitted. Consent timing has not been tested. Review which tags you enable on signup pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch2-evidence/qa-evidence/2026-10-25-database-odd-batch2/pr1153-wp-surf-school-plugin-privacy-9b2c1e4.png"
+  },
+  {
+    "pr": 1149,
+    "sha": "54f065f07f786a0237a57575c2f4911ca20b1e4d",
+    "short": "54f065f",
+    "path": "/wp-horseback-riding-plugin-privacy",
+    "slug": "wp-horseback-riding-plugin-privacy",
+    "head": "54f065f07f786a0237a57575c2f4911ca20b1e4d",
+    "file": "pr1149-wp-horseback-riding-plugin-privacy-54f065f.png",
+    "h1": "The booking form that must ask your exact weight — and keeps it forever",
+    "criteria": {
+      "h1": "The booking form that must ask your exact weight — and keeps it forever",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A Saturday trail slot or a lesson block is a booking you create; a service name such as horseback riding or beginner trail is a label you configure. Neither is a documented default. Exact-weight, rider-age, skill-claim, or emergency-contact questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof anyone rode — and a CSV export of \"Sam Rivera, weight: 185 lb, age: 12, skill: beginner, ICE: Morgan Rivera\" next to a contact name is still a calendar that holds a weigh-in number next to a minor's age for horse assignment. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Trail and lesson bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Exact-weight, rider-age, skill-claim, or emergency-contact fields are fields you add; they are not documented defaults. Completing the form can store an exact weight in pounds next to a kid's age, a beginner skill claim, an emergency contact for a sport with real injury rates, a contact name, and optional waiver or liability uploads — typed once so the barn desk does not have to re-key the booking, into the same tables as a horseback-riding label. An exact-weight answer is what a guest typed, not a clinical weigh-in. A trail booking is a calendar row, not proof anyone rode — and a staff login can open \"Sam Rivera, weight: 185 lb, age: 12, skill: beginner, ICE: Morgan Rivera, waiver PDF\" next to everyone else's resume. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | Exact-weight and emergency-contact answers stored in WordPress; optional waiver uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that an exact-weight, rider-age, skill-claim, or emergency-contact field was sent. A page request from this script is not proof anyone mounted. The page URL can say horseback riding even when no form is submitted. Consent timing has not been tested. Review which tags you enable on booking pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch2-evidence/qa-evidence/2026-10-25-database-odd-batch2/pr1149-wp-horseback-riding-plugin-privacy-54f065f.png"
+  },
+  {
+    "pr": 1145,
+    "sha": "efe8d697a3865cf8e3acd2f7c29d8688146bb5ef",
+    "short": "efe8d69",
+    "path": "/wp-go-kart-plugin-privacy",
+    "slug": "wp-go-kart-plugin-privacy",
+    "head": "efe8d697a3865cf8e3acd2f7c29d8688146bb5ef",
+    "file": "pr1145-wp-go-kart-plugin-privacy-efe8d69.png",
+    "h1": "The kiosk that scans your driver's license and posts your lap times under your real name",
+    "criteria": {
+      "h1": "The kiosk that scans your driver's license and posts your lap times under your real name",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A Saturday heat slot or a track block is a booking you create; a service name such as go kart or junior session is a label you configure. Neither is a documented default. License-number, DOB, address, height, weight, parent-signature, or leaderboard-name questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof anyone raced — and a CSV export of \"Jordan Lee, DOB 03/14/1991, Lic #D1234567, best lap 42.1\" next to a contact name is still a calendar that holds a license-grade identity next to a published lap. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Track and heat bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Legal-name, DOB, address, license-number, height, weight, parent-signature, or leaderboard-name fields are fields you add; they are not documented defaults. Completing the form can store a kiosk-scanned license number next to a legal name, DOB, home address, a minor's height and weight, a parent's signature, a contact name, and optional license-photo or waiver uploads — typed once so the front desk does not have to re-key the heat, into the same tables as a go-kart-session label. A license answer is what a guest typed or a kiosk stored, not a DMV file. A track booking is a calendar row, not proof anyone raced — and a staff login can open \"Jordan Lee, DOB 03/14/1991, Lic #D1234567, ht 4 ft 10 in, parent sig, waiver PDF\" next to everyone else's resume. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | License, DOB, and address answers stored in WordPress; optional license or waiver uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that a license-number, DOB, address, height, weight, parent-signature, or leaderboard-name field was sent. A page request from this script is not proof anyone entered a kart. The page URL can say go kart even when no form is submitted. Consent timing has not been tested. Review which tags you enable on check-in and booking pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch2-evidence/qa-evidence/2026-10-25-database-odd-batch2/pr1145-wp-go-kart-plugin-privacy-efe8d69.png"
+  },
+  {
+    "pr": 1141,
+    "sha": "6e2ebacd506ff8511c0dbcdc9fbf264eb2769ca2",
+    "short": "6e2ebac",
+    "path": "/wp-auto-repair-plugin-privacy",
+    "slug": "wp-auto-repair-plugin-privacy",
+    "head": "6e2ebacd506ff8511c0dbcdc9fbf264eb2769ca2",
+    "file": "pr1141-wp-auto-repair-plugin-privacy-6e2ebac.png",
+    "h1": "The drop-off form that ties your plate to your address and scans your license for the loaner",
+    "criteria": {
+      "h1": "The drop-off form that ties your plate to your address and scans your license for the loaner",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A Thursday brake-inspect slot or a loaner handoff window is a booking you create; a service name such as auto repair or oil change is a label you configure. Neither is a documented default. License-plate, home-address, phone, problem-description, service-history weekday, or loaner-agreement questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof anyone serviced a car — and a CSV export of \"ABC-1234, 14 Oak St, clunk leaving the office lot Tuesday, Thu service\" next to a contact name is still a calendar that holds a plate-to-person registry beside a customer row. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Drop-off and loaner bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. License-plate, name, phone, home-address, problem-description, service-history weekday, or loaner-agreement fields are fields you add; they are not documented defaults. Completing the form can store a plate next to a name, phone, home address, a dated \"describe the problem\" note, a Thursday service slot that marks when the driveway sits empty, a contact name, and optional loaner-agreement or driver's-license-scan uploads — typed once so the advisor does not have to rewrite the RO, into the same tables as an oil-change package name. A plate answer is what a customer typed, not a DMV lookup. A drop-off booking is a calendar row, not proof anyone serviced a car — and a staff login can open \"ABC-1234, 14 Oak St, clunk leaving the office lot Tuesday, Thu, DL scan\" next to everyone else's resume. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | Plate, address, and problem-note answers stored in WordPress; optional loaner-agreement or driver's-license uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that a plate, address, phone, problem-description, service-history weekday, or loaner-agreement field was sent. A page request from this script is not proof anyone repaired a vehicle. The page URL can say auto repair even when no form is submitted. Consent timing has not been tested. Review which tags you enable on drop-off intake and booking pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch2-evidence/qa-evidence/2026-10-25-database-odd-batch2/pr1141-wp-auto-repair-plugin-privacy-6e2ebac.png"
+  },
+  {
+    "pr": 1137,
+    "sha": "c7162c105b3f89f6822352864aa192f9aef3d0ac",
+    "short": "c7162c1",
+    "path": "/wp-campground-plugin-privacy",
+    "slug": "wp-campground-plugin-privacy",
+    "head": "c7162c105b3f89f6822352864aa192f9aef3d0ac",
+    "file": "pr1137-wp-campground-plugin-privacy-c7162c1.png",
+    "h1": "The site map that says which numbered pitch your kids sleep on tonight",
+    "criteria": {
+      "h1": "The site map that says which numbered pitch your kids sleep on tonight",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A Friday-to-Sunday tent-site slot or a seasonal full-hookup package is a booking you create; a service name such as campground or RV park is a label you configure. Neither is a documented default. Party-name, age, numbered-site, plate, rig-description, seasonal-site, arrival, or departure questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof anyone pitched a tent — and a CSV export of site 42 next to \"Alex, Jordan (8), Sam (5)\", a plate number, and a fifth-wheel note is still a calendar that holds a party roster and pitch assignment beside a contact name. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Campsite bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Party-name, age, numbered-site, plate, rig-description, seasonal-site, arrival, or departure fields are fields you add; they are not documented defaults. Completing the form can store a named party next to a campsite booking, a contact name, a site number, stay dates, optional ID or waiver uploads, a plate number, and a rig description — typed once so the park knows which pitch the kids sleep on tonight, into the same tables as a tent-site package name. A party-name answer is what a guest typed, not a park census. A campsite booking is a calendar row, not proof anyone pitched a tent — and a staff login can open \"Alex + kids, site 42, ABC-1234, fifth-wheel, Fri–Sun\" next to everyone else's resume. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | Party, site, and plate answers stored in WordPress; optional ID or waiver uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that a party-name, age, numbered-site, plate, rig-description, seasonal-site, arrival, or departure field was sent. A page request from this script is not proof anyone checked in. The page URL can say campground even when no form is submitted. Consent timing has not been tested. Review which tags you enable on reservation and site-map intake pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch2-evidence/qa-evidence/2026-10-25-database-odd-batch2/pr1137-wp-campground-plugin-privacy-c7162c1.png"
+  },
+  {
+    "pr": 1133,
+    "sha": "f3e4e5f0f0d36f1622f3d0463d564d2352971dd3",
+    "short": "f3e4e5f",
+    "path": "/wp-escape-room-plugin-privacy",
+    "slug": "wp-escape-room-plugin-privacy",
+    "head": "f3e4e5f0f0d36f1622f3d0463d564d2352971dd3",
+    "file": "pr1133-wp-escape-room-plugin-privacy-f3e4e5f.png",
+    "h1": "The booking that maps your team and films your hour in the room",
+    "criteria": {
+      "h1": "The booking that maps your team and films your hour in the room",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A Friday private-room slot or a corporate team-building package is a booking you create; a service name such as escape room or private room is a label you configure. Neither is a documented default. Employer, department, team-roster, waiver-upload, room-recording, or victory-photo questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof anyone played — and a CSV export of a Friday 7pm private room next to Acme Corp, Marketing, \"Alex, Jordan, Sam\", and a waiver PDF filename is still a calendar that holds a social graph and attendance list beside a contact name. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Room bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Employer, department, team-roster, waiver-upload, room-recording, or victory-photo fields are fields you add; they are not documented defaults. Completing the form can store a named teammate next to a room booking, a contact name, an employer, a department, optional waiver uploads, a session recording, and a victory photo — typed once so the venue can staff the game master and know who showed up, into the same tables as a package name. A roster answer is what a booker typed, not an HR file. A room booking is a calendar row, not proof anyone played — and a staff login can open \"Alex + Jordan, Acme Corp / Marketing, waiver.pdf, room.mp4, victory.jpg, Friday 7pm private room\" next to everyone else's resume. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | Employer, roster, and waiver answers stored in WordPress; optional room-recording and victory-photo uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that an employer, department, team-roster, waiver, room-recording, or victory-photo field was sent. A page request from this script is not proof anyone entered a room. The page URL can say escape room even when no form is submitted. Consent timing has not been tested. Review which tags you enable on reservation and roster-intake pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch2-evidence/qa-evidence/2026-10-25-database-odd-batch2/pr1133-wp-escape-room-plugin-privacy-f3e4e5f.png"
+  },
+  {
+    "pr": 1129,
+    "sha": "80ba1ee4e86c75a06cad6021b0f19332fe279a3c",
+    "short": "80ba1ee",
+    "path": "/wp-ski-rental-plugin-privacy",
+    "slug": "wp-ski-rental-plugin-privacy",
+    "head": "80ba1ee4e86c75a06cad6021b0f19332fe279a3c",
+    "file": "pr1129-wp-ski-rental-plugin-privacy-80ba1ee.png",
+    "h1": "The binding form that stores the whole family's weight, by name",
+    "criteria": {
+      "h1": "The binding form that stores the whole family's weight, by name",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A Saturday ski-week slot or a weekend demo-ski package is a booking you create; a service name such as ski rental or DIN binding intake is a label you configure. Neither is a documented default. Height, weight, age, ability-level, DIN, or waiver-upload questions are custom fields you add (textarea, select, input, or checkbox); they are not documented defaults. A booking is a calendar row, not proof anyone skied — and a CSV export of a Saturday 9am ski-week slot next to Mom's weight and a waiver PDF filename is still a calendar that holds a family weight log beside a contact name. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Ski-rental bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Height, weight, age, ability-level, DIN, or waiver-upload fields are fields you add; they are not documented defaults. Completing the form can store a named weight next to a rental booking, a contact name, kids' rows, and optional waiver uploads — typed once so the shop can set bindings, into the same tables as a boot size. A weight answer is what a renter typed, not a clinic chart. A rental booking is a calendar row, not proof anyone skied — and a staff login can open \"Mom, 165 lb, age 42, intermediate, waiver.pdf, Saturday ski week\" next to everyone else's resume. Notification emails can copy field values and files off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. | Height, weight, age, and ability answers stored in WordPress; optional waiver uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "PixelYourSite – Your smart PIXEL (TAG) & API ManagerDocumented pixel and tag manager (plugin version 11.4.2.1). When a Meta Pixel ID is saved, version 11.4.2.1 dist/scripts/public.js loads https://connect.facebook.net/en_US/fbevents.js. A noscript image uses https://www.facebook.com/tr. Google Analytics 4, Google Tag Manager, and Head and Footer scripts load only when you enable them. Automated events include form submissions; those events do not by themselves prove that a height, weight, age, ability-level, DIN, or waiver-upload field was sent. A page request from this script is not proof anyone left the lodge. The page URL can say ski rental even when no form is submitted. Consent timing has not been tested. Review which tags you enable on reservation and DIN-intake pages. | Marketing tags handled through Meta, Google, or other configured platforms | connect.facebook.net | Not assessed | Not tested | None | WordPress.org listingv11.4.2.1 readme.txt (SVN)v11.4.2.1 public.js (fbevents.js)"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch2-evidence/qa-evidence/2026-10-25-database-odd-batch2/pr1129-wp-ski-rental-plugin-privacy-80ba1ee.png"
+  }
+]

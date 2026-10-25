@@ -1,0 +1,146 @@
+[
+  {
+    "pr": 783,
+    "sha": "45b1be116c76df0cb0e29361baa1f2c6f0847b72",
+    "short": "45b1be1",
+    "path": "/wp-bail-bonds-plugin-privacy",
+    "slug": "wp-bail-bonds-plugin-privacy",
+    "issue": 760,
+    "head": "45b1be116c76df0cb0e29361baa1f2c6f0847b72",
+    "file": "pr783-wp-bail-bonds-plugin-privacy-45b1be1.png",
+    "h1": "The bail application behind the \"get released now\" form",
+    "criteria": {
+      "h1": "The bail application behind the \"get released now\" form",
+      "tableRows": [
+        "Formidable FormsDocumented self-hosted form builder (plugin version 6.35). The readme states every form submission is stored in the WordPress database, with back-end entry access, CSV export, and email notifications or autoresponders you configure. Defendant name, charge, booking number, co-signer SSN fragments, collateral details, and family contact fields depend on the fields you add — they are not fixed bail-bond defaults. Optional payment, CRM, or spam-protection integrations send data only when enabled. Retention of entry rows after a release request ends is not specified as a default purge. Public form browser hosts are unverified. | Bail-application form entries stored in your WordPress database | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv6.35 readme.txt (SVN)",
+        "Forminator FormsDocumented self-hosted form builder (plugin version 1.58.1). The readme states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, with GDPR-oriented tools left to your implementation. Which defendant, co-signer, charge, booking-number, collateral, or family-contact questions appear depends on the fields you configure — they are not established as fixed bail-bond defaults. Optional third-party email, CRM, storage, captcha, and payment integrations send data only when enabled. Retention of submission rows is not specified as a default purge. Public form browser hosts are unverified. | Application submissions stored and organized on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)",
+        "Clio Grow FormDocumented WordPress contact form for Clio Grow customers (plugin version 1.0.5). The listing states completed form data is submitted to the firm's Clio Grow Inbox and that a Clio Grow account is required. Version 1.0.5 source posts lead payloads to a region-specific Grow URL such as https://grow.clio.com/inbox_leads (with AU, CA, EU, and SPM host variants). Which defendant, co-signer, charge, booking-number, collateral, or family-contact questions appear depends on the fields you enable in the plugin settings — they are not established as fixed bail-bond defaults by the listing. This row describes the documented storage path only and does not assess legal or regulatory compliance status. Review Clio Grow account access, retention, and any notification copies separately. Browser hosts for the public form were not verified for this snapshot beyond the documented server-side submit URLs. | Bail-application leads submitted to a Clio Grow CRM inbox | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.0.5 readme.txt (SVN trunk)v1.0.5 grow submit URL source"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch8-evidence/qa-evidence/2026-10-25-database-odd-batch8/pr783-wp-bail-bonds-plugin-privacy-45b1be1.png"
+  },
+  {
+    "pr": 779,
+    "sha": "f5632dcf46c434249d562f28c3253250fa6d1d0c",
+    "short": "f5632dc",
+    "path": "/wp-driving-school-plugin-privacy",
+    "slug": "wp-driving-school-plugin-privacy",
+    "issue": 755,
+    "head": "f5632dcf46c434249d562f28c3253250fa6d1d0c",
+    "file": "pr779-wp-driving-school-plugin-privacy-f5632dc.png",
+    "h1": "The permit number and pickup address in a booking row",
+    "criteria": {
+      "h1": "The permit number and pickup address in a booking row",
+      "tableRows": [
+        "Booking CalendarDocumented general-purpose WordPress booking plugin (version 11.9.1). The privacy notice states booking details are stored in the WordPress database and are not sent to the vendor's servers by default; optional integrations may send data to external services you configure. Appointment-style flows collect customer contact details with configurable form fields — permit or license numbers, dates of birth, home pickup addresses, lesson notes, or test results depend on the fields you add; they are not fixed driving-school defaults. Confirmation emails to administrators and visitors can copy booking details off-site. Retention of booking rows is not specified as a default purge. Public booking-form browser hosts are unverified. | Lesson bookings and form answers stored in WordPress | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv11.9.1 readme.txt (SVN)Booking data / GDPR FAQ",
+        "LucrativeIT Driving School Management SystemDocumented driving-school booking and instructor-scheduling plugin (version 1.1.0). Students book lessons against live instructor availability; bookings list student, service, date and time, instructor, location, and payment status. Locations store address, city, state, postcode, and phone for training centres or pickup points. A customisable booking form supports text, textarea, email, phone, number, date, dropdown, radio, and checkbox fields — permit or license numbers, dates of birth, home addresses, and lesson notes depend on the fields you configure; they are not fixed identity-document defaults. Optional customer login stores account bookings on the site. External services: Stripe Checkout (and optional WooCommerce or SMTP) only when enabled; card details stay on Stripe's hosted page and are not stored on the site. Deleting the plugin removes its tables and settings. Retention of booking or customer rows after a lesson ends is not specified as a default purge. Public booking-form browser hosts are unverified. | Driving-lesson bookings and customer records stored in WordPress | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.1.0 readme.txt (SVN)",
+        "eDrive SiteDocumented WordPress embed for the eDrive driving-school management platform (plugin version 1.0.0). Offers, theory groups, and school details are pulled from eDrive; the enrollment form ([edrive_form]) collects name, phone, email, offer, group, and message with a mandatory data-processing consent checkbox. Every request is sent from the WordPress server to https://partners.edrive.md with the school's API key; enrollment leads land in the eDrive Leads section — not as ordinary WordPress form-entry tables. The API key never reaches the browser. Permit or license numbers, dates of birth, pickup addresses, and test results are not listed as fixed enrollment fields; any such detail would depend on what the visitor types in the message field. This row describes the documented storage path only and does not assess legal or regulatory compliance status. Review vendor account access and retention separately. Browser hosts for the embed were not verified for this snapshot (partner API calls are server-side). | Enrollment leads forwarded to the eDrive vendor platform | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.0.0 readme.txt (SVN)eDrive privacy policy"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-odd-batch8-evidence/qa-evidence/2026-10-25-database-odd-batch8/pr779-wp-driving-school-plugin-privacy-f5632dc.png"
+  }
+]
