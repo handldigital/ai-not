@@ -1,0 +1,578 @@
+[
+  {
+    "pr": 1635,
+    "sha": "86d72e5a55e0ba68b0982b9263775734b4fdcd83",
+    "short": "86d72e5",
+    "path": "/wp-dog-waste-removal-plugin-privacy",
+    "issue": 1611,
+    "slug": "wp-dog-waste-removal-plugin-privacy",
+    "head": "86d72e5a55e0ba68b0982b9263775734b4fdcd83",
+    "file": "pr1635-wp-dog-waste-removal-plugin-privacy-86d72e5.png",
+    "h1": "The scoop schedule that logs your dog, your gate code, and the hours your yard sits empty",
+    "criteria": {
+      "h1": "The scoop schedule that logs your dog, your gate code, and the hours your yard sits empty",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A window such as \"scoop window, gate code, yard photo\" is a booking you create; a service name such as dog waste removal or yard scooping is a label you configure. Neither is a documented default. Dog-name, gate-code, absence-window, yard-photo, property-address, owner-name, phone, email, or appointment-date questions are custom fields you add (textarea, select, input, checkbox, or file); they are not documented defaults. A booking is a calendar row, not proof of work - and a CSV export of \"scoop window + gate code + yard photo\" next to a named owner is still a calendar that answers when the crew is expected. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Dog-waste-removal service bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Dog-name, gate-code, absence-window, yard-photo, property-address, owner-name, phone, email, or appointment-date questions are fields you add; they are not documented defaults. Optional yard photo uploads are files you accept; that file type is not a documented default. A yard photo is a stored file, not a map of the property. A gate-code note is stored text, not a key to the house. A dog-waste-removal form is not proof anyone entered the yard. Notification emails can copy field values and file links off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. How long a yard photo sits after a visit that never happened is not a documented default of the plugin. | Gate-code and absence-window answers stored in WordPress; optional yard-photo uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "Iptanus File UploadDocumented frontend upload form (formerly WordPress File Upload). By default files land inside the wp-content directory of the site; the upload path is configurable. Uploaded files can be added to Media or attached to the current page. FTP and SFTP destinations are documented. The Professional version documents uploads to Google Drive, Dropbox, OneDrive, or Amazon S3. A yard photo or route-sheet PDF is a file you accept; that file type is not a documented default. An uploaded yard photo is a stored file, not a map of the property. Deleting a form entry later does not by itself prove the file was removed from the uploads path or from a cloud destination you enabled. The listing claims GDPR compliance without a tested EXIF-strip or retention length here. Review upload directory, Media attachment, and cloud destinations. Browser hosts for the visitor upload path were not verified for this snapshot. How long a yard photo file sits after a visit that never happened is not a documented default of the plugin. | Yard-photo and route-sheet uploads stored under the site wp-content path | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listing"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-kent-batch6-evidence/qa-evidence/2026-10-25-kent-absorb-batch6/pr1635-wp-dog-waste-removal-plugin-privacy-86d72e5.png"
+  },
+  {
+    "pr": 1636,
+    "sha": "233eb796908997570eefe7a353e29f3c0382318f",
+    "short": "233eb79",
+    "path": "/wp-pool-table-installation-plugin-privacy",
+    "issue": 1613,
+    "slug": "wp-pool-table-installation-plugin-privacy",
+    "head": "233eb796908997570eefe7a353e29f3c0382318f",
+    "file": "pr1636-wp-pool-table-installation-plugin-privacy-233eb79.png",
+    "h1": "The delivery quote that measures your basement and prices what's in it",
+    "criteria": {
+      "h1": "The delivery quote that measures your basement and prices what's in it",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A window such as \"delivery week, stair measurement, basement photo\" is a booking you create; a service name such as pool table installation or billiard delivery is a label you configure. Neither is a documented default. Basement-photo, stair-measurement, door-width, table-size, property-address, owner-name, phone, email, or appointment-date questions are custom fields you add (textarea, select, input, checkbox, or file); they are not documented defaults. A booking is a calendar row, not proof of work - and a CSV export of \"delivery week + stair measurement + basement photo\" next to a named owner is still a calendar that answers when the crew is expected. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Pool-table-installation service bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Basement-photo, stair-measurement, door-width, table-size, property-address, owner-name, phone, email, or appointment-date questions are fields you add; they are not documented defaults. Optional basement photo uploads are files you accept; that file type is not a documented default. A basement photo is a stored file, not an inventory of the room. A stair-measurement note is stored text, not a floor plan of the house. A pool-table form is not proof anyone carried slate. Notification emails can copy field values and file links off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. How long a basement photo sits after a delivery that never happened is not a documented default of the plugin. | Stair-measurement and table-size answers stored in WordPress; optional basement-photo uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "Iptanus File UploadDocumented frontend upload form (formerly WordPress File Upload). By default files land inside the wp-content directory of the site; the upload path is configurable. Uploaded files can be added to Media or attached to the current page. FTP and SFTP destinations are documented. The Professional version documents uploads to Google Drive, Dropbox, OneDrive, or Amazon S3. A basement photo or measurement-sheet PDF is a file you accept; that file type is not a documented default. An uploaded basement photo is a stored file, not an inventory of the room. Deleting a form entry later does not by itself prove the file was removed from the uploads path or from a cloud destination you enabled. The listing claims GDPR compliance without a tested EXIF-strip or retention length here. Review upload directory, Media attachment, and cloud destinations. Browser hosts for the visitor upload path were not verified for this snapshot. How long a basement photo file sits after a delivery that never happened is not a documented default of the plugin. | Basement-photo and measurement-sheet uploads stored under the site wp-content path | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listing"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-kent-batch6-evidence/qa-evidence/2026-10-25-kent-absorb-batch6/pr1636-wp-pool-table-installation-plugin-privacy-233eb79.png"
+  },
+  {
+    "pr": 1637,
+    "sha": "84c3a11d02bb6c05232a0ca63ce7f1992b62be23",
+    "short": "84c3a11",
+    "path": "/wp-recording-studio-construction-plugin-privacy",
+    "issue": 1615,
+    "slug": "wp-recording-studio-construction-plugin-privacy",
+    "head": "84c3a11d02bb6c05232a0ca63ce7f1992b62be23",
+    "file": "pr1637-wp-recording-studio-construction-plugin-privacy-84c3a11.png",
+    "h1": "The acoustics consult that catalogs your gear list and the hours the booth is occupied",
+    "criteria": {
+      "h1": "The acoustics consult that catalogs your gear list and the hours the booth is occupied",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A window such as \"build week, session hours, booth photo\" is a booking you create; a service name such as recording studio construction or home booth build is a label you configure. Neither is a documented default. Gear-list, session-hours, booth-photo, floor-plan, property-address, owner-name, phone, email, or appointment-date questions are custom fields you add (textarea, select, input, checkbox, or file); they are not documented defaults. A booking is a calendar row, not proof of work - and a CSV export of \"build week + session hours + booth photo\" next to a named owner is still a calendar that answers when the crew is expected. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Recording-studio-construction service bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Gear-list, session-hours, booth-photo, floor-plan, property-address, owner-name, phone, email, or appointment-date questions are fields you add; they are not documented defaults. Optional booth photo uploads are files you accept; that file type is not a documented default. A booth photo is a stored file, not an inventory of the room. A gear-list note is stored text, not a map of stealable equipment. A studio-construction form is not proof anyone hung treatment. Notification emails can copy field values and file links off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. How long a booth photo sits after a consult that never happened is not a documented default of the plugin. | Gear-list and session-hours answers stored in WordPress; optional booth-photo uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "Iptanus File UploadDocumented frontend upload form (formerly WordPress File Upload). By default files land inside the wp-content directory of the site; the upload path is configurable. Uploaded files can be added to Media or attached to the current page. FTP and SFTP destinations are documented. The Professional version documents uploads to Google Drive, Dropbox, OneDrive, or Amazon S3. A booth photo or floor-plan PDF is a file you accept; that file type is not a documented default. An uploaded booth photo is a stored file, not an inventory of the room. Deleting a form entry later does not by itself prove the file was removed from the uploads path or from a cloud destination you enabled. The listing claims GDPR compliance without a tested EXIF-strip or retention length here. Review upload directory, Media attachment, and cloud destinations. Browser hosts for the visitor upload path were not verified for this snapshot. How long a booth photo file sits after a consult that never happened is not a documented default of the plugin. | Booth-photo and floor-plan uploads stored under the site wp-content path | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listing"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-kent-batch6-evidence/qa-evidence/2026-10-25-kent-absorb-batch6/pr1637-wp-recording-studio-construction-plugin-privacy-84c3a11.png"
+  },
+  {
+    "pr": 1638,
+    "sha": "d6515849f5d94bd29129e8409911f0b66fa283e2",
+    "short": "d651584",
+    "path": "/wp-salt-room-construction-plugin-privacy",
+    "issue": 1617,
+    "slug": "wp-salt-room-construction-plugin-privacy",
+    "head": "d6515849f5d94bd29129e8409911f0b66fa283e2",
+    "file": "pr1638-wp-salt-room-construction-plugin-privacy-d651584.png",
+    "h1": "The wellness build that pairs your health claims with your floor plan",
+    "criteria": {
+      "h1": "The wellness build that pairs your health claims with your floor plan",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A window such as \"build week, health claim, floor-plan photo\" is a booking you create; a service name such as salt room construction or halotherapy room is a label you configure. Neither is a documented default. Health-claim, floor-plan-photo, room-use, property-address, owner-name, phone, email, or appointment-date questions are custom fields you add (textarea, select, input, checkbox, or file); they are not documented defaults. A booking is a calendar row, not proof of work - and a CSV export of \"build week + health claim + floor-plan photo\" next to a named owner is still a calendar that answers when the crew is expected. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Salt-room-construction service bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Health-claim, floor-plan-photo, room-use, property-address, owner-name, phone, email, or appointment-date questions are fields you add; they are not documented defaults. Optional floor-plan photo uploads are files you accept; that file type is not a documented default. A floor-plan photo is a stored file, not a medical record. A health-claim note is stored text, not a diagnosis. A salt-room form is not proof anyone packed a wall. Notification emails can copy field values and file links off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. How long a floor-plan photo sits after a build that never happened is not a documented default of the plugin. | Health-claim and room-use answers stored in WordPress; optional floor-plan-photo uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "Iptanus File UploadDocumented frontend upload form (formerly WordPress File Upload). By default files land inside the wp-content directory of the site; the upload path is configurable. Uploaded files can be added to Media or attached to the current page. FTP and SFTP destinations are documented. The Professional version documents uploads to Google Drive, Dropbox, OneDrive, or Amazon S3. A floor-plan photo or spec-sheet PDF is a file you accept; that file type is not a documented default. An uploaded floor-plan photo is a stored file, not a medical record. Deleting a form entry later does not by itself prove the file was removed from the uploads path or from a cloud destination you enabled. The listing claims GDPR compliance without a tested EXIF-strip or retention length here. Review upload directory, Media attachment, and cloud destinations. Browser hosts for the visitor upload path were not verified for this snapshot. How long a floor-plan photo file sits after a build that never happened is not a documented default of the plugin. | Floor-plan-photo and spec-sheet uploads stored under the site wp-content path | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listing"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-kent-batch6-evidence/qa-evidence/2026-10-25-kent-absorb-batch6/pr1638-wp-salt-room-construction-plugin-privacy-d651584.png"
+  },
+  {
+    "pr": 1645,
+    "sha": "f4c6bc2a8fd40c1cd1c07b611df3b7dc1d7d9a91",
+    "short": "f4c6bc2",
+    "path": "/wp-mini-split-installation-plugin-privacy",
+    "issue": 1627,
+    "slug": "wp-mini-split-installation-plugin-privacy",
+    "head": "f4c6bc2a8fd40c1cd1c07b611df3b7dc1d7d9a91",
+    "file": "pr1645-wp-mini-split-installation-plugin-privacy-f4c6bc2.png",
+    "h1": "The load calculation that maps every room you heat and the hours you keep them warm",
+    "criteria": {
+      "h1": "The load calculation that maps every room you heat and the hours you keep them warm",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A window such as \"install week, occupancy schedule, room photo\" is a booking you create; a service name such as mini-split installation or ductless heat pump is a label you configure. Neither is a documented default. Room-sizing, occupancy-schedule, panel-capacity, room-photo, property-address, owner-name, phone, email, or appointment-date questions are custom fields you add (textarea, select, input, checkbox, or file); they are not documented defaults. A booking is a calendar row, not proof of work - and a CSV export of \"install week + occupancy schedule + room photo\" next to a named owner is still a calendar that answers when the crew is expected. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Mini-split-installation service bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Room-sizing, occupancy-schedule, panel-capacity, room-photo, property-address, owner-name, phone, email, or appointment-date questions are fields you add; they are not documented defaults. Optional room photo uploads are files you accept; that file type is not a documented default. A room photo is a stored file, not a thermal map of the house. An occupancy-schedule note is stored text, not a ledger of when you are home. A mini-split form is not proof anyone hung a head. Notification emails can copy field values and file links off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. How long a room photo sits after a load calc that never happened is not a documented default of the plugin. | Occupancy-schedule and panel-capacity answers stored in WordPress; optional room-photo uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "Iptanus File UploadDocumented frontend upload form (formerly WordPress File Upload). By default files land inside the wp-content directory of the site; the upload path is configurable. Uploaded files can be added to Media or attached to the current page. FTP and SFTP destinations are documented. The Professional version documents uploads to Google Drive, Dropbox, OneDrive, or Amazon S3. A room photo or load-sheet PDF is a file you accept; that file type is not a documented default. An uploaded room photo is a stored file, not a thermal map of the house. Deleting a form entry later does not by itself prove the file was removed from the uploads path or from a cloud destination you enabled. The listing claims GDPR compliance without a tested EXIF-strip or retention length here. Review upload directory, Media attachment, and cloud destinations. Browser hosts for the visitor upload path were not verified for this snapshot. How long a room photo file sits after a load calc that never happened is not a documented default of the plugin. | Room-photo and load-sheet uploads stored under the site wp-content path | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listing"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-kent-batch6-evidence/qa-evidence/2026-10-25-kent-absorb-batch6/pr1645-wp-mini-split-installation-plugin-privacy-f4c6bc2.png"
+  },
+  {
+    "pr": 1646,
+    "sha": "ceb099c17b4169216647be4ba546ca752e5a183c",
+    "short": "ceb099c",
+    "path": "/wp-basement-finishing-plugin-privacy",
+    "issue": 1628,
+    "slug": "wp-basement-finishing-plugin-privacy",
+    "head": "ceb099c17b4169216647be4ba546ca752e5a183c",
+    "file": "pr1646-wp-basement-finishing-plugin-privacy-ceb099c.png",
+    "h1": "The buildout quote that floor-plans the rooms that aren't on any listing yet",
+    "criteria": {
+      "h1": "The buildout quote that floor-plans the rooms that aren't on any listing yet",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A window such as \"build week, intended use, basement photo\" is a booking you create; a service name such as basement finishing or lower-level buildout is a label you configure. Neither is a documented default. Floor-plan, intended-use, unregistered-square-footage, basement-photo, property-address, owner-name, phone, email, or appointment-date questions are custom fields you add (textarea, select, input, checkbox, or file); they are not documented defaults. A booking is a calendar row, not proof of work - and a CSV export of \"build week + intended use + basement photo\" next to a named owner is still a calendar that answers when the crew is expected. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Basement-finishing service bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Floor-plan, intended-use, unregistered-square-footage, basement-photo, property-address, owner-name, phone, email, or appointment-date questions are fields you add; they are not documented defaults. Optional basement photo uploads are files you accept; that file type is not a documented default. A basement photo is a stored file, not a floor plan of unlisted rooms. An intended-use note is stored text, not a permit. A basement-finishing form is not proof anyone framed a wall. Notification emails can copy field values and file links off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. How long a basement photo sits after a buildout that never happened is not a documented default of the plugin. | Intended-use and floor-plan answers stored in WordPress; optional basement-photo uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "Iptanus File UploadDocumented frontend upload form (formerly WordPress File Upload). By default files land inside the wp-content directory of the site; the upload path is configurable. Uploaded files can be added to Media or attached to the current page. FTP and SFTP destinations are documented. The Professional version documents uploads to Google Drive, Dropbox, OneDrive, or Amazon S3. A basement photo or floor-plan PDF is a file you accept; that file type is not a documented default. An uploaded basement photo is a stored file, not a floor plan of unlisted rooms. Deleting a form entry later does not by itself prove the file was removed from the uploads path or from a cloud destination you enabled. The listing claims GDPR compliance without a tested EXIF-strip or retention length here. Review upload directory, Media attachment, and cloud destinations. Browser hosts for the visitor upload path were not verified for this snapshot. How long a basement photo file sits after a buildout that never happened is not a documented default of the plugin. | Basement-photo and floor-plan uploads stored under the site wp-content path | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listing"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-kent-batch6-evidence/qa-evidence/2026-10-25-kent-absorb-batch6/pr1646-wp-basement-finishing-plugin-privacy-ceb099c.png"
+  },
+  {
+    "pr": 1647,
+    "sha": "37a7fb30498433daf2eaed88247f29e1e5b275c4",
+    "short": "37a7fb3",
+    "path": "/wp-screened-porch-construction-plugin-privacy",
+    "issue": 1629,
+    "slug": "wp-screened-porch-construction-plugin-privacy",
+    "head": "37a7fb30498433daf2eaed88247f29e1e5b275c4",
+    "file": "pr1647-wp-screened-porch-construction-plugin-privacy-37a7fb3.png",
+    "h1": "The measurement visit that maps the one room of your house with no locks",
+    "criteria": {
+      "h1": "The measurement visit that maps the one room of your house with no locks",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A window such as \"measure week, sit-outside window, porch photo\" is a booking you create; a service name such as screened porch construction or porch screening is a label you configure. Neither is a documented default. Sightline, entry-point, sit-outside-window, porch-photo, property-address, owner-name, phone, email, or appointment-date questions are custom fields you add (textarea, select, input, checkbox, or file); they are not documented defaults. A booking is a calendar row, not proof of work - and a CSV export of \"measure week + sit-outside window + porch photo\" next to a named owner is still a calendar that answers when the crew is expected. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Screened-porch-construction service bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Sightline, entry-point, sit-outside-window, porch-photo, property-address, owner-name, phone, email, or appointment-date questions are fields you add; they are not documented defaults. Optional porch photo uploads are files you accept; that file type is not a documented default. A porch photo is a stored file, not a map of unlocked openings. An entry-point note is stored text, not a key to the house. A screened-porch form is not proof anyone screened an opening. Notification emails can copy field values and file links off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. How long a porch photo sits after a measurement that never happened is not a documented default of the plugin. | Entry-point and sit-outside-window answers stored in WordPress; optional porch-photo uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "Iptanus File UploadDocumented frontend upload form (formerly WordPress File Upload). By default files land inside the wp-content directory of the site; the upload path is configurable. Uploaded files can be added to Media or attached to the current page. FTP and SFTP destinations are documented. The Professional version documents uploads to Google Drive, Dropbox, OneDrive, or Amazon S3. A porch photo or measurement-sheet PDF is a file you accept; that file type is not a documented default. An uploaded porch photo is a stored file, not a map of unlocked openings. Deleting a form entry later does not by itself prove the file was removed from the uploads path or from a cloud destination you enabled. The listing claims GDPR compliance without a tested EXIF-strip or retention length here. Review upload directory, Media attachment, and cloud destinations. Browser hosts for the visitor upload path were not verified for this snapshot. How long a porch photo file sits after a measurement that never happened is not a documented default of the plugin. | Porch-photo and measurement-sheet uploads stored under the site wp-content path | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listing"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-kent-batch6-evidence/qa-evidence/2026-10-25-kent-absorb-batch6/pr1647-wp-screened-porch-construction-plugin-privacy-37a7fb3.png"
+  },
+  {
+    "pr": 1648,
+    "sha": "2ab5e304b74d83e7d36ce9332f5a1279774da234",
+    "short": "2ab5e30",
+    "path": "/wp-tv-mounting-plugin-privacy",
+    "issue": 1630,
+    "slug": "wp-tv-mounting-plugin-privacy",
+    "head": "2ab5e304b74d83e7d36ce9332f5a1279774da234",
+    "file": "pr1648-wp-tv-mounting-plugin-privacy-2ab5e30.png",
+    "h1": "The install form that lists the size of every screen and the wall it hangs on",
+    "criteria": {
+      "h1": "The install form that lists the size of every screen and the wall it hangs on",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A window such as \"install week, screen size, wall photo\" is a booking you create; a service name such as TV mounting or wall-mount install is a label you configure. Neither is a documented default. Screen-size, wall-photo, room-name, gate-or-entry, property-address, owner-name, phone, email, or appointment-date questions are custom fields you add (textarea, select, input, checkbox, or file); they are not documented defaults. A booking is a calendar row, not proof of work - and a CSV export of \"install week + screen size + wall photo\" next to a named owner is still a calendar that answers when the crew is expected. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | TV-mounting service bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Screen-size, wall-photo, room-name, gate-or-entry, property-address, owner-name, phone, email, or appointment-date questions are fields you add; they are not documented defaults. Optional wall photo uploads are files you accept; that file type is not a documented default. A wall photo is a stored file, not an inventory of electronics. A gate-or-entry note is stored text, not a key to the house. A TV-mounting form is not proof anyone hung a screen. Notification emails can copy field values and file links off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. How long a wall photo sits after an install that never happened is not a documented default of the plugin. | Screen-size and gate-or-entry answers stored in WordPress; optional wall-photo uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "Iptanus File UploadDocumented frontend upload form (formerly WordPress File Upload). By default files land inside the wp-content directory of the site; the upload path is configurable. Uploaded files can be added to Media or attached to the current page. FTP and SFTP destinations are documented. The Professional version documents uploads to Google Drive, Dropbox, OneDrive, or Amazon S3. A wall photo or mount-spec PDF is a file you accept; that file type is not a documented default. An uploaded wall photo is a stored file, not an inventory of electronics. Deleting a form entry later does not by itself prove the file was removed from the uploads path or from a cloud destination you enabled. The listing claims GDPR compliance without a tested EXIF-strip or retention length here. Review upload directory, Media attachment, and cloud destinations. Browser hosts for the visitor upload path were not verified for this snapshot. How long a wall photo file sits after an install that never happened is not a documented default of the plugin. | Wall-photo and mount-spec uploads stored under the site wp-content path | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listing"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-kent-batch6-evidence/qa-evidence/2026-10-25-kent-absorb-batch6/pr1648-wp-tv-mounting-plugin-privacy-2ab5e30.png"
+  }
+]
