@@ -1,0 +1,31 @@
+{
+  "issue": 483,
+  "name": "AICAC-HALT-HELPER",
+  "exact_sha": "b553b18e307503176d120c1e5aa66f969ed99c41",
+  "captured_at": "2026-10-26T20:52:50.064Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA b553b18 (database/483-halt-helper); Playwright local serve of per-AC HTML for Halt::security_check_failed / permission_denied / saved. Live sandbox plugin was not checked out.",
+  "email": "haktan+aicac-halt-helper@handldigital.com",
+  "shots": [
+    {
+      "file": "01-helper-methods.png",
+      "bytes": 149819,
+      "heading": "AC1 Halt helper three methods + house strings"
+    },
+    {
+      "file": "02-adoption-route.png",
+      "bytes": 171454,
+      "heading": "AC2 Oct-train four + admin.php route through Halt"
+    },
+    {
+      "file": "03-back-links.png",
+      "bytes": 137084,
+      "heading": "AC3 save/permission terminal pages link back"
+    },
+    {
+      "file": "04-readme-free.png",
+      "bytes": 93119,
+      "heading": "AC4 README-FREE fence"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"b553b18e307503176d120c1e5aa66f969ed99c41\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}

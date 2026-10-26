@@ -1,0 +1,9 @@
+exact_sha=b553b18e307503176d120c1e5aa66f969ed99c41
+short_sha=b553b18
+captured_at=2026-10-26T20:52:50.064Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA b553b18 (database/483-halt-helper); Playwright local serve of per-AC HTML for Halt::security_check_failed / permission_denied / saved. Live sandbox plugin was not checked out.
+files:
+  01-helper-methods.png (149819 B)
+  02-adoption-route.png (171454 B)
+  03-back-links.png (137084 B)
+  04-readme-free.png (93119 B)
