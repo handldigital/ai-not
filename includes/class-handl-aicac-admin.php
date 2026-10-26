@@ -419,12 +419,23 @@ final class Admin {
 			return;
 		}
 
+		$back = Halt::admin_page_url( self::MENU_SLUG );
 		if ( ! $this->user_can_view_screens() ) {
-			wp_die( esc_html__( 'You do not have permission to access this page.', 'handl-ai-connector-access-control' ) );
+			Halt::permission_denied(
+				__( 'You do not have permission to access this page.', 'handl-ai-connector-access-control' ),
+				$back
+			);
+
+			return;
 		}
 
 		if ( ! $this->user_can_manage_options() && ! Caps::is_read_export_action( $posted_action ) ) {
-			wp_die( esc_html__( 'You do not have permission to change AI Access Control settings.', 'handl-ai-connector-access-control' ) );
+			Halt::permission_denied(
+				__( 'You do not have permission to change AI Access Control settings.', 'handl-ai-connector-access-control' ),
+				$back
+			);
+
+			return;
 		}
 
 		if ( 'export_log' === $posted_action ) {
@@ -470,7 +481,12 @@ final class Admin {
 	 */
 	private function require_admin_mutation( string $nonce_action ): void {
 		if ( ! Caps::user_can_manage() ) {
-			wp_die( esc_html__( 'You do not have permission to access this page.', 'handl-ai-connector-access-control' ) );
+			Halt::permission_denied(
+				__( 'You do not have permission to access this page.', 'handl-ai-connector-access-control' ),
+				Halt::admin_page_url( self::MENU_SLUG )
+			);
+
+			return;
 		}
 		check_admin_referer( $nonce_action, 'handl_aicac_nonce' );
 	}
@@ -658,7 +674,12 @@ final class Admin {
 
 	public function render_page(): void {
 		if ( ! $this->user_can_view_screens() ) {
-			wp_die( esc_html__( 'You do not have permission to access this page.', 'handl-ai-connector-access-control' ) );
+			Halt::permission_denied(
+				__( 'You do not have permission to access this page.', 'handl-ai-connector-access-control' ),
+				Halt::admin_page_url( self::MENU_SLUG )
+			);
+
+			return;
 		}
 
 		// F5: Dashboard is default (board Q2). "log" aliases Activity for old bookmarks.
@@ -725,7 +746,12 @@ final class Admin {
 		if ( isset( $_POST['handl_aicac_action'] ) ) {
 			$posted_action = sanitize_key( wp_unslash( (string) $_POST['handl_aicac_action'] ) );
 			if ( ! $this->user_can_manage_options() && ! Caps::is_read_export_action( $posted_action ) ) {
-				wp_die( esc_html__( 'You do not have permission to change AI Access Control settings.', 'handl-ai-connector-access-control' ) );
+				Halt::permission_denied(
+					__( 'You do not have permission to change AI Access Control settings.', 'handl-ai-connector-access-control' ),
+					Halt::admin_page_url( self::MENU_SLUG )
+				);
+
+				return;
 			}
 			if ( 'save_auditor_roles' === $posted_action ) {
 				check_admin_referer( 'handl_aicac_save_auditor_roles', 'handl_aicac_nonce' );

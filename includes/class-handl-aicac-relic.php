@@ -1289,12 +1289,20 @@ final class Relic {
 	}
 
 	public static function handle_save(): void {
+		$back = Halt::admin_page_url( self::PAGE_SLUG );
 		if ( ! Caps::user_can_manage() ) {
-			wp_die( esc_html__( 'You do not have permission to save legacy AI content settings.', 'handl-ai-connector-access-control' ) );
+			Halt::permission_denied(
+				__( 'You do not have permission to save legacy AI content settings.', 'handl-ai-connector-access-control' ),
+				$back
+			);
+
+			return;
 		}
 		check_admin_referer( self::ACTION_SAVE );
 		if ( empty( $_POST[ self::POST_PRESENT ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
-			wp_die( esc_html__( 'Security check failed. Go back, reload the page, and try again.', 'handl-ai-connector-access-control' ) );
+			Halt::security_check_failed( $back );
+
+			return;
 		}
 		self::save_settings( array( 'enabled' => ! empty( $_POST[ self::POST_ENABLED ] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 
@@ -1307,8 +1315,14 @@ final class Relic {
 	}
 
 	public static function handle_ack(): void {
+		$back = Halt::admin_page_url( self::PAGE_SLUG );
 		if ( ! Caps::user_can_manage() ) {
-			wp_die( esc_html__( 'You do not have permission to acknowledge legacy AI findings.', 'handl-ai-connector-access-control' ) );
+			Halt::permission_denied(
+				__( 'You do not have permission to acknowledge legacy AI findings.', 'handl-ai-connector-access-control' ),
+				$back
+			);
+
+			return;
 		}
 		check_admin_referer( self::ACTION_ACK );
 		$post_id = isset( $_POST['post_id'] ) ? (int) wp_unslash( (string) $_POST['post_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
