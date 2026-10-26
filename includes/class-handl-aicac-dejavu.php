@@ -127,7 +127,14 @@ final class Dejavu {
 		$provider = strtolower( trim( (string) ( $row['provider'] ?? '' ) ) );
 		$model    = strtolower( trim( (string) ( $row['model'] ?? '' ) ) );
 		$parts    = array( $plugin, $op, $provider, $model );
-		$joined   = implode( '|', $parts );
+		// AICAC-CARPOOL (#486): when a prompt hash is present, fold it in so
+		// census + carpool share one ask key. Legacy rows without a hash keep
+		// the four-field fingerprint (grades stay stable for history).
+		$prompt_hash = strtolower( trim( (string) ( $row['prompt_hash'] ?? '' ) ) );
+		if ( '' !== $prompt_hash && 1 === preg_match( '/^[a-f0-9]{64}$/', $prompt_hash ) ) {
+			$parts[] = $prompt_hash;
+		}
+		$joined = implode( '|', $parts );
 
 		return '' !== $joined ? $joined : 'unknown';
 	}
@@ -371,13 +378,18 @@ final class Dejavu {
 
 		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__( 'Déjà vu', 'handl-ai-connector-access-control' ) . '</h1>';
-		echo '<p class="description">' . esc_html__( 'Connectors that keep asking the same allowed question — a caching opportunity table. Read-only; never changes allow/deny rules. Denied calls are out of scope.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Connectors that keep asking the same allowed question — a caching opportunity table. Denied calls are out of scope.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		echo '<ul class="ul-disc">';
 		echo '<li><strong>' . esc_html__( 'ECHO-CHAMBER', 'handl-ai-connector-access-control' ) . '</strong> — ' . esc_html__( 'Repeat share 70% or higher.', 'handl-ai-connector-access-control' ) . '</li>';
 		echo '<li><strong>' . esc_html__( 'RERUN-HEAVY', 'handl-ai-connector-access-control' ) . '</strong> — ' . esc_html__( 'Repeat share 40% or higher.', 'handl-ai-connector-access-control' ) . '</li>';
 		echo '<li><strong>' . esc_html__( 'VARIED', 'handl-ai-connector-access-control' ) . '</strong> — ' . esc_html__( 'Mostly distinct asks.', 'handl-ai-connector-access-control' ) . '</li>';
 		echo '</ul>';
+
+		// AICAC-CARPOOL (#486): acting half — opt-in + savings on this screen.
+		if ( class_exists( Carpool::class, false ) ) {
+			Carpool::render_dejavu_panel( is_array( $snap['rows'] ) ? $snap['rows'] : array() );
+		}
 
 		if ( empty( $snap['rows'] ) ) {
 			echo '<p>' . esc_html__( 'No repeated allowed calls in the lookback window yet. Grades appear once connectors reuse the same ask.', 'handl-ai-connector-access-control' ) . '</p>';

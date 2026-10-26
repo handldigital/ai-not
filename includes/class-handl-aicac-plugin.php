@@ -37,6 +37,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-budget.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-rate-cap.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-soft-deny.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-carpool.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-forecast.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-governance-coverage.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-usage-trends.php';
@@ -204,6 +205,7 @@ final class Plugin {
 		New_Plugin::instance()->init();
 		First_Deny::instance()->init();
 		Soft_Deny::instance()->init();
+		Carpool::instance()->init();
 		Review_Nudge::instance()->init();
 		Exit_Interview::instance()->init();
 		Version_Watch::init();

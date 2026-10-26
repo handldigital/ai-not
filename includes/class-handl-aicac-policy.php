@@ -280,6 +280,9 @@ final class Policy {
 			if ( class_exists( Deny_Receipt::class, false ) ) { Deny_Receipt::stamp( $event ); } // AICAC-DENY-RECEIPT (#430) sanctioned one-line hook.
 		}
 
+		// AICAC-CARPOOL (#486): on allow, arm cache hit stub or store-capture (never changes $prevent).
+		if ( class_exists( Carpool::class, false ) ) { Carpool::maybe_arm_from_allow( $prevent, $event, $builder, is_string( $plugin ) ? $plugin : null, $operation ); }
+
 		$this->log_event( $event );
 
 		// Observability only: opt-in denial email / digest. Never changes $prevent.
@@ -2198,6 +2201,13 @@ final class Policy {
 			$before = $log[ $i ];
 			$log[ $i ] = array_merge( $log[ $i ], $patch );
 			update_option( Plugin::LOG_OPTION_KEY, $log, false );
+			if ( class_exists( Carpool::class, false ) ) { // AICAC-CARPOOL (#486) sanctioned one-line hook.
+				Carpool::attach_tokens_for_log_key(
+					$log_key,
+					isset( $patch['input_tokens'] ) ? (int) $patch['input_tokens'] : ( isset( $patch['tokens_in'] ) ? (int) $patch['tokens_in'] : null ),
+					isset( $patch['output_tokens'] ) ? (int) $patch['output_tokens'] : ( isset( $patch['tokens_out'] ) ? (int) $patch['tokens_out'] : null )
+				);
+			}
 			// AICAC-BUDGET-A: attribute estimated-spend delta to the period bucket.
 			Budget::maybe_record_from_row( $before, $log[ $i ], self::get_policy() );
 			// S-103: token patch can move estimated spend over a threshold.
