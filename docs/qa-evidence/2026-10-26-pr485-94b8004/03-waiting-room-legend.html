@@ -1,0 +1,18 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR485 03-waiting-room-legend.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:1100px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.ui .wrap{max-width:100%;margin:0;background:#fff;padding:12px;border:1px solid #c3c4c7}
+.ui h1{font-size:22px;font-weight:400;margin:0 0 8px}
+.ui table.widefat{border-collapse:collapse;width:100%;margin:8px 0}
+.ui table.widefat th,.ui table.widefat td{border:1px solid #c3c4c7;padding:6px 8px;text-align:left}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA 94b8004266cd67fea680c31647702e2f99d84c5b · PR485 / #476 AICAC-COPY-POLISH · 03-waiting-room-legend.png</p>
+<section><h2>AC3 Waiting-room grade legend single less-than</h2><dl><dt>legend source</dt><dd>POLITE &lt; 300ms (single escape)</dd><dt>double-escape &amp;lt;</dt><dd>absent</dd></dl><div class="ui"><div class="wrap"><h1>Waiting room</h1><p class="description">Who makes visitors wait on AI — front vs admin vs cron — graded by front-surface p95. Timing only; never blocks or delays a call. Off by default.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_waiting_room_save" /><input type="hidden" name="_wpnonce" value="testnonce" /><input type="hidden" name="handl_aicac_waiting_room_present" value="1" /><table class="form-table" role="presentation"><tbody><tr><th scope="row">Enable waiting room</th><td><label><input type="checkbox" name="handl_aicac_waiting_room_enabled" value="1"  checked="checked" /> Time AI Client calls by request surface and grade front-end visitor waits</label></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save waiting room settings" /></form><p class="description">Grades (front surface p95): INVISIBLE = no front samples · POLITE &lt; 300ms · NOTICEABLE &lt; 2s · BLOCKING ≥ 2s.</p><h2>By plugin (front impact)</h2><p><a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-waiting-room&handl_aicac_waiting_room_csv=1&_wpnonce=test-nonce-5b73fe0652642d70e12fcdef56acb0f5">Download CSV</a> <a class="button" href="https://example.test/wp-admin/admin.php?page=handl-aicac-waiting-room&handl_aicac_waiting_room_print=1&_wpnonce=test-nonce-e4c9383bfe8cc9b68e5fe5debd7b8f3c" target="_blank" rel="noopener noreferrer">Print / PDF view</a></p><table class="widefat striped"><thead><tr><th>Plugin</th><th>Grade</th><th>Front calls</th><th>Visitor-seconds</th><th>p95 (ms)</th><th>Worst wait (ms)</th></tr></thead><tbody><tr><td><code>polite/polite.php</code></td><td>POLITE</td><td>2</td><td>0.13</td><td>80</td><td>80</td></tr></tbody></table><h2>Other surfaces (totals)</h2><table class="widefat striped"><thead><tr><th>Surface</th><th>Calls</th><th>Total ms</th><th>Max ms</th></tr></thead><tbody><tr><td>admin</td><td>0</td><td>0</td><td>0</td></tr><tr><td>rest</td><td>0</td><td>0</td><td>0</td></tr><tr><td>cron</td><td>0</td><td>0</td><td>0</td></tr><tr><td>cli</td><td>0</td><td>0</td><td>0</td></tr></tbody></table></div></div><p class="pass">AC3 pass</p></section>
+</body></html>

@@ -1,0 +1,37 @@
+{
+  "pr": 485,
+  "issue": 476,
+  "name": "AICAC-COPY-POLISH",
+  "exact_sha": "94b8004266cd67fea680c31647702e2f99d84c5b",
+  "captured_at": "2026-10-26T20:38:45.242Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 94b8004 (database/476-copy-polish); Playwright local serve of per-AC HTML including Rate_Shock / Deny_Receipt / Dejavu / Relic / Waiting_Room / Limbo render_page(). Live sandbox plugin was not checked out. Relic fixture now=1761220800.",
+  "email": "haktan+aicac-copy-polish@handldigital.com",
+  "shots": [
+    {
+      "file": "01-menus-deja.png",
+      "bytes": 368515,
+      "heading": "AC1 menus Rate change alerts / Deny receipts / Déjà vu + readable fingerprint"
+    },
+    {
+      "file": "02-relic-review.png",
+      "bytes": 290524,
+      "heading": "AC2 Relic Review status + Legacy AI content subject"
+    },
+    {
+      "file": "03-waiting-room-legend.png",
+      "bytes": 246595,
+      "heading": "AC3 Waiting-room grade legend single less-than"
+    },
+    {
+      "file": "04-limbo-empty.png",
+      "bytes": 225828,
+      "heading": "AC4 Limbo n=0 no completed decisions yet"
+    },
+    {
+      "file": "05-fence-nonce.png",
+      "bytes": 385642,
+      "heading": "AC5 README-FREE fence + nonce sweep string"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"94b8004266cd67fea680c31647702e2f99d84c5b\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true,\n    \"ac5\": true\n}"
+}
