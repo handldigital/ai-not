@@ -558,6 +558,26 @@ final class Limbo {
 	/**
 	 * @param list<int> $values Sorted or unsorted durations in seconds.
 	 */
+	/**
+	 * Admin/print copy for historical time-to-decision; avoids bare em-dash placeholders when n=0.
+	 *
+	 * @param array<string,mixed> $stats Stats map from snapshot().
+	 */
+	public static function time_to_decision_label( array $stats ): string {
+		$n = (int) ( $stats['sample_count'] ?? 0 );
+		if ( $n <= 0 ) {
+			return __( 'Time-to-decision: no completed decisions yet.', 'handl-ai-connector-access-control' );
+		}
+
+		return sprintf(
+			/* translators: 1: median days, 2: worst days, 3: sample count */
+			__( 'Time-to-decision: median %1$s days, worst %2$s days (n=%3$d)', 'handl-ai-connector-access-control' ),
+			null !== ( $stats['median_days'] ?? null ) ? (string) $stats['median_days'] : '—',
+			null !== ( $stats['worst_days'] ?? null ) ? (string) $stats['worst_days'] : '—',
+			$n
+		);
+	}
+
 	public static function median_int( array $values ): ?int {
 		$n = count( $values );
 		if ( 0 === $n ) {
@@ -961,15 +981,7 @@ final class Limbo {
 				(int) ( $snap['sla_days'] ?? self::DEFAULT_SLA_DAYS )
 			)
 		) . '</li>';
-		$html .= '<li>' . esc_html(
-			sprintf(
-				/* translators: 1: median days, 2: worst days, 3: n */
-				__( 'Time-to-decision: median %1$s days, worst %2$s days (n=%3$d)', 'handl-ai-connector-access-control' ),
-				null !== ( $stats['median_days'] ?? null ) ? (string) $stats['median_days'] : '—',
-				null !== ( $stats['worst_days'] ?? null ) ? (string) $stats['worst_days'] : '—',
-				(int) ( $stats['sample_count'] ?? 0 )
-			)
-		) . '</li>';
+		$html .= '<li>' . esc_html( self::time_to_decision_label( $stats ) ) . '</li>';
 		$html .= '</ul>';
 
 		$html .= '<h2>' . esc_html__( 'Aging roster (oldest first)', 'handl-ai-connector-access-control' ) . '</h2>';
@@ -1094,15 +1106,7 @@ final class Limbo {
 				(int) $snap['sla_days']
 			)
 		) . '</li>';
-		echo '<li>' . esc_html(
-			sprintf(
-				/* translators: 1: median, 2: worst, 3: n */
-				__( 'Time-to-decision: median %1$s days, worst %2$s days (n=%3$d)', 'handl-ai-connector-access-control' ),
-				null !== ( $stats['median_days'] ?? null ) ? (string) $stats['median_days'] : '—',
-				null !== ( $stats['worst_days'] ?? null ) ? (string) $stats['worst_days'] : '—',
-				(int) ( $stats['sample_count'] ?? 0 )
-			)
-		) . '</li>';
+		echo '<li>' . esc_html( self::time_to_decision_label( $stats ) ) . '</li>';
 		if ( (int) $snap['stale_count'] > 0 && ! empty( $oldest ) ) {
 			echo '<li><strong>' . esc_html(
 				sprintf(
@@ -1211,7 +1215,7 @@ final class Limbo {
 		}
 		check_admin_referer( self::ACTION_SAVE );
 		if ( empty( $_POST[ self::POST_PRESENT ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
-			wp_die( esc_html__( 'Invalid form', 'handl-ai-connector-access-control' ) );
+			wp_die( esc_html__( 'Security check failed. Go back, reload the page, and try again.', 'handl-ai-connector-access-control' ) );
 		}
 		$days_raw = isset( $_POST[ self::POST_SLA_DAYS ] ) ? wp_unslash( (string) $_POST[ self::POST_SLA_DAYS ] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		self::save_settings(

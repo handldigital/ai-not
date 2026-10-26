@@ -655,8 +655,8 @@ final class Rate_Shock {
 		}
 		add_submenu_page(
 			Admin::MENU_SLUG,
-			__( 'Rate shock', 'handl-ai-connector-access-control' ),
-			__( 'Rate shock', 'handl-ai-connector-access-control' ),
+			__( 'Rate change alerts', 'handl-ai-connector-access-control' ),
+			__( 'Rate change alerts', 'handl-ai-connector-access-control' ),
 			Caps::VIEW,
 			self::PAGE_SLUG,
 			array( self::class, 'render_page' )
@@ -669,7 +669,7 @@ final class Rate_Shock {
 		}
 		check_admin_referer( self::ACTION_SAVE );
 		if ( empty( $_POST[ self::POST_PRESENT ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
-			wp_die( esc_html__( 'Invalid form', 'handl-ai-connector-access-control' ) );
+			wp_die( esc_html__( 'Security check failed. Go back, reload the page, and try again.', 'handl-ai-connector-access-control' ) );
 		}
 		self::save_settings(
 			array(
@@ -689,7 +689,7 @@ final class Rate_Shock {
 		$can_manage = Caps::user_can_manage();
 
 		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__( 'Rate shock', 'handl-ai-connector-access-control' ) . '</h1>';
+		echo '<h1>' . esc_html__( 'Rate change alerts', 'handl-ai-connector-access-control' ) . '</h1>';
 		echo '<p>' . esc_html__( 'When a signed rates-feed update changes prices for models this site used in the last 30 days, AI Not emails the personal cost impact. Unused models and tiny deltas still get an Activity row, but no alert.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( $can_manage ) {

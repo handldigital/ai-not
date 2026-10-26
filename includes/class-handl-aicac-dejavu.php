@@ -133,6 +133,27 @@ final class Dejavu {
 	}
 
 	/**
+	 * Human-readable label for a composite fingerprint key.
+	 */
+	public static function format_fingerprint_label( string $fingerprint ): string {
+		$parts = explode( '|', $fingerprint );
+		if ( count( $parts ) < 4 ) {
+			return $fingerprint;
+		}
+		$plugin   = (string) $parts[0];
+		$op       = (string) $parts[1];
+		$provider = (string) $parts[2];
+		$model    = (string) $parts[3];
+		$ask      = '' !== $op ? $op : __( 'unknown ask', 'handl-ai-connector-access-control' );
+		$model_bit = '' !== $model ? $provider . '/' . $model : $provider;
+		if ( '' === $model_bit ) {
+			$model_bit = __( 'unknown model', 'handl-ai-connector-access-control' );
+		}
+
+		return $plugin . ' · ' . $ask . ' · ' . $model_bit;
+	}
+
+	/**
 	 * @param array<string,mixed> $row Activity row.
 	 */
 	public static function connector_key( array $row ): string {
@@ -334,8 +355,8 @@ final class Dejavu {
 		}
 		add_submenu_page(
 			Admin::MENU_SLUG,
-			__( 'Deja vu', 'handl-ai-connector-access-control' ),
-			__( 'Deja vu', 'handl-ai-connector-access-control' ),
+			__( 'Déjà vu', 'handl-ai-connector-access-control' ),
+			__( 'Déjà vu', 'handl-ai-connector-access-control' ),
 			Caps::VIEW,
 			self::PAGE_SLUG,
 			array( self::class, 'render_page' )
@@ -349,7 +370,7 @@ final class Dejavu {
 		$snap = self::snapshot();
 
 		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__( 'Deja vu', 'handl-ai-connector-access-control' ) . '</h1>';
+		echo '<h1>' . esc_html__( 'Déjà vu', 'handl-ai-connector-access-control' ) . '</h1>';
 		echo '<p class="description">' . esc_html__( 'Connectors that keep asking the same allowed question — a caching opportunity table. Read-only; never changes allow/deny rules. Denied calls are out of scope.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		echo '<ul class="ul-disc">';
@@ -376,7 +397,7 @@ final class Dejavu {
 
 		foreach ( $snap['rows'] as $row ) {
 			$pct = (int) round( 100.0 * (float) $row['repeat_ratio'] );
-			$top = (string) $row['top_fingerprint'] . ' ×' . (int) $row['top_count'];
+			$top = self::format_fingerprint_label( (string) $row['top_fingerprint'] ) . ' ×' . (int) $row['top_count'];
 			echo '<tr>';
 			echo '<td>' . esc_html( (string) $row['connector'] ) . '</td>';
 			echo '<td>' . esc_html( (string) (int) $row['calls'] ) . '</td>';

@@ -827,7 +827,7 @@ final class Deputy {
 		if ( '' !== $who ) {
 			echo '<li>' . esc_html( sprintf( /* translators: %s: login */ __( 'Requested by: %s', 'handl-ai-connector-access-control' ), $who ) ) . '</li>';
 		}
-		echo '<li>' . esc_html( sprintf( /* translators: %d: hours */ __( 'Requester waited: %dh', 'handl-ai-connector-access-control' ), $waited ) ) . '</li>';
+		echo '<li>' . esc_html( sprintf( /* translators: %d: hours */ __( 'Requester has waited: %d hours', 'handl-ai-connector-access-control' ), $waited ) ) . '</li>';
 		echo '</ul>';
 		echo '<p>' . esc_html__( 'This link is scoped to this one request. It does not grant any other capability.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
@@ -976,7 +976,7 @@ final class Deputy {
 		}
 		check_admin_referer( self::ACTION_SAVE );
 		if ( empty( $_POST[ self::POST_PRESENT ] ) ) {
-			self::halt( __( 'That request is not valid.', 'handl-ai-connector-access-control' ) );
+			self::halt( __( 'Security check failed. Go back, reload the page, and try again.', 'handl-ai-connector-access-control' ) );
 
 			return;
 		}
@@ -1033,7 +1033,7 @@ final class Deputy {
 		$body   .= __( 'Requested by:', 'handl-ai-connector-access-control' ) . ' ' . $who . "\n";
 		$body   .= sprintf(
 			/* translators: %d: hours */
-			__( 'Requester waited: %dh', 'handl-ai-connector-access-control' ),
+			__( 'Requester has waited: %d hours', 'handl-ai-connector-access-control' ),
 			$hours
 		) . "\n\n";
 		$body .= __( 'Approve this request for 24 hours:', 'handl-ai-connector-access-control' ) . "\n" . $approve . "\n\n";
@@ -1074,7 +1074,7 @@ final class Deputy {
 			$site
 		);
 		$reask = function_exists( 'admin_url' ) ? admin_url() : '';
-		$body  = __( 'Your AI access request expired because it waited longer than the site deputy window.', 'handl-ai-connector-access-control' ) . "\n\n";
+		$body  = __( "Your AI access request expired because it waited longer than this site's auto-expire window.", 'handl-ai-connector-access-control' ) . "\n\n";
 		$body .= __( 'Plugin:', 'handl-ai-connector-access-control' ) . ' ' . $plugin . "\n";
 		$body .= __( 'Reason:', 'handl-ai-connector-access-control' ) . ' ' . $reason . "\n\n";
 		$body .= __( 'You can sign in and request access again.', 'handl-ai-connector-access-control' ) . "\n";

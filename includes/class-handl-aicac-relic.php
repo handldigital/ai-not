@@ -1017,16 +1017,28 @@ final class Relic {
 	 * @param array<string,mixed> $snap Snapshot.
 	 */
 	public static function build_subject( array $snap ): string {
-		$site = function_exists( 'get_bloginfo' )
+		$site  = function_exists( 'get_bloginfo' )
 			? wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES )
 			: 'WordPress';
+		$relic = (int) ( $snap['unacked_relic'] ?? 0 );
+		$aging = (int) ( $snap['unacked_aging'] ?? 0 );
+		$posts = sprintf(
+			/* translators: %d: count of retired-model posts needing review */
+			_n(
+				'%d retired-model post needs review',
+				'%d retired-model posts need review',
+				$relic,
+				'handl-ai-connector-access-control'
+			),
+			$relic
+		);
 
 		return sprintf(
-			/* translators: 1: site name, 2: unacked RELIC count, 3: unacked AGING count */
-			__( '[%1$s] [RELIC] %2$d unacked retired-model post(s), %3$d aging', 'handl-ai-connector-access-control' ),
+			/* translators: 1: site name, 2: retired-model post phrase, 3: aging count */
+			__( '[%1$s] Legacy AI content: %2$s, %3$d aging', 'handl-ai-connector-access-control' ),
 			$site,
-			(int) ( $snap['unacked_relic'] ?? 0 ),
-			(int) ( $snap['unacked_aging'] ?? 0 )
+			$posts,
+			$aging
 		);
 	}
 
@@ -1162,7 +1174,7 @@ final class Relic {
 
 		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__( 'Legacy AI content', 'handl-ai-connector-access-control' ) . '</h1>';
-		echo '<p class="description">' . esc_html__( 'Finds posts shaped by a model that has already retired (RELIC) or that retires within 90 days (AGING). Ack means you reviewed it and are keeping it as-is; a later touch by another retiring model re-opens the row. Never edits or flags content on the public site. Off by default.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Finds posts shaped by a model that has already retired (RELIC) or that retires within 90 days (AGING). Acknowledged means you reviewed it and are keeping it as-is; a later touch by another retiring model re-opens the row. Never edits or flags content on the public site. Off by default.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( $can_manage ) {
 			$action = admin_url( 'admin-post.php' );
@@ -1175,7 +1187,7 @@ final class Relic {
 			echo '<table class="form-table" role="presentation"><tbody>';
 			echo '<tr><th scope="row">' . esc_html__( 'Enable legacy AI census', 'handl-ai-connector-access-control' ) . '</th><td>';
 			echo '<label><input type="checkbox" name="' . esc_attr( self::POST_ENABLED ) . '" value="1" ' . checked( $enabled, true, false ) . ' /> ';
-			echo esc_html__( 'Join AI-touched provenance with the model retirement calendar and alert on new unacked findings', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'Match posts\' AI provenance against the model retirement calendar and alert on new findings that need review', 'handl-ai-connector-access-control' );
 			echo '</label></td></tr></tbody></table>';
 			submit_button( __( 'Save legacy AI content settings', 'handl-ai-connector-access-control' ) );
 			echo '</form>';
@@ -1190,7 +1202,7 @@ final class Relic {
 		echo '<ul>';
 		echo '<li>' . esc_html( sprintf( /* translators: %d: count */ __( 'RELIC posts: %d', 'handl-ai-connector-access-control' ), (int) $snap['relic_count'] ) ) . '</li>';
 		echo '<li>' . esc_html( sprintf( /* translators: %d: count */ __( 'AGING posts: %d', 'handl-ai-connector-access-control' ), (int) $snap['aging_count'] ) ) . '</li>';
-		echo '<li>' . esc_html( sprintf( /* translators: %d: count */ __( 'Unacked RELIC: %d', 'handl-ai-connector-access-control' ), (int) $snap['unacked_relic'] ) ) . '</li>';
+		echo '<li>' . esc_html( sprintf( /* translators: %d: count */ __( 'RELIC needing review: %d', 'handl-ai-connector-access-control' ), (int) $snap['unacked_relic'] ) ) . '</li>';
 		echo '</ul>';
 
 		echo '<p><a class="button" href="' . esc_url( $csv ) . '">' . esc_html__( 'Download CSV', 'handl-ai-connector-access-control' ) . '</a></p>';
@@ -1206,7 +1218,7 @@ final class Relic {
 		echo '<th>' . esc_html__( 'Model', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Retires', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Verdict', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Ack', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Review status', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Finding', 'handl-ai-connector-access-control' ) . '</th>';
 		if ( $can_manage ) {
 			echo '<th>' . esc_html__( 'Action', 'handl-ai-connector-access-control' ) . '</th>';
@@ -1227,7 +1239,7 @@ final class Relic {
 			echo '<td><code>' . esc_html( (string) $row['provider'] ) . '</code> / <strong>' . esc_html( (string) $row['model'] ) . '</strong></td>';
 			echo '<td>' . esc_html( (string) $row['eol'] ) . '</td>';
 			echo '<td>' . esc_html( (string) $row['verdict'] ) . '</td>';
-			echo '<td>' . esc_html( ! empty( $row['acked'] ) ? __( 'acked', 'handl-ai-connector-access-control' ) : __( 'unacked', 'handl-ai-connector-access-control' ) ) . '</td>';
+			echo '<td>' . esc_html( ! empty( $row['acked'] ) ? __( 'Reviewed', 'handl-ai-connector-access-control' ) : __( 'Needs review', 'handl-ai-connector-access-control' ) ) . '</td>';
 			echo '<td>' . esc_html( (string) $row['summary'] ) . '</td>';
 			if ( $can_manage ) {
 				echo '<td>';
@@ -1282,7 +1294,7 @@ final class Relic {
 		}
 		check_admin_referer( self::ACTION_SAVE );
 		if ( empty( $_POST[ self::POST_PRESENT ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
-			wp_die( esc_html__( 'Invalid form', 'handl-ai-connector-access-control' ) );
+			wp_die( esc_html__( 'Security check failed. Go back, reload the page, and try again.', 'handl-ai-connector-access-control' ) );
 		}
 		self::save_settings( array( 'enabled' => ! empty( $_POST[ self::POST_ENABLED ] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 

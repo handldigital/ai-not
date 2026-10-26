@@ -235,7 +235,7 @@ final class Access_Request {
 		}
 
 		if ( '' === $plugin ) {
-			self::halt( __( 'That request is not valid.', 'handl-ai-connector-access-control' ) );
+			self::halt( __( 'Security check failed. Go back, reload the page, and try again.', 'handl-ai-connector-access-control' ) );
 			return;
 		}
 
@@ -276,7 +276,7 @@ final class Access_Request {
 		$id       = isset( $_POST['handl_aicac_request_id'] ) ? self::sanitize_id( wp_unslash( (string) $_POST['handl_aicac_request_id'] ) ) : '';
 		$decision = isset( $_POST['handl_aicac_decision'] ) ? sanitize_key( wp_unslash( (string) $_POST['handl_aicac_decision'] ) ) : '';
 		if ( '' === $id || ! in_array( $decision, array( 'approve', 'deny' ), true ) ) {
-			self::halt( __( 'That request is not valid.', 'handl-ai-connector-access-control' ) );
+			self::halt( __( 'Security check failed. Go back, reload the page, and try again.', 'handl-ai-connector-access-control' ) );
 			return;
 		}
 
