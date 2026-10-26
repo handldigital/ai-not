@@ -637,8 +637,14 @@ final class Rate_Shock {
 	}
 
 	public static function handle_dismiss(): void {
+		$back = Halt::admin_page_url( self::PAGE_SLUG );
 		if ( ! Caps::user_can_view() ) {
-			wp_die( esc_html__( 'You do not have permission to dismiss this notice.', 'handl-ai-connector-access-control' ) );
+			Halt::permission_denied(
+				__( 'You do not have permission to dismiss this notice.', 'handl-ai-connector-access-control' ),
+				$back
+			);
+
+			return;
 		}
 		check_admin_referer( self::ACTION_DISMISS );
 		delete_option( self::NOTICE_OPTION );
@@ -664,12 +670,20 @@ final class Rate_Shock {
 	}
 
 	public static function handle_save(): void {
+		$back = Halt::admin_page_url( self::PAGE_SLUG );
 		if ( ! Caps::user_can_manage() ) {
-			wp_die( esc_html__( 'You do not have permission to save rate-shock settings.', 'handl-ai-connector-access-control' ) );
+			Halt::permission_denied(
+				__( 'You do not have permission to save rate-shock settings.', 'handl-ai-connector-access-control' ),
+				$back
+			);
+
+			return;
 		}
 		check_admin_referer( self::ACTION_SAVE );
 		if ( empty( $_POST[ self::POST_PRESENT ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
-			wp_die( esc_html__( 'Security check failed. Go back, reload the page, and try again.', 'handl-ai-connector-access-control' ) );
+			Halt::security_check_failed( $back );
+
+			return;
 		}
 		self::save_settings(
 			array(

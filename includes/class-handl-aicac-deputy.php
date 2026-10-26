@@ -969,14 +969,17 @@ final class Deputy {
 		if ( function_exists( 'nocache_headers' ) ) {
 			nocache_headers();
 		}
+		$back = Halt::admin_page_url( self::PAGE_SLUG );
 		if ( ! class_exists( Caps::class, false ) || ! Caps::user_can_manage() ) {
-			self::halt( __( 'You need permission to manage these settings.', 'handl-ai-connector-access-control' ) );
+			Halt::permission_denied( '', $back );
+			self::$last_halt = Halt::last_message();
 
 			return;
 		}
 		check_admin_referer( self::ACTION_SAVE );
 		if ( empty( $_POST[ self::POST_PRESENT ] ) ) {
-			self::halt( __( 'Security check failed. Go back, reload the page, and try again.', 'handl-ai-connector-access-control' ) );
+			Halt::security_check_failed( $back );
+			self::$last_halt = Halt::last_message();
 
 			return;
 		}
@@ -991,12 +994,13 @@ final class Deputy {
 		);
 		$url = function_exists( 'admin_url' )
 			? add_query_arg( array( 'page' => self::PAGE_SLUG, 'updated' => '1' ), admin_url( 'admin.php' ) )
-			: '';
+			: $back;
 		if ( '' !== $url && function_exists( 'wp_safe_redirect' ) ) {
 			wp_safe_redirect( $url );
 			exit;
 		}
-		self::halt( __( 'Deputy settings saved.', 'handl-ai-connector-access-control' ) );
+		Halt::saved( __( 'Deputy settings saved.', 'handl-ai-connector-access-control' ), $url !== '' ? $url : $back );
+		self::$last_halt = Halt::last_message();
 	}
 
 	/* ---------------------------------------------------------------------
