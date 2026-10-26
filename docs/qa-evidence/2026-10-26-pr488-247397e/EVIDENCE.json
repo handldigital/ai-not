@@ -1,0 +1,37 @@
+{
+  "pr": 488,
+  "issue": 483,
+  "name": "AICAC-HALT-HELPER",
+  "exact_sha": "247397ed0bab2c30fff5627937f33e43454cd514",
+  "captured_at": "2026-10-26T20:57:31.918Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 247397e (database/483-halt-helper); Playwright local serve of Halt terminals including Deputy signed-link handle_open. Live sandbox plugin was not checked out.",
+  "email": "haktan+aicac-halt-helper@handldigital.com",
+  "shots": [
+    {
+      "file": "01-helper-methods.png",
+      "bytes": 150496,
+      "heading": "AC1 Halt helper three methods + house strings"
+    },
+    {
+      "file": "02-adoption-route.png",
+      "bytes": 172485,
+      "heading": "AC2 Oct-train four + admin.php route through Halt"
+    },
+    {
+      "file": "02b-deputy-signed-link.png",
+      "bytes": 123838,
+      "heading": "AC2b Deputy signed-link terminals via Halt (wp_die 0)"
+    },
+    {
+      "file": "03-back-links.png",
+      "bytes": 137214,
+      "heading": "AC3 save/permission terminal pages link back"
+    },
+    {
+      "file": "04-readme-free.png",
+      "bytes": 92795,
+      "heading": "AC4 README-FREE fence"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"247397ed0bab2c30fff5627937f33e43454cd514\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true\n}"
+}
