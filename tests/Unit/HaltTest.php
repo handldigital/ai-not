@@ -119,6 +119,7 @@ final class HaltTest extends TestCase {
 		$this->assertStringContainsString( 'Halt::security_check_failed', $deputy_src );
 		$this->assertStringContainsString( 'Halt::permission_denied', $deputy_src );
 		$this->assertStringContainsString( 'Halt::saved', $deputy_src );
+		$this->assertSame( 0, substr_count( $deputy_src, 'wp_die(' ), 'Deputy signed-link halt must not call wp_die directly.' );
 
 		$this->assertStringContainsString( 'Halt::security_check_failed', $relic_src );
 		$this->assertStringContainsString( 'Halt::permission_denied', $relic_src );
@@ -142,6 +143,15 @@ final class HaltTest extends TestCase {
 		$this->assertSame( Halt::last_message(), Deny_Receipt::last_halt() );
 		$this->assertNotSame( '', Halt::last_back_url() );
 		$this->assertStringContainsString( 'page=handl-aicac-deny-receipt', Halt::last_back_url() );
+		$this->assertStringContainsString( 'Back to settings', Halt::last_html() );
+	}
+
+	public function test_deputy_signed_link_errors_route_through_halt_with_back_link(): void {
+		Deputy::handle_open();
+		$this->assertSame( 'permission', Halt::last_kind() );
+		$this->assertSame( Deputy::error_message( 'cap' ), Halt::last_message() );
+		$this->assertSame( Halt::last_message(), Deputy::last_halt() );
+		$this->assertStringContainsString( 'page=handl-aicac-deputy', Halt::last_back_url() );
 		$this->assertStringContainsString( 'Back to settings', Halt::last_html() );
 	}
 

@@ -799,7 +799,7 @@ final class Deputy {
 			return;
 		}
 		$result = self::apply_verified( $got['row'], $id, (int) get_current_user_id() );
-		self::halt( $result['message'] );
+		self::halt( $result['message'], ! empty( $result['ok'] ) );
 	}
 
 	/**
@@ -1382,15 +1382,18 @@ final class Deputy {
 		return bin2hex( random_bytes( 16 ) );
 	}
 
-	private static function halt( string $message ): void {
-		self::$last_halt = $message;
-		if ( defined( 'HANDL_AICAC_PHPUNIT' ) && HANDL_AICAC_PHPUNIT ) {
-			return;
+	/**
+	 * Terminal page for signed-link handlers — always via Halt (back link included).
+	 *
+	 * @param bool $saved True for success terminals; false for permission/invalid-link errors.
+	 */
+	private static function halt( string $message, bool $saved = false ): void {
+		$back = Halt::admin_page_url( self::PAGE_SLUG );
+		if ( $saved ) {
+			Halt::saved( $message, $back );
+		} else {
+			Halt::permission_denied( $message, $back );
 		}
-		if ( function_exists( 'wp_die' ) ) {
-			wp_die( esc_html( $message ) );
-		}
-		echo esc_html( $message );
-		exit;
+		self::$last_halt = Halt::last_message();
 	}
 }
