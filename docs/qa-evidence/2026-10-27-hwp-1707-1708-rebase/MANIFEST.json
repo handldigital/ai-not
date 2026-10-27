@@ -1,0 +1,146 @@
+[
+  {
+    "pr": 1729,
+    "issue": 1707,
+    "sha": "c308e9854763c9d654ea4c4c819eb63e671751f8",
+    "short": "c308e98",
+    "path": "/wp-float-tank-installation-plugin-privacy",
+    "slug": "wp-float-tank-installation-plugin-privacy",
+    "h1": "The install quote that soundproofs the room where you go to disappear",
+    "head": "c308e9854763c9d654ea4c4c819eb63e671751f8",
+    "file": "pr1729-wp-float-tank-installation-plugin-privacy-c308e98.png",
+    "criteria": {
+      "h1": "The install quote that soundproofs the room where you go to disappear",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A window such as \"isolation pour week, tank size, soundproofing notes\" is a booking you create; a service name such as float tank installation or sensory-deprivation pod install is a label you configure. Neither is a documented default. Property-address, floor-plan, plumbing-and-filtration-specs, wellness-claims, owner-name, phone, email, or appointment-date questions are custom fields you add (textarea, select, input, checkbox, or file); they are not documented defaults. A booking is a calendar row, not proof of work - and a CSV export of \"isolation pour week + tank size + soundproofing notes\" next to a named owner is still a calendar that answers when the crew is expected. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Float tank installation service bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Property-address, floor-plan, plumbing-and-filtration-specs, wellness-claims, owner-name, phone, email, or appointment-date questions are fields you add; they are not documented defaults. Optional floor-plan uploads are files you accept; that file type is not a documented default. A wellness claim is stored text, not a medical diagnosis. A floor-plan note is stored text, not a sealed architectural drawing. A float tank installation form is not proof of completed work. Notification emails can copy field values and file links off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. How long a floor plan sits after a call that never happened is not a documented default of the plugin. | Wellness-claim and floor-plan answers stored in WordPress; optional floor-plan uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "Iptanus File UploadDocumented frontend upload form (formerly WordPress File Upload). By default files land inside the wp-content directory of the site; the upload path is configurable. Uploaded files can be added to Media or attached to the current page. FTP and SFTP destinations are documented. The Professional version documents uploads to Google Drive, Dropbox, OneDrive, or Amazon S3. A floor-plan PDF is a file you accept; that file type is not a documented default. An uploaded floor-plan PDF is a stored file, not proof of completed work. Deleting a form entry later does not by itself prove the file was removed from the uploads path or from a cloud destination you enabled. The listing claims GDPR compliance without a tested EXIF-strip or retention length here. Review upload directory, Media attachment, and cloud destinations. Browser hosts for the visitor upload path were not verified for this snapshot. How long a floor-plan file sits after a call that never happened is not a documented default of the plugin. | Floor-plan and room-layout uploads stored under the site wp-content path | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listing"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-1707-1708-evidence/qa-evidence/2026-10-27-hwp-1707-1708-rebase/pr1729-wp-float-tank-installation-plugin-privacy-c308e98.png"
+  },
+  {
+    "pr": 1730,
+    "issue": 1708,
+    "sha": "d0cf9df78c9bab32967c588a01fadb83678f9223",
+    "short": "d0cf9df",
+    "path": "/wp-sugar-shack-construction-plugin-privacy",
+    "slug": "wp-sugar-shack-construction-plugin-privacy",
+    "h1": "The outbuilding quote that counts your taps, your acreage, and the nights the fire runs unattended",
+    "head": "d0cf9df78c9bab32967c588a01fadb83678f9223",
+    "file": "pr1730-wp-sugar-shack-construction-plugin-privacy-d0cf9df.png",
+    "criteria": {
+      "h1": "The outbuilding quote that counts your taps, your acreage, and the nights the fire runs unattended",
+      "tableRows": [
+        "Easy AppointmentsDocumented self-hosted appointment plugin marketed for service businesses (plugin version 4.0.3). WordPress admin screens cover locations, services, workers, an appointments list, a customer list, custom form fields, and CSV export. A window such as \"boil weekend, tap count, evaporator size\" is a booking you create; a service name such as sugar shack construction or maple evaporator house is a label you configure. Neither is a documented default. Property-address, wooded-acreage, tap-count, evaporator-specs, hobby-vs-commercial-intent, owner-name, phone, email, or appointment-date questions are custom fields you add (textarea, select, input, checkbox, or file); they are not documented defaults. A booking is a calendar row, not proof of work - and a CSV export of \"boil weekend + tap count + evaporator size\" next to a named owner is still a calendar that answers when the crew is expected. Emails can include those custom fields and copy the appointment off-site. An optional GDPR setting can auto-remove customer data older than six months; that is not a default purge. Google Calendar, SMS, and payments are Pro. Google reCAPTCHA is optional. Public booking-form browser hosts are unverified. | Sugar shack construction service bookings stored on your WordPress site | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv4.0.3 readme.txt (SVN)",
+        "Forminator Forms – Contact Form, Payment Form & Custom Form BuilderDocumented self-hosted form builder (plugin version 1.58.1). The listing states Forminator stores and organizes submissions so you can sort, analyze, and manage responses, and includes a free file-upload field with multi-file support. Version 1.58.1 helper-fields.php forminator_upload_root() writes under the WordPress uploads directory plus /forminator/, with per-form hashed subfolders from forminator_get_upload_path(). upload.php stores files through that path. Property-address, wooded-acreage, tap-count, evaporator-specs, hobby-vs-commercial-intent, owner-name, phone, email, or appointment-date questions are fields you add; they are not documented defaults. Optional sugarbush-map uploads are files you accept; that file type is not a documented default. A tap count is stored text, not a survey of your sugarbush. An acreage note is stored text, not a deed extract. A sugar shack construction form is not proof of completed work. Notification emails can copy field values and file links off-site. Optional Stripe, PayPal, HubSpot, Mailchimp, and webhook integrations send data only when you enable them. Public form-page browser hosts are unverified. How long a sugarbush map sits after a call that never happened is not a documented default of the plugin. | Tap-count and acreage answers stored in WordPress; optional sugarbush-map uploads in the site uploads/forminator folder | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listingv1.58.1 readme.txt (SVN)v1.58.1 helper-fields.php (upload root)v1.58.1 upload.php",
+        "Iptanus File UploadDocumented frontend upload form (formerly WordPress File Upload). By default files land inside the wp-content directory of the site; the upload path is configurable. Uploaded files can be added to Media or attached to the current page. FTP and SFTP destinations are documented. The Professional version documents uploads to Google Drive, Dropbox, OneDrive, or Amazon S3. A sugarbush-map PDF is a file you accept; that file type is not a documented default. An uploaded sugarbush-map PDF is a stored file, not proof of completed work. Deleting a form entry later does not by itself prove the file was removed from the uploads path or from a cloud destination you enabled. The listing claims GDPR compliance without a tested EXIF-strip or retention length here. Review upload directory, Media attachment, and cloud destinations. Browser hosts for the visitor upload path were not verified for this snapshot. How long a sugarbush-map file sits after a call that never happened is not a documented default of the plugin. | Sugarbush-map and evaporator-plan uploads stored under the site wp-content path | Browser hosts not verified | Not assessed | Not tested | None | WordPress.org listing"
+      ],
+      "related": [
+        {
+          "text": "",
+          "href": "/"
+        },
+        {
+          "text": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "text": "Services",
+          "href": "/services"
+        },
+        {
+          "text": "Who We Serve",
+          "href": "/who-we-serve"
+        },
+        {
+          "text": "Proof",
+          "href": "/praise"
+        },
+        {
+          "text": "Blog",
+          "href": "/blog"
+        },
+        {
+          "text": "Fix my site",
+          "href": "/triage"
+        },
+        {
+          "text": "One-time fix",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=primary-nav"
+        },
+        {
+          "text": "Speed check",
+          "href": "/speed-check"
+        },
+        {
+          "text": "Contact",
+          "href": "/contact-us"
+        },
+        {
+          "text": "Emergency?",
+          "href": "/emergency"
+        },
+        {
+          "text": "Get help",
+          "href": "/one-time-fix?from=nav&utm_source=nav&utm_medium=internal&utm_campaign=handlwp_one_time_fix_owned&utm_content=nav-get-help-cta"
+        }
+      ],
+      "disclaimer": true,
+      "privacyIndex": true
+    },
+    "outPath": "/Users/handl/.buzz/.scratch/hwp-1707-1708-evidence/qa-evidence/2026-10-27-hwp-1707-1708-rebase/pr1730-wp-sugar-shack-construction-plugin-privacy-d0cf9df.png"
+  }
+]
