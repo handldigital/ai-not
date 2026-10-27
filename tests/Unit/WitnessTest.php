@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace HandL\AICAC\Tests\Unit;
 
+use HandL\AICAC\Legal_Hold;
 use HandL\AICAC\Plugin;
 use HandL\AICAC\Witness;
 use PHPUnit\Framework\TestCase;
@@ -28,6 +29,7 @@ final class WitnessTest extends TestCase {
 		$GLOBALS['handl_aicac_test_added_actions']    = array();
 		$GLOBALS['handl_aicac_test_cron']             = array();
 		Witness::reset_for_tests();
+		Legal_Hold::reset_for_tests();
 		update_option( 'admin_email', 'haktan+aicac-witness@handldigital.com' );
 		update_option(
 			Plugin::OPTION_KEY,
@@ -53,6 +55,7 @@ final class WitnessTest extends TestCase {
 		$GLOBALS['handl_aicac_test_added_actions'] = array();
 		$GLOBALS['handl_aicac_test_cron']          = array();
 		Witness::reset_for_tests();
+		Legal_Hold::reset_for_tests();
 		parent::tearDown();
 	}
 
@@ -545,10 +548,28 @@ final class WitnessTest extends TestCase {
 	}
 
 	public function test_legal_hold_class_absent_means_no_hold_info(): void {
-		if ( class_exists( 'HandL\\AICAC\\Legal_Hold', false ) ) {
-			$this->markTestSkipped( 'Legal_Hold is present in this build; the absent-class guard path cannot be exercised in-process.' );
-		}
-		$this->assertFalse( class_exists( 'HandL\\AICAC\\Legal_Hold', false ), 'Legal_Hold is not part of this branch.' );
+		// Absent-class guard (held_count → 0) cannot be exercised in-process
+		// once Legal_Hold is loaded. Union: seed a real site-wide hold so
+		// Witness::held_count reads Legal_Hold::has_active_holds / row_is_held.
+		$this->assertTrue( class_exists( Legal_Hold::class, false ) );
+		$this->assertTrue( method_exists( Legal_Hold::class, 'has_active_holds' ) );
+		$this->assertTrue( method_exists( Legal_Hold::class, 'row_is_held' ) );
+		update_option(
+			Legal_Hold::HOLDS_OPTION,
+			array(
+				'unionhold' => array(
+					'id'         => 'unionhold',
+					'name'       => 'Union hold',
+					'scope'      => Legal_Hold::SCOPE_SITE,
+					'reason'     => 'union tests',
+					'created_at' => self::NOW,
+					'created_by' => 1,
+				),
+			),
+			false
+		);
+		$this->assertTrue( Legal_Hold::has_active_holds() );
+
 		$old    = array( self::NOW - ( 45 * self::DAY ) );
 		$recent = $this->recent( 3 );
 		$this->baseline( array_merge( $old, $recent ) );
@@ -560,7 +581,10 @@ final class WitnessTest extends TestCase {
 		);
 		$this->recheck( $recent );
 
-		$this->assertSame( 'sanctioned', $this->only_finding()['classification'] );
+		$finding = $this->only_finding();
+		$this->assertSame( 'unsanctioned', $finding['classification'] );
+		$this->assertSame( 'prune_despite_legal_hold', $finding['code'] );
+		$this->assertStringContainsString( 'legal hold', $finding['summary'] );
 	}
 
 	public function test_finding_links_to_retention_screen_when_available(): void {

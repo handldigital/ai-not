@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace HandL\AICAC\Tests\Unit;
 
 use HandL\AICAC\Doppelganger;
+use HandL\AICAC\Drill;
 use HandL\AICAC\Plugin;
 use PHPUnit\Framework\TestCase;
 
@@ -26,6 +27,7 @@ final class DoppelgangerTest extends TestCase {
 		$GLOBALS['handl_aicac_test_added_actions']    = array();
 		$GLOBALS['handl_aicac_test_cron']             = array();
 		Doppelganger::reset_for_tests();
+		Drill::reset_for_tests();
 		update_option( 'admin_email', 'owner@prod.example.com' );
 		update_option(
 			Plugin::OPTION_KEY,
@@ -44,6 +46,7 @@ final class DoppelgangerTest extends TestCase {
 		$GLOBALS['handl_aicac_test_cron']          = array();
 		unset( $GLOBALS['handl_aicac_wp_mail'] );
 		Doppelganger::reset_for_tests();
+		Drill::reset_for_tests();
 		parent::tearDown();
 	}
 
@@ -245,6 +248,12 @@ final class DoppelgangerTest extends TestCase {
 			)
 		);
 		$this->enable();
+		// Absent-class skip of the drill schedule cannot be exercised
+		// in-process once Drill is loaded. Union: seed Drill enabled.
+		$this->assertTrue( class_exists( Drill::class, false ) );
+		$this->assertTrue( method_exists( Drill::class, 'is_enabled' ) );
+		Drill::save_settings( array( 'enabled' => true ) );
+		$this->assertTrue( Drill::is_enabled() );
 		$options_before = $GLOBALS['handl_aicac_test_options'];
 
 		$ammo = Doppelganger::ammunition();
@@ -266,9 +275,8 @@ final class DoppelgangerTest extends TestCase {
 		$this->assertTrue( $live['weekly_report'] );
 		$this->assertTrue( $live['monthly_report'] );
 		$this->assertFalse( $live['governance_digest'] );
-		if ( ! class_exists( 'HandL\\AICAC\\Drill', false ) ) {
-			$this->assertArrayNotHasKey( 'drill', $live, 'drill is skipped when its class is absent' );
-		}
+		$this->assertArrayHasKey( 'drill', $live );
+		$this->assertTrue( $live['drill'] );
 		$this->assertNotEmpty( $snap['checklist'] );
 
 		$keys = array();
