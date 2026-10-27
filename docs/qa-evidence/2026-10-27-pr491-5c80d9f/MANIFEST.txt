@@ -1,0 +1,9 @@
+exact_sha=5c80d9ffd4a6406c7536d31b36a88a9837c5c221
+short_sha=5c80d9f
+captured_at=2026-10-27T21:04:47.294Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 5c80d9f (ai-not-477-union-tests); Playwright local serve of per-AC HTML for the four union asserts. Live sandbox plugin was not checked out.
+files:
+  01-myai-quota.png (122428 B)
+  02-witness-legal-hold.png (147441 B)
+  03-dossier-join.png (129909 B)
+  04-drill-suite.png (178257 B)

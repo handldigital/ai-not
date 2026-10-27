@@ -1,0 +1,32 @@
+{
+  "pr": 491,
+  "issue": 477,
+  "name": "AICAC-UNION-TESTS",
+  "exact_sha": "5c80d9ffd4a6406c7536d31b36a88a9837c5c221",
+  "captured_at": "2026-10-27T21:04:47.294Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 5c80d9f (ai-not-477-union-tests); Playwright local serve of per-AC HTML for the four union asserts. Live sandbox plugin was not checked out.",
+  "email": "haktan+aicac-union-tests@handldigital.com",
+  "shots": [
+    {
+      "file": "01-myai-quota.png",
+      "bytes": 122428,
+      "heading": "AC1 My_AI quota_for_user reads real User_Quota"
+    },
+    {
+      "file": "02-witness-legal-hold.png",
+      "bytes": 147441,
+      "heading": "AC2 Witness prune_despite_legal_hold via real Legal_Hold"
+    },
+    {
+      "file": "03-dossier-join.png",
+      "bytes": 129909,
+      "heading": "AC3 Dossier join uses real User_Quota not the in-file stub"
+    },
+    {
+      "file": "04-drill-suite.png",
+      "bytes": 178257,
+      "heading": "AC4 Drill schedule live; tests-only README-FREE; 0 skips"
+    }
+  ],
+  "export_stdout": "sha=5c80d9ffd4a6406c7536d31b36a88a9837c5c221 ac1=pass ac2=pass ac3=pass ac4=pass"
+}
