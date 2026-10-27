@@ -1,0 +1,111 @@
+{
+  "sha": "f3af1f052f4d0246e7be600996cabb7526bc5a60",
+  "capturedAt": "2026-10-27T21:18:20.320Z",
+  "results": [
+    {
+      "slug": "wp-chimney-sweep-plugin-privacy",
+      "url": "http://127.0.0.1:4175/wp-chimney-sweep-plugin-privacy",
+      "file": "pr1733-wp-chimney-sweep-plugin-privacy-f3af1f0.png",
+      "title": "WordPress chimney sweep plugin privacy | HandL WP",
+      "h1": "Where your chimney photos and service records go",
+      "mainWordCount": 956,
+      "headings": [
+        "Where your chimney photos and service records go",
+        "Where sweep bookings, condition reports, and page tags go",
+        "Bookings and reports on your WordPress site",
+        "Page tags handled by a vendor",
+        "Chimney-sweep booking, condition-report, and marketing-tag setups",
+        "What this table does and does not prove",
+        "Related pages"
+      ],
+      "mainLinkCount": 15,
+      "sourceLinkCount": 9,
+      "scanLimitationPresent": true,
+      "horizontalOverflow": false
+    },
+    {
+      "slug": "wp-aircraft-hangar-construction-plugin-privacy",
+      "url": "http://127.0.0.1:4175/wp-aircraft-hangar-construction-plugin-privacy",
+      "file": "pr1733-wp-aircraft-hangar-construction-plugin-privacy-f3af1f0.png",
+      "title": "WordPress aircraft hangar construction plugin privacy | HandL WP",
+      "h1": "Where your hangar plans and aircraft details go",
+      "mainWordCount": 882,
+      "headings": [
+        "Where your hangar plans and aircraft details go",
+        "Where hangar plans, tail numbers, and hangar bookings go",
+        "Entries, bookings, and uploads on your WordPress site",
+        "Uploads or connected destinations off your WordPress site",
+        "Aircraft-hangar-construction booking, hangar-plan, and tail-number setups",
+        "What this table does and does not prove",
+        "Related pages"
+      ],
+      "mainLinkCount": 13,
+      "sourceLinkCount": 7,
+      "scanLimitationPresent": true,
+      "horizontalOverflow": false
+    },
+    {
+      "slug": "wp-vineyard-installation-plugin-privacy",
+      "url": "http://127.0.0.1:4175/wp-vineyard-installation-plugin-privacy",
+      "file": "pr1733-wp-vineyard-installation-plugin-privacy-f3af1f0.png",
+      "title": "WordPress vineyard installation plugin privacy | HandL WP",
+      "h1": "Where your vineyard plans and property details go",
+      "mainWordCount": 880,
+      "headings": [
+        "Where your vineyard plans and property details go",
+        "Where site plans, water-rights answers, and planting bookings go",
+        "Entries, bookings, and uploads on your WordPress site",
+        "Uploads or connected destinations off your WordPress site",
+        "Vineyard-installation booking, site-plan, and water-rights setups",
+        "What this table does and does not prove",
+        "Related pages"
+      ],
+      "mainLinkCount": 13,
+      "sourceLinkCount": 7,
+      "scanLimitationPresent": true,
+      "horizontalOverflow": false
+    },
+    {
+      "slug": "wp-float-tank-installation-plugin-privacy",
+      "url": "http://127.0.0.1:4175/wp-float-tank-installation-plugin-privacy",
+      "file": "pr1733-wp-float-tank-installation-plugin-privacy-f3af1f0.png",
+      "title": "WordPress float tank installation plugin privacy | HandL WP",
+      "h1": "Where your float-tank plans and booking details go",
+      "mainWordCount": 879,
+      "headings": [
+        "Where your float-tank plans and booking details go",
+        "Where floor plans, wellness claims, and float-tank bookings go",
+        "Entries, bookings, and uploads on your WordPress site",
+        "Uploads or connected destinations off your WordPress site",
+        "Float-tank-installation booking, floor-plan, and wellness-claim setups",
+        "What this table does and does not prove",
+        "Related pages"
+      ],
+      "mainLinkCount": 13,
+      "sourceLinkCount": 7,
+      "scanLimitationPresent": true,
+      "horizontalOverflow": false
+    },
+    {
+      "slug": "wp-sugar-shack-construction-plugin-privacy",
+      "url": "http://127.0.0.1:4175/wp-sugar-shack-construction-plugin-privacy",
+      "file": "pr1733-wp-sugar-shack-construction-plugin-privacy-f3af1f0.png",
+      "title": "WordPress sugar shack construction plugin privacy | HandL WP",
+      "h1": "Where your sugar-shack plans and property details go",
+      "mainWordCount": 882,
+      "headings": [
+        "Where your sugar-shack plans and property details go",
+        "Where sugarbush maps, tap counts, and sugar-shack bookings go",
+        "Entries, bookings, and uploads on your WordPress site",
+        "Uploads or connected destinations off your WordPress site",
+        "Sugar-shack-construction booking, sugarbush-map, and tap-count setups",
+        "What this table does and does not prove",
+        "Related pages"
+      ],
+      "mainLinkCount": 13,
+      "sourceLinkCount": 7,
+      "scanLimitationPresent": true,
+      "horizontalOverflow": false
+    }
+  ]
+}
