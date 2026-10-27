@@ -1,0 +1,32 @@
+[
+  {
+    "pr": 1734,
+    "issue": 1713,
+    "sha": "ae24c11cd6c08091dc6c0560994e6ab741d4db9a",
+    "path": "/wp-cryotherapy-studio-plugin-privacy",
+    "file": "pr1734-wp-cryotherapy-studio-plugin-privacy-ae24c11.png",
+    "h1": "Where your cryotherapy screening answers and waivers go",
+    "headings": 7,
+    "mainLinks": 13,
+    "sourceLinks": 7,
+    "relatedLinks": 3,
+    "scanLimitation": true,
+    "desktopOverflow": false,
+    "capture": "Puppeteer headless browser, 1440px viewport, local exact-SHA production build"
+  },
+  {
+    "pr": 1735,
+    "issue": 1714,
+    "sha": "8d2ba86fe1bd510cf53f1726395c69e0a3655ff2",
+    "path": "/wp-hyperbaric-oxygen-therapy-plugin-privacy",
+    "file": "pr1735-wp-hyperbaric-oxygen-therapy-plugin-privacy-8d2ba86.png",
+    "h1": "Where your hyperbaric therapy intake and session records go",
+    "headings": 7,
+    "mainLinks": 13,
+    "sourceLinks": 7,
+    "relatedLinks": 3,
+    "scanLimitation": true,
+    "desktopOverflow": false,
+    "capture": "Puppeteer headless browser, 1440px viewport, local exact-SHA production build"
+  }
+]
