@@ -1,0 +1,37 @@
+{
+  "pr": 490,
+  "issue": 486,
+  "name": "AICAC-CARPOOL",
+  "exact_sha": "281787a7b4508f325d95d974f99b0c937c5085cf",
+  "captured_at": "2026-10-27T21:06:04.945Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 281787a (database/486-carpool); Playwright local serve of Carpool Déjà vu panel + cache hit/miss/TTL/flush proofs. Live sandbox DNS/500 blocked browser QA (Spot_Check TypeError + handl-sandbox host miss).",
+  "email": "haktan+aicac-carpool@handldigital.com",
+  "shots": [
+    {
+      "file": "01-panel-off-default.png",
+      "bytes": 201573,
+      "heading": "AC1 off by default + Carpool panel empty state"
+    },
+    {
+      "file": "02-cache-hit-savings.png",
+      "bytes": 236727,
+      "heading": "AC2 cache hit stubs transport + served-from-cache + savings"
+    },
+    {
+      "file": "03-cache-miss-variants.png",
+      "bytes": 109670,
+      "heading": "AC3 different prompt model connector are cache misses"
+    },
+    {
+      "file": "04-ttl-flush-deny.png",
+      "bytes": 106667,
+      "heading": "AC4 TTL expiry + policy flush + deny never arms"
+    },
+    {
+      "file": "05-readme-free-suite.png",
+      "bytes": 158883,
+      "heading": "AC5 README-FREE + wire + CarpoolTest"
+    }
+  ],
+  "export_stdout": "{\n    \"head\": \"281787a7b4508f325d95d974f99b0c937c5085cf\",\n    \"ac1\": true,\n    \"ac2\": true,\n    \"ac3\": true,\n    \"ac4\": true,\n    \"ac5\": true\n}"
+}

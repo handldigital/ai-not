@@ -1,0 +1,18 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR490 02-cache-hit-savings.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:420px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:1100px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.ui.wrap,.ui .wrap{max-width:100%;margin:0;background:#fff;padding:12px;border:1px solid #c3c4c7}
+.ui h1,.ui h2{font-size:22px;font-weight:400;margin:0 0 8px}
+.ui table.form-table{border-collapse:collapse;width:100%;margin:8px 0}
+.ui table.form-table th,.ui table.form-table td{border:1px solid #c3c4c7;padding:6px 8px;text-align:left;vertical-align:top}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA 281787a7b4508f325d95d974f99b0c937c5085cf · PR490 / #486 AICAC-CARPOOL · 02-cache-hit-savings.png</p>
+<section><h2>AC2 cache hit stubs transport + served-from-cache + savings</h2><dl><dt>outcome</dt><dd>served-from-cache</dd><dt>carpool_source</dt><dd>aicac_test_bea0bb12</dd><dt>stub body</dt><dd><code>{&quot;id&quot;:&quot;cached-1&quot;,&quot;choices&quot;:[{&quot;message&quot;:{&quot;content&quot;:&quot;hi&quot;}}]}</code></dd><dt>hits / estimated savings</dt><dd>1 / &lt;$0.01</dd><dt>Cost::estimate_usd path</dt><dd>100 in / 20 out → 0.00045</dd></dl><div class="ui wrap"><h2>Carpool</h2><p class="description">Reuse a stored response when the same connector sends an identical allowed request before the cache expires. Off by default. Enable caching separately for each connector. Blocked requests are never cached.</p><p>Calls avoided: 1. Estimated savings: &lt;$0.01.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_carpool_save" /><input type="hidden" name="handl_aicac_carpool_present" value="1" /><input type="hidden" name="_wpnonce" value="testnonce" /><table class="form-table" role="presentation"><tbody><tr><th scope="row"><label for="handl-aicac-carpool-ttl">Cache duration (seconds)</label></th><td><input name="handl_aicac_carpool_ttl" id="handl-aicac-carpool-ttl" type="number" min="30" max="86400" value="300" class="small-text" /><p class="description">Default: 300 seconds. Cached responses expire after this time and are cleared when policy changes.</p></td></tr><tr><th scope="row">Opt-in connectors</th><td><fieldset><legend class="screen-reader-text">Opt-in connectors</legend><label for="handl-aicac-carpool-5e9a7a4d8ae24a6f5a06a0cb12a6eede" style="display:block;margin-bottom:4px;"><input type="checkbox" id="handl-aicac-carpool-5e9a7a4d8ae24a6f5a06a0cb12a6eede" name="handl_aicac_carpool_connectors[echo/plugin.php]" value="1" checked="checked" /> echo/plugin.php</label><label for="handl-aicac-carpool-fdb50117cb8319db5fb1b736e332dc3a" style="display:block;margin-bottom:4px;"><input type="checkbox" id="handl-aicac-carpool-fdb50117cb8319db5fb1b736e332dc3a" name="handl_aicac_carpool_connectors[other/plugin.php]" value="1" /> other/plugin.php</label></fieldset></td></tr></tbody></table><input type="submit" name="submit" class="button" value="Save carpool settings" /></form></div><p class="pass">AC2 pass</p></section>
+</body></html>

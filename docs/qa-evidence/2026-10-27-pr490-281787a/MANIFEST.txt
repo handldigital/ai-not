@@ -1,0 +1,13 @@
+exact_sha=281787a7b4508f325d95d974f99b0c937c5085cf
+short_sha=281787a
+captured_at=2026-10-27T21:06:04.945Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 281787a (database/486-carpool); Playwright local serve of Carpool Déjà vu panel + cache hit/miss/TTL/flush proofs. Live sandbox DNS/500 blocked browser QA (Spot_Check TypeError + handl-sandbox host miss).
+files:
+  01-panel-off-default.png (201573 B)
+  02-cache-hit-savings.png (236727 B)
+  03-cache-miss-variants.png (109670 B)
+  04-ttl-flush-deny.png (106667 B)
+  05-readme-free-suite.png (158883 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md
