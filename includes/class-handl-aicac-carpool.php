@@ -809,7 +809,7 @@ final class Carpool {
 		$saved_usd  = self::estimated_saved_usd( $settings );
 
 		echo '<h2>' . esc_html__( 'Carpool', 'handl-ai-connector-access-control' ) . '</h2>';
-		echo '<p class="description">' . esc_html__( 'When a connector asks the same allowed question again within the TTL window, serve the stored response instead of calling the provider. Off by default — opt in per connector. Denies are never cached.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Reuse a stored response when the same connector sends an identical allowed request before the cache expires. Off by default. Enable caching separately for each connector. Blocked requests are never cached.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		$saved_label = '';
 		if ( null !== $saved_usd && class_exists( Cost::class, false ) && method_exists( Cost::class, 'format_usd' ) ) {
@@ -821,7 +821,7 @@ final class Carpool {
 		echo esc_html(
 			sprintf(
 				/* translators: 1: cache hit count, 2: estimated USD saved (or em dash) */
-				__( 'Saved calls: %1$d. Estimated saved spend: %2$s (est.).', 'handl-ai-connector-access-control' ),
+				__( 'Calls avoided: %1$d. Estimated savings: %2$s.', 'handl-ai-connector-access-control' ),
 				$hits,
 				'' !== $saved_label ? $saved_label : '—'
 			)
@@ -862,13 +862,13 @@ final class Carpool {
 		echo '<input type="hidden" name="' . esc_attr( self::POST_PRESENT ) . '" value="1" />';
 		wp_nonce_field( self::ACTION_SAVE );
 		echo '<table class="form-table" role="presentation"><tbody>';
-		echo '<tr><th scope="row"><label for="handl-aicac-carpool-ttl">' . esc_html__( 'Cache TTL (seconds)', 'handl-ai-connector-access-control' ) . '</label></th><td>';
+		echo '<tr><th scope="row"><label for="handl-aicac-carpool-ttl">' . esc_html__( 'Cache duration (seconds)', 'handl-ai-connector-access-control' ) . '</label></th><td>';
 		echo '<input name="' . esc_attr( self::POST_TTL ) . '" id="handl-aicac-carpool-ttl" type="number" min="' . esc_attr( (string) self::TTL_MIN ) . '" max="' . esc_attr( (string) self::TTL_MAX ) . '" value="' . esc_attr( (string) (int) $settings['ttl'] ) . '" class="small-text" />';
-		echo '<p class="description">' . esc_html__( 'Default 300. Entries expire after this many seconds, or when policy changes.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Default: 300 seconds. Cached responses expire after this time and are cleared when policy changes.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Opt-in connectors', 'handl-ai-connector-access-control' ) . '</th><td>';
 		if ( empty( $connectors ) ) {
-			echo '<p>' . esc_html__( 'No connectors in the lookback window yet. Grades appear once connectors reuse the same ask — then you can opt them in here.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p>' . esc_html__( 'No connectors available to enable yet. Check again after connectors send more allowed requests.', 'handl-ai-connector-access-control' ) . '</p>';
 		} else {
 			echo '<fieldset><legend class="screen-reader-text">' . esc_html__( 'Opt-in connectors', 'handl-ai-connector-access-control' ) . '</legend>';
 			foreach ( array_keys( $connectors ) as $c ) {

@@ -378,7 +378,7 @@ final class Dejavu {
 
 		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__( 'Déjà vu', 'handl-ai-connector-access-control' ) . '</h1>';
-		echo '<p class="description">' . esc_html__( 'Connectors that keep asking the same allowed question — a caching opportunity table. Denied calls are out of scope.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Find connectors that repeat the same allowed request. Blocked requests are excluded. Caching does not change allow or block rules.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		echo '<ul class="ul-disc">';
 		echo '<li><strong>' . esc_html__( 'ECHO-CHAMBER', 'handl-ai-connector-access-control' ) . '</strong> — ' . esc_html__( 'Repeat share 70% or higher.', 'handl-ai-connector-access-control' ) . '</li>';
