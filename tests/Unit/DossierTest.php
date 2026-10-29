@@ -10,8 +10,11 @@ declare(strict_types=1);
 namespace HandL\AICAC\Tests\Unit;
 
 use HandL\AICAC\Access_Request;
+use HandL\AICAC\Aup;
+use HandL\AICAC\Clock;
 use HandL\AICAC\Dossier;
 use HandL\AICAC\Plugin;
+use HandL\AICAC\User_Quota;
 use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/../stubs/wp-admin-escape.php';
@@ -34,6 +37,8 @@ final class DossierTest extends TestCase {
 		);
 		unset( $GLOBALS['handl_aicac_test_dossier_sources'] );
 		Dossier::reset_for_tests();
+		User_Quota::reset_for_tests();
+		Aup::reset_for_tests();
 		update_option(
 			Plugin::OPTION_KEY,
 			array(
@@ -50,6 +55,8 @@ final class DossierTest extends TestCase {
 
 	protected function tearDown(): void {
 		Dossier::reset_for_tests();
+		User_Quota::reset_for_tests();
+		Aup::reset_for_tests();
 		$GLOBALS['handl_aicac_test_options'] = array();
 		unset(
 			$GLOBALS['handl_aicac_test_users'],
@@ -57,7 +64,8 @@ final class DossierTest extends TestCase {
 			$GLOBALS['handl_aicac_test_current_user_can'],
 			$GLOBALS['handl_aicac_test_caps'],
 			$GLOBALS['handl_aicac_test_quota_eval'],
-			$GLOBALS['handl_aicac_test_aup_status']
+			$GLOBALS['handl_aicac_test_aup_status'],
+			$GLOBALS['handl_aicac_test_user_meta']
 		);
 		parent::tearDown();
 	}
@@ -126,10 +134,25 @@ final class DossierTest extends TestCase {
 	}
 
 	public function test_join_with_all_sources_present(): void {
-		if ( ( new \ReflectionClass( \HandL\AICAC\User_Quota::class ) )->getFileName() !== __FILE__ ) {
-			$this->markTestSkipped( 'Real User_Quota is loaded; this test drives the stub defined in this file.' );
-		}
+		// In-file User_Quota / Aup stubs only load when those classes are
+		// absent. Union main always has the real classes; seed their options.
+		$this->assertTrue( class_exists( User_Quota::class, false ) );
+		$this->assertNotSame( __FILE__, ( new \ReflectionClass( User_Quota::class ) )->getFileName() );
 		$now = 1_800_000_000;
+		$policy                                   = get_option( Plugin::OPTION_KEY, array() );
+		$policy                                   = is_array( $policy ) ? $policy : array();
+		$policy[ User_Quota::POLICY_ROLE_LIMITS ] = array( 'editor' => 40 );
+		update_option( Plugin::OPTION_KEY, $policy, false );
+		User_Quota::set_window_count( 12, User_Quota::hour_key( Clock::now() ), 12 );
+		Aup::save_settings(
+			array(
+				'enabled'     => true,
+				'policy_text' => 'Use AI responsibly.',
+				'grace_days'  => 7,
+			),
+			$now
+		);
+		Aup::accept_current( 12, $now, '127.0.0.1' );
 		update_option(
 			Plugin::LOG_OPTION_KEY,
 			array(
@@ -161,14 +184,6 @@ final class DossierTest extends TestCase {
 			'HandL\\AICAC\\Aup'            => true,
 			'HandL\\AICAC\\Access_Request' => true,
 		);
-		$GLOBALS['handl_aicac_test_quota_eval'] = array(
-			'prevent' => false,
-			'reason'  => '',
-			'limit'   => 40,
-			'count'   => 12,
-			'source'  => 'role',
-		);
-		$GLOBALS['handl_aicac_test_aup_status'] = 'current';
 		$req_id = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 		update_option(
 			Access_Request::OPTION_KEY,
@@ -245,6 +260,8 @@ final class DossierTest extends TestCase {
 
 namespace HandL\AICAC;
 
+// Branch-scoped doubles. On union main the real classes are already loaded,
+// so these blocks are no-ops (class_exists stubs cannot unload them in-process).
 if ( ! class_exists( User_Quota::class, false ) ) {
 	/**
 	 * Test double for queued User_Quota (#339).

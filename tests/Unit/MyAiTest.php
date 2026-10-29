@@ -10,10 +10,12 @@ declare(strict_types=1);
 namespace HandL\AICAC\Tests\Unit;
 
 use HandL\AICAC\Access_Request;
+use HandL\AICAC\Clock;
 use HandL\AICAC\My_AI;
 use HandL\AICAC\Plugin;
 use HandL\AICAC\Policy;
 use HandL\AICAC\Temp_Allow;
+use HandL\AICAC\User_Quota;
 use PHPUnit\Framework\TestCase;
 
 final class MyAiTest extends TestCase {
@@ -26,6 +28,7 @@ final class MyAiTest extends TestCase {
 		$GLOBALS['handl_aicac_test_caps'] = array( 'read' => true );
 		unset( $GLOBALS['handl_aicac_test_current_user_can'] );
 		My_AI::reset_for_tests();
+		User_Quota::reset_for_tests();
 		update_option(
 			Plugin::OPTION_KEY,
 			array(
@@ -49,13 +52,15 @@ final class MyAiTest extends TestCase {
 
 	protected function tearDown(): void {
 		My_AI::reset_for_tests();
+		User_Quota::reset_for_tests();
 		$GLOBALS['handl_aicac_test_options'] = array();
 		$GLOBALS['handl_aicac_test_user_id'] = 0;
 		unset(
 			$GLOBALS['handl_aicac_test_user_roles'],
 			$GLOBALS['handl_aicac_test_caps'],
 			$GLOBALS['handl_aicac_test_current_user_can'],
-			$GLOBALS['handl_aicac_test_shortcodes']
+			$GLOBALS['handl_aicac_test_shortcodes'],
+			$GLOBALS['handl_aicac_test_user_meta']
 		);
 		delete_option( Access_Request::OPTION_KEY );
 		parent::tearDown();
@@ -138,11 +143,22 @@ final class MyAiTest extends TestCase {
 	}
 
 	public function test_quota_guard_returns_null_without_user_quota_class(): void {
-		if ( class_exists( \HandL\AICAC\User_Quota::class, false ) ) {
-			$this->markTestSkipped( 'User_Quota is present in this build; the absent-class guard path cannot be exercised in-process.' );
-		}
-		$this->assertFalse( class_exists( \HandL\AICAC\User_Quota::class, false ) );
-		$this->assertNull( My_AI::quota_for_user( 12 ) );
+		// Absent-class guard (quota_for_user → null) cannot be exercised
+		// in-process once User_Quota is loaded. Union: seed real fixtures.
+		$this->assertTrue( class_exists( User_Quota::class, false ) );
+		$this->assertTrue( method_exists( User_Quota::class, 'evaluate' ) );
+		$policy                                   = Policy::get_policy();
+		$policy[ User_Quota::POLICY_ROLE_LIMITS ] = array( 'editor' => 40 );
+		update_option( Plugin::OPTION_KEY, $policy, false );
+		$now = Clock::now();
+		User_Quota::set_window_count( 12, User_Quota::hour_key( $now ), 12 );
+
+		$quota = My_AI::quota_for_user( 12 );
+		$this->assertIsArray( $quota );
+		$this->assertSame( 40, $quota['limit'] );
+		$this->assertSame( 12, $quota['count'] );
+		$this->assertSame( 'role', $quota['source'] );
+		$this->assertFalse( $quota['prevent'] );
 	}
 
 	public function test_pending_requests_filter_to_self(): void {
