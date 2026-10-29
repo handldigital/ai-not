@@ -416,14 +416,14 @@ final class Seatbelt {
 
 		echo '<div class="handl-aicac-seatbelt-panel" style="border:1px solid #c3c4c7;padding:12px 16px;background:#fff;max-width:40em;margin:0 0 1.25em;">';
 		echo '<h2 style="margin-top:0;">' . esc_html__( 'Update seatbelt', 'handl-ai-connector-access-control' ) . '</h2>';
-		echo '<p>' . esc_html__( 'While WordPress is updating plugins, themes, or core, deny governed AI calls and restore your policy when the update finishes. Off by default.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p>' . esc_html__( 'Block AI calls controlled by HandL during WordPress, plugin, and theme updates. Your policy is restored when this protection ends. Off by default.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( ! empty( $win['active'] ) ) {
-			echo '<p><strong>' . esc_html__( 'Seatbelt window is active.', 'handl-ai-connector-access-control' ) . '</strong> ';
+			echo '<p><strong>' . esc_html__( 'Update protection is active.', 'handl-ai-connector-access-control' ) . '</strong> ';
 			echo esc_html(
 				sprintf(
-					/* translators: %d: held call count */
-					__( 'Held calls so far: %d.', 'handl-ai-connector-access-control' ),
+					/* translators: %d: blocked AI call count during the update window */
+					__( 'AI calls blocked during this update: %d.', 'handl-ai-connector-access-control' ),
 					(int) $win['held_count']
 				)
 			);
@@ -435,10 +435,10 @@ final class Seatbelt {
 		echo '<input type="hidden" name="handl_aicac_tab" value="' . esc_attr( $tab ) . '" />';
 		wp_nonce_field( self::ACTION_SAVE, 'handl_aicac_nonce' );
 		echo '<p><label><input type="checkbox" name="handl_aicac_seatbelt_enabled" value="1" ' . checked( ! empty( $settings['enabled'] ), true, false ) . ' /> ';
-		echo esc_html__( 'Enable automatic deny-all during updates', 'handl-ai-connector-access-control' ) . '</label></p>';
-		echo '<p><label for="handl-aicac-seatbelt-failsafe">' . esc_html__( 'Failsafe duration (seconds)', 'handl-ai-connector-access-control' ) . '</label> ';
+		echo esc_html__( 'Block AI calls during updates', 'handl-ai-connector-access-control' ) . '</label></p>';
+		echo '<p><label for="handl-aicac-seatbelt-failsafe">' . esc_html__( 'Maximum blocking time (seconds)', 'handl-ai-connector-access-control' ) . '</label> ';
 		echo '<input type="number" min="' . esc_attr( (string) self::FAILSAFE_MIN ) . '" max="' . esc_attr( (string) self::FAILSAFE_MAX ) . '" name="handl_aicac_seatbelt_failsafe" id="handl-aicac-seatbelt-failsafe" value="' . esc_attr( (string) $settings['failsafe_seconds'] ) . '" /></p>';
-		echo '<p class="description">' . esc_html__( 'Default: 600. The window ends when the update completes, or after this many seconds if the upgrader crashes.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Default: 600 seconds (10 minutes). Protection ends when the update finishes or this limit is reached, whichever comes first. An existing manual freeze stays active.', 'handl-ai-connector-access-control' ) . '</p>';
 		submit_button( __( 'Save seatbelt settings', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
 		echo '</form>';
 		echo '</div>';
@@ -527,21 +527,39 @@ final class Seatbelt {
 		}
 	}
 
+	/**
+	 * Plain Activity label for an internal window-end cause code.
+	 */
+	public static function cause_label( string $cause ): string {
+		$map = array(
+			'complete'          => __( 'update finished', 'handl-ai-connector-access-control' ),
+			'failsafe'          => __( 'time limit reached', 'handl-ai-connector-access-control' ),
+			'maintenance_clear' => __( 'maintenance ended', 'handl-ai-connector-access-control' ),
+			'manual_cleared'    => __( 'manual restore', 'handl-ai-connector-access-control' ),
+		);
+		$key = sanitize_key( $cause );
+
+		return $map[ $key ] ?? __( 'protection ended', 'handl-ai-connector-access-control' );
+	}
+
 	private static function append_summary( int $held, string $cause, int $now ): void {
 		if ( ! class_exists( Policy::class, false ) ) {
 			return;
 		}
+		$held  = max( 0, $held );
+		$label = self::cause_label( $cause );
 		Policy::append_log_event(
 			array(
 				'ts'       => $now,
 				'decision' => 'seatbelt_window',
 				'channel'  => 'seatbelt',
 				'cause'    => sanitize_key( $cause ),
-				'held'     => max( 0, $held ),
+				'held'     => $held,
 				'summary'  => sprintf(
-					'Update seatbelt ended (%s); held %d call(s).',
-					$cause,
-					max( 0, $held )
+					/* translators: 1: plain end reason (e.g. update finished), 2: blocked call count */
+					__( 'Update protection ended (%1$s). AI calls blocked: %2$d.', 'handl-ai-connector-access-control' ),
+					$label,
+					$held
 				),
 			)
 		);

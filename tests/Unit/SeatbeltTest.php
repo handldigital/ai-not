@@ -116,6 +116,15 @@ final class SeatbeltTest extends TestCase {
 		$this->assertNotNull( $summary );
 		$this->assertSame( 2, (int) ( $summary['held'] ?? -1 ) );
 		$this->assertSame( 'seatbelt', (string) ( $summary['channel'] ?? '' ) );
+		$this->assertSame( 'complete', (string) ( $summary['cause'] ?? '' ) );
+		$this->assertSame(
+			'Update protection ended (update finished). AI calls blocked: 2.',
+			(string) ( $summary['summary'] ?? '' )
+		);
+		$this->assertSame( 'update finished', Seatbelt::cause_label( 'complete' ) );
+		$this->assertSame( 'time limit reached', Seatbelt::cause_label( 'failsafe' ) );
+		$this->assertSame( 'maintenance ended', Seatbelt::cause_label( 'maintenance_clear' ) );
+		$this->assertSame( 'manual restore', Seatbelt::cause_label( 'manual_cleared' ) );
 	}
 
 	public function test_failsafe_expiry_restores_policy(): void {
