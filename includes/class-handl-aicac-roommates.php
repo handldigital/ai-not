@@ -143,6 +143,23 @@ final class Roommates {
 		return self::GRADE_INSUFFICIENT;
 	}
 
+	/**
+	 * Display label for a stored grade code. Internal codes stay unchanged.
+	 */
+	public static function display_grade( string $grade ): string {
+		if ( self::GRADE_SOLO === $grade ) {
+			return __( 'One plugin', 'handl-ai-connector-access-control' );
+		}
+		if ( self::GRADE_SHARED === $grade ) {
+			return __( 'Two plugins', 'handl-ai-connector-access-control' );
+		}
+		if ( self::GRADE_SKELETON === $grade ) {
+			return __( 'Three or more plugins', 'handl-ai-connector-access-control' );
+		}
+
+		return $grade;
+	}
+
 	public static function min_calls(): int {
 		$default = self::MIN_CALLS_DEFAULT;
 		$filtered = apply_filters( 'handl_aicac_roommates_min_calls', $default );
@@ -442,8 +459,8 @@ final class Roommates {
 		}
 		add_submenu_page(
 			Admin::MENU_SLUG,
-			__( 'Roommates', 'handl-ai-connector-access-control' ),
-			__( 'Roommates', 'handl-ai-connector-access-control' ),
+			__( 'API key sharing', 'handl-ai-connector-access-control' ),
+			__( 'API key sharing', 'handl-ai-connector-access-control' ),
 			Caps::VIEW,
 			self::PAGE_SLUG,
 			array( self::class, 'render_page' )
@@ -457,46 +474,52 @@ final class Roommates {
 		$snap = self::snapshot();
 
 		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__( 'Roommates', 'handl-ai-connector-access-control' ) . '</h1>';
-		echo '<p class="description">' . esc_html__( 'API credentials shared by more than one plugin. Report only — this screen never changes policy or the activity log.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<h1>' . esc_html__( 'API key sharing', 'handl-ai-connector-access-control' ) . '</h1>';
+		echo '<p class="description">' . esc_html__( 'See which plugins were found with the same AI API key. This report does not change your policy or activity log. Only a short identifier is shown for each key.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		echo '<ul class="ul-disc">';
-		echo '<li><strong>' . esc_html__( 'SOLO-KEY', 'handl-ai-connector-access-control' ) . '</strong> — ' . esc_html__( 'One plugin holds this credential.', 'handl-ai-connector-access-control' ) . '</li>';
-		echo '<li><strong>' . esc_html__( 'SHARED', 'handl-ai-connector-access-control' ) . '</strong> — ' . esc_html__( 'Two plugins hold this credential.', 'handl-ai-connector-access-control' ) . '</li>';
-		echo '<li><strong>' . esc_html__( 'SKELETON-KEY', 'handl-ai-connector-access-control' ) . '</strong> — ' . esc_html__( 'Three or more plugins hold this credential.', 'handl-ai-connector-access-control' ) . '</li>';
+		echo '<li><strong>' . esc_html__( 'One plugin', 'handl-ai-connector-access-control' ) . '</strong> — ' . esc_html__( 'Key detected in one plugin.', 'handl-ai-connector-access-control' ) . '</li>';
+		echo '<li><strong>' . esc_html__( 'Two plugins', 'handl-ai-connector-access-control' ) . '</strong> — ' . esc_html__( 'Key detected in two plugins.', 'handl-ai-connector-access-control' ) . '</li>';
+		echo '<li><strong>' . esc_html__( 'Three or more plugins', 'handl-ai-connector-access-control' ) . '</strong> — ' . esc_html__( 'Key detected in three or more plugins.', 'handl-ai-connector-access-control' ) . '</li>';
 		echo '</ul>';
 
 		if ( self::GRADE_INSUFFICIENT === $snap['status'] ) {
-			echo '<p>' . esc_html__( 'INSUFFICIENT-DATA: too few logged AI calls to attach last-seen times.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p>' . esc_html(
+				sprintf(
+					/* translators: %d: configured minimum logged AI calls. */
+					__( 'Limited activity history: fewer than %d AI calls are logged.', 'handl-ai-connector-access-control' ),
+					self::min_calls()
+				)
+			) . '</p>';
 		}
 
 		if ( empty( $snap['findings'] ) ) {
-			if ( self::GRADE_INSUFFICIENT !== $snap['status'] ) {
-				echo '<p>' . esc_html__( 'No API credentials found.', 'handl-ai-connector-access-control' ) . '</p>';
-			}
+			echo '<p>' . esc_html__( 'No AI API keys were detected in the data checked.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '</div>';
 
 			return;
 		}
 
+		echo '<p class="description">' . esc_html__( 'Times show the latest logged AI call from any listed plugin, not confirmed use of this key.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<table class="widefat striped"><thead><tr>';
-		echo '<th>' . esc_html__( 'Fingerprint', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Key identifier', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Plugins', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Providers', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Last seen', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Grade', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Latest plugin activity (UTC)', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Sharing', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead><tbody>';
 		foreach ( $snap['findings'] as $row ) {
 			$plugins   = isset( $row['plugins'] ) && is_array( $row['plugins'] ) ? $row['plugins'] : array();
 			$providers = isset( $row['providers'] ) && is_array( $row['providers'] ) ? $row['providers'] : array();
 			$last      = isset( $row['last_seen'] ) ? (int) $row['last_seen'] : 0;
-			$seen      = $last > 0 ? gmdate( 'Y-m-d H:i', $last ) . ' UTC' : '—';
+			$seen      = $last > 0 ? gmdate( 'Y-m-d H:i', $last ) : '—';
+			$grade     = isset( $row['grade'] ) ? (string) $row['grade'] : '';
 			echo '<tr>';
 			echo '<td><code>' . esc_html( (string) $row['short'] ) . '</code></td>';
 			echo '<td>' . esc_html( implode( ', ', array_map( 'strval', $plugins ) ) ) . '</td>';
 			echo '<td>' . esc_html( implode( ', ', array_map( 'strval', $providers ) ) ) . '</td>';
 			echo '<td>' . esc_html( $seen ) . '</td>';
-			echo '<td>' . esc_html( (string) $row['grade'] ) . '</td>';
+			echo '<td>' . esc_html( self::display_grade( $grade ) ) . '</td>';
 			echo '</tr>';
 		}
 		echo '</tbody></table>';

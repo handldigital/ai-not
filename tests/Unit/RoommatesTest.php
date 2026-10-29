@@ -174,7 +174,13 @@ final class RoommatesTest extends TestCase {
 		$this->assertStringNotContainsString( self::KEY, $html );
 		$this->assertStringNotContainsString( 'SHAREDKEY', $html );
 		$this->assertFalse( Roommates::stored_contains_raw_key( $stored, self::KEY ) );
-		$this->assertStringContainsString( 'SKELETON-KEY', $html );
+		$this->assertSame( Roommates::GRADE_SKELETON, $stored['findings'][0]['grade'] );
+		$this->assertStringContainsString( 'Three or more plugins', $html );
+		$this->assertStringNotContainsString( 'SKELETON-KEY', $html );
+		$this->assertStringContainsString( 'API key sharing', $html );
+		$this->assertStringContainsString( 'Key identifier', $html );
+		$this->assertStringContainsString( 'Latest plugin activity (UTC)', $html );
+		$this->assertStringContainsString( 'Times show the latest logged AI call from any listed plugin, not confirmed use of this key.', $html );
 		$this->assertStringContainsString( self::P1, $html );
 		$this->assertStringContainsString( self::P2, $html );
 		$this->assertStringContainsString( self::P3, $html );
@@ -224,8 +230,9 @@ final class RoommatesTest extends TestCase {
 		ob_start();
 		Roommates::render_page();
 		$html = (string) ob_get_clean();
-		$this->assertStringContainsString( 'INSUFFICIENT-DATA', $html );
-		$this->assertStringNotContainsString( 'No API credentials found.', $html );
+		$this->assertStringContainsString( 'Limited activity history: fewer than 5 AI calls are logged.', $html );
+		$this->assertStringNotContainsString( 'INSUFFICIENT-DATA', $html );
+		$this->assertStringContainsString( 'No AI API keys were detected in the data checked.', $html );
 	}
 
 	public function test_empty_state_when_enough_calls_and_no_keys(): void {
@@ -243,7 +250,7 @@ final class RoommatesTest extends TestCase {
 		ob_start();
 		Roommates::render_page();
 		$html = (string) ob_get_clean();
-		$this->assertStringContainsString( 'No API credentials found.', $html );
+		$this->assertStringContainsString( 'No AI API keys were detected in the data checked.', $html );
 		$this->assertStringNotContainsString( '<tbody>', $html );
 	}
 
