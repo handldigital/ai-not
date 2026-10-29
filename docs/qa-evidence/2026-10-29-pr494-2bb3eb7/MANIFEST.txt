@@ -1,0 +1,13 @@
+exact_sha=2bb3eb77553c5b550f2b41496cd1a7f01420db41
+short_sha=2bb3eb7
+captured_at=2026-10-29T23:35:18.598Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 2bb3eb7 (ai-not-487-seatbelt, Krusty copy PASS); Playwright local serve of per-AC HTML including Seatbelt::render_panel(). Live sandbox hostname NXDOMAIN — not checked out.
+files:
+  01-off-default-panel.png (246415 B)
+  02-upgrader-deny-summary.png (220571 B)
+  03-failsafe-restore.png (108905 B)
+  04-manual-freeze-wins.png (104204 B)
+  05-suite-fence.png (115682 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

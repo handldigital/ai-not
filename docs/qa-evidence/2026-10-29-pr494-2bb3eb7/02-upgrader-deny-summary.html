@@ -1,0 +1,14 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PR494 02-upgrader-deny-summary.png</title>
+<style>
+body{margin:24px;font:16px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#111;background:#fff}
+#aicac-qa-stamp{font:18px/1.3 ui-monospace,Menlo,monospace;background:#111;color:#fff;padding:10px 12px}
+dl{display:grid;grid-template-columns:280px 1fr;gap:6px 16px;margin:12px 0}
+dt{font-weight:700}
+section{border:1px solid #ccc;padding:16px;margin:16px 0;max-width:1100px}
+.ui{border:1px solid #ddd;background:#f7f7f7;padding:12px;margin-top:8px}
+.pass{color:#0a7a28;font-weight:700}
+pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace;background:#f6f8fa;padding:12px}
+</style></head><body>
+<p id="aicac-qa-stamp">SHA 2bb3eb77553c5b550f2b41496cd1a7f01420db41 · PR494 / #487 AICAC-SEATBELT · 02-upgrader-deny-summary.png</p>
+<section><h2>AC2 upgrader deny + summary + panel active</h2><p class="pass">AC2 pass</p><dl><dt>denial_reason</dt><dd>update_in_progress</dd><dt>held_count</dt><dd>2</dd><dt>Activity summary</dt><dd>Update protection ended (update finished). AI calls blocked: 2.</dd><dt>policy restored after complete</dt><dd>yes</dd></dl><div class="ui"><div class="handl-aicac-seatbelt-panel" style="border:1px solid #c3c4c7;padding:12px 16px;background:#fff;max-width:40em;margin:0 0 1.25em;"><h2 style="margin-top:0;">Update seatbelt</h2><p>Block AI calls controlled by HandL during WordPress, plugin, and theme updates. Your policy is restored when this protection ends. Off by default.</p><p><strong>Update protection is active.</strong> AI calls blocked during this update: 2.</p><form method="post" action="https://example.test/wp-admin/admin-post.php"><input type="hidden" name="action" value="handl_aicac_seatbelt_save" /><input type="hidden" name="handl_aicac_tab" value="protections" /><input type="hidden" name="handl_aicac_nonce" value="testnonce" /><p><label><input type="checkbox" name="handl_aicac_seatbelt_enabled" value="1"  checked="checked" /> Block AI calls during updates</label></p><p><label for="handl-aicac-seatbelt-failsafe">Maximum blocking time (seconds)</label> <input type="number" min="60" max="3600" name="handl_aicac_seatbelt_failsafe" id="handl-aicac-seatbelt-failsafe" value="600" /></p><p class="description">Default: 600 seconds (10 minutes). Protection ends when the update finishes or this limit is reached, whichever comes first. An existing manual freeze stays active.</p><input type="submit" name="submit" class="button" value="Save seatbelt settings" /></form></div></div></section>
+</body></html>
