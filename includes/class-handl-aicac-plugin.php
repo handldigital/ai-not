@@ -77,6 +77,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quiet-hours.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-break-glass.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-freeze.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-seatbelt.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-pii-warn.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-mcp-gate.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-residency.php';
@@ -201,6 +202,7 @@ final class Plugin {
 		Waiting_Room::init();
 		Break_Glass::init();
 		Freeze::init();
+		Seatbelt::init();
 		Temp_Allow::instance()->init();
 		New_Plugin::instance()->init();
 		First_Deny::instance()->init();

@@ -457,6 +457,19 @@ final class Policy {
 			);
 		}
 
+		// AICAC-SEATBELT (#487): update window — distinct reason before Freeze kill_switch.
+		if ( class_exists( Seatbelt::class, false ) && Seatbelt::should_deny( $now ) ) {
+			Seatbelt::note_held();
+			return self::with_matched_tools(
+				array(
+					'prevent' => true,
+					'reason'  => Seatbelt::REASON,
+				),
+				$policy,
+				$armed_tools ?? array()
+			);
+		}
+
 		if ( ! empty( $policy['kill_switch'] ) ) {
 			$exceptions = self::get_kill_switch_exceptions( $policy );
 			if ( $plugin_basename && in_array( $plugin_basename, $exceptions, true ) ) {
