@@ -1999,6 +1999,9 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		echo '</form>';
 
 		$this->render_freeze_controls( 'protections' );
+		if ( class_exists( Seatbelt::class, false ) ) {
+			Seatbelt::render_panel( 'protections' );
+		}
 
 		Access_Request::render_inbox_section( $plugins );
 
@@ -3456,6 +3459,10 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 		$this->render_onboarding_dashboard_section( $policy );
 		// AICAC-PANIC-FREEZE (#267): one-click deny-all with countdown restore.
 		$this->render_freeze_controls( 'dashboard' );
+		// AICAC-SEATBELT (#487): opt-in auto deny-all during WordPress updates.
+		if ( class_exists( Seatbelt::class, false ) ) {
+			Seatbelt::render_panel( 'dashboard' );
+		}
 		// AICAC-CHECKLIST (#190): post-wizard getting-started panel.
 		$this->render_getting_started_checklist( $policy, $log );
 
@@ -9133,6 +9140,7 @@ echo '<p class="description">' . esc_html__( 'Plugin rules set the main access l
 	private function format_denial_reason_label( string $reason ): string {
 		$map = array(
 			'kill_switch'         => __( 'Blocked by HandL: emergency stop', 'handl-ai-connector-access-control' ),
+			'update_in_progress'  => __( 'Blocked by HandL: WordPress update in progress', 'handl-ai-connector-access-control' ),
 			'quiet_hours'         => __( 'Blocked by HandL: scheduled quiet hours', 'handl-ai-connector-access-control' ),
 			'role'                => __( 'Blocked by HandL: role not allowed', 'handl-ai-connector-access-control' ),
 			'plugin'              => __( 'Blocked by HandL: plugin rule', 'handl-ai-connector-access-control' ),
