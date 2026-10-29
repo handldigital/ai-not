@@ -195,6 +195,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-deputy.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-relic.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-deny-receipt.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-roommates.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -311,6 +312,7 @@ final class Plugin {
 		Deputy::init();
 		Relic::init();
 		Deny_Receipt::init();
+		Roommates::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
