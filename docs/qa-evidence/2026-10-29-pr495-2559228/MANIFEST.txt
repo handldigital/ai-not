@@ -1,0 +1,12 @@
+exact_sha=25592285058ce601ca3fd5b918df30031ee646e3
+short_sha=2559228
+captured_at=2026-10-29T23:21:19.494Z
+method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 2559228 (ai-not-474-roommates); Playwright local serve of per-AC HTML including Roommates::render_page(). Live sandbox plugin was not checked out.
+files:
+  01-wired-init.png (149049 B)
+  02-skeleton-key.png (198025 B)
+  03-fingerprint-only.png (189878 B)
+  04-readonly-suite.png (204814 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

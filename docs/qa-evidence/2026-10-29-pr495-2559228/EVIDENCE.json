@@ -1,0 +1,32 @@
+{
+  "pr": 495,
+  "issue": 474,
+  "name": "AICAC-ROOMMATES",
+  "exact_sha": "25592285058ce601ca3fd5b918df30031ee646e3",
+  "captured_at": "2026-10-29T23:21:19.494Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 2559228 (ai-not-474-roommates); Playwright local serve of per-AC HTML including Roommates::render_page(). Live sandbox plugin was not checked out.",
+  "email": "haktan+aicac-roommates@handldigital.com",
+  "shots": [
+    {
+      "file": "01-wired-init.png",
+      "bytes": 149049,
+      "heading": "AC1 class wired via require+init"
+    },
+    {
+      "file": "02-skeleton-key.png",
+      "bytes": 198025,
+      "heading": "AC2 SKELETON-KEY three plugins one credential"
+    },
+    {
+      "file": "03-fingerprint-only.png",
+      "bytes": 189878,
+      "heading": "AC3 raw key never in option or HTML"
+    },
+    {
+      "file": "04-readonly-suite.png",
+      "bytes": 204814,
+      "heading": "AC4 read-only policy+log + suite"
+    }
+  ],
+  "export_stdout": "ac1=1\nac2=1\nac3=1\nac4=1\nempty=1\nsha=25592285058ce601ca3fd5b918df30031ee646e3\nhtml=/Users/handl/.buzz/.scratch/pr495-export.html"
+}
