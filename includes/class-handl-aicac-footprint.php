@@ -653,6 +653,11 @@ final class Footprint {
 				'note'  => 'Stubs denied AI HTTP responses on the request path.',
 			),
 			array(
+				'class' => 'Carpool',
+				'hook'  => 'pre_http_request',
+				'note'  => 'Serves cached identical allowed AI HTTP responses on the request path.',
+			),
+			array(
 				'class' => 'Policy',
 				'hook'  => 'wp_ai_client_prevent_prompt',
 				'note'  => 'Primary AI Client gate decision filter.',
