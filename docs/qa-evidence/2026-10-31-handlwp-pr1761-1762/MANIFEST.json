@@ -1,0 +1,68 @@
+[
+  {
+    "pr": 1761,
+    "issue": 1754,
+    "sha": "eec601950a1d4cfdb105cc4aa38a729b286192a9",
+    "short": "eec60195",
+    "url": "http://127.0.0.1:5191/wp-glassblowing-studio-plugin-privacy",
+    "h1": "Where memorial-glass order forms store personal details",
+    "testid": "wp-glassblowing-studio-plugin-privacy",
+    "status": 200,
+    "metrics": {
+      "h1": "Where memorial-glass order forms store personal details",
+      "ctaText": "Scan your site for third-party requests",
+      "caveat": "The scan checks browser requests on the pages it visits. It cannot inspect form entries, bookings, uploaded files, email inboxes, staff permissions, vendor accounts, or backups.",
+      "rowCount": 3,
+      "rows": [
+        "wp-glassblowing-studio-plugin-privacy-row-easy-appointments",
+        "wp-glassblowing-studio-plugin-privacy-row-forminator",
+        "wp-glassblowing-studio-plugin-privacy-row-wp-file-upload"
+      ],
+      "related": {
+        "booking": true,
+        "forms": true,
+        "gallery": true,
+        "plugins": true
+      },
+      "table": true
+    },
+    "pngPath": "/Users/handl/.buzz/.scratch/hwp-1754-1755-evidence/pr1761-eec60195.png",
+    "svgPath": "/Users/handl/.buzz/.scratch/hwp-1754-1755-evidence/pr1761-eec60195.svg",
+    "pngBytes": 624767,
+    "svgBytes": 833450,
+    "ok": true
+  },
+  {
+    "pr": 1762,
+    "issue": 1755,
+    "sha": "e598448d5dc0af9563813714360b1af7f0e30e0b",
+    "short": "e598448d",
+    "url": "http://127.0.0.1:5192/wp-blacksmith-classes-plugin-privacy",
+    "h1": "Where forge-class booking forms store student names and waivers",
+    "testid": "wp-blacksmith-classes-plugin-privacy",
+    "status": 200,
+    "metrics": {
+      "h1": "Where forge-class booking forms store student names and waivers",
+      "ctaText": "Scan your site for third-party requests",
+      "caveat": "The scan checks browser requests on the pages it visits. It cannot inspect form entries, bookings, uploaded files, email inboxes, staff permissions, vendor accounts, or backups.",
+      "rowCount": 3,
+      "rows": [
+        "wp-blacksmith-classes-plugin-privacy-row-easy-appointments",
+        "wp-blacksmith-classes-plugin-privacy-row-forminator",
+        "wp-blacksmith-classes-plugin-privacy-row-wp-file-upload"
+      ],
+      "related": {
+        "booking": true,
+        "forms": true,
+        "gallery": true,
+        "plugins": true
+      },
+      "table": true
+    },
+    "pngPath": "/Users/handl/.buzz/.scratch/hwp-1754-1755-evidence/pr1762-e598448d.png",
+    "svgPath": "/Users/handl/.buzz/.scratch/hwp-1754-1755-evidence/pr1762-e598448d.svg",
+    "pngBytes": 640574,
+    "svgBytes": 854526,
+    "ok": true
+  }
+]
