@@ -1,0 +1,5 @@
+01-activity-operation-detour.png	AC1	Expanded Why? + Detour Set AI type Text to Allow + Open this setting
+02-activity-budget-detour.png	AC2	Expanded Why? + Detour budget final estimated amount
+03-activity-multi-none.png	AC3	Expanded Why? + No single setting change found.
+04-deny-receipt-detour.png	AC4	Deny Receipt Detour surface; capability-gated; no apply
+05-suite-fence.png	CI/fence	DetourTest at exact SHA

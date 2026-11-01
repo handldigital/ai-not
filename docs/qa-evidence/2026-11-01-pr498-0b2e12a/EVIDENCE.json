@@ -1,0 +1,37 @@
+{
+  "pr": 498,
+  "issue": 489,
+  "name": "AICAC-DETOUR",
+  "sha": "0b2e12a64ae453532c56aa7905adfbaf9b26771f",
+  "short": "0b2e12a",
+  "dir": "2026-11-01-pr498-0b2e12a",
+  "email": "haktan+aicac-detour@handldigital.com",
+  "method": "Headless Chrome against live local WordPress admin on handl-sandbox at plugin SHA 0b2e12a. Activity row element screenshots with Why? open and .handl-aicac-detour text asserted before capture.",
+  "shots": [
+    {
+      "file": "01-activity-operation-detour.png",
+      "ac": "AC1",
+      "covers": "Expanded Why? + Detour Set AI type Text to Allow + Open this setting"
+    },
+    {
+      "file": "02-activity-budget-detour.png",
+      "ac": "AC2",
+      "covers": "Expanded Why? + Detour budget final estimated amount"
+    },
+    {
+      "file": "03-activity-multi-none.png",
+      "ac": "AC3",
+      "covers": "Expanded Why? + No single setting change found."
+    },
+    {
+      "file": "04-deny-receipt-detour.png",
+      "ac": "AC4",
+      "covers": "Deny Receipt Detour surface; capability-gated; no apply"
+    },
+    {
+      "file": "05-suite-fence.png",
+      "ac": "CI/fence",
+      "covers": "DetourTest at exact SHA"
+    }
+  ]
+}
