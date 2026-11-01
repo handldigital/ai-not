@@ -95,13 +95,13 @@ final class DetourTest extends TestCase {
 
 		$this->assertIsArray( $sug );
 		$this->assertSame( 'operation', $sug['kind'] );
-		$this->assertStringContainsString( 'generate_text', $sug['message'] );
+		$this->assertStringContainsString( 'Set AI type Text to Allow', $sug['message'] );
 		$this->assertStringContainsString( self::PLUGIN, $sug['message'] );
 		$this->assertNotSame( '', $sug['url'] );
 
 		$html = Detour::render_line( $event );
 		$this->assertStringContainsString( 'What would allow this', $html );
-		$this->assertStringContainsString( 'generate_text', $html );
+		$this->assertStringContainsString( 'Set AI type Text to Allow', $html );
 		$this->assertStringContainsString( 'Open this setting', $html );
 		$this->assertSame( $before, $GLOBALS['handl_aicac_test_options'] );
 	}
@@ -141,7 +141,9 @@ final class DetourTest extends TestCase {
 
 		$this->assertIsArray( $sug );
 		$this->assertSame( 'budget', $sug['kind'] );
-		$this->assertStringContainsString( '0.4', $sug['message'] );
+		// Display final budget ($1.00 spend/cap + $0.40 ask = $1.40), not the raise alone.
+		$this->assertStringContainsString( '1.4', $sug['message'] );
+		$this->assertStringContainsString( 'Set the estimated budget', $sug['message'] );
 		$this->assertStringContainsString( self::PLUGIN, $sug['message'] );
 	}
 
@@ -166,10 +168,11 @@ final class DetourTest extends TestCase {
 		$sug = Detour::suggest( $event );
 		$this->assertIsArray( $sug );
 		$this->assertSame( 'none', $sug['kind'] );
-		$this->assertSame( 'No single change allows this.', $sug['message'] );
+		$this->assertSame( 'No single setting change found.', $sug['message'] );
+		$this->assertSame( Detour::NONE_COPY, $sug['message'] );
 
 		$html = Detour::render_line( $event );
-		$this->assertStringContainsString( 'No single change allows this.', $html );
+		$this->assertStringContainsString( 'No single setting change found.', $html );
 		$this->assertStringNotContainsString( 'Open this setting', $html );
 	}
 

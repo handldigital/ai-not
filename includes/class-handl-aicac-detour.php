@@ -27,7 +27,7 @@ final class Detour {
 
 	public const LABEL = 'What would allow this';
 
-	public const NONE_COPY = 'No single change allows this.';
+	public const NONE_COPY = 'No single setting change found.';
 
 	/** @var bool */
 	private static $registered = false;
@@ -134,7 +134,7 @@ final class Detour {
 		if ( empty( $winners ) ) {
 			return array(
 				'kind'    => 'none',
-				'message' => __( 'No single change allows this.', 'handl-ai-connector-access-control' ),
+				'message' => __( 'No single setting change found.', 'handl-ai-connector-access-control' ),
 				'url'     => '',
 			);
 		}
@@ -313,13 +313,12 @@ final class Detour {
 		if ( $family_denied && '' !== $plugin && '' !== $family && Operations::FAMILY_UNKNOWN !== $family ) {
 			$fam_labels = class_exists( Operations::class, false ) ? Operations::family_labels() : array();
 			$fam_label  = isset( $fam_labels[ $family ] ) ? (string) $fam_labels[ $family ] : $family;
-			$op_name    = '' !== $op ? $op : $family;
 			$out[]      = array(
 				'kind'    => 'operation',
 				'message' => sprintf(
-					/* translators: 1: AI Client operation or family label, 2: connector/plugin name */
-					__( 'Enable operation %1$s for connector %2$s', 'handl-ai-connector-access-control' ),
-					$op_name,
+					/* translators: 1: AI type / capability family label, 2: connector/plugin name */
+					__( 'Set AI type %1$s to Allow for connector %2$s', 'handl-ai-connector-access-control' ),
+					$fam_label,
 					$label
 				),
 				'url'     => $url_rules,
@@ -329,7 +328,6 @@ final class Detour {
 					'family' => $family,
 				),
 			);
-			unset( $fam_label );
 		}
 
 		if ( 'budget' === $reason || 'budget:hard' === $source || 'budget' === $source ) {
@@ -342,9 +340,9 @@ final class Detour {
 				$out[] = array(
 					'kind'    => 'budget',
 					'message' => sprintf(
-						/* translators: 1: currency raise amount, 2: connector/plugin name */
-						__( 'Raise the estimated budget for %2$s by $%1$s', 'handl-ai-connector-access-control' ),
-						self::format_money( $raise ),
+						/* translators: 1: final estimated budget amount, 2: connector/plugin name */
+						__( 'Set the estimated budget for %2$s to $%1$s', 'handl-ai-connector-access-control' ),
+						self::format_money( $new ),
 						$label
 					),
 					'url'     => $url_rules,
