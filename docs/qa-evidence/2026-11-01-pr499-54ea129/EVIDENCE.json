@@ -3,30 +3,33 @@
   "issue": 475,
   "name": "AICAC-LUGGAGE",
   "exact_sha": "54ea12908be7ebd0c809a6d49691f0b3791b04ed",
-  "captured_at": "2026-11-01T21:48:54.337Z",
-  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 54ea129 (ai-not-475-luggage, Krusty copy PASS); Playwright local serve of per-AC HTML including Luggage::render_page(). Live sandbox plugin was not checked out.",
-  "email": "haktan+aicac-luggage@handldigital.com",
+  "captured_at": "2026-11-01T22:01:37.855Z",
+  "method": "Live sandbox plugin checked out to force-asserted SHA 54ea129; WP-CLI qa-admin + Luggage::render_page() HTML with inlined wp-admin CSS; Playwright local serve of the real Outbound media wrap. Admin HTTP 500 is Spot_Check::maybe_sample TypeError on init (empty-string from do_action). Live SHA restored after capture.",
   "shots": [
     {
       "file": "01-wired-init.png",
-      "bytes": 147601,
-      "heading": "AC1 class wired via require+init"
+      "bytes": 133242,
+      "job": "luggage_empty",
+      "heading": "luggage_empty"
     },
     {
       "file": "02-file-upload-detected.png",
-      "bytes": 226125,
-      "heading": "AC2 multipart File upload detected"
+      "bytes": 143473,
+      "job": "luggage_packed",
+      "heading": "luggage_packed"
     },
     {
       "file": "03-url-and-homebody.png",
-      "bytes": 232420,
-      "heading": "AC3 URL reference and no-media grades"
+      "bytes": 156888,
+      "job": "luggage_grades",
+      "heading": "luggage_grades"
     },
     {
       "file": "04-payload-never-stored.png",
-      "bytes": 258370,
-      "heading": "AC4 payload never stored + LuggageTest 12/73"
+      "bytes": 159089,
+      "job": "luggage_payload",
+      "heading": "luggage_payload"
     }
   ],
-  "export_stdout": "ac1=1\nac2=1\nac3=1\nac4=1\nempty=1\nsha=54ea12908be7ebd0c809a6d49691f0b3791b04ed\nhtml=/Users/handl/.buzz/.scratch/pr499-export.html"
+  "export_stdout": "{\"ok\":true,\"job\":\"luggage_empty\",\"sha\":\"54ea12908be7ebd0c809a6d49691f0b3791b04ed\",\"class\":\"HandL\\\\AICAC\\\\Luggage\",\"page\":\"handl-aicac-luggage\",\"bytes\":94857,\"payload\":\"absent\",\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"text\":\"PR499 / #475 AICAC-LUGGAGE SHA 54ea129 exact product SHA 54ea12908be7ebd0c809a6d49691f0b3791b04ed live handl-sandbox plugin + DB (WP-CLI Luggage::render_page; admin HTTP 500 is Spot_Check TypeError on init) AC: AC1 empty Outbound media surface (class wired)Outbound mediaReview me\"}}\n{\"ok\":true,\"job\":\"luggage_packed\",\"sha\":\"54ea12908be7ebd0c809a6d49691f0b3791b04ed\",\"class\":\"HandL\\\\AICAC\\\\Luggage\",\"page\":\"handl-aicac-luggage\",\"bytes\":95110,\"payload\":\"absent\",\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"text\":\"PR499 / #475 AICAC-LUGGAGE SHA 54ea129 exact product SHA 54ea12908be7ebd0c809a6d49691f0b3791b04ed live handl-sandbox plugin + DB (WP-CLI Luggage::render_page; admin HTTP 500 is Spot_Check TypeError on init) AC: AC2 multipart File upload detectedOutbound mediaReview media detected\"}}\n{\"ok\":true,\"job\":\"luggage_grades\",\"sha\":\"54ea12908be7ebd0c809a6d49691f0b3791b04ed\",\"class\":\"HandL\\\\AICAC\\\\Luggage\",\"page\":\"handl-aicac-luggage\",\"bytes\":95242,\"payload\":\"absent\",\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"text\":\"PR499 / #475 AICAC-LUGGAGE SHA 54ea129 exact product SHA 54ea12908be7ebd0c809a6d49691f0b3791b04ed live handl-sandbox plugin + DB (WP-CLI Luggage::render_page; admin HTTP 500 is Spot_Check TypeError on init) AC: AC3 URL reference + no-media gradesOutbound mediaReview media detecte\"}}\n{\"ok\":true,\"job\":\"luggage_payload\",\"sha\":\"54ea12908be7ebd0c809a6d49691f0b3791b04ed\",\"class\":\"HandL\\\\AICAC\\\\Luggage\",\"page\":\"handl-aicac-luggage\",\"bytes\":95276,\"payload\":\"absent\",\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"text\":\"PR499 / #475 AICAC-LUGGAGE SHA 54ea129 exact product SHA 54ea12908be7ebd0c809a6d49691f0b3791b04ed live handl-sandbox plugin + DB (WP-CLI Luggage::render_page; admin HTTP 500 is Spot_Check TypeError on init) AC: AC4 payload never stored on Outbound media surfaceOutbound mediaRevie\"}}"
 }

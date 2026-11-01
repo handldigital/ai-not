@@ -1,12 +1,12 @@
 exact_sha=54ea12908be7ebd0c809a6d49691f0b3791b04ed
 short_sha=54ea129
-captured_at=2026-11-01T21:48:54.337Z
-method=In-memory PHPUnit bootstrap at force-asserted worktree SHA 54ea129 (ai-not-475-luggage, Krusty copy PASS); Playwright local serve of per-AC HTML including Luggage::render_page(). Live sandbox plugin was not checked out.
+captured_at=2026-11-01T22:01:37.855Z
+method=Live sandbox plugin checked out to force-asserted SHA 54ea129; WP-CLI qa-admin + Luggage::render_page() HTML with inlined wp-admin CSS; Playwright local serve of the real Outbound media wrap. Admin HTTP 500 is Spot_Check::maybe_sample TypeError on init (empty-string from do_action). Live SHA restored after capture.
 files:
-  01-wired-init.png (147601 B)
-  02-file-upload-detected.png (226125 B)
-  03-url-and-homebody.png (232420 B)
-  04-payload-never-stored.png (258370 B)
+  01-wired-init.png (133242 B)
+  02-file-upload-detected.png (143473 B)
+  03-url-and-homebody.png (156888 B)
+  04-payload-never-stored.png (159089 B)
   EVIDENCE.html
   EVIDENCE.json
   PROVENANCE.md

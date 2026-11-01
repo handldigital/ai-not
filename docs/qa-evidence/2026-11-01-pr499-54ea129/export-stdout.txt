@@ -1,7 +1,4 @@
-ac1=1
-ac2=1
-ac3=1
-ac4=1
-empty=1
-sha=54ea12908be7ebd0c809a6d49691f0b3791b04ed
-html=/Users/handl/.buzz/.scratch/pr499-export.html
+{"ok":true,"job":"luggage_empty","sha":"54ea12908be7ebd0c809a6d49691f0b3791b04ed","class":"HandL\\AICAC\\Luggage","page":"handl-aicac-luggage","bytes":94857,"payload":"absent","needles":{"stamp":true,"wrap":true,"h1":true,"text":"PR499 / #475 AICAC-LUGGAGE SHA 54ea129 exact product SHA 54ea12908be7ebd0c809a6d49691f0b3791b04ed live handl-sandbox plugin + DB (WP-CLI Luggage::render_page; admin HTTP 500 is Spot_Check TypeError on init) AC: AC1 empty Outbound media surface (class wired)Outbound mediaReview me"}}
+{"ok":true,"job":"luggage_packed","sha":"54ea12908be7ebd0c809a6d49691f0b3791b04ed","class":"HandL\\AICAC\\Luggage","page":"handl-aicac-luggage","bytes":95110,"payload":"absent","needles":{"stamp":true,"wrap":true,"h1":true,"text":"PR499 / #475 AICAC-LUGGAGE SHA 54ea129 exact product SHA 54ea12908be7ebd0c809a6d49691f0b3791b04ed live handl-sandbox plugin + DB (WP-CLI Luggage::render_page; admin HTTP 500 is Spot_Check TypeError on init) AC: AC2 multipart File upload detectedOutbound mediaReview media detected"}}
+{"ok":true,"job":"luggage_grades","sha":"54ea12908be7ebd0c809a6d49691f0b3791b04ed","class":"HandL\\AICAC\\Luggage","page":"handl-aicac-luggage","bytes":95242,"payload":"absent","needles":{"stamp":true,"wrap":true,"h1":true,"text":"PR499 / #475 AICAC-LUGGAGE SHA 54ea129 exact product SHA 54ea12908be7ebd0c809a6d49691f0b3791b04ed live handl-sandbox plugin + DB (WP-CLI Luggage::render_page; admin HTTP 500 is Spot_Check TypeError on init) AC: AC3 URL reference + no-media gradesOutbound mediaReview media detecte"}}
+{"ok":true,"job":"luggage_payload","sha":"54ea12908be7ebd0c809a6d49691f0b3791b04ed","class":"HandL\\AICAC\\Luggage","page":"handl-aicac-luggage","bytes":95276,"payload":"absent","needles":{"stamp":true,"wrap":true,"h1":true,"text":"PR499 / #475 AICAC-LUGGAGE SHA 54ea129 exact product SHA 54ea12908be7ebd0c809a6d49691f0b3791b04ed live handl-sandbox plugin + DB (WP-CLI Luggage::render_page; admin HTTP 500 is Spot_Check TypeError on init) AC: AC4 payload never stored on Outbound media surfaceOutbound mediaRevie"}}
