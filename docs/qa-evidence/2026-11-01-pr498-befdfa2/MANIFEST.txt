@@ -1,0 +1,5 @@
+01-activity-operation-detour.png	AC1	Activity Why panel + Detour line: Set AI type Text to Allow + Open this setting
+02-activity-budget-detour.png	AC2	Budget-blocked deny shows final estimated budget amount
+03-activity-multi-none.png	AC3	Multi-blocker → No single setting change found.
+04-deny-receipt-detour.png	AC1+AC4	Deny Receipt lookup Detour surface; capability-gated; no apply control
+05-suite-fence.png	CI/fence	DetourTest + CarbonTest framing fix at exact SHA

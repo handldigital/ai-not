@@ -1,0 +1,37 @@
+{
+  "pr": 498,
+  "issue": 489,
+  "name": "AICAC-DETOUR",
+  "sha": "befdfa2cf9ca088d7ebedb04b1ac6cf73d3eb0e3",
+  "short": "befdfa2",
+  "dir": "2026-11-01-pr498-befdfa2",
+  "email": "haktan+aicac-detour@handldigital.com",
+  "method": "Headless Chrome against live local WordPress admin on handl-sandbox at force-asserted plugin checkout SHA befdfa2 (database/489-detour, Krusty copy PASS + CarbonTest CI fix). Seeded deny Activity rows + Deny Receipt lookup; screenshots are rendered wp-admin HTML (not local composed stubs).",
+  "shots": [
+    {
+      "file": "01-activity-operation-detour.png",
+      "ac": "AC1",
+      "covers": "Activity Why panel + Detour line: Set AI type Text to Allow + Open this setting"
+    },
+    {
+      "file": "02-activity-budget-detour.png",
+      "ac": "AC2",
+      "covers": "Budget-blocked deny shows final estimated budget amount"
+    },
+    {
+      "file": "03-activity-multi-none.png",
+      "ac": "AC3",
+      "covers": "Multi-blocker → No single setting change found."
+    },
+    {
+      "file": "04-deny-receipt-detour.png",
+      "ac": "AC1+AC4",
+      "covers": "Deny Receipt lookup Detour surface; capability-gated; no apply control"
+    },
+    {
+      "file": "05-suite-fence.png",
+      "ac": "CI/fence",
+      "covers": "DetourTest + CarbonTest framing fix at exact SHA"
+    }
+  ]
+}
