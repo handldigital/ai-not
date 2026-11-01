@@ -198,6 +198,18 @@ final class DetourTest extends TestCase {
 		$this->assertSame( $before, $GLOBALS['handl_aicac_test_options'] );
 	}
 
+	public function test_activity_inject_script_finds_plugin_without_column_plugin_class(): void {
+		$src = (string) file_get_contents( HANDL_AICAC_DIR . '/includes/class-handl-aicac-detour.php' );
+		$this->assertStringContainsString( 'td.column-plugin code', $src );
+		// Activity markup often omits .column-plugin; matcher must prefer path-like <code>.
+		$this->assertStringContainsString( 'ct.indexOf("/")!==-1', $src );
+		$this->assertStringNotContainsString(
+			'td.column-plugin code, td code',
+			$src,
+			'Broad td code fallback matches Operation before Plugin'
+		);
+	}
+
 	public function test_append_to_why_html_injects_detour_after_expander(): void {
 		$policy = array(
 			'default' => 'allow',

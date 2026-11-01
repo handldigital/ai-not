@@ -230,7 +230,10 @@ final class Detour {
 		echo 'function txt(el){return (el&&el.textContent||"").replace(/\s+/g," ").trim();}';
 		echo 'for(var i=0;i<trs.length;i++){';
 		echo 'var tr=trs[i];var why=tr.querySelector(".handl-aicac-why");if(!why)continue;';
-		echo 'var pluginCode=tr.querySelector("td.column-plugin code, td code");';
+		// Activity plugin cells are often bare <td><code>plugin/file.php</code></td> (no .column-plugin).
+		// Prefer that class when present; otherwise pick the first path-like code (contains "/").
+		echo 'var pluginCode=tr.querySelector("td.column-plugin code");';
+		echo 'if(!pluginCode){var codes=tr.querySelectorAll("td code");for(var ci=0;ci<codes.length;ci++){var ct=txt(codes[ci]);if(ct.indexOf("/")!==-1){pluginCode=codes[ci];break;}}}';
 		echo 'var opCode=tr.querySelector("td.column-operation code");';
 		echo 'var plugin=txt(pluginCode);var op=txt(opCode);if(op==="—")op="";';
 		echo 'for(var j=0;j<rows.length;j++){';
