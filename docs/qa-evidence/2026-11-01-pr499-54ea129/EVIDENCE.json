@@ -1,0 +1,32 @@
+{
+  "pr": 499,
+  "issue": 475,
+  "name": "AICAC-LUGGAGE",
+  "exact_sha": "54ea12908be7ebd0c809a6d49691f0b3791b04ed",
+  "captured_at": "2026-11-01T21:48:54.337Z",
+  "method": "In-memory PHPUnit bootstrap at force-asserted worktree SHA 54ea129 (ai-not-475-luggage, Krusty copy PASS); Playwright local serve of per-AC HTML including Luggage::render_page(). Live sandbox plugin was not checked out.",
+  "email": "haktan+aicac-luggage@handldigital.com",
+  "shots": [
+    {
+      "file": "01-wired-init.png",
+      "bytes": 147601,
+      "heading": "AC1 class wired via require+init"
+    },
+    {
+      "file": "02-file-upload-detected.png",
+      "bytes": 226125,
+      "heading": "AC2 multipart File upload detected"
+    },
+    {
+      "file": "03-url-and-homebody.png",
+      "bytes": 232420,
+      "heading": "AC3 URL reference and no-media grades"
+    },
+    {
+      "file": "04-payload-never-stored.png",
+      "bytes": 258370,
+      "heading": "AC4 payload never stored + LuggageTest 12/73"
+    }
+  ],
+  "export_stdout": "ac1=1\nac2=1\nac3=1\nac4=1\nempty=1\nsha=54ea12908be7ebd0c809a6d49691f0b3791b04ed\nhtml=/Users/handl/.buzz/.scratch/pr499-export.html"
+}
