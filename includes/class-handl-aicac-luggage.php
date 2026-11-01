@@ -472,6 +472,23 @@ final class Luggage {
 		return self::GRADE_HOMEBODY;
 	}
 
+	/**
+	 * Display label for a stored grade code. Internal codes stay unchanged.
+	 */
+	public static function display_grade( string $grade ): string {
+		if ( self::GRADE_HOMEBODY === $grade ) {
+			return __( 'No media detected', 'handl-ai-connector-access-control' );
+		}
+		if ( self::GRADE_DAYTRIP === $grade ) {
+			return __( 'Upload reference detected', 'handl-ai-connector-access-control' );
+		}
+		if ( self::GRADE_PACKED === $grade ) {
+			return __( 'File upload detected', 'handl-ai-connector-access-control' );
+		}
+
+		return $grade;
+	}
+
 	public static function register_menu(): void {
 		if ( ! class_exists( Caps::class, false ) || ! Caps::user_can_view() ) {
 			return;
@@ -497,12 +514,12 @@ final class Luggage {
 
 		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__( 'Outbound media', 'handl-ai-connector-access-control' ) . '</h1>';
-		echo '<p class="description">' . esc_html__( 'See which plugins send site uploads to AI providers. This report does not change your policy or activity log. File contents are never stored.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Review media detected in AI requests by plugin. Detection does not confirm delivery. This report does not change your policy or activity log and stores file metadata only.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		echo '<ul class="ul-disc">';
-		echo '<li><strong>' . esc_html__( 'HOMEBODY', 'handl-ai-connector-access-control' ) . '</strong> — ' . esc_html__( 'No site files in AI requests.', 'handl-ai-connector-access-control' ) . '</li>';
-		echo '<li><strong>' . esc_html__( 'DAY-TRIPPER', 'handl-ai-connector-access-control' ) . '</strong> — ' . esc_html__( 'A wp-content/uploads URL was referenced.', 'handl-ai-connector-access-control' ) . '</li>';
-		echo '<li><strong>' . esc_html__( 'PACKED-SUITCASE', 'handl-ai-connector-access-control' ) . '</strong> — ' . esc_html__( 'Raw file bytes were in the request body.', 'handl-ai-connector-access-control' ) . '</li>';
+		echo '<li><strong>' . esc_html( self::display_grade( self::GRADE_HOMEBODY ) ) . '</strong> — ' . esc_html__( 'No site files detected in the requests checked.', 'handl-ai-connector-access-control' ) . '</li>';
+		echo '<li><strong>' . esc_html( self::display_grade( self::GRADE_DAYTRIP ) ) . '</strong> — ' . esc_html__( 'An upload URL or attachment ID was referenced.', 'handl-ai-connector-access-control' ) . '</li>';
+		echo '<li><strong>' . esc_html( self::display_grade( self::GRADE_PACKED ) ) . '</strong> — ' . esc_html__( 'A file upload was detected in a request.', 'handl-ai-connector-access-control' ) . '</li>';
 		echo '</ul>';
 
 		if ( self::GRADE_INSUFFICIENT === $snap['status'] ) {
@@ -516,7 +533,7 @@ final class Luggage {
 		}
 
 		if ( empty( $snap['findings'] ) ) {
-			echo '<p>' . esc_html__( 'No AI calls in the activity log yet.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p>' . esc_html__( 'No activity available for this report yet.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '</div>';
 
 			return;
@@ -527,9 +544,9 @@ final class Luggage {
 		echo '<th>' . esc_html__( 'Files', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Types', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Providers', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Bytes outbound', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Last shipment (UTC)', 'handl-ai-connector-access-control' ) . '</th>';
-		echo '<th>' . esc_html__( 'Grade', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Recorded file bytes', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Last recorded activity (UTC)', 'handl-ai-connector-access-control' ) . '</th>';
+		echo '<th>' . esc_html__( 'Media detected', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '</tr></thead><tbody>';
 		foreach ( $snap['findings'] as $row ) {
 			$files     = isset( $row['files'] ) && is_array( $row['files'] ) ? $row['files'] : array();
@@ -550,7 +567,7 @@ final class Luggage {
 			echo '<td>' . esc_html( implode( ', ', array_map( 'strval', $providers ) ) ) . '</td>';
 			echo '<td>' . esc_html( (string) (int) ( $row['bytes'] ?? 0 ) ) . '</td>';
 			echo '<td>' . esc_html( $seen ) . '</td>';
-			echo '<td>' . esc_html( (string) ( $row['grade'] ?? '' ) ) . '</td>';
+			echo '<td>' . esc_html( self::display_grade( (string) ( $row['grade'] ?? '' ) ) ) . '</td>';
 			echo '</tr>';
 		}
 		echo '</tbody></table>';

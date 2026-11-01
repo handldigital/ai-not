@@ -196,7 +196,16 @@ final class LuggageTest extends TestCase {
 		$this->assertStringNotContainsString( self::PAYLOAD, $json );
 		$this->assertStringNotContainsString( '"bits"', $json );
 		$this->assertStringContainsString( self::FILE, $html );
-		$this->assertStringContainsString( Luggage::GRADE_PACKED, $html );
+		$this->assertStringContainsString( 'File upload detected', $html );
+		$this->assertStringContainsString( 'Upload reference detected', $html );
+		$this->assertStringContainsString( 'Media detected', $html );
+		$this->assertStringContainsString( 'Recorded file bytes', $html );
+		$this->assertStringContainsString( 'Last recorded activity (UTC)', $html );
+		$this->assertStringContainsString( 'Review media detected in AI requests by plugin.', $html );
+		$this->assertStringNotContainsString( Luggage::GRADE_PACKED, $html );
+		$this->assertStringNotContainsString( Luggage::GRADE_DAYTRIP, $html );
+		$this->assertStringNotContainsString( Luggage::GRADE_HOMEBODY, $html );
+		$this->assertSame( Luggage::GRADE_PACKED, $census['findings'][0]['grade'] );
 	}
 
 	public function test_activity_log_upload_url_is_day_tripper_without_http_observe(): void {
@@ -221,7 +230,11 @@ final class LuggageTest extends TestCase {
 		Luggage::render_page();
 		$html = (string) ob_get_clean();
 		$this->assertStringContainsString( 'Outbound media', $html );
-		$this->assertStringContainsString( 'No AI calls in the activity log yet.', $html );
+		$this->assertStringContainsString( 'No activity available for this report yet.', $html );
+		$this->assertStringContainsString( 'No media detected', $html );
+		$this->assertStringContainsString( 'No site files detected in the requests checked.', $html );
+		$this->assertStringContainsString( 'An upload URL or attachment ID was referenced.', $html );
+		$this->assertStringContainsString( 'A file upload was detected in a request.', $html );
 		$this->assertStringNotContainsString( '<tbody>', $html );
 	}
 
