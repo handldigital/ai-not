@@ -199,6 +199,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-roommates.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-luggage.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-detour.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-neighbors.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -319,6 +320,7 @@ final class Plugin {
 		Roommates::init();
 		Luggage::init();
 		Detour::init();
+		Neighbors::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
