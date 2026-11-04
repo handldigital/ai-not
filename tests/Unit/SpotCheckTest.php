@@ -285,4 +285,11 @@ final class SpotCheckTest extends TestCase {
 		}
 		$this->assertTrue( true );
 	}
+
+	public function test_wp_init_empty_arg_does_not_fatal(): void {
+		$out = Spot_Check::maybe_sample( '' );
+		$this->assertSame( 0, $out['added'] );
+		$this->assertSame( 0, $out['candidates'] );
+		$this->assertSame( 0, $out['selected'] );
+	}
 }
