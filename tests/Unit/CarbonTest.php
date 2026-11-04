@@ -207,7 +207,10 @@ final class CarbonTest extends TestCase {
 
 	public function test_enabled_page_shows_estimate_framing(): void {
 		Carbon::save_settings( array( 'enabled' => true ) );
-		$now = strtotime( '2026-10-12 12:00:00 UTC' );
+		// Wall-clock "today": render_page()->roster() rebuilds with time() and
+		// keys the plugin table to the current day/month. A fixed historic $now
+		// left the roster empty after the calendar rolled past that day/month.
+		$now = time();
 		$log = array(
 			array(
 				'ts'            => $now,
