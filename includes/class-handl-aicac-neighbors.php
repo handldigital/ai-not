@@ -366,6 +366,7 @@ final class Neighbors {
 	 *   denies:int,
 	 *   deny_rate:float,
 	 *   spend_usd:float,
+	 *   calls_with_cost:int,
 	 *   first_ts:int,
 	 *   last_ts:int,
 	 *   span:int,
@@ -377,14 +378,15 @@ final class Neighbors {
 		$now  = self::now();
 		$cut  = $now - self::WINDOW_SECONDS;
 		$out  = array(
-			'calls'     => 0,
-			'denies'    => 0,
-			'deny_rate' => 0.0,
-			'spend_usd' => 0.0,
-			'first_ts'  => 0,
-			'last_ts'   => 0,
-			'span'      => 0,
-			'available' => $pack['available'],
+			'calls'           => 0,
+			'denies'          => 0,
+			'deny_rate'       => 0.0,
+			'spend_usd'       => 0.0,
+			'calls_with_cost' => 0,
+			'first_ts'        => 0,
+			'last_ts'         => 0,
+			'span'            => 0,
+			'available'       => $pack['available'],
 		);
 		$spend = 0.0;
 		foreach ( $pack['rows'] as $row ) {
@@ -411,6 +413,7 @@ final class Neighbors {
 			$usd = self::row_spend_usd( $row );
 			if ( null !== $usd ) {
 				$spend += $usd;
+				++$out['calls_with_cost'];
 			}
 		}
 		$out['spend_usd'] = $spend;
@@ -483,6 +486,16 @@ final class Neighbors {
 		$call_pts  = isset( $dist['weekly_calls'] ) && is_array( $dist['weekly_calls'] ) ? $dist['weekly_calls'] : array();
 		$spend_pts = isset( $dist['spend_usd'] ) && is_array( $dist['spend_usd'] ) ? $dist['spend_usd'] : array();
 
+		$with_cost = (int) $agg['calls_with_cost'];
+		$calls     = (int) $agg['calls'];
+		if ( $with_cost < 1 ) {
+			$spend_coverage = 'none';
+		} elseif ( $with_cost < $calls ) {
+			$spend_coverage = 'partial';
+		} else {
+			$spend_coverage = 'complete';
+		}
+
 		return array(
 			'status'           => $status,
 			'as_of'            => self::now(),
@@ -490,10 +503,12 @@ final class Neighbors {
 			'table_format'     => (string) $table['format'],
 			'site_size'        => $size,
 			'posts'            => $posts,
-			'weekly_calls'     => (int) $agg['calls'],
+			'weekly_calls'     => $calls,
 			'denies'           => (int) $agg['denies'],
 			'deny_rate'        => (float) $agg['deny_rate'],
 			'spend_usd'        => (float) $agg['spend_usd'],
+			'calls_with_cost'  => $with_cost,
+			'spend_coverage'   => $spend_coverage,
 			'span'             => (int) $agg['span'],
 			'weekly_call_band' => $weekly_band,
 			'deny_rate_band'   => $deny_band,
@@ -562,26 +577,38 @@ final class Neighbors {
 
 		$out   = array();
 		$out[] = sprintf(
-			/* translators: 1: typical low deny percent, 2: typical high deny percent, 3: this site's deny percent */
-			__( 'Sites your size typically deny %1$s–%2$s of AI calls — you deny %3$s.', 'handl-ai-connector-access-control' ),
+			/* translators: 1: example low deny percent, 2: example high deny percent, 3: this site's recorded deny percent */
+			__( 'Example deny-rate range: %1$s–%2$s. This site\'s recorded deny rate over the past 7 days: %3$s.', 'handl-ai-connector-access-control' ),
 			self::pct_label( $deny_p25 ),
 			self::pct_label( $deny_p75 ),
 			self::pct_label( (float) ( $snap['deny_rate'] ?? 0 ) )
 		);
 		$out[] = sprintf(
-			/* translators: 1: typical low weekly calls, 2: typical high weekly calls, 3: this site's weekly calls */
-			__( 'Sites your size typically make %1$s–%2$s AI calls per week — you made %3$s.', 'handl-ai-connector-access-control' ),
+			/* translators: 1: example low weekly calls, 2: example high weekly calls, 3: this site's recorded weekly calls */
+			__( 'Example weekly call range: %1$s–%2$s. This site\'s recorded calls over the past 7 days: %3$s.', 'handl-ai-connector-access-control' ),
 			self::int_label( $call_p25 ),
 			self::int_label( $call_p75 ),
 			self::int_label( (float) ( $snap['weekly_calls'] ?? 0 ) )
 		);
-		$out[] = sprintf(
-			/* translators: 1: typical low weekly spend, 2: typical high weekly spend, 3: this site's estimated weekly spend */
-			__( 'Sites your size typically spend %1$s–%2$s per week — your estimate is %3$s.', 'handl-ai-connector-access-control' ),
-			self::usd_label( $usd_p25 ),
-			self::usd_label( $usd_p75 ),
-			self::usd_label( (float) ( $snap['spend_usd'] ?? 0 ) )
-		);
+
+		$coverage = (string) ( $snap['spend_coverage'] ?? 'none' );
+		if ( 'complete' === $coverage ) {
+			$out[] = sprintf(
+				/* translators: 1: example low weekly spend, 2: example high weekly spend, 3: this site's estimated weekly spend */
+				__( 'Example weekly spend range (USD): %1$s–%2$s. This site\'s estimated spend over the past 7 days (USD): %3$s.', 'handl-ai-connector-access-control' ),
+				self::usd_label( $usd_p25 ),
+				self::usd_label( $usd_p75 ),
+				self::usd_label( (float) ( $snap['spend_usd'] ?? 0 ) )
+			);
+		} elseif ( 'partial' === $coverage ) {
+			$out[] = sprintf(
+				/* translators: %s: estimated spend for calls that have cost data */
+				__( 'Estimated spend for calls with cost data over the past 7 days (USD): %s. Some calls have no cost data.', 'handl-ai-connector-access-control' ),
+				self::usd_label( (float) ( $snap['spend_usd'] ?? 0 ) )
+			);
+		} else {
+			$out[] = __( 'Spend estimate unavailable.', 'handl-ai-connector-access-control' );
+		}
 
 		return $out;
 	}
@@ -621,8 +648,8 @@ final class Neighbors {
 		}
 		add_submenu_page(
 			Admin::MENU_SLUG,
-			__( 'Peer comparison', 'handl-ai-connector-access-control' ),
-			__( 'Peer comparison', 'handl-ai-connector-access-control' ),
+			__( 'Usage reference', 'handl-ai-connector-access-control' ),
+			__( 'Usage reference', 'handl-ai-connector-access-control' ),
 			Caps::VIEW,
 			self::PAGE_SLUG,
 			array( self::class, 'render_page' )
@@ -641,14 +668,14 @@ final class Neighbors {
 		}
 		wp_add_dashboard_widget(
 			self::WIDGET_ID,
-			__( 'AI peer comparison', 'handl-ai-connector-access-control' ),
+			__( 'AI usage reference', 'handl-ai-connector-access-control' ),
 			array( self::class, 'render_dashboard' )
 		);
 	}
 
 	public static function handle_save(): void {
 		if ( ! class_exists( Caps::class, false ) || ! Caps::user_can_manage() ) {
-			wp_die( esc_html__( 'You do not have permission to save peer comparison.', 'handl-ai-connector-access-control' ) );
+			wp_die( esc_html__( 'You do not have permission to save these settings.', 'handl-ai-connector-access-control' ) );
 		}
 		check_admin_referer( self::ACTION_SAVE );
 		if ( empty( $_POST[ self::POST_PRESENT ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
@@ -674,8 +701,8 @@ final class Neighbors {
 		$can_manage = Caps::user_can_manage();
 
 		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__( 'Peer comparison', 'handl-ai-connector-access-control' ) . '</h1>';
-		echo '<p class="description">' . esc_html__( 'See how this site\'s AI usage compares with anonymized typical sites of similar size. Nothing is sent from this site.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<h1>' . esc_html__( 'Usage reference', 'handl-ai-connector-access-control' ) . '</h1>';
+		echo '<p class="description">' . esc_html__( 'Compare this site\'s recorded AI activity with example ranges grouped by published post count. These ranges do not represent measured peer usage. This comparison does not upload site data.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( $can_manage ) {
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
@@ -687,7 +714,7 @@ final class Neighbors {
 			echo '<table class="form-table" role="presentation"><tbody>';
 			echo '<tr><th scope="row">' . esc_html__( 'Compare', 'handl-ai-connector-access-control' ) . '</th><td>';
 			echo '<label><input type="checkbox" name="' . esc_attr( self::POST_ENABLED ) . '" value="1"' . checked( $enabled, true, false ) . ' /> ';
-			echo esc_html__( 'Compare this site with anonymized typical usage', 'handl-ai-connector-access-control' ) . '</label>';
+			echo esc_html__( 'Show usage reference', 'handl-ai-connector-access-control' ) . '</label>';
 			echo '</td></tr></tbody></table>';
 			if ( function_exists( 'submit_button' ) ) {
 				submit_button( __( 'Save changes', 'handl-ai-connector-access-control' ) );
@@ -698,7 +725,7 @@ final class Neighbors {
 		}
 
 		if ( ! $enabled ) {
-			echo '<p>' . esc_html__( 'Peer comparison is off.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p>' . esc_html__( 'Usage reference is off.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '</div>';
 
 			return;
@@ -731,7 +758,7 @@ final class Neighbors {
 			return;
 		}
 		if ( self::STATUS_INSUFFICIENT === $status ) {
-			echo '<p>' . esc_html__( 'Not enough activity yet. Peer comparison needs at least one week of AI activity.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p>' . esc_html__( 'Not enough activity yet. This report needs at least one week of AI activity.', 'handl-ai-connector-access-control' ) . '</p>';
 
 			return;
 		}
@@ -744,6 +771,7 @@ final class Neighbors {
 			echo '<li>' . esc_html( $sentence ) . '</li>';
 		}
 		echo '</ul>';
+		echo '<p class="description">' . esc_html__( 'Example ranges are grouped by published post count, not measured peer usage.', 'handl-ai-connector-access-control' ) . '</p>';
 	}
 
 	private static function maybe_hook_digest(): void {

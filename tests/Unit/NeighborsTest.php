@@ -46,7 +46,7 @@ final class NeighborsTest extends TestCase {
 	/**
 	 * @return list<array<string,mixed>>
 	 */
-	private function week_of_activity( int $allows, int $denies, float $usd_each = 0.42 ): array {
+	private function week_of_activity( int $allows, int $denies, float $usd_each = 0.42, bool $include_cost = true ): array {
 		$rows  = array();
 		$total = $allows + $denies;
 		for ( $i = 0; $i < $total; $i++ ) {
@@ -54,13 +54,16 @@ final class NeighborsTest extends TestCase {
 			$ts   = ( 1 === $total )
 				? self::NOW
 				: self::NOW - self::WEEK + (int) round( ( $i / ( $total - 1 ) ) * self::WEEK );
-			$rows[] = array(
-				'ts'            => $ts,
-				'decision'      => $deny ? 'deny' : 'allow',
-				'plugin'        => 'alpha/alpha.php',
-				'provider'      => 'openai',
-				'estimated_usd' => $usd_each,
+			$row  = array(
+				'ts'       => $ts,
+				'decision' => $deny ? 'deny' : 'allow',
+				'plugin'   => 'alpha/alpha.php',
+				'provider' => 'openai',
 			);
+			if ( $include_cost ) {
+				$row['estimated_usd'] = $usd_each;
+			}
+			$rows[] = $row;
 		}
 
 		return $rows;
@@ -99,8 +102,9 @@ final class NeighborsTest extends TestCase {
 		ob_start();
 		Neighbors::render_page();
 		$off = (string) ob_get_clean();
-		$this->assertStringContainsString( 'Peer comparison is off.', $off );
-		$this->assertStringNotContainsString( 'you deny', $off );
+		$this->assertStringContainsString( 'Usage reference is off.', $off );
+		$this->assertStringContainsString( 'Usage reference', $off );
+		$this->assertStringNotContainsString( 'recorded deny rate over the past 7 days', $off );
 		$this->assertStringNotContainsString( 'OFF', $off );
 
 		Neighbors::save_settings( array( 'enabled' => true ) );
@@ -108,14 +112,20 @@ final class NeighborsTest extends TestCase {
 		ob_start();
 		Neighbors::render_page();
 		$on = (string) ob_get_clean();
-		$this->assertStringContainsString( 'Sites your size typically deny 2%–5% of AI calls — you deny 11%.', $on );
-		$this->assertStringContainsString( 'Nothing is sent from this site.', $on );
+		$this->assertStringContainsString( 'Example deny-rate range: 2%–5%. This site&#039;s recorded deny rate over the past 7 days: 11%.', $on );
+		$this->assertStringContainsString( 'Example weekly spend range (USD):', $on );
+		$this->assertStringContainsString( 'This comparison does not upload site data.', $on );
+		$this->assertStringContainsString( 'These ranges do not represent measured peer usage.', $on );
+		$this->assertStringContainsString( 'Show usage reference', $on );
 		$this->assertStringNotContainsString( 'INSUFFICIENT-DATA', $on );
+		$this->assertStringNotContainsString( 'Sites your size typically', $on );
+		$this->assertStringNotContainsString( 'anonymized', $on );
 
 		ob_start();
 		Neighbors::render_dashboard();
 		$dash = (string) ob_get_clean();
-		$this->assertStringContainsString( 'Sites your size typically deny 2%–5% of AI calls — you deny 11%.', $dash );
+		$this->assertStringContainsString( 'Example deny-rate range: 2%–5%. This site&#039;s recorded deny rate over the past 7 days: 11%.', $dash );
+		$this->assertStringContainsString( 'Example ranges are grouped by published post count, not measured peer usage.', $dash );
 		$this->assertStringContainsString( 'handl-aicac-neighbors-dash', $dash );
 	}
 
@@ -148,6 +158,8 @@ final class NeighborsTest extends TestCase {
 		$this->assertSame( 'steady', $a['weekly_call_band'] );
 		$this->assertSame( 'high', $a['deny_rate_band'] );
 		$this->assertSame( Neighbors::STATUS_OK, $a['status'] );
+		$this->assertSame( 'complete', $a['spend_coverage'] );
+		$this->assertSame( 100, $a['calls_with_cost'] );
 		$this->assertSame( 0.02, $a['deny_typical']['p25'] );
 		$this->assertSame( 0.05, $a['deny_typical']['p75'] );
 		$this->assertGreaterThanOrEqual( 90, $a['deny_percentile'] );
@@ -181,7 +193,7 @@ final class NeighborsTest extends TestCase {
 		ob_start();
 		Neighbors::render_page();
 		$html = (string) ob_get_clean();
-		$this->assertStringContainsString( 'Not enough activity yet. Peer comparison needs at least one week of AI activity.', $html );
+		$this->assertStringContainsString( 'Not enough activity yet. This report needs at least one week of AI activity.', $html );
 		$this->assertStringNotContainsString( 'INSUFFICIENT-DATA', $html );
 		$this->assertSame( Neighbors::STATUS_INSUFFICIENT, Neighbors::census()['status'] );
 		$this->assertSame( array(), Neighbors::sentences( Neighbors::census() ) );
@@ -235,7 +247,8 @@ final class NeighborsTest extends TestCase {
 		Neighbors::save_settings( array( 'enabled' => true ) );
 		Neighbors::set_test_log( $this->week_of_activity( 89, 11 ) );
 		$line = Neighbors::digest_line();
-		$this->assertStringContainsString( 'you deny 11%', $line );
+		$this->assertStringContainsString( 'Example deny-rate range: 2%–5%. This site\'s recorded deny rate over the past 7 days: 11%.', $line );
+		$this->assertStringNotContainsString( 'Sites your size typically', $line );
 		$appended = Neighbors::append_digest_line( array( 'keep' ) );
 		$this->assertSame( 'keep', $appended[0] );
 		$this->assertSame( $line, $appended[1] );
@@ -247,5 +260,34 @@ final class NeighborsTest extends TestCase {
 		Neighbors::save_settings( array( 'enabled' => true ) );
 		Neighbors::register_dashboard();
 		$this->assertTrue( Neighbors::is_enabled() );
+	}
+
+	public function test_spend_unavailable_and_partial_are_not_complete_comparisons(): void {
+		Neighbors::save_settings( array( 'enabled' => true ) );
+		Neighbors::set_test_log( $this->week_of_activity( 89, 11, 0.42, false ) );
+		$none = Neighbors::census();
+		$this->assertSame( 'none', $none['spend_coverage'] );
+		$this->assertSame( 0, $none['calls_with_cost'] );
+		$none_html_lines = Neighbors::sentences( $none );
+		$this->assertContains( 'Spend estimate unavailable.', $none_html_lines );
+		$this->assertStringNotContainsString( 'Example weekly spend range', implode( "\n", $none_html_lines ) );
+		ob_start();
+		Neighbors::render_page();
+		$none_html = (string) ob_get_clean();
+		$this->assertStringContainsString( 'Spend estimate unavailable.', $none_html );
+		$this->assertStringNotContainsString( 'your estimate is $0.00', $none_html );
+		$this->assertStringNotContainsString( 'This site\'s estimated spend over the past 7 days (USD): $0.00', $none_html );
+
+		$mixed = $this->week_of_activity( 50, 0, 0.42, true );
+		$mixed = array_merge( $mixed, $this->week_of_activity( 39, 11, 0.42, false ) );
+		Neighbors::set_test_log( $mixed );
+		$partial = Neighbors::census();
+		$this->assertSame( 'partial', $partial['spend_coverage'] );
+		$this->assertSame( 50, $partial['calls_with_cost'] );
+		$partial_lines = Neighbors::sentences( $partial );
+		$joined        = implode( "\n", $partial_lines );
+		$this->assertStringContainsString( 'Estimated spend for calls with cost data over the past 7 days (USD):', $joined );
+		$this->assertStringContainsString( 'Some calls have no cost data.', $joined );
+		$this->assertStringNotContainsString( 'Example weekly spend range', $joined );
 	}
 }
