@@ -69,7 +69,8 @@ final class Welcome_Back {
 		self::$registered = true;
 
 		add_action( 'admin_menu', array( self::class, 'register_menu' ), 20 );
-		add_action( 'admin_init', array( self::class, 'maybe_track_last_seen' ), 5 );
+		// WP 7.1 do_action() with no extra args still passes ''.
+		add_action( 'admin_init', array( self::class, 'maybe_track_last_seen' ), 5, 0 );
 		add_action( 'admin_post_' . self::ACTION_SAVE, array( self::class, 'handle_save' ) );
 		add_action( 'admin_post_' . self::ACTION_DISMISS, array( self::class, 'handle_dismiss' ) );
 
@@ -302,8 +303,10 @@ final class Welcome_Back {
 	/**
 	 * Throttled last-seen update on admin views. Does not clear a pending notice
 	 * until the admin visits the catch-up page or dismisses.
+	 *
+	 * @param mixed $now Optional timestamp; non-int values (including WP's '') are ignored.
 	 */
-	public static function maybe_track_last_seen( ?int $now = null, bool $force = false ): bool {
+	public static function maybe_track_last_seen( $now = null, bool $force = false ): bool {
 		if ( ! self::is_enabled() ) {
 			return false;
 		}

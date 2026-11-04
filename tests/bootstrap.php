@@ -1335,4 +1335,5 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-relic.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-deny-receipt.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-roommates.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-luggage.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-neighbors.php';
 require_once __DIR__ . '/stubs/namespace-filter-input.php';

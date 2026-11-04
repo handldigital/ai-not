@@ -162,4 +162,10 @@ final class WelcomeBackTest extends TestCase {
 		Welcome_Back::set_last_seen( self::USER, self::NOW - ( 30 * $this->day() ) );
 		$this->assertFalse( Welcome_Back::qualifies_for_notice( self::USER, self::NOW ) );
 	}
+
+	public function test_wp_admin_init_empty_arg_does_not_fatal(): void {
+		$this->enable();
+		$this->assertIsBool( Welcome_Back::maybe_track_last_seen( '' ) );
+		$this->assertIsBool( Welcome_Back::maybe_track_last_seen() );
+	}
 }
