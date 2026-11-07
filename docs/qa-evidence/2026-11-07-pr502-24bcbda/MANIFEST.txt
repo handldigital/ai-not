@@ -1,0 +1,15 @@
+exact_sha=24bcbda2e1e3f4a0c93b13aa7d3a0494daf83a47
+short_sha=24bcbda
+captured_at=2026-11-07T23:51:37.936Z
+method=Live sandbox plugin checked out to force-asserted SHA 24bcbda; WP-CLI qa-admin + Neighbors::render_page() HTML with inlined wp-admin CSS; Playwright local serve of the real Usage reference wrap. Live SHA restored after capture.
+files:
+  01-off.png (95216 B)
+  02-complete-spend.png (155070 B)
+  03-partial-spend.png (151903 B)
+  04-unavailable-spend.png (140544 B)
+  05-empty.png (97001 B)
+  06-insufficient.png (102910 B)
+  07-dashboard.png (113225 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

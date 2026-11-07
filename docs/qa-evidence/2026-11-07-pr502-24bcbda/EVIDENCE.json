@@ -1,0 +1,53 @@
+{
+  "pr": 502,
+  "issue": 492,
+  "name": "AICAC-NEIGHBORS",
+  "exact_sha": "24bcbda2e1e3f4a0c93b13aa7d3a0494daf83a47",
+  "captured_at": "2026-11-07T23:51:37.936Z",
+  "method": "Live sandbox plugin checked out to force-asserted SHA 24bcbda; WP-CLI qa-admin + Neighbors::render_page() HTML with inlined wp-admin CSS; Playwright local serve of the real Usage reference wrap. Live SHA restored after capture.",
+  "shots": [
+    {
+      "file": "01-off.png",
+      "bytes": 95216,
+      "job": "neighbors_off",
+      "heading": "neighbors_off"
+    },
+    {
+      "file": "02-complete-spend.png",
+      "bytes": 155070,
+      "job": "neighbors_complete",
+      "heading": "neighbors_complete"
+    },
+    {
+      "file": "03-partial-spend.png",
+      "bytes": 151903,
+      "job": "neighbors_partial",
+      "heading": "neighbors_partial"
+    },
+    {
+      "file": "04-unavailable-spend.png",
+      "bytes": 140544,
+      "job": "neighbors_unavailable",
+      "heading": "neighbors_unavailable"
+    },
+    {
+      "file": "05-empty.png",
+      "bytes": 97001,
+      "job": "neighbors_empty",
+      "heading": "neighbors_empty"
+    },
+    {
+      "file": "06-insufficient.png",
+      "bytes": 102910,
+      "job": "neighbors_insufficient",
+      "heading": "neighbors_insufficient"
+    },
+    {
+      "file": "07-dashboard.png",
+      "bytes": 113225,
+      "job": "neighbors_dashboard",
+      "heading": "neighbors_dashboard"
+    }
+  ],
+  "export_stdout": "{\"ok\":true,\"job\":\"neighbors_off\",\"sha\":\"24bcbda2e1e3f4a0c93b13aa7d3a0494daf83a47\",\"class\":\"HandL\\\\AICAC\\\\Neighbors\",\"page\":\"handl-aicac-neighbors\",\"bytes\":95121,\"status\":\"OFF\",\"spend\":\"complete\",\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"text\":\"PR502 / #492 AICAC-NEIGHBORS SHA 24bcbda exact product SHA 24bcbda2e1e3f4a0c93b13aa7d3a0494daf83a47 live handl-sandbox plugin + DB (WP-CLI Neighbors::render_page) AC: AC1 OFF default Usage referenceUsage referenceCompare this site&#039;s recorded AI activity with example ranges grouped by published post count. These ranges do not represent measured peer usag\"}}\n{\"ok\":true,\"job\":\"neighbors_complete\",\"sha\":\"24bcbda2e1e3f4a0c93b13aa7d3a0494daf83a47\",\"class\":\"HandL\\\\AICAC\\\\Neighbors\",\"page\":\"handl-aicac-neighbors\",\"bytes\":95586,\"status\":\"OK\",\"spend\":\"complete\",\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"text\":\"PR502 / #492 AICAC-NEIGHBORS SHA 24bcbda exact product SHA 24bcbda2e1e3f4a0c93b13aa7d3a0494daf83a47 live handl-sandbox plugin + DB (WP-CLI Neighbors::render_page) AC: AC2 enabled complete spend + disclosuresUsage referenceCompare this site&#039;s recorded AI activity with example ranges grouped by published post count. These ranges do not represent measured \"}}\n{\"ok\":true,\"job\":\"neighbors_partial\",\"sha\":\"24bcbda2e1e3f4a0c93b13aa7d3a0494daf83a47\",\"class\":\"HandL\\\\AICAC\\\\Neighbors\",\"page\":\"handl-aicac-neighbors\",\"bytes\":95578,\"status\":\"OK\",\"spend\":\"partial\",\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"text\":\"PR502 / #492 AICAC-NEIGHBORS SHA 24bcbda exact product SHA 24bcbda2e1e3f4a0c93b13aa7d3a0494daf83a47 live handl-sandbox plugin + DB (WP-CLI Neighbors::render_page) AC: AC3 partial spend (not a complete comparison)Usage referenceCompare this site&#039;s recorded AI activity with example ranges grouped by published post count. These ranges do not represent meas\"}}\n{\"ok\":true,\"job\":\"neighbors_unavailable\",\"sha\":\"24bcbda2e1e3f4a0c93b13aa7d3a0494daf83a47\",\"class\":\"HandL\\\\AICAC\\\\Neighbors\",\"page\":\"handl-aicac-neighbors\",\"bytes\":95488,\"status\":\"OK\",\"spend\":\"none\",\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"text\":\"PR502 / #492 AICAC-NEIGHBORS SHA 24bcbda exact product SHA 24bcbda2e1e3f4a0c93b13aa7d3a0494daf83a47 live handl-sandbox plugin + DB (WP-CLI Neighbors::render_page) AC: AC4 spend estimate unavailableUsage referenceCompare this site&#039;s recorded AI activity with example ranges grouped by published post count. These ranges do not represent measured peer usage\"}}\n{\"ok\":true,\"job\":\"neighbors_empty\",\"sha\":\"24bcbda2e1e3f4a0c93b13aa7d3a0494daf83a47\",\"class\":\"HandL\\\\AICAC\\\\Neighbors\",\"page\":\"handl-aicac-neighbors\",\"bytes\":95153,\"status\":\"EMPTY\",\"spend\":\"none\",\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"text\":\"PR502 / #492 AICAC-NEIGHBORS SHA 24bcbda exact product SHA 24bcbda2e1e3f4a0c93b13aa7d3a0494daf83a47 live handl-sandbox plugin + DB (WP-CLI Neighbors::render_page) AC: AC5 empty activityUsage referenceCompare this site&#039;s recorded AI activity with example ranges grouped by published post count. These ranges do not represent measured peer usage. This compa\"}}\n{\"ok\":true,\"job\":\"neighbors_insufficient\",\"sha\":\"24bcbda2e1e3f4a0c93b13aa7d3a0494daf83a47\",\"class\":\"HandL\\\\AICAC\\\\Neighbors\",\"page\":\"handl-aicac-neighbors\",\"bytes\":95203,\"status\":\"INSUFFICIENT-DATA\",\"spend\":\"none\",\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"text\":\"PR502 / #492 AICAC-NEIGHBORS SHA 24bcbda exact product SHA 24bcbda2e1e3f4a0c93b13aa7d3a0494daf83a47 live handl-sandbox plugin + DB (WP-CLI Neighbors::render_page) AC: AC6 insufficient week of activityUsage referenceCompare this site&#039;s recorded AI activity with example ranges grouped by published post count. These ranges do not represent measured peer us\"}}\n{\"ok\":true,\"job\":\"neighbors_dashboard\",\"sha\":\"24bcbda2e1e3f4a0c93b13aa7d3a0494daf83a47\",\"class\":\"HandL\\\\AICAC\\\\Neighbors\",\"page\":\"handl-aicac-neighbors\",\"bytes\":94699,\"status\":\"OK\",\"spend\":\"complete\",\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"text\":\"PR502 / #492 AICAC-NEIGHBORS SHA 24bcbda exact product SHA 24bcbda2e1e3f4a0c93b13aa7d3a0494daf83a47 live handl-sandbox plugin + DB (WP-CLI Neighbors::render_page) AC: AC7 dashboard widget AI usage referenceAI usage referenceExample deny-rate range: 2%–5%. This site&#039;s recorded deny rate over the past 7 days: 11%.Example weekly call range: 12–30. This\"}}"
+}
