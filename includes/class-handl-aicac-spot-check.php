@@ -78,7 +78,8 @@ final class Spot_Check {
 		add_action( 'admin_post_' . self::ACTION_SAVE, array( self::class, 'handle_save' ) );
 		add_action( 'admin_post_' . self::ACTION_VERDICT, array( self::class, 'handle_verdict' ) );
 		if ( ! ( defined( 'WP_CLI' ) && WP_CLI ) ) {
-			add_action( 'init', array( self::class, 'maybe_sample' ), 35 );
+			// WP 7.1 do_action() with no extra args still passes ''.
+			add_action( 'init', array( self::class, 'maybe_sample' ), 35, 0 );
 			if ( function_exists( 'is_admin' ) && is_admin() ) {
 				add_action( 'admin_notices', array( self::class, 'maybe_staleness_notice' ) );
 			}
@@ -536,10 +537,14 @@ final class Spot_Check {
 	/**
 	 * Run daily sampling. Idempotent for already-queued entry ids.
 	 *
-	 * @param array<string,mixed>|null $log Log.
+	 * @param mixed    $log Log rows, or WP's empty-string action placeholder.
+	 * @param int|null $now Optional now.
 	 * @return array{added:int,candidates:int,selected:int}
 	 */
-	public static function maybe_sample( ?array $log = null, ?int $now = null ): array {
+	public static function maybe_sample( $log = null, ?int $now = null ): array {
+		if ( ! is_array( $log ) ) {
+			$log = null;
+		}
 		$result = array(
 			'added'      => 0,
 			'candidates' => 0,
