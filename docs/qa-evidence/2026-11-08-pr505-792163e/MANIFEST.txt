@@ -1,0 +1,12 @@
+exact_sha=792163e3207fb52eeade8d3da1867a9559affdf9
+short_sha=792163e
+captured_at=2026-11-08T00:58:02.433Z
+method=Live sandbox plugin checked out to force-asserted SHA 792163e; WP-CLI qa-admin + Taint::render_page() / Deny_Receipt::render_page() HTML with inlined wp-admin CSS; Playwright local serve of the real wrap. Live SHA restored to 0b2e12a after capture.
+files:
+  01-off.png (128012 B)
+  02-warn.png (124461 B)
+  03-deny.png (126948 B)
+  04-receipt-no-matched-text.png (283671 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

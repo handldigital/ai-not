@@ -1,0 +1,35 @@
+{
+  "pr": 505,
+  "issue": 496,
+  "name": "AICAC-TAINT",
+  "exact_sha": "792163e3207fb52eeade8d3da1867a9559affdf9",
+  "captured_at": "2026-11-08T00:58:02.433Z",
+  "method": "Live sandbox plugin checked out to force-asserted SHA 792163e; WP-CLI qa-admin + Taint::render_page() / Deny_Receipt::render_page() HTML with inlined wp-admin CSS; Playwright local serve of the real wrap. Live SHA restored to 0b2e12a after capture.",
+  "shots": [
+    {
+      "file": "01-off.png",
+      "bytes": 128012,
+      "job": "taint_off",
+      "heading": "taint_off"
+    },
+    {
+      "file": "02-warn.png",
+      "bytes": 124461,
+      "job": "taint_warn",
+      "heading": "taint_warn"
+    },
+    {
+      "file": "03-deny.png",
+      "bytes": 126948,
+      "job": "taint_deny",
+      "heading": "taint_deny"
+    },
+    {
+      "file": "04-receipt-no-matched-text.png",
+      "bytes": 283671,
+      "job": "taint_receipt",
+      "heading": "taint_receipt"
+    }
+  ],
+  "export_stdout": "{\"ok\":true,\"job\":\"taint_off\",\"sha\":\"792163e3207fb52eeade8d3da1867a9559affdf9\",\"class\":\"HandL\\\\AICAC\\\\Taint\",\"page\":\"handl-aicac-taint\",\"plugin\":\"ai/ai.php\",\"mode\":\"off\",\"selected\":true,\"receipt\":\"\",\"bytes\":150184,\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"off_copy\":true,\"hostile\":false,\"text\":\"PR505 / #496 AICAC-TAINT SHA 792163e exact product SHA 792163e3207fb52eeade8d3da1867a9559affdf9 live handl-sandbox plugin + DB (WP-CLI Taint::render_page) AC: AC Off default Injection screenInjection screenCheck each plugin&#039;s AI Client requests for text that may try to change the AI&#039;s instructions. Off by default.Pattern checks can flag harmless text and miss attacks.Injection screen is off.PluginScreenActiveCampaign for WooCommerceactivecampaign-for-woocommerce/act\"}}\n{\"ok\":true,\"job\":\"taint_warn\",\"sha\":\"792163e3207fb52eeade8d3da1867a9559affdf9\",\"class\":\"HandL\\\\AICAC\\\\Taint\",\"page\":\"handl-aicac-taint\",\"plugin\":\"ai/ai.php\",\"mode\":\"warn\",\"selected\":true,\"receipt\":\"\",\"bytes\":150154,\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"off_copy\":false,\"hostile\":false,\"text\":\"PR505 / #496 AICAC-TAINT SHA 792163e exact product SHA 792163e3207fb52eeade8d3da1867a9559affdf9 live handl-sandbox plugin + DB (WP-CLI Taint::render_page) AC: AC Warn (flags, does not block)Injection screenCheck each plugin&#039;s AI Client requests for text that may try to change the AI&#039;s instructions. Off by default.Pattern checks can flag harmless text and miss attacks.PluginScreenActiveCampaign for WooCommerceactivecampaign-for-woocommerce/activecampaign-for-woocomme\"}}\n{\"ok\":true,\"job\":\"taint_deny\",\"sha\":\"792163e3207fb52eeade8d3da1867a9559affdf9\",\"class\":\"HandL\\\\AICAC\\\\Taint\",\"page\":\"handl-aicac-taint\",\"plugin\":\"ai/ai.php\",\"mode\":\"deny\",\"selected\":true,\"receipt\":\"\",\"bytes\":150181,\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"off_copy\":false,\"hostile\":false,\"text\":\"PR505 / #496 AICAC-TAINT SHA 792163e exact product SHA 792163e3207fb52eeade8d3da1867a9559affdf9 live handl-sandbox plugin + DB (WP-CLI Taint::render_page) AC: AC Deny (blocks matching requests unless Learn mode is on)Injection screenCheck each plugin&#039;s AI Client requests for text that may try to change the AI&#039;s instructions. Off by default.Pattern checks can flag harmless text and miss attacks.PluginScreenActiveCampaign for WooCommerceactivecampaign-for-woocommerce/\"}}\n{\"ok\":true,\"job\":\"taint_receipt\",\"sha\":\"792163e3207fb52eeade8d3da1867a9559affdf9\",\"class\":\"HandL\\\\AICAC\\\\Taint\",\"page\":\"handl-aicac-deny-receipt\",\"plugin\":\"ai/ai.php\",\"mode\":\"deny\",\"selected\":true,\"receipt\":\"AICAC-S7E8-QGJC\",\"bytes\":97323,\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"off_copy\":false,\"hostile\":false,\"text\":\"PR505 / #496 AICAC-TAINT SHA 792163e exact product SHA 792163e3207fb52eeade8d3da1867a9559affdf9 live handl-sandbox plugin + DB (WP-CLI Deny_Receipt::render_page + Taint::build_body) AC: AC Receipt names class, never matched text (Learn-mode bypass copy in alert)Deny receiptsGive blocked callers a short reference code they can quote. Paste a code here to open the matching Activity row. Off by default. This does not change Allow or Deny rules.Show code to callers Add &quot;Refe\"}}"
+}
