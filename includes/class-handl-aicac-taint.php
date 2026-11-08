@@ -552,6 +552,11 @@ final class Taint {
 			}
 			echo '</form>';
 		}
+
+		if ( class_exists( Litmus::class, false ) && method_exists( Litmus::class, 'render_section' ) ) {
+			Litmus::render_section();
+		}
+
 		echo '</div>';
 	}
 
