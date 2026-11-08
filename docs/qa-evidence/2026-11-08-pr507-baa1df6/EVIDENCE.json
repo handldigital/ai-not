@@ -1,0 +1,35 @@
+{
+  "pr": 507,
+  "issue": 503,
+  "name": "AICAC-LOOKBACK",
+  "exact_sha": "baa1df616a7801f29204dc204874a09516bfc3ff",
+  "captured_at": "2026-11-08T01:24:13.525Z",
+  "method": "Live sandbox plugin checked out to force-asserted SHA baa1df6; WP-CLI qa-admin + Lookback::render_page() / Admin Insights + Lookback::maybe_inject_provider_map() HTML with inlined wp-admin CSS; Playwright local serve of the real wrap. Live SHA restored to 0b2e12a after capture.",
+  "shots": [
+    {
+      "file": "01-empty-window.png",
+      "bytes": 148545,
+      "job": "lookback_empty",
+      "heading": "lookback_empty"
+    },
+    {
+      "file": "02-populated-retention.png",
+      "bytes": 343468,
+      "job": "lookback_populated",
+      "heading": "lookback_populated"
+    },
+    {
+      "file": "03-csv-action.png",
+      "bytes": 207116,
+      "job": "lookback_csv",
+      "heading": "lookback_csv"
+    },
+    {
+      "file": "04-insights-link.png",
+      "bytes": 137257,
+      "job": "lookback_insights",
+      "heading": "lookback_insights"
+    }
+  ],
+  "export_stdout": "{\"ok\":true,\"job\":\"lookback_empty\",\"sha\":\"baa1df616a7801f29204dc204874a09516bfc3ff\",\"class\":\"HandL\\\\AICAC\\\\Lookback\",\"page\":\"handl-aicac-lookback\",\"plugin\":\"ai/ai.php\",\"from\":\"2026-09-29\",\"to\":\"2026-11-08\",\"bytes\":96293,\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"empty\":true,\"csv\":false,\"insights\":false,\"map_table\":false,\"pii_leak\":false,\"text\":\"PR507 / #503 AICAC-LOOKBACK SHA baa1df6 exact product SHA baa1df616a7801f29204dc204874a09516bfc3ff live handl-sandbox plugin + DB (WP-CLI Lookback::render_page) AC: AC Empty provider/window (Choose a provider and date window.)Exposure lookbackReview saved Activity for one AI provider in a date window. This report only reads saved Activity and media records. It does not collect new data or change policy. Records may include blocked attempts and do not confirm delivery or expos\"}}\n{\"ok\":true,\"job\":\"lookback_populated\",\"sha\":\"baa1df616a7801f29204dc204874a09516bfc3ff\",\"class\":\"HandL\\\\AICAC\\\\Lookback\",\"page\":\"handl-aicac-lookback\",\"plugin\":\"ai/ai.php\",\"from\":\"2026-09-29\",\"to\":\"2026-11-08\",\"bytes\":98500,\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"empty\":false,\"csv\":true,\"insights\":false,\"map_table\":false,\"pii_leak\":false,\"text\":\"PR507 / #503 AICAC-LOOKBACK SHA baa1df6 exact product SHA baa1df616a7801f29204dc204874a09516bfc3ff live handl-sandbox plugin + DB (WP-CLI Lookback::render_page) AC: AC Populated summary with retention/missing-data contextExposure lookbackReview saved Activity for one AI provider in a date window. This report only reads saved Activity and media records. It does not collect new data or change policy. Records may include blocked attempts and do not confirm delivery or exposure.P\"}}\n{\"ok\":true,\"job\":\"lookback_csv\",\"sha\":\"baa1df616a7801f29204dc204874a09516bfc3ff\",\"class\":\"HandL\\\\AICAC\\\\Lookback\",\"page\":\"handl-aicac-lookback\",\"plugin\":\"ai/ai.php\",\"from\":\"2026-09-29\",\"to\":\"2026-11-08\",\"bytes\":100216,\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"empty\":false,\"csv\":true,\"insights\":false,\"map_table\":false,\"pii_leak\":false,\"text\":\"PR507 / #503 AICAC-LOOKBACK SHA baa1df6 exact product SHA baa1df616a7801f29204dc204874a09516bfc3ff live handl-sandbox plugin + DB (WP-CLI Lookback::render_page) AC: AC CSV action (Download CSV + lookback context tag)Exposure lookbackReview saved Activity for one AI provider in a date window. This report only reads saved Activity and media records. It does not collect new data or change policy. Records may include blocked attempts and do not confirm delivery or exposure.Provid\"}}\n{\"ok\":true,\"job\":\"lookback_insights\",\"sha\":\"baa1df616a7801f29204dc204874a09516bfc3ff\",\"class\":\"HandL\\\\AICAC\\\\Lookback\",\"page\":\"handl-aicac-insights\",\"plugin\":\"ai/ai.php\",\"from\":\"2026-09-29\",\"to\":\"2026-11-08\",\"bytes\":112409,\"needles\":{\"stamp\":true,\"wrap\":false,\"h1\":true,\"empty\":false,\"csv\":false,\"insights\":true,\"map_table\":true,\"pii_leak\":false,\"text\":\"HandL AI AccessInsightsSee patterns in AI use and estimated spend.Find a settingUsage insightsTotals and peaks from the saved log, grouped by plugin, provider, model, or operation.Using 10 of 200 saved entries (entry limit plus 30-day time limit; stricter limit wins).Total calls10Calls with token data10100% of callsTotal tokens (input + output)1,200Reported total: 1,200Largest single call120100 input, 20 outputTop block reasonsWhy calls were blocked in the saved log. Counts u\"}}"
+}

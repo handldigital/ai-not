@@ -1,0 +1,12 @@
+exact_sha=baa1df616a7801f29204dc204874a09516bfc3ff
+short_sha=baa1df6
+captured_at=2026-11-08T01:24:13.525Z
+method=Live sandbox plugin checked out to force-asserted SHA baa1df6; WP-CLI qa-admin + Lookback::render_page() / Admin Insights + Lookback::maybe_inject_provider_map() HTML with inlined wp-admin CSS; Playwright local serve of the real wrap. Live SHA restored to 0b2e12a after capture.
+files:
+  01-empty-window.png (148545 B)
+  02-populated-retention.png (343468 B)
+  03-csv-action.png (207116 B)
+  04-insights-link.png (137257 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md
