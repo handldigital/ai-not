@@ -633,7 +633,7 @@ final class Understudy {
 		}
 		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__( 'Model audition', 'handl-ai-connector-access-control' ) . '</h1>';
-		echo '<p class="description">' . esc_html__( 'Quietly try a cheaper model on a sample of allowed calls, then apply it with Model-Force if the match is close. Audition runs in the background. Live AI calls are not delayed.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Try another model on a sample of allowed calls. Tests run in the background. Applying a model changes this plugin\'s future AI calls.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( ! self::is_enabled() ) {
 			echo '<p>' . esc_html__( 'Model audition is off.', 'handl-ai-connector-access-control' ) . '</p>';
@@ -661,10 +661,11 @@ final class Understudy {
 		if ( '' === $plugin ) {
 			return;
 		}
-		$row       = self::plugin_row( $plugin );
-		$enabled   = self::is_enabled_for( $plugin );
+		$row        = self::plugin_row( $plugin );
+		$enabled    = self::is_enabled_for( $plugin );
 		$can_manage = class_exists( Caps::class, false ) && Caps::user_can_manage();
-		$verdict   = self::verdict( $plugin );
+		$verdict    = self::verdict( $plugin );
+		$applied    = ! empty( $verdict['applied'] );
 
 		if ( $can_manage ) {
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
@@ -674,10 +675,10 @@ final class Understudy {
 				wp_nonce_field( self::ACTION_SAVE );
 			}
 			echo '<p><label><input type="checkbox" name="handl_aicac_understudy_enabled" value="1"' . checked( $enabled, true, false ) . ' /> ';
-			echo esc_html__( 'Audition a cheaper model for this plugin', 'handl-ai-connector-access-control' ) . '</label></p>';
+			echo esc_html__( 'Test another model for this plugin', 'handl-ai-connector-access-control' ) . '</label></p>';
 			echo '<p><label>' . esc_html__( 'Provider', 'handl-ai-connector-access-control' ) . ' ';
 			echo '<input type="text" class="regular-text code" name="handl_aicac_understudy_provider" value="' . esc_attr( (string) ( $row['provider'] ?? '' ) ) . '" placeholder="openai" autocomplete="off" /></label></p>';
-			echo '<p><label>' . esc_html__( 'Cheaper model', 'handl-ai-connector-access-control' ) . ' ';
+			echo '<p><label>' . esc_html__( 'Model to test', 'handl-ai-connector-access-control' ) . ' ';
 			echo '<input type="text" class="regular-text code" name="handl_aicac_understudy_model" value="' . esc_attr( (string) ( $row['model'] ?? '' ) ) . '" placeholder="gpt-4o-mini" autocomplete="off" /></label></p>';
 			echo '<p><label>' . esc_html__( 'Sample this percent of allowed calls', 'handl-ai-connector-access-control' ) . ' ';
 			echo '<input type="number" min="1" max="100" name="handl_aicac_understudy_sample_pct" value="' . esc_attr( (string) (int) ( $row['sample_pct'] ?? self::SAMPLE_PCT_DEFAULT ) ) . '" /></label></p>';
@@ -688,7 +689,12 @@ final class Understudy {
 			} else {
 				echo '<button type="submit" class="button">' . esc_html__( 'Save audition', 'handl-ai-connector-access-control' ) . '</button>';
 			}
+			echo '<p class="description">' . esc_html__( 'Test calls may incur provider charges. To stop testing, clear this checkbox and save.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '</form>';
+		}
+
+		if ( $applied ) {
+			self::render_applied_state( $plugin, $can_manage );
 		}
 
 		if ( ! $enabled ) {
@@ -705,38 +711,27 @@ final class Understudy {
 
 		echo '<p>' . esc_html(
 			sprintf(
-				/* translators: 1: close-match percent, 2: sample count */
-				__( 'Close match on %1$s of %2$s samples.', 'handl-ai-connector-access-control' ),
+				/* translators: 1: similar-wording percent, 2: sample count */
+				__( 'Similar wording in %1$s of %2$s samples.', 'handl-ai-connector-access-control' ),
 				self::pct_label( (float) $verdict['match_pct'] ),
 				self::int_label( (float) $verdict['sample_count'] )
 			)
 		) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Compares shared words only. Similar wording does not confirm accuracy or quality. Review the results before switching models.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		$savings = $verdict['monthly_savings'];
 		if ( null !== $savings && $savings > 0 ) {
 			echo '<p>' . esc_html(
 				sprintf(
 					/* translators: %s: estimated USD savings */
-					__( 'Forcing this model would have saved about %s this month.', 'handl-ai-connector-access-control' ),
+					__( 'Estimated savings on priced calls in the last 30 days: %s.', 'handl-ai-connector-access-control' ),
 					self::usd_label( (float) $savings )
 				)
 			) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Uses recorded token counts and available rates. Excludes unpriced calls and test-call costs. Actual savings may differ.', 'handl-ai-connector-access-control' ) . '</p>';
 		}
-		echo '<p class="description">' . esc_html__( 'Based on sampled calls. This is an estimate.', 'handl-ai-connector-access-control' ) . '</p>';
 
-		if ( ! $can_manage ) {
-			return;
-		}
-		if ( $verdict['applied'] ) {
-			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="margin-top:0.5em;">';
-			echo '<input type="hidden" name="action" value="' . esc_attr( self::ACTION_REVERT ) . '" />';
-			echo '<input type="hidden" name="handl_aicac_understudy_plugin" value="' . esc_attr( $plugin ) . '" />';
-			if ( function_exists( 'wp_nonce_field' ) ) {
-				wp_nonce_field( self::ACTION_REVERT );
-			}
-			echo '<button type="submit" class="button">' . esc_html__( 'Undo this model force', 'handl-ai-connector-access-control' ) . '</button>';
-			echo '</form>';
-
+		if ( ! $can_manage || $applied ) {
 			return;
 		}
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="margin-top:0.5em;">';
@@ -745,7 +740,22 @@ final class Understudy {
 		if ( function_exists( 'wp_nonce_field' ) ) {
 			wp_nonce_field( self::ACTION_APPLY );
 		}
-		echo '<button type="submit" class="button button-primary">' . esc_html__( 'Force this cheaper model', 'handl-ai-connector-access-control' ) . '</button>';
+		echo '<button type="submit" class="button button-primary">' . esc_html__( 'Use this model for this plugin', 'handl-ai-connector-access-control' ) . '</button>';
+		echo '</form>';
+	}
+
+	private static function render_applied_state( string $plugin, bool $can_manage ): void {
+		echo '<p>' . esc_html__( 'This model is applied to future AI calls from this plugin. Stopping the audition does not restore the previous model setting.', 'handl-ai-connector-access-control' ) . '</p>';
+		if ( ! $can_manage ) {
+			return;
+		}
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="margin-top:0.5em;">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( self::ACTION_REVERT ) . '" />';
+		echo '<input type="hidden" name="handl_aicac_understudy_plugin" value="' . esc_attr( $plugin ) . '" />';
+		if ( function_exists( 'wp_nonce_field' ) ) {
+			wp_nonce_field( self::ACTION_REVERT );
+		}
+		echo '<button type="submit" class="button">' . esc_html__( 'Restore previous model setting', 'handl-ai-connector-access-control' ) . '</button>';
 		echo '</form>';
 	}
 

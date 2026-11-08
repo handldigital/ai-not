@@ -137,7 +137,12 @@ final class UnderstudyTest extends TestCase {
 		$off = (string) ob_get_clean();
 		$this->assertStringContainsString( 'Model audition is off.', $off );
 		$this->assertStringContainsString( 'Model audition', $off );
+		$this->assertStringContainsString( 'Try another model on a sample of allowed calls.', $off );
+		$this->assertStringContainsString( 'Test another model for this plugin', $off );
+		$this->assertStringContainsString( 'Model to test', $off );
+		$this->assertStringContainsString( 'Test calls may incur provider charges. To stop testing, clear this checkbox and save.', $off );
 		$this->assertStringNotContainsString( 'OFF', $off );
+		$this->assertStringNotContainsString( 'cheaper', strtolower( $off ) );
 
 		$this->assertTrue(
 			Understudy::enable_for(
@@ -301,11 +306,59 @@ final class UnderstudyTest extends TestCase {
 		ob_start();
 		Understudy::render_plugin_card( self::PLUGIN );
 		$html = (string) ob_get_clean();
-		$this->assertStringContainsString( 'Close match on', $html );
-		$this->assertStringContainsString( 'Force this cheaper model', $html );
-		$this->assertStringContainsString( 'Forcing this model would have saved about', $html );
+		$this->assertStringContainsString( 'Similar wording in', $html );
+		$this->assertStringContainsString( 'Compares shared words only. Similar wording does not confirm accuracy or quality. Review the results before switching models.', $html );
+		$this->assertStringContainsString( 'Use this model for this plugin', $html );
+		$this->assertStringContainsString( 'Estimated savings on priced calls in the last 30 days:', $html );
+		$this->assertStringContainsString( 'Uses recorded token counts and available rates. Excludes unpriced calls and test-call costs. Actual savings may differ.', $html );
+		$this->assertStringNotContainsString( 'Based on sampled calls. This is an estimate.', $html );
 		$this->assertStringNotContainsString( 'CLOSE-MATCH', $html );
 		$this->assertStringNotContainsString( 'INSUFFICIENT', $html );
+		$this->assertStringNotContainsString( 'cheaper', strtolower( $html ) );
+	}
+
+	public function test_applied_state_and_restore_stay_visible_when_testing_is_off(): void {
+		Understudy::enable_for(
+			self::PLUGIN,
+			array(
+				'provider' => 'openai',
+				'model'    => 'gpt-4o-mini',
+			)
+		);
+		$this->assertTrue( Understudy::apply_force( self::PLUGIN ) );
+		Understudy::disable_for( self::PLUGIN );
+		$this->assertFalse( Understudy::is_enabled_for( self::PLUGIN ) );
+		$this->assertTrue( Understudy::is_applied( self::PLUGIN ) );
+
+		ob_start();
+		Understudy::render_plugin_card( self::PLUGIN );
+		$html = (string) ob_get_clean();
+		$this->assertStringContainsString( 'Model audition is off.', $html );
+		$this->assertStringContainsString( 'This model is applied to future AI calls from this plugin. Stopping the audition does not restore the previous model setting.', $html );
+		$this->assertStringContainsString( 'Restore previous model setting', $html );
+		$this->assertStringNotContainsString( 'Use this model for this plugin', $html );
+	}
+
+	public function test_applied_state_and_restore_stay_visible_when_samples_expire(): void {
+		Understudy::enable_for(
+			self::PLUGIN,
+			array(
+				'provider' => 'openai',
+				'model'    => 'gpt-4o-mini',
+			)
+		);
+		$this->assertTrue( Understudy::apply_force( self::PLUGIN ) );
+		$this->assertTrue( Understudy::is_enabled_for( self::PLUGIN ) );
+		$this->assertTrue( Understudy::is_applied( self::PLUGIN ) );
+		$this->assertSame( 0, Understudy::verdict( self::PLUGIN )['sample_count'] );
+
+		ob_start();
+		Understudy::render_plugin_card( self::PLUGIN );
+		$html = (string) ob_get_clean();
+		$this->assertStringContainsString( 'Not enough samples yet.', $html );
+		$this->assertStringContainsString( 'This model is applied to future AI calls from this plugin. Stopping the audition does not restore the previous model setting.', $html );
+		$this->assertStringContainsString( 'Restore previous model setting', $html );
+		$this->assertStringNotContainsString( 'Use this model for this plugin', $html );
 	}
 
 	public function test_spend_lands_on_distinct_understudy_ledger_line(): void {
