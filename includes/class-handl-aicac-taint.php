@@ -394,7 +394,7 @@ final class Taint {
 			self::CLASS_INSTRUCTION => __( 'Instruction override', 'handl-ai-connector-access-control' ),
 			self::CLASS_ROLE        => __( 'Role reassignment', 'handl-ai-connector-access-control' ),
 			self::CLASS_EXFIL       => __( 'Secret-prompt bait', 'handl-ai-connector-access-control' ),
-			self::CLASS_OBFUSCATION => __( 'Hidden characters', 'handl-ai-connector-access-control' ),
+			self::CLASS_OBFUSCATION => __( 'Hidden characters or mixed alphabets', 'handl-ai-connector-access-control' ),
 		);
 		$class = sanitize_key( $class );
 
@@ -438,7 +438,7 @@ final class Taint {
 	 */
 	public static function build_body( string $plugin, array $classes, string $mode ): string {
 		$lines   = array();
-		$lines[] = __( 'HandL AI Connector Access Control found text that looks like an attempt to override this plugin\'s AI instructions.', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'HandL AI Connector Access Control found text that matches a possible prompt-injection pattern in this plugin\'s AI request.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = sprintf(
 			/* translators: %s: plugin basename or label */
@@ -446,15 +446,15 @@ final class Taint {
 			self::plugin_label( $plugin )
 		);
 		if ( self::MODE_WARN === self::sanitize_mode( $mode ) ) {
-			$lines[] = __( 'Result: Allowed and logged', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'Screen result: Warn (this check did not block the request).', 'handl-ai-connector-access-control' );
 		}
-		$lines[] = __( 'Pattern classes found (counts only; HandL does not save or email the matching text):', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'Pattern types and match counts (matching text is not included in this alert):', 'handl-ai-connector-access-control' );
 		$summary = self::receipt_summary( $classes );
 		if ( '' !== $summary ) {
 			$lines[] = $summary;
 		}
 		$lines[] = '';
-		$lines[] = __( 'To block future requests like this, set this plugin\'s injection screen to Deny.', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'To block requests that match these patterns, set this plugin\'s injection screen to Deny and turn off Learn mode.', 'handl-ai-connector-access-control' );
 
 		return implode( "\n", $lines );
 	}
@@ -500,7 +500,8 @@ final class Taint {
 
 		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__( 'Injection screen', 'handl-ai-connector-access-control' ) . '</h1>';
-		echo '<p class="description">' . esc_html__( 'Block or log prompts that look like someone is trying to override this plugin\'s AI instructions. Off by default.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Check each plugin\'s AI Client requests for text that may try to change the AI\'s instructions. Off by default.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Pattern checks can flag harmless text and miss attacks.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( empty( $modes ) ) {
 			echo '<p>' . esc_html__( 'Injection screen is off.', 'handl-ai-connector-access-control' ) . '</p>';
@@ -540,7 +541,8 @@ final class Taint {
 			echo '</td></tr>';
 		}
 		echo '</tbody></table>';
-		echo '<p class="description">' . esc_html__( 'Warn logs the pattern class and still allows the call. Deny blocks the call. Matching text is never stored.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Off skips this check. Warn flags matches without blocking them. Deny blocks matching requests unless Learn mode is on. Other rules still apply.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Match details show pattern types and counts, not matching text.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( $can_manage ) {
 			if ( function_exists( 'submit_button' ) ) {

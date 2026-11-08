@@ -122,7 +122,7 @@ final class Policy_Simulator {
 			'tool_armed'        => __( 'Blocked tool rule', 'handl-ai-connector-access-control' ),
 			'ability_armed'     => __( 'Blocked tool rule', 'handl-ai-connector-access-control' ),
 			'pii'               => __( 'Personal information detected', 'handl-ai-connector-access-control' ),
-			'taint'             => __( 'Prompt injection detected', 'handl-ai-connector-access-control' ),
+			'taint'             => __( 'Possible prompt injection', 'handl-ai-connector-access-control' ),
 			'mcp'               => __( 'MCP rule', 'handl-ai-connector-access-control' ),
 			'residency'         => __( 'Provider region filter', 'handl-ai-connector-access-control' ),
 			'rate_cap'          => __( 'Call cap', 'handl-ai-connector-access-control' ),

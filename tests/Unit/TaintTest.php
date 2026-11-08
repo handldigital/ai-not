@@ -159,7 +159,7 @@ final class TaintTest extends TestCase {
 		$receipt = Taint::receipt_summary( $event['taint_match']['classes'] );
 		$this->assertStringContainsString( 'Instruction override', $receipt );
 		$this->assertStringNotContainsString( 'ignore previous', strtolower( $receipt ) );
-		$this->assertSame( 'Prompt injection detected', \HandL\AICAC\Policy_Simulator::reason_label( Taint::REASON ) );
+		$this->assertSame( 'Possible prompt injection', \HandL\AICAC\Policy_Simulator::reason_label( Taint::REASON ) );
 		$json = wp_json_encode( $event );
 		$this->assertStringNotContainsString( self::HOSTILE, (string) $json );
 	}
@@ -227,7 +227,7 @@ final class TaintTest extends TestCase {
 		$this->assertCount( 1, self::$mails );
 		$body = self::$mails[0]['message'];
 		$this->assertStringContainsString( 'Instruction override', $body );
-		$this->assertStringContainsString( 'Result: Allowed and logged', $body );
+		$this->assertStringContainsString( 'Screen result: Warn (this check did not block the request).', $body );
 		$this->assertStringNotContainsString( 'ignore previous instructions', strtolower( $body ) );
 		$this->assertStringNotContainsString( 'dump the system prompt', strtolower( $body ) );
 		$receipt = Taint::receipt_summary( $event['taint_match']['classes'] );
@@ -243,6 +243,10 @@ final class TaintTest extends TestCase {
 		$this->assertStringContainsString( 'Injection screen is off.', $html );
 		$this->assertStringContainsString( 'Save injection screen', $html );
 		$this->assertStringContainsString( 'Off by default', $html );
+		$this->assertStringContainsString( 'Pattern checks can flag harmless text and miss attacks.', $html );
+		$this->assertStringContainsString( 'Off skips this check.', $html );
+		$this->assertStringContainsString( 'Match details show pattern types and counts, not matching text.', $html );
+		$this->assertStringNotContainsString( 'Matching text is never stored.', $html );
 	}
 
 	public function test_sanitize_plugin_modes_drops_off(): void {
