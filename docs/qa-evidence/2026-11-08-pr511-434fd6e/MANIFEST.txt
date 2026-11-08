@@ -1,0 +1,13 @@
+exact_sha=434fd6edd57f51e4bb886a922ea5007dceea1494
+short_sha=434fd6e
+captured_at=2026-11-08T02:20:47.339Z
+method=Live sandbox plugin checked out to force-asserted SHA 434fd6e; WP-CLI qa-admin + AICAC admin_menu callbacks + Foyer::render_page HTML with inlined wp-admin CSS; Playwright local serve of the real More tools wrap. Live SHA restored to 0b2e12a after capture.
+files:
+  01-simple-menu-direct.png (177994 B)
+  02-upgrade-full.png (344381 B)
+  03-pin-unpin.png (243025 B)
+  04-search.png (97318 B)
+  05-full-restore.png (380580 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md
