@@ -1,0 +1,10 @@
+exact_sha=7be08d78d69012fb9ba76e4f798e220e6f96af9a
+short_sha=7be08d7
+captured_at=2026-11-08T00:29:12.000Z
+method=Live sandbox plugin checked out to force-asserted SHA 7be08d7; WP-CLI qa-admin + Understudy::render_plugin_card() HTML with inlined wp-admin CSS; Playwright local serve of the real Model audition wrap. Live SHA restored after capture.
+files:
+  01-stopped-after-apply.png (167986 B)
+  02-no-samples-after-apply.png (167820 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md
