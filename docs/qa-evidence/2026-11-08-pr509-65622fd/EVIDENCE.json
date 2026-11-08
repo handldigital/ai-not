@@ -1,0 +1,35 @@
+{
+  "pr": 509,
+  "issue": 506,
+  "name": "AICAC-LITMUS",
+  "exact_sha": "65622fdedfea81d028b7982dea4c1f1e956bc4f7",
+  "captured_at": "2026-11-08T01:47:46.912Z",
+  "method": "Live sandbox plugin checked out to force-asserted SHA 65622fd; WP-CLI qa-admin + Taint::render_page() / Litmus::render_section() HTML with inlined wp-admin CSS; Playwright local serve of the real Pattern test wrap. Live SHA restored to 0b2e12a after capture.",
+  "shots": [
+    {
+      "file": "01-empty-test.png",
+      "bytes": 159076,
+      "job": "litmus_empty",
+      "heading": "litmus_empty"
+    },
+    {
+      "file": "02-class-only-matches.png",
+      "bytes": 94709,
+      "job": "litmus_matches",
+      "heading": "litmus_matches"
+    },
+    {
+      "file": "03-mode-preview.png",
+      "bytes": 126154,
+      "job": "litmus_preview",
+      "heading": "litmus_preview"
+    },
+    {
+      "file": "04-input-limit.png",
+      "bytes": 103880,
+      "job": "litmus_limit",
+      "heading": "litmus_limit"
+    }
+  ],
+  "export_stdout": "{\"ok\":true,\"job\":\"litmus_empty\",\"sha\":\"65622fdedfea81d028b7982dea4c1f1e956bc4f7\",\"class\":\"HandL\\\\AICAC\\\\Litmus\",\"page\":\"handl-aicac-taint\",\"bytes\":151881,\"needles\":{\"stamp\":true,\"wrap\":true,\"litmus\":true,\"h2\":true,\"empty\":true,\"class\":false,\"learn\":true,\"limit\":true,\"hostile\":false,\"text\":\"Injection screenCheck each plugin&#039;s AI Client requests for text that may try to change the AI&#039;s instructions. Off by default.Pattern checks can flag harmless text and miss attacks.Injection screen is off.PluginScreenActiveCampaign for WooCommerceactivecampaign-for-woocommerce/activecampaign-for-woocommerce.phpOffWarnDenyAdvanced Custom Fields PROadvanced-custom-fields-pro/acf.phpOffWarnDenyAffiliateWPaffiliate-wp/affiliate-wp.phpOffWarnDenyAI Engine: ChatGPT Chatbot\"}}\n{\"ok\":true,\"job\":\"litmus_matches\",\"sha\":\"65622fdedfea81d028b7982dea4c1f1e956bc4f7\",\"class\":\"HandL\\\\AICAC\\\\Litmus\",\"page\":\"handl-aicac-taint\",\"bytes\":152152,\"needles\":{\"stamp\":true,\"wrap\":true,\"litmus\":true,\"h2\":true,\"empty\":false,\"class\":true,\"learn\":true,\"limit\":true,\"hostile\":false,\"text\":\"Injection screenCheck each plugin&#039;s AI Client requests for text that may try to change the AI&#039;s instructions. Off by default.Pattern checks can flag harmless text and miss attacks.Injection screen is off.PluginScreenActiveCampaign for WooCommerceactivecampaign-for-woocommerce/activecampaign-for-woocommerce.phpOffWarnDenyAdvanced Custom Fields PROadvanced-custom-fields-pro/acf.phpOffWarnDenyAffiliateWPaffiliate-wp/affiliate-wp.phpOffWarnDenyAI Engine: ChatGPT Chatbot\"}}\n{\"ok\":true,\"job\":\"litmus_preview\",\"sha\":\"65622fdedfea81d028b7982dea4c1f1e956bc4f7\",\"class\":\"HandL\\\\AICAC\\\\Litmus\",\"page\":\"handl-aicac-taint\",\"bytes\":152092,\"needles\":{\"stamp\":true,\"wrap\":true,\"litmus\":true,\"h2\":true,\"empty\":false,\"class\":true,\"learn\":true,\"limit\":true,\"hostile\":false,\"text\":\"Injection screenCheck each plugin&#039;s AI Client requests for text that may try to change the AI&#039;s instructions. Off by default.Pattern checks can flag harmless text and miss attacks.Injection screen is off.PluginScreenActiveCampaign for WooCommerceactivecampaign-for-woocommerce/activecampaign-for-woocommerce.phpOffWarnDenyAdvanced Custom Fields PROadvanced-custom-fields-pro/acf.phpOffWarnDenyAffiliateWPaffiliate-wp/affiliate-wp.phpOffWarnDenyAI Engine: ChatGPT Chatbot\"}}\n{\"ok\":true,\"job\":\"litmus_limit\",\"sha\":\"65622fdedfea81d028b7982dea4c1f1e956bc4f7\",\"class\":\"HandL\\\\AICAC\\\\Litmus\",\"page\":\"handl-aicac-taint\",\"bytes\":151472,\"needles\":{\"stamp\":true,\"wrap\":true,\"litmus\":true,\"h2\":true,\"empty\":false,\"class\":false,\"learn\":true,\"limit\":true,\"hostile\":false,\"text\":\"Injection screenCheck each plugin&#039;s AI Client requests for text that may try to change the AI&#039;s instructions. Off by default.Pattern checks can flag harmless text and miss attacks.Injection screen is off.PluginScreenActiveCampaign for WooCommerceactivecampaign-for-woocommerce/activecampaign-for-woocommerce.phpOffWarnDenyAdvanced Custom Fields PROadvanced-custom-fields-pro/acf.phpOffWarnDenyAffiliateWPaffiliate-wp/affiliate-wp.phpOffWarnDenyAI Engine: ChatGPT Chatbot\"}}"
+}

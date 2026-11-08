@@ -1,0 +1,12 @@
+exact_sha=65622fdedfea81d028b7982dea4c1f1e956bc4f7
+short_sha=65622fd
+captured_at=2026-11-08T01:47:46.912Z
+method=Live sandbox plugin checked out to force-asserted SHA 65622fd; WP-CLI qa-admin + Taint::render_page() / Litmus::render_section() HTML with inlined wp-admin CSS; Playwright local serve of the real Pattern test wrap. Live SHA restored to 0b2e12a after capture.
+files:
+  01-empty-test.png (159076 B)
+  02-class-only-matches.png (94709 B)
+  03-mode-preview.png (126154 B)
+  04-input-limit.png (103880 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md
