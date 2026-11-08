@@ -431,9 +431,9 @@ final class Tripwire {
 			self::plugin_label( $plugin )
 		);
 		if ( self::MODE_WARN === self::sanitize_mode( $mode ) ) {
-			$lines[] = __( 'Screen result: Warn (this check did not block the request).', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'Tripwire setting: Warn. This check does not block the request. Other rules still apply.', 'handl-ai-connector-access-control' );
 		} else {
-			$lines[] = __( 'Screen result: Deny (this check blocked the request).', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'Tripwire setting: Deny. This check blocks matching requests except in Learn mode.', 'handl-ai-connector-access-control' );
 		}
 		$lines[] = __( 'Secret types and counts (values are not included in this alert):', 'handl-ai-connector-access-control' );
 		$summary = self::receipt_summary( $kinds );
@@ -441,7 +441,7 @@ final class Tripwire {
 			$lines[] = $summary;
 		}
 		$lines[] = '';
-		$lines[] = __( 'A site secret in an AI prompt is never legitimate. Secret values are never stored.', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'Review this plugin\'s AI request and remove any site secrets. This alert does not include secret values.', 'handl-ai-connector-access-control' );
 
 		return implode( "\n", $lines );
 	}
@@ -490,10 +490,10 @@ final class Tripwire {
 
 		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__( 'Secret tripwire', 'handl-ai-connector-access-control' ) . '</h1>';
-		echo '<p class="description">' . esc_html__( 'Block AI requests that include this site\'s own secrets: the database password, authentication keys, and stored provider API keys. On by default.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Checks AI request text for this site\'s database password, authentication keys and salts, and provider API keys already found by Keyscan. On by default.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'This check does not save secret values. Alerts name the secret type only.', 'handl-ai-connector-access-control' ) . '</p>';
 
-		echo '<p>' . esc_html__( 'Secret tripwire is on. Matching requests are blocked.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p>' . esc_html__( 'Secret tripwire is on. Deny is the default; per-plugin Warn settings and Learn mode can allow matching requests.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( empty( $plugins ) ) {
 			echo '<p>' . esc_html__( 'No plugins are available yet.', 'handl-ai-connector-access-control' ) . '</p>';
@@ -530,7 +530,7 @@ final class Tripwire {
 			echo '</td></tr>';
 		}
 		echo '</tbody></table>';
-		echo '<p class="description">' . esc_html__( 'Deny blocks the request. Warn records the secret type and still allows the call. Other rules still apply.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Deny blocks matching requests unless Learn mode is on. Warn does not block them. Other rules still apply.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( $can_manage ) {
 			if ( function_exists( 'submit_button' ) ) {

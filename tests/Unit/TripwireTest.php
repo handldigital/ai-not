@@ -138,7 +138,8 @@ final class TripwireTest extends TestCase {
 		Policy::append_log_event( $event );
 		$this->assertCount( 1, self::$mails );
 		$this->assertStringContainsString( 'Database password', self::$mails[0]['message'] );
-		$this->assertStringContainsString( 'Deny', self::$mails[0]['message'] );
+		$this->assertStringContainsString( 'Tripwire setting: Deny. This check blocks matching requests except in Learn mode.', self::$mails[0]['message'] );
+		$this->assertStringContainsString( 'Review this plugin\'s AI request and remove any site secrets. This alert does not include secret values.', self::$mails[0]['message'] );
 		$this->assertStringNotContainsString( self::DB_SECRET, self::$mails[0]['message'] );
 	}
 
@@ -238,7 +239,7 @@ final class TripwireTest extends TestCase {
 		$this->assertStringNotContainsString( self::AUTH_SECRET, (string) $encoded );
 		$this->assertCount( 1, self::$mails );
 		$this->assertStringContainsString( 'Authentication key', self::$mails[0]['message'] );
-		$this->assertStringContainsString( 'Warn', self::$mails[0]['message'] );
+		$this->assertStringContainsString( 'Tripwire setting: Warn. This check does not block the request. Other rules still apply.', self::$mails[0]['message'] );
 		$this->assertStringNotContainsString( self::AUTH_SECRET, self::$mails[0]['message'] );
 	}
 
@@ -306,10 +307,10 @@ final class TripwireTest extends TestCase {
 		Tripwire::render_page();
 		$html = (string) ob_get_clean();
 		$this->assertStringContainsString( 'Secret tripwire', $html );
-		$this->assertStringContainsString( 'Secret tripwire is on. Matching requests are blocked.', $html );
+		$this->assertStringContainsString( 'Secret tripwire is on. Deny is the default; per-plugin Warn settings and Learn mode can allow matching requests.', $html );
 		$this->assertStringContainsString( 'Save tripwire', $html );
-		$this->assertStringContainsString( 'On by default', $html );
-		$this->assertStringContainsString( 'Deny blocks the request', $html );
+		$this->assertStringContainsString( 'already found by Keyscan. On by default.', $html );
+		$this->assertStringContainsString( 'Deny blocks matching requests unless Learn mode is on.', $html );
 		$this->assertStringContainsString( 'This check does not save secret values', $html );
 	}
 
