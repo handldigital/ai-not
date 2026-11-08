@@ -204,6 +204,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-taint.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-lookback.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-litmus.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-foyer.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -329,6 +330,7 @@ final class Plugin {
 		Taint::init();
 		Lookback::init();
 		Litmus::init();
+		Foyer::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
