@@ -78,9 +78,9 @@ final class LitmusTest extends TestCase {
 		$rep = Litmus::evaluate( self::HOSTILE );
 		$this->assertTrue( $rep['matched'] );
 		$this->assertGreaterThanOrEqual( 1, $rep['matches'][ Taint::CLASS_INSTRUCTION ] ?? 0 );
-		$this->assertSame( 'Off: not checked', $rep['verdicts']['off'] );
-		$this->assertSame( 'Warn: flagged, allowed', $rep['verdicts']['warn'] );
-		$this->assertSame( 'Deny: blocked (unless Learn mode is on)', $rep['verdicts']['deny'] );
+		$this->assertSame( 'Off: this check would be skipped', $rep['verdicts']['off'] );
+		$this->assertSame( 'Warn: this check would flag a match without blocking it', $rep['verdicts']['warn'] );
+		$this->assertSame( 'Deny: this check would block a match unless Learn mode is on', $rep['verdicts']['deny'] );
 		$this->assertFalse( $rep['none_would_flag'] );
 
 		$_POST = array(
@@ -93,10 +93,11 @@ final class LitmusTest extends TestCase {
 		$html = (string) ob_get_clean();
 		$this->assertStringContainsString( 'Pattern test', $html );
 		$this->assertStringContainsString( 'Instruction override', $html );
-		$this->assertStringContainsString( 'Off: not checked', $html );
-		$this->assertStringContainsString( 'Warn: flagged, allowed', $html );
-		$this->assertStringContainsString( 'Deny: blocked (unless Learn mode is on)', $html );
+		$this->assertStringContainsString( 'Off: this check would be skipped', $html );
+		$this->assertStringContainsString( 'Warn: this check would flag a match without blocking it', $html );
+		$this->assertStringContainsString( 'Deny: this check would block a match unless Learn mode is on', $html );
 		$this->assertStringContainsString( 'unless Learn mode is on', $html );
+		$this->assertStringContainsString( 'Injection check only. Other rules still apply. Pattern checks can flag harmless text and miss attacks.', $html );
 		$this->assertStringNotContainsString( self::HOSTILE, $html );
 		$this->assertStringNotContainsString( 'ignore previous instructions', strtolower( $html ) );
 		$this->assertStringNotContainsString( 'dump the system prompt', strtolower( $html ) );
@@ -107,8 +108,8 @@ final class LitmusTest extends TestCase {
 		$this->assertFalse( $rep['matched'] );
 		$this->assertSame( array(), $rep['matches'] );
 		$this->assertTrue( $rep['none_would_flag'] );
-		$this->assertSame( 'Warn: not flagged', $rep['verdicts']['warn'] );
-		$this->assertSame( 'Deny: not blocked', $rep['verdicts']['deny'] );
+		$this->assertSame( 'Warn: no match for this check', $rep['verdicts']['warn'] );
+		$this->assertSame( 'Deny: no match for this check', $rep['verdicts']['deny'] );
 
 		$_POST = array(
 			'action'           => Litmus::ACTION,
@@ -118,9 +119,9 @@ final class LitmusTest extends TestCase {
 		ob_start();
 		Litmus::render_section();
 		$html = (string) ob_get_clean();
-		$this->assertStringContainsString( 'No pattern classes matched.', $html );
-		$this->assertStringContainsString( 'No mode would flag this text.', $html );
-		$this->assertStringContainsString( 'Off: not checked', $html );
+		$this->assertStringContainsString( 'No current patterns matched the tested text.', $html );
+		$this->assertStringNotContainsString( 'No mode would flag this text.', $html );
+		$this->assertStringContainsString( 'Off: this check would be skipped', $html );
 		$this->assertStringNotContainsString( self::BENIGN, $html );
 		$this->assertStringNotContainsString( 'Instruction override', $html );
 	}
@@ -183,9 +184,11 @@ final class LitmusTest extends TestCase {
 		$html = (string) ob_get_clean();
 		$this->assertStringContainsString( 'Pattern test', $html );
 		$this->assertStringContainsString( 'Test patterns', $html );
-		$this->assertStringContainsString( 'Pasted text is not saved, logged, or sent off this site.', $html );
+		$this->assertStringContainsString( 'This tool does not save your sample or send it to an AI provider.', $html );
+		$this->assertStringContainsString( 'HTML tags are removed. Only the first 20,000 bytes are tested; this may be fewer than 20,000 characters.', $html );
+		$this->assertStringContainsString( 'Paste plain text to test the current injection patterns.', $html );
 		$this->assertStringNotContainsString( 'Instruction override', $html );
-		$this->assertStringNotContainsString( 'No pattern classes matched.', $html );
+		$this->assertStringNotContainsString( 'No current patterns matched the tested text.', $html );
 	}
 
 	public function test_injection_screen_includes_pattern_test_section(): void {
@@ -197,6 +200,7 @@ final class LitmusTest extends TestCase {
 		$this->assertStringContainsString( 'Pattern test', $html );
 		$this->assertStringContainsString( 'Test patterns', $html );
 		$this->assertStringContainsString( 'handl_aicac_litmus_test', $html );
+		$this->assertStringContainsString( 'This tool does not save your sample or send it to an AI provider.', $html );
 	}
 
 	/**

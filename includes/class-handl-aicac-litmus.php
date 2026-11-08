@@ -68,13 +68,13 @@ final class Litmus {
 			'matches'         => $matches,
 			'matched'         => $matched,
 			'verdicts'        => array(
-				'off'  => __( 'Off: not checked', 'handl-ai-connector-access-control' ),
+				'off'  => __( 'Off: this check would be skipped', 'handl-ai-connector-access-control' ),
 				'warn' => $matched
-					? __( 'Warn: flagged, allowed', 'handl-ai-connector-access-control' )
-					: __( 'Warn: not flagged', 'handl-ai-connector-access-control' ),
+					? __( 'Warn: this check would flag a match without blocking it', 'handl-ai-connector-access-control' )
+					: __( 'Warn: no match for this check', 'handl-ai-connector-access-control' ),
 				'deny' => $matched
-					? __( 'Deny: blocked (unless Learn mode is on)', 'handl-ai-connector-access-control' )
-					: __( 'Deny: not blocked', 'handl-ai-connector-access-control' ),
+					? __( 'Deny: this check would block a match unless Learn mode is on', 'handl-ai-connector-access-control' )
+					: __( 'Deny: no match for this check', 'handl-ai-connector-access-control' ),
 			),
 			'none_would_flag' => ! $matched,
 		);
@@ -92,8 +92,8 @@ final class Litmus {
 
 		echo '<div class="handl-aicac-litmus" style="max-width:52em;margin-top:2em;">';
 		echo '<h2>' . esc_html__( 'Pattern test', 'handl-ai-connector-access-control' ) . '</h2>';
-		echo '<p class="description">' . esc_html__( 'Paste sample text to see which pattern types would match. Matching text is not stored or shown. This test does not change policy or log Activity.', 'handl-ai-connector-access-control' ) . '</p>';
-		echo '<p class="description">' . esc_html__( 'Pasted text is not saved, logged, or sent off this site.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Paste plain text to test the current injection patterns. Results show pattern types and counts, not matching text. This test does not change settings or add Activity entries.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'This tool does not save your sample or send it to an AI provider.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin.php?page=' . Taint::PAGE_SLUG ) ) . '" class="handl-aicac-litmus-form">';
 		echo '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" />';
@@ -102,6 +102,7 @@ final class Litmus {
 		}
 		echo '<p><label for="handl-aicac-litmus-text">' . esc_html__( 'Sample text', 'handl-ai-connector-access-control' ) . '</label></p>';
 		echo '<p><textarea id="handl-aicac-litmus-text" name="' . esc_attr( self::FIELD_TEXT ) . '" rows="6" cols="80" class="large-text"></textarea></p>';
+		echo '<p class="description">' . esc_html__( 'HTML tags are removed. Only the first 20,000 bytes are tested; this may be fewer than 20,000 characters.', 'handl-ai-connector-access-control' ) . '</p>';
 		if ( function_exists( 'submit_button' ) ) {
 			submit_button( __( 'Test patterns', 'handl-ai-connector-access-control' ), 'secondary', 'submit', false );
 		} else {
@@ -123,7 +124,7 @@ final class Litmus {
 		echo '<div class="handl-aicac-litmus-result" style="margin-top:1.25em;">';
 		echo '<h3>' . esc_html__( 'Pattern types', 'handl-ai-connector-access-control' ) . '</h3>';
 		if ( empty( $result['matches'] ) ) {
-			echo '<p>' . esc_html__( 'No pattern classes matched.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p>' . esc_html__( 'No current patterns matched the tested text.', 'handl-ai-connector-access-control' ) . '</p>';
 		} else {
 			$summary = class_exists( Taint::class, false ) && method_exists( Taint::class, 'receipt_summary' )
 				? Taint::receipt_summary( $result['matches'] )
@@ -132,14 +133,12 @@ final class Litmus {
 		}
 
 		echo '<h3>' . esc_html__( 'Mode preview', 'handl-ai-connector-access-control' ) . '</h3>';
+		echo '<p class="description">' . esc_html__( 'Injection check only. Other rules still apply. Pattern checks can flag harmless text and miss attacks.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<ul class="ul-disc">';
 		foreach ( array( 'off', 'warn', 'deny' ) as $mode ) {
 			echo '<li>' . esc_html( (string) ( $result['verdicts'][ $mode ] ?? '' ) ) . '</li>';
 		}
 		echo '</ul>';
-		if ( ! empty( $result['none_would_flag'] ) ) {
-			echo '<p>' . esc_html__( 'No mode would flag this text.', 'handl-ai-connector-access-control' ) . '</p>';
-		}
 		echo '</div>';
 	}
 
