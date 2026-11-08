@@ -222,7 +222,7 @@ final class LookbackTest extends TestCase {
 		$this->assertGreaterThan( 0, $rep['retention_precede_days'] );
 		$this->assertStringContainsString( 'days of this window precede retention', $rep['retention_notice'] );
 		$this->assertSame(
-			$rep['retention_precede_days'] . ' days of this window precede retention.',
+			$rep['retention_precede_days'] . ' days of this window precede retention. Saved Activity does not cover those days, so this report cannot show what happened then.',
 			$rep['retention_notice']
 		);
 	}
@@ -270,7 +270,11 @@ final class LookbackTest extends TestCase {
 		$this->assertStringContainsString( 'Exposure lookback', $html );
 		$this->assertStringContainsString( 'Choose a provider and date window.', $html );
 		$this->assertStringContainsString( 'Run lookback', $html );
-		$this->assertStringContainsString( 'This report only reads saved Activity', $html );
+		$this->assertStringContainsString( 'Review saved Activity for one AI provider in a date window.', $html );
+		$this->assertStringContainsString( 'This report only reads saved Activity and media records.', $html );
+		$this->assertStringContainsString( 'Records may include blocked attempts and do not confirm delivery or exposure.', $html );
+		$this->assertStringContainsString( 'Dates use UTC and include the full start and end days.', $html );
+		$this->assertStringContainsString( 'Enter the plugin file path shown in Activity, for example my-plugin/my-plugin.php. Leave blank for all plugins.', $html );
 		$this->assertStringNotContainsString( 'Download CSV', $html );
 	}
 
@@ -317,7 +321,10 @@ final class LookbackTest extends TestCase {
 		Lookback::render_page();
 		$html = (string) ob_get_clean();
 		$this->assertStringContainsString( 'Exposure lookback', $html );
+		$this->assertStringContainsString( 'Saved Activity in this window', $html );
+		$this->assertStringContainsString( 'Saved Activity entries', $html );
 		$this->assertStringContainsString( 'days of this window precede retention', $html );
+		$this->assertStringContainsString( 'Saved Activity does not cover those days, so this report cannot show what happened then.', $html );
 		$this->assertStringContainsString( 'Email address', $html );
 		$this->assertStringContainsString( 'Download CSV', $html );
 		$this->assertStringContainsString( Lookback::ACTION_EXPORT, $html );
@@ -325,6 +332,10 @@ final class LookbackTest extends TestCase {
 		$this->assertStringNotContainsString( self::EMAIL, $html );
 		$this->assertStringContainsString( 'Personal information pattern hits', $html );
 		$this->assertStringContainsString( 'Outbound media', $html );
+		$this->assertStringContainsString( 'Pattern counts show recorded matches, not confirmed personal information.', $html );
+		$this->assertStringContainsString( 'Saved content references (up to 20)', $html );
+		$this->assertStringNotContainsString( 'Exposure in this window', $html );
+		$this->assertStringNotContainsString( 'No matching calls in this window.', $html );
 	}
 
 	public function test_incident_query_prefills_window(): void {

@@ -142,7 +142,7 @@ final class Lookback {
 
 		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__( 'Exposure lookback', 'handl-ai-connector-access-control' ) . '</h1>';
-		echo '<p class="description">' . esc_html__( 'See what this site sent one AI provider in a date window. This report only reads saved Activity. It does not collect new data or change policy.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Review saved Activity for one AI provider in a date window. This report only reads saved Activity and media records. It does not collect new data or change policy. Records may include blocked attempts and do not confirm delivery or exposure.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		self::render_form( $input );
 
@@ -335,6 +335,7 @@ final class Lookback {
 				__( '%d days of this window precede retention.', 'handl-ai-connector-access-control' ),
 				$precede
 			);
+			$notice .= ' ' . __( 'Saved Activity does not cover those days, so this report cannot show what happened then.', 'handl-ai-connector-access-control' );
 		}
 
 		return array(
@@ -502,10 +503,12 @@ final class Lookback {
 
 		echo '<tr><th scope="row"><label for="handl-aicac-lookback-to">' . esc_html__( 'To', 'handl-ai-connector-access-control' ) . '</label></th><td>';
 		echo '<input type="date" id="handl-aicac-lookback-to" name="to" value="' . esc_attr( $input['to'] ) . '" />';
+		echo '<p class="description">' . esc_html__( 'Dates use UTC and include the full start and end days.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td></tr>';
 
 		echo '<tr><th scope="row"><label for="handl-aicac-lookback-plugin">' . esc_html__( 'Connector (optional)', 'handl-ai-connector-access-control' ) . '</label></th><td>';
 		echo '<input type="text" id="handl-aicac-lookback-plugin" name="plugin" value="' . esc_attr( $input['plugin'] ) . '" class="regular-text" />';
+		echo '<p class="description">' . esc_html__( 'Enter the plugin file path shown in Activity, for example my-plugin/my-plugin.php. Leave blank for all plugins.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '</td></tr>';
 
 		echo '</tbody></table>';
@@ -527,10 +530,10 @@ final class Lookback {
 			echo '<div class="notice notice-warning inline"><p>' . esc_html( $notice ) . '</p></div>';
 		}
 
-		echo '<h2>' . esc_html__( 'Exposure in this window', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<h2>' . esc_html__( 'Saved Activity in this window', 'handl-ai-connector-access-control' ) . '</h2>';
 		echo '<table class="widefat striped handl-aicac-lookback-summary" style="max-width:52em;"><tbody>';
 
-		echo '<tr><th scope="row">' . esc_html__( 'Calls', 'handl-ai-connector-access-control' ) . '</th><td>' . esc_html( (string) (int) $report['call_count'] ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Saved Activity entries', 'handl-ai-connector-access-control' ) . '</th><td>' . esc_html( (string) (int) $report['call_count'] ) . '</td></tr>';
 
 		$plugin_cell = empty( $report['plugins'] )
 			? '—'
@@ -572,9 +575,10 @@ final class Lookback {
 		}
 		echo '<tr><th scope="row">' . esc_html__( 'Estimated spend', 'handl-ai-connector-access-control' ) . '</th><td>' . esc_html( $spend_cell ) . '</td></tr>';
 		echo '</tbody></table>';
+		echo '<p class="description">' . esc_html__( 'Pattern counts show recorded matches, not confirmed personal information. A dash means no recorded value is available; it does not prove that no personal information or media was sent. Media detection does not confirm delivery. Estimated spend includes only entries with available token counts and rates.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( ! empty( $report['content_refs'] ) ) {
-			echo '<h3>' . esc_html__( 'Content still in the saved log', 'handl-ai-connector-access-control' ) . '</h3>';
+			echo '<h3>' . esc_html__( 'Saved content references (up to 20)', 'handl-ai-connector-access-control' ) . '</h3>';
 			echo '<ul class="ul-disc">';
 			foreach ( $report['content_refs'] as $ref ) {
 				echo '<li>' . esc_html( (string) ( $ref['label'] ?? '' ) ) . '</li>';
@@ -583,7 +587,7 @@ final class Lookback {
 		}
 
 		if ( (int) $report['call_count'] < 1 ) {
-			echo '<p>' . esc_html__( 'No matching calls in this window.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p>' . esc_html__( 'No matching Activity entries are saved for this window.', 'handl-ai-connector-access-control' ) . '</p>';
 		}
 
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="handl-aicac-lookback-export">';
