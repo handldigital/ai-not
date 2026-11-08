@@ -254,6 +254,19 @@ final class Policy {
 			}
 		}
 
+		// AICAC-TRIPWIRE (#497): real-secret egress guard — deny by default.
+		if ( ! $prevent ) {
+			$trip = Tripwire::apply_to_event( $event, $policy, $builder );
+			if ( ! empty( $trip['prevent'] ) ) {
+				$event['would_decision'] = 'deny';
+				$event['denial_reason']  = Tripwire::REASON;
+				if ( empty( $policy['audit_only'] ) ) {
+					$prevent           = true;
+					$event['decision'] = 'deny';
+				}
+			}
+		}
+
 		// AICAC-NEWCOMER-HOLD (#271): flag first_seen_hold; deny-mode can still block.
 		$hold_reason = isset( $would_eval['reason'] ) ? (string) $would_eval['reason'] : '';
 		if ( empty( $event['selftest'] ) && ( ! $prevent || New_Plugin::REASON === $hold_reason ) ) {
@@ -1213,7 +1226,8 @@ final class Policy {
 		// AICAC-PII-WARN: per-plugin off|warn|deny (absent = off) + filterable patterns.
 		$policy['pii_screen']   = Pii_Warn::sanitize_plugin_modes( $policy['pii_screen'] ?? array() );
 		$policy['pii_patterns'] = Pii_Warn::sanitize_patterns( $policy['pii_patterns'] ?? null );
-		$policy['taint_screen'] = Taint::sanitize_plugin_modes( $policy['taint_screen'] ?? array() );
+		$policy['taint_screen']     = Taint::sanitize_plugin_modes( $policy['taint_screen'] ?? array() );
+		$policy['tripwire_screen']  = Tripwire::sanitize_plugin_modes( $policy['tripwire_screen'] ?? array() );
 		// Optional role gate (AICAC-ROLE): off by default = all roles may initiate AI.
 		$policy['role_gate_enabled'] = (bool) ( $policy['role_gate_enabled'] ?? false );
 		$policy['allowed_roles']     = self::sanitize_allowed_roles( $policy['allowed_roles'] ?? array() );
@@ -1567,6 +1581,7 @@ final class Policy {
 		$policy['pii_screen']             = Pii_Warn::sanitize_plugin_modes( $policy['pii_screen'] ?? array() );
 		$policy['pii_patterns']           = Pii_Warn::sanitize_patterns( $policy['pii_patterns'] ?? null );
 		$policy['taint_screen']           = Taint::sanitize_plugin_modes( $policy['taint_screen'] ?? array() );
+		$policy['tripwire_screen']        = Tripwire::sanitize_plugin_modes( $policy['tripwire_screen'] ?? array() );
 		$policy['role_gate_enabled']      = ! empty( $policy['role_gate_enabled'] );
 		$policy['allowed_roles']          = self::sanitize_allowed_roles( $policy['allowed_roles'] ?? array() );
 		$policy['operations']             = self::sanitize_operations( $policy['operations'] ?? array() );
@@ -2042,7 +2057,7 @@ final class Policy {
 				Drift::flush_deferred_alerts();
 			}
 			$channel = isset( $event['channel'] ) ? (string) $event['channel'] : '';
-			if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget', 'selftest', 'pii', 'taint', 'latency' ), true ) ) {
+			if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget', 'selftest', 'pii', 'taint', 'tripwire', 'latency' ), true ) ) {
 				Anomaly::maybe_evaluate( $policy );
 			}
 			return;
@@ -2076,13 +2091,18 @@ final class Policy {
 			Taint::maybe_alert( $event, $policy );
 		}
 
+		// AICAC-TRIPWIRE: deny/warn alert after retain (kinds only, never values).
+		if ( ! $is_direct_http && ! $is_selftest && isset( $event['tripwire_match'] ) ) {
+			Tripwire::maybe_alert( $event, $policy );
+		}
+
 		if ( $shadow_alert_eligible ) {
 			Alerts::maybe_notify_shadow( $event, $policy );
 		}
 
 		// AICAC-ANOMALY: re-check after new retained rows (skip our own audit rows).
 		$channel = isset( $event['channel'] ) ? (string) $event['channel'] : '';
-		if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget', 'selftest', 'pii', 'latency' ), true ) ) {
+		if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget', 'selftest', 'pii', 'tripwire', 'latency' ), true ) ) {
 			Anomaly::maybe_evaluate( $policy );
 		}
 	}
