@@ -201,6 +201,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-detour.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-neighbors.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-understudy.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-taint.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -323,6 +324,7 @@ final class Plugin {
 		Detour::init();
 		Neighbors::init();
 		Understudy::init();
+		Taint::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
