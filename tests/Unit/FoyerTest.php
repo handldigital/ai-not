@@ -298,4 +298,58 @@ final class FoyerTest extends TestCase {
 		$this->assertStringContainsString( 'Privacy &amp; exposure', $html );
 		$this->assertStringNotContainsString( '>Dashboard<', $html );
 	}
+
+	public function test_copy_hold_catalog_descriptions_and_cleanup_group(): void {
+		$this->assertSame( 'hygiene', Foyer::GROUP_HYGIENE );
+		$this->assertSame( 'Cleanup', Foyer::group_labels()[ Foyer::GROUP_HYGIENE ] );
+
+		$expected = array(
+			'handl-aicac-chargeback'    => 'Monthly AI cost estimates by user and role.',
+			'handl-aicac-volume'        => 'Recorded data sent to and received from AI providers.',
+			'handl-aicac-concentration' => 'Recorded calls and estimated spend by AI provider.',
+			'handl-aicac-footprint'     => 'Storage and scheduled jobs used by this plugin.',
+			'handl-aicac-postcard'      => "Review what this plugin's emails and webhooks may share.",
+			'handl-aicac-embargo'       => 'Check AI requests for unpublished or private post content.',
+			'handl-aicac-waiting-room'  => 'Recorded AI response times on visitor-facing pages.',
+			'handl-aicac-sleepwalker'   => 'Review alert thresholds against recorded activity.',
+			'handl-aicac-weather'       => "Status updates from AI providers' public status pages.",
+			'handl-aicac-rollback'      => 'Detect when a restore brings back older AI access settings.',
+			'handl-aicac-doppelganger'  => 'Check whether this site differs from its saved identity.',
+			'handl-aicac-coach'         => 'Preview and send an explanation to users with repeated denials.',
+			'handl-aicac-botwatch'      => 'Known AI crawlers recorded visiting this site.',
+			'handl-aicac-snowflake'     => 'AI Not settings that differ from plugin defaults.',
+			'handl-aicac-wallflower'    => 'AI-capable plugins with no calls recorded in the selected period.',
+			'handl-aicac-succession'    => 'Review alert recipients and missing backup coverage.',
+			'handl-aicac-understudy'    => 'Test another model on sampled calls in the background.',
+			'handl-aicac-handshake'     => 'Review connection security settings for recorded AI requests.',
+		);
+		$rows = array();
+		foreach ( array_keys( $expected ) as $slug ) {
+			$rows[] = array( $slug, 'handl_aicac_view', $slug );
+		}
+		$by_slug = array();
+		foreach ( Foyer::cards( $rows ) as $card ) {
+			$by_slug[ $card['slug'] ] = $card;
+		}
+		foreach ( $expected as $slug => $description ) {
+			$this->assertSame( $description, $by_slug[ $slug ]['description'] ?? null, $slug );
+		}
+		$this->assertSame( Foyer::GROUP_HYGIENE, $by_slug['handl-aicac-snowflake']['group'] );
+		$this->assertSame( Foyer::GROUP_HYGIENE, $by_slug['handl-aicac-succession']['group'] );
+
+		Foyer::set_mode( Foyer::MODE_SIMPLE );
+		Foyer::set_test_submenu( $rows );
+		ob_start();
+		Foyer::render_page();
+		$html = (string) ob_get_clean();
+		$this->assertStringContainsString( 'Cleanup', $html );
+		$this->assertStringNotContainsString( 'Hygiene', $html );
+		$this->assertStringContainsString( 'Recorded AI response times on visitor-facing pages.', $html );
+		$this->assertStringContainsString( 'Check AI requests for unpublished or private post content.', $html );
+		$this->assertStringContainsString( 'AI Not settings that differ from plugin defaults.', $html );
+		$this->assertStringNotContainsString( 'Queue and delay for busy AI providers.', $html );
+		$this->assertStringNotContainsString( 'Hold AI content before it publishes.', $html );
+		$this->assertStringNotContainsString( 'A shareable snapshot of AI use.', $html );
+		$this->assertStringNotContainsString( 'One-off plugins that do not match the rest.', $html );
+	}
 }
