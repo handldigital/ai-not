@@ -1,0 +1,13 @@
+exact_sha=3c3f114560fdba4a883213b83a9fd67d68aac55b
+short_sha=3c3f114
+captured_at=2026-11-08T02:46:06.581Z
+method=Live sandbox plugin checked out to force-asserted SHA 3c3f114; WP-CLI qa-admin + Tripwire::render_page() / apply_to_event + Deny_Receipt::render_page HTML with inlined wp-admin CSS; Playwright local serve of the real wrap. Live SHA restored to 0b2e12a after capture.
+files:
+  01-default-on.png (137700 B)
+  02-warn-override.png (126827 B)
+  03-db-password-deny.png (279081 B)
+  04-provider-key-deny.png (274991 B)
+  05-warn-alert-digest.png (234613 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

@@ -1,0 +1,41 @@
+{
+  "pr": 513,
+  "issue": 497,
+  "name": "AICAC-TRIPWIRE",
+  "exact_sha": "3c3f114560fdba4a883213b83a9fd67d68aac55b",
+  "captured_at": "2026-11-08T02:46:06.581Z",
+  "method": "Live sandbox plugin checked out to force-asserted SHA 3c3f114; WP-CLI qa-admin + Tripwire::render_page() / apply_to_event + Deny_Receipt::render_page HTML with inlined wp-admin CSS; Playwright local serve of the real wrap. Live SHA restored to 0b2e12a after capture.",
+  "shots": [
+    {
+      "file": "01-default-on.png",
+      "bytes": 137700,
+      "job": "tripwire_default",
+      "heading": "tripwire_default"
+    },
+    {
+      "file": "02-warn-override.png",
+      "bytes": 126827,
+      "job": "tripwire_warn",
+      "heading": "tripwire_warn"
+    },
+    {
+      "file": "03-db-password-deny.png",
+      "bytes": 279081,
+      "job": "tripwire_db_deny",
+      "heading": "tripwire_db_deny"
+    },
+    {
+      "file": "04-provider-key-deny.png",
+      "bytes": 274991,
+      "job": "tripwire_provider",
+      "heading": "tripwire_provider"
+    },
+    {
+      "file": "05-warn-alert-digest.png",
+      "bytes": 234613,
+      "job": "tripwire_alert",
+      "heading": "tripwire_alert"
+    }
+  ],
+  "export_stdout": "{\"ok\":true,\"job\":\"tripwire_default\",\"sha\":\"3c3f114560fdba4a883213b83a9fd67d68aac55b\",\"class\":\"HandL\\\\AICAC\\\\Tripwire\",\"page\":\"handl-aicac-tripwire\",\"plugin\":\"ai/ai.php\",\"mode\":\"deny\",\"selected\":true,\"builds\":1,\"bytes\":146971,\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"db_leak\":false,\"pv_leak\":false,\"text\":\"PR513 / #497 AICAC-TRIPWIRE SHA 3c3f114 exact product SHA 3c3f114560fdba4a883213b83a9fd67d68aac55b live handl-sandbox plugin + DB (WP-CLI Tripwire::render_page) AC: AC Fresh deny-mode default on (Secret tripwire page)Secret tripwireChecks AI request text for this site&#039;s database password, authentication keys and salts, and provider API keys already found by Keyscan. On by default.This check does not save secret values. Alerts name the secret type only.Secret tripwire is \"}}\n{\"ok\":true,\"job\":\"tripwire_warn\",\"sha\":\"3c3f114560fdba4a883213b83a9fd67d68aac55b\",\"class\":\"HandL\\\\AICAC\\\\Tripwire\",\"page\":\"handl-aicac-tripwire\",\"plugin\":\"ai/ai.php\",\"mode\":\"warn\",\"selected\":true,\"builds\":0,\"bytes\":146847,\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"db_leak\":false,\"pv_leak\":false,\"text\":\"PR513 / #497 AICAC-TRIPWIRE SHA 3c3f114 exact product SHA 3c3f114560fdba4a883213b83a9fd67d68aac55b live handl-sandbox plugin + DB (WP-CLI Tripwire::render_page) AC: AC Per-plugin Warn override (settings)Secret tripwireChecks AI request text for this site&#039;s database password, authentication keys and salts, and provider API keys already found by Keyscan. On by default.This check does not save secret values. Alerts name the secret type only.Secret tripwire is on. Deny is th\"}}\n{\"ok\":true,\"job\":\"tripwire_db_deny\",\"sha\":\"3c3f114560fdba4a883213b83a9fd67d68aac55b\",\"class\":\"HandL\\\\AICAC\\\\Tripwire\",\"page\":\"handl-aicac-deny-receipt\",\"plugin\":\"ai/ai.php\",\"mode\":\"deny\",\"selected\":true,\"builds\":0,\"bytes\":97266,\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"db_leak\":false,\"pv_leak\":false,\"text\":\"PR513 / #497 AICAC-TRIPWIRE SHA 3c3f114 exact product SHA 3c3f114560fdba4a883213b83a9fd67d68aac55b live handl-sandbox plugin + DB (WP-CLI Deny_Receipt::render_page + Tripwire::apply_to_event) AC: AC DB_PASSWORD deny + alert, kind db-password, secret absentDeny receiptsGive blocked callers a short reference code they can quote. Paste a code here to open the matching Activity row. Off by default. This does not change Allow or Deny rules.Show code to callers Add &quot;Reference:\"}}\n{\"ok\":true,\"job\":\"tripwire_provider\",\"sha\":\"3c3f114560fdba4a883213b83a9fd67d68aac55b\",\"class\":\"HandL\\\\AICAC\\\\Tripwire\",\"page\":\"handl-aicac-deny-receipt\",\"plugin\":\"ai/ai.php\",\"mode\":\"deny\",\"selected\":true,\"builds\":0,\"bytes\":97273,\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"db_leak\":false,\"pv_leak\":false,\"text\":\"PR513 / #497 AICAC-TRIPWIRE SHA 3c3f114 exact product SHA 3c3f114560fdba4a883213b83a9fd67d68aac55b live handl-sandbox plugin + DB (WP-CLI Deny_Receipt::render_page + Tripwire::apply_to_event) AC: AC Keyscan-known provider key deny, kind provider-key, secret absentDeny receiptsGive blocked callers a short reference code they can quote. Paste a code here to open the matching Activity row. Off by default. This does not change Allow or Deny rules.Show code to callers Add &quot;Re\"}}\n{\"ok\":true,\"job\":\"tripwire_alert\",\"sha\":\"3c3f114560fdba4a883213b83a9fd67d68aac55b\",\"class\":\"HandL\\\\AICAC\\\\Tripwire\",\"page\":\"handl-aicac-tripwire\",\"plugin\":\"ai/ai.php\",\"mode\":\"warn\",\"selected\":true,\"builds\":1,\"bytes\":147699,\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"db_leak\":false,\"pv_leak\":false,\"text\":\"PR513 / #497 AICAC-TRIPWIRE SHA 3c3f114 exact product SHA 3c3f114560fdba4a883213b83a9fd67d68aac55b live handl-sandbox plugin + DB (WP-CLI Tripwire::render_page) AC: AC Warn override allows + alerts kinds only; digest built onceSecret tripwireChecks AI request text for this site&#039;s database password, authentication keys and salts, and provider API keys already found by Keyscan. On by default.This check does not save secret values. Alerts name the secret type only.Secret tr\"}}"
+}
