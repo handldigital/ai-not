@@ -205,6 +205,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-lookback.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-litmus.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-foyer.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-tripwire.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -331,6 +332,7 @@ final class Plugin {
 		Lookback::init();
 		Litmus::init();
 		Foyer::init();
+		Tripwire::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
