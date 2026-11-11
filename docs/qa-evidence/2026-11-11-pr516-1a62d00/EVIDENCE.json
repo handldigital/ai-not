@@ -1,0 +1,35 @@
+{
+  "pr": 516,
+  "issue": 501,
+  "name": "AICAC-OPTOUT",
+  "exact_sha": "1a62d00c8a2443471d618ee37a33928be1413c33",
+  "captured_at": "2026-11-11T00:47:01.150Z",
+  "method": "Live sandbox plugin checked out to force-asserted SHA 1a62d00; WP-CLI qa-admin + Optout::render_page() / apply/preempt + Deny_Receipt::render_page HTML with inlined wp-admin CSS; Playwright local serve of the real wrap. Live SHA restored to 0b2e12a after capture.",
+  "shots": [
+    {
+      "file": "01-openai-flag-added.png",
+      "bytes": 314622,
+      "job": "optout_openai",
+      "heading": "optout_openai"
+    },
+    {
+      "file": "02-unsupported-warn-unchanged.png",
+      "bytes": 316231,
+      "job": "optout_warn",
+      "heading": "optout_warn"
+    },
+    {
+      "file": "03-strict-deny-receipt.png",
+      "bytes": 282459,
+      "job": "optout_strict",
+      "heading": "optout_strict"
+    },
+    {
+      "file": "04-feature-off-unchanged.png",
+      "bytes": 317830,
+      "job": "optout_off",
+      "heading": "optout_off"
+    }
+  ],
+  "export_stdout": "{\"ok\":true,\"job\":\"optout_openai\",\"sha\":\"1a62d00c8a2443471d618ee37a33928be1413c33\",\"class\":\"HandL\\\\AICAC\\\\Optout\",\"page\":\"handl-aicac-optout\",\"plugin\":\"ai/ai.php\",\"decision\":\"allow\",\"identical\":false,\"store\":\"false\",\"blocked\":false,\"receipt\":\"\",\"bytes\":159440,\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"text\":\"PR516 / #501 AICAC-OPTOUT SHA 1a62d00 exact product SHA 1a62d00c8a2443471d618ee37a33928be1413c33 live handl-sandbox plugin + DB (WP-CLI Optout::render_page + Optout::apply) AC: AC Configured OpenAI flag added (store=false)AI request flagsAdd configured privacy flags to recognized AI calls made through WordPress. The bundled flag is OpenAI store=false for supported requests. This does not guarantee no training or zero data retention. Off by default.Request flags Add configured\"}}\n{\"ok\":true,\"job\":\"optout_warn\",\"sha\":\"1a62d00c8a2443471d618ee37a33928be1413c33\",\"class\":\"HandL\\\\AICAC\\\\Optout\",\"page\":\"handl-aicac-optout\",\"plugin\":\"ai/ai.php\",\"decision\":\"warn\",\"identical\":true,\"store\":\"absent\",\"blocked\":false,\"receipt\":\"\",\"bytes\":159470,\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"text\":\"PR516 / #501 AICAC-OPTOUT SHA 1a62d00 exact product SHA 1a62d00c8a2443471d618ee37a33928be1413c33 live handl-sandbox plugin + DB (WP-CLI Optout::render_page + Optout::apply) AC: AC Unsupported configured flag warns; payload unchangedAI request flagsAdd configured privacy flags to recognized AI calls made through WordPress. The bundled flag is OpenAI store=false for supported requests. This does not guarantee no training or zero data retention. Off by default.Request flags Add \"}}\n{\"ok\":true,\"job\":\"optout_strict\",\"sha\":\"1a62d00c8a2443471d618ee37a33928be1413c33\",\"class\":\"HandL\\\\AICAC\\\\Optout\",\"page\":\"handl-aicac-deny-receipt\",\"plugin\":\"ai/ai.php\",\"decision\":\"deny\",\"identical\":true,\"store\":\"absent\",\"blocked\":true,\"receipt\":\"AICAC-0H00-1H31\",\"bytes\":97608,\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"text\":\"PR516 / #501 AICAC-OPTOUT SHA 1a62d00 exact product SHA 1a62d00c8a2443471d618ee37a33928be1413c33 live handl-sandbox plugin + DB (WP-CLI Deny_Receipt::render_page + Optout::apply/preempt) AC: AC Strict mode blocks with Deny ReceiptDeny receiptsGive blocked callers a short reference code they can quote. Paste a code here to open the matching Activity row. Off by default. This does not change Allow or Deny rules.Show code to callers Add &quot;Reference: AICAC-XXXX-XXXX&quot; to \"}}\n{\"ok\":true,\"job\":\"optout_off\",\"sha\":\"1a62d00c8a2443471d618ee37a33928be1413c33\",\"class\":\"HandL\\\\AICAC\\\\Optout\",\"page\":\"handl-aicac-optout\",\"plugin\":\"ai/ai.php\",\"decision\":\"none\",\"identical\":true,\"store\":\"absent\",\"blocked\":false,\"receipt\":\"\",\"bytes\":159457,\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"text\":\"PR516 / #501 AICAC-OPTOUT SHA 1a62d00 exact product SHA 1a62d00c8a2443471d618ee37a33928be1413c33 live handl-sandbox plugin + DB (WP-CLI Optout::render_page + Optout::apply) AC: AC Feature-off leaves the request unchangedAI request flagsAdd configured privacy flags to recognized AI calls made through WordPress. The bundled flag is OpenAI store=false for supported requests. This does not guarantee no training or zero data retention. Off by default.Request flags are off. This fe\"}}"
+}

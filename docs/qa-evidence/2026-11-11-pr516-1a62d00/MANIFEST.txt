@@ -1,0 +1,12 @@
+exact_sha=1a62d00c8a2443471d618ee37a33928be1413c33
+short_sha=1a62d00
+captured_at=2026-11-11T00:47:01.150Z
+method=Live sandbox plugin checked out to force-asserted SHA 1a62d00; WP-CLI qa-admin + Optout::render_page() / apply/preempt + Deny_Receipt::render_page HTML with inlined wp-admin CSS; Playwright local serve of the real wrap. Live SHA restored to 0b2e12a after capture.
+files:
+  01-openai-flag-added.png (314622 B)
+  02-unsupported-warn-unchanged.png (316231 B)
+  03-strict-deny-receipt.png (282459 B)
+  04-feature-off-unchanged.png (317830 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md
