@@ -123,7 +123,7 @@ final class OptoutTest extends TestCase {
 		$this->assertCount( 1, $events );
 		$this->assertSame( 'allow', $events[0]['decision'] );
 		$this->assertSame( Optout::DETAIL_APPLIED, $events[0]['detail'] );
-		$this->assertSame( 'no-train requested', $events[0]['detail'] );
+		$this->assertSame( 'Request flag added', $events[0]['detail'] );
 		$this->assertTrue( $events[0]['optout']['applied'] );
 		$log = get_option( Plugin::LOG_OPTION_KEY );
 		$this->assertIsArray( $log );
@@ -159,7 +159,7 @@ final class OptoutTest extends TestCase {
 		$this->assertNotNull( Optout::pending_deny() );
 		$pre = Optout::preempt( false, $out, self::ANTHROPIC );
 		$this->assertInstanceOf( \WP_Error::class, $pre );
-		$this->assertStringContainsString( 'no request-level no-training flag', $pre->get_error_message() );
+		$this->assertStringContainsString( 'No configured flag could be added to this request', $pre->get_error_message() );
 		$this->assertStringContainsString( 'anthropic', $pre->get_error_message() );
 		$events = Optout::last_events();
 		$this->assertCount( 1, $events );
@@ -248,10 +248,15 @@ final class OptoutTest extends TestCase {
 		ob_start();
 		Optout::render_page();
 		$html = (string) ob_get_clean();
-		$this->assertStringContainsString( 'No-training flags', $html );
-		$this->assertStringContainsString( 'No-training flags are off. Outbound requests are not changed.', $html );
+		$this->assertStringContainsString( 'AI request flags', $html );
+		$this->assertStringContainsString( 'Request flags are off. This feature does not change outbound requests.', $html );
+		$this->assertStringContainsString( 'Add configured privacy flags to recognized AI calls made through WordPress.', $html );
+		$this->assertStringContainsString( 'This does not guarantee no training or zero data retention.', $html );
 		$this->assertStringContainsString( 'store=false', $html );
-		$this->assertStringContainsString( 'No request flag', $html );
+		$this->assertStringContainsString( 'No flag configured', $html );
+		$this->assertStringContainsString( 'This table lists the flags configured here.', $html );
+		$this->assertStringContainsString( 'When a flag cannot be added', $html );
+		$this->assertStringContainsString( 'Block recognized AI calls when a configured flag cannot be added.', $html );
 	}
 
 	public function test_train_exposure_row_is_read_only_class_exists_guarded(): void {

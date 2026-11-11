@@ -1,11 +1,13 @@
 <?php
 /**
- * AICAC-OPTOUT (#501): request no-training / zero-retention flags.
+ * AICAC-OPTOUT (#501): add configured privacy flags to recognized AI HTTP.
  *
  * Enforcement half of TRAIN-EXPOSURE. Mutates outbound AI HTTP at
- * http_request_args only. Train-Exposure table is class_exists-guarded
- * read-only for per-provider shapes. Strict unsupported-provider deny
- * aborts on pre_http_request with a normal deny receipt. OFF by default.
+ * http_request_args only. Bundled flag is OpenAI store=false; this does
+ * not guarantee no training or zero data retention. Train-Exposure table
+ * is class_exists-guarded read-only. Strict mode aborts on
+ * pre_http_request with a normal deny receipt when a configured flag
+ * cannot be added. OFF by default.
  *
  * README-FREE. Own options (handl_aicac_optout*). Own admin screen.
  * Zero policy.php / tripwire.php / admin.php / readme.txt edits.
@@ -20,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Attach provider no-training flags to outbound AI requests.
+ * Attach configured privacy flags to recognized outbound AI requests.
  */
 final class Optout {
 
@@ -44,7 +46,7 @@ final class Optout {
 
 	public const CHANNEL = 'optout';
 
-	public const DETAIL_APPLIED = 'no-train requested';
+	public const DETAIL_APPLIED = 'Request flag added';
 
 	public const KIND_JSON = 'json_body';
 
@@ -580,7 +582,7 @@ final class Optout {
 
 		return sprintf(
 			/* translators: %s: provider id */
-			__( 'This provider has no request-level no-training flag (%s).', 'handl-ai-connector-access-control' ),
+			__( 'No configured flag could be added to this request (%s).', 'handl-ai-connector-access-control' ),
 			'' !== $provider ? $provider : 'unknown'
 		);
 	}
@@ -682,8 +684,8 @@ final class Optout {
 		}
 		add_submenu_page(
 			Admin::MENU_SLUG,
-			__( 'No-training flags', 'handl-ai-connector-access-control' ),
-			__( 'No-training flags', 'handl-ai-connector-access-control' ),
+			__( 'AI request flags', 'handl-ai-connector-access-control' ),
+			__( 'AI request flags', 'handl-ai-connector-access-control' ),
 			Caps::VIEW,
 			self::PAGE_SLUG,
 			array( self::class, 'render_page' )
@@ -700,11 +702,11 @@ final class Optout {
 		$map        = self::map();
 
 		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__( 'No-training flags', 'handl-ai-connector-access-control' ) . '</h1>';
-		echo '<p class="description">' . esc_html__( 'Ask providers not to train on or keep this site\'s AI requests, when they offer a request flag. Off by default. This does not change Allow or Deny rules.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<h1>' . esc_html__( 'AI request flags', 'handl-ai-connector-access-control' ) . '</h1>';
+		echo '<p class="description">' . esc_html__( 'Add configured privacy flags to recognized AI calls made through WordPress. The bundled flag is OpenAI store=false for supported requests. This does not guarantee no training or zero data retention. Off by default.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( empty( $settings['enabled'] ) && array() === $settings['plugin_modes'] ) {
-			echo '<p>' . esc_html__( 'No-training flags are off. Outbound requests are not changed.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p>' . esc_html__( 'Request flags are off. This feature does not change outbound requests.', 'handl-ai-connector-access-control' ) . '</p>';
 		}
 
 		if ( self::is_map_stale() ) {
@@ -724,18 +726,18 @@ final class Optout {
 			echo '<table class="form-table" role="presentation"><tbody>';
 			echo '<tr><th scope="row">' . esc_html__( 'Request flags', 'handl-ai-connector-access-control' ) . '</th><td>';
 			echo '<label><input type="checkbox" name="' . esc_attr( self::POST_ENABLED ) . '" value="1" ' . checked( ! empty( $settings['enabled'] ), true, false ) . ' /> ';
-			echo esc_html__( 'Request no-training / zero-retention where the provider supports it.', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'Add configured flags to supported AI requests.', 'handl-ai-connector-access-control' );
 			echo '</label></td></tr>';
-			echo '<tr><th scope="row">' . esc_html__( 'Unsupported providers', 'handl-ai-connector-access-control' ) . '</th><td>';
+			echo '<tr><th scope="row">' . esc_html__( 'When a flag cannot be added', 'handl-ai-connector-access-control' ) . '</th><td>';
 			echo '<label><input type="checkbox" name="' . esc_attr( self::POST_STRICT ) . '" value="1" ' . checked( ! empty( $settings['strict'] ), true, false ) . ' /> ';
-			echo esc_html__( 'Block calls to providers with no request-level flag.', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'Block recognized AI calls when a configured flag cannot be added.', 'handl-ai-connector-access-control' );
 			echo '</label>';
-			echo '<p class="description">' . esc_html__( 'When this is off, those calls go out and a warning is logged.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Applies only when request flags are enabled for the calling plugin. These calls are blocked even if other rules allow them. When unchecked, this feature logs a warning and lets other rules decide whether the call proceeds.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '</td></tr></tbody></table>';
 		}
 
 		echo '<h2>' . esc_html__( 'Provider flags', 'handl-ai-connector-access-control' ) . '</h2>';
-		echo '<p class="description">' . esc_html__( 'Only listed flags are attached to requests. Other providers have no request-level mechanism.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'This table lists the flags configured here. A missing flag does not mean the provider offers no privacy controls.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<table class="widefat striped" style="max-width:56em;"><thead><tr>';
 		echo '<th>' . esc_html__( 'Provider', 'handl-ai-connector-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Request flag', 'handl-ai-connector-access-control' ) . '</th>';
@@ -752,7 +754,7 @@ final class Optout {
 			if ( is_array( $mech ) ) {
 				echo esc_html( (string) $mech['label'] );
 			} else {
-				echo esc_html__( 'No request flag', 'handl-ai-connector-access-control' );
+				echo esc_html__( 'No flag configured', 'handl-ai-connector-access-control' );
 			}
 			echo '</td><td>';
 			if ( is_array( $exp ) ) {
@@ -789,9 +791,9 @@ final class Optout {
 
 		if ( $can_manage ) {
 			if ( function_exists( 'submit_button' ) ) {
-				submit_button( __( 'Save no-training flags', 'handl-ai-connector-access-control' ) );
+				submit_button( __( 'Save request flags', 'handl-ai-connector-access-control' ) );
 			} else {
-				echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Save no-training flags', 'handl-ai-connector-access-control' ) . '</button></p>';
+				echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Save request flags', 'handl-ai-connector-access-control' ) . '</button></p>';
 			}
 			echo '</form>';
 		}
@@ -885,7 +887,7 @@ final class Optout {
 			)
 		);
 		if ( class_exists( Halt::class, false ) ) {
-			Halt::saved( __( 'No-training flags saved.', 'handl-ai-connector-access-control' ), $back );
+			Halt::saved( __( 'Request flags saved.', 'handl-ai-connector-access-control' ), $back );
 		}
 	}
 }
