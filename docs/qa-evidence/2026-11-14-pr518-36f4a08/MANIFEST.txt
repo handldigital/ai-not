@@ -1,0 +1,12 @@
+exact_sha=36f4a08f115483db6562ef5861295c7120bac8c4
+short_sha=36f4a08
+captured_at=2026-11-14T00:51:57.898Z
+method=Live sandbox plugin checked out to force-asserted SHA 36f4a08; WP-CLI qa-admin + Quarantine::render_page() / consider() / Deny_Receipt::render_page HTML with inlined wp-admin CSS; Playwright local serve of the real wrap. Live SHA restored to 0b2e12a after capture.
+files:
+  01-off.png (307935 B)
+  02-warn-unchanged.png (377650 B)
+  03-block-error.png (392909 B)
+  04-receipt-no-reply-text.png (353776 B)
+  EVIDENCE.html
+  EVIDENCE.json
+  PROVENANCE.md

@@ -1,0 +1,35 @@
+{
+  "pr": 518,
+  "issue": 512,
+  "name": "AICAC-QUARANTINE",
+  "exact_sha": "36f4a08f115483db6562ef5861295c7120bac8c4",
+  "captured_at": "2026-11-14T00:51:57.898Z",
+  "method": "Live sandbox plugin checked out to force-asserted SHA 36f4a08; WP-CLI qa-admin + Quarantine::render_page() / consider() / Deny_Receipt::render_page HTML with inlined wp-admin CSS; Playwright local serve of the real wrap. Live SHA restored to 0b2e12a after capture.",
+  "shots": [
+    {
+      "file": "01-off.png",
+      "bytes": 307935,
+      "job": "quarantine_off",
+      "heading": "quarantine_off"
+    },
+    {
+      "file": "02-warn-unchanged.png",
+      "bytes": 377650,
+      "job": "quarantine_warn",
+      "heading": "quarantine_warn"
+    },
+    {
+      "file": "03-block-error.png",
+      "bytes": 392909,
+      "job": "quarantine_block",
+      "heading": "quarantine_block"
+    },
+    {
+      "file": "04-receipt-no-reply-text.png",
+      "bytes": 353776,
+      "job": "quarantine_receipt",
+      "heading": "quarantine_receipt"
+    }
+  ],
+  "export_stdout": "{\"ok\":true,\"job\":\"quarantine_off\",\"sha\":\"36f4a08f115483db6562ef5861295c7120bac8c4\",\"class\":\"HandL\\\\AICAC\\\\Quarantine\",\"page\":\"handl-aicac-quarantine\",\"plugin\":\"ai/ai.php\",\"decision\":\"none\",\"identical\":true,\"blocked\":false,\"receipt\":\"\",\"selected\":true,\"bytes\":152343,\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"off_copy\":true,\"hostile\":false,\"text\":\"PR518 / #512 AICAC-QUARANTINE SHA 36f4a08 exact product SHA 36f4a08f115483db6562ef5861295c7120bac8c4 live handl-sandbox plugin + DB (WP-CLI Quarantine::render_page + Quarantine::consider) AC: AC Feature-off does not check AI repliesResponse quarantineCheck replies from recognized AI providers for script tags and other patterns listed below. Warn leaves replies unchanged. Block returns an error when a pattern matches. Checks are off until you configure them.Response quarantine\"}}\n{\"ok\":true,\"job\":\"quarantine_warn\",\"sha\":\"36f4a08f115483db6562ef5861295c7120bac8c4\",\"class\":\"HandL\\\\AICAC\\\\Quarantine\",\"page\":\"handl-aicac-quarantine\",\"plugin\":\"ai/ai.php\",\"decision\":\"warn\",\"identical\":true,\"blocked\":false,\"receipt\":\"\",\"selected\":true,\"bytes\":152889,\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"off_copy\":false,\"hostile\":false,\"text\":\"PR518 / #512 AICAC-QUARANTINE SHA 36f4a08 exact product SHA 36f4a08f115483db6562ef5861295c7120bac8c4 live handl-sandbox plugin + DB (WP-CLI Quarantine::render_page + Quarantine::consider) AC: AC Warn default logs kinds and leaves the reply unchangedResponse quarantineCheck replies from recognized AI providers for script tags and other patterns listed below. Warn leaves replies unchanged. Block returns an error when a pattern matches. Checks are off until you configure them.Th\"}}\n{\"ok\":true,\"job\":\"quarantine_block\",\"sha\":\"36f4a08f115483db6562ef5861295c7120bac8c4\",\"class\":\"HandL\\\\AICAC\\\\Quarantine\",\"page\":\"handl-aicac-quarantine\",\"plugin\":\"ai/ai.php\",\"decision\":\"deny\",\"identical\":false,\"blocked\":true,\"receipt\":\"AICAC-071A-ZCGP\",\"selected\":true,\"bytes\":152984,\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"off_copy\":false,\"hostile\":false,\"text\":\"PR518 / #512 AICAC-QUARANTINE SHA 36f4a08 exact product SHA 36f4a08f115483db6562ef5861295c7120bac8c4 live handl-sandbox plugin + DB (WP-CLI Quarantine::render_page + Quarantine::consider) AC: AC Per-plugin Block returns WP_Error instead of the replyResponse quarantineCheck replies from recognized AI providers for script tags and other patterns listed below. Warn leaves replies unchanged. Block returns an error when a pattern matches. Checks are off until you configure them.Th\"}}\n{\"ok\":true,\"job\":\"quarantine_receipt\",\"sha\":\"36f4a08f115483db6562ef5861295c7120bac8c4\",\"class\":\"HandL\\\\AICAC\\\\Quarantine\",\"page\":\"handl-aicac-deny-receipt\",\"plugin\":\"ai/ai.php\",\"decision\":\"deny\",\"identical\":false,\"blocked\":true,\"receipt\":\"AICAC-VK30-M09W\",\"selected\":true,\"bytes\":97983,\"needles\":{\"stamp\":true,\"wrap\":true,\"h1\":true,\"off_copy\":false,\"hostile\":false,\"text\":\"PR518 / #512 AICAC-QUARANTINE SHA 36f4a08 exact product SHA 36f4a08f115483db6562ef5861295c7120bac8c4 live handl-sandbox plugin + DB (WP-CLI Deny_Receipt::render_page + Quarantine::consider) AC: AC Deny receipt names pattern types, never the reply textDeny receiptsGive blocked callers a short reference code they can quote. Paste a code here to open the matching Activity row. Off by default. This does not change Allow or Deny rules.Show code to callers Add &quot;Reference: AICA\"}}"
+}
