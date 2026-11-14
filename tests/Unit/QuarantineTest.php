@@ -162,12 +162,16 @@ final class QuarantineTest extends TestCase {
 		$this->assertSame( 2, $last['quarantine']['kinds'][ Quarantine::KIND_SCRIPT ] );
 		$quarantine_mail = null;
 		foreach ( self::$mails as $mail ) {
-			if ( false !== strpos( $mail['subject'], 'Active content in an AI reply' ) ) {
+			if ( false !== strpos( $mail['subject'], 'Possible active content in an AI reply used by' ) ) {
 				$quarantine_mail = $mail;
 				break;
 			}
 		}
 		$this->assertNotNull( $quarantine_mail );
+		$this->assertStringContainsString( 'found a matching active-content pattern', $quarantine_mail['message'] );
+		$this->assertStringContainsString( 'Code examples can also match.', $quarantine_mail['message'] );
+		$this->assertStringContainsString( 'Mode: Warn. The reply was left unchanged.', $quarantine_mail['message'] );
+		$this->assertStringContainsString( 'Review how this plugin displays AI replies.', $quarantine_mail['message'] );
 		$this->assertStringContainsString( 'Script tag (2)', $quarantine_mail['message'] );
 		$this->assertStringNotContainsString( 'alert(1)', $quarantine_mail['message'] );
 		$this->assertNotEmpty( Quarantine::test_mails() );
@@ -186,8 +190,13 @@ final class QuarantineTest extends TestCase {
 		$out = Quarantine::on_http_response( $resp, $args, self::OPENAI );
 		$this->assertInstanceOf( \WP_Error::class, $out );
 		$this->assertSame( Quarantine::ERROR_CODE, $out->code );
-		$this->assertStringContainsString( 'blocked', strtolower( $out->get_error_message() ) );
+		$this->assertStringContainsString( 'matched an active-content pattern:', $out->get_error_message() );
+		$this->assertStringContainsString( 'Script tag (2)', $out->get_error_message() );
 		$this->assertStringNotContainsString( 'alert(1)', $out->get_error_message() );
+		$this->assertSame(
+			'This AI reply was blocked because it matched an active-content pattern.',
+			Quarantine::block_message( array() )
+		);
 		$events = Quarantine::last_events();
 		$this->assertCount( 1, $events );
 		$this->assertSame( 'deny', $events[0]['decision'] );
@@ -295,11 +304,21 @@ final class QuarantineTest extends TestCase {
 		Quarantine::render_page();
 		$html = (string) ob_get_clean();
 		$this->assertStringContainsString( 'Response quarantine', $html );
-		$this->assertStringContainsString( 'Response quarantine is off. AI replies are not checked.', $html );
-		$this->assertStringContainsString( 'Check AI replies for script tags and other active content', $html );
-		$this->assertStringContainsString( 'Warn is the default', $html );
-		$this->assertStringContainsString( 'Check AI replies for active content.', $html );
-		$this->assertStringContainsString( 'matching text is never stored', $html );
+		$this->assertStringContainsString( 'Response quarantine is off. This feature is not checking AI replies.', $html );
+		$this->assertStringContainsString( 'This feature records pattern types and match counts, not the reply text.', $html );
+		$this->assertStringContainsString( 'Check replies from recognized AI providers for script tags and other patterns listed below.', $html );
+		$this->assertStringContainsString( 'Checks are off until you configure them.', $html );
+		$this->assertStringContainsString( 'Default for plugins without a setting.', $html );
+		$this->assertStringContainsString( 'Use Warn for plugins without a saved mode.', $html );
+		$this->assertStringContainsString( 'Saved per-plugin modes still apply.', $html );
+		$this->assertStringContainsString( 'Code examples can also match these patterns.', $html );
+		$this->assertStringContainsString( 'Only the first 512 KiB of the text being checked is scanned.', $html );
+		$this->assertStringContainsString( 'Saved modes override the default above.', $html );
+		$this->assertStringContainsString( 'Block returns an error instead of the reply.', $html );
+		$this->assertStringContainsString( '>Block<', $html );
+		$this->assertStringNotContainsString( '>Hard<', $html );
+		$this->assertSame( 'hard', Quarantine::MODE_HARD );
+		$this->assertSame( 'Block', Quarantine::mode_choices()[ Quarantine::MODE_HARD ] );
 	}
 
 	public function test_request_args_are_never_mutated(): void {

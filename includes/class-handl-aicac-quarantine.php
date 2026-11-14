@@ -573,12 +573,12 @@ final class Quarantine {
 	public static function block_message( array $kinds ): string {
 		$summary = self::receipt_summary( $kinds );
 		if ( '' === $summary ) {
-			return __( 'This AI reply was blocked because it contained active content.', 'handl-ai-connector-access-control' );
+			return __( 'This AI reply was blocked because it matched an active-content pattern.', 'handl-ai-connector-access-control' );
 		}
 
 		return sprintf(
 			/* translators: %s: kind labels and counts */
-			__( 'This AI reply was blocked because it contained active content: %s.', 'handl-ai-connector-access-control' ),
+			__( 'This AI reply was blocked because it matched an active-content pattern: %s.', 'handl-ai-connector-access-control' ),
 			$summary
 		);
 	}
@@ -799,7 +799,7 @@ final class Quarantine {
 
 		return sprintf(
 			/* translators: 1: site name, 2: plugin label */
-			__( '[%1$s] Active content in an AI reply from %2$s', 'handl-ai-connector-access-control' ),
+			__( '[%1$s] Possible active content in an AI reply used by %2$s', 'handl-ai-connector-access-control' ),
 			$site,
 			$label
 		);
@@ -810,7 +810,7 @@ final class Quarantine {
 	 */
 	public static function build_body( string $plugin, array $kinds, string $mode ): string {
 		$lines   = array();
-		$lines[] = __( 'HandL AI Connector Access Control found active content in this plugin\'s AI reply.', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'HandL AI Connector Access Control found a matching active-content pattern in this plugin\'s AI reply. Code examples can also match.', 'handl-ai-connector-access-control' );
 		$lines[] = '';
 		$lines[] = sprintf(
 			/* translators: %s: plugin basename or label */
@@ -818,9 +818,9 @@ final class Quarantine {
 			self::plugin_label( $plugin )
 		);
 		if ( self::MODE_HARD === self::sanitize_mode( $mode ) ) {
-			$lines[] = __( 'Screen result: Hard (the reply was blocked).', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'Mode: Block. The reply was blocked.', 'handl-ai-connector-access-control' );
 		} else {
-			$lines[] = __( 'Screen result: Warn (the reply was not changed).', 'handl-ai-connector-access-control' );
+			$lines[] = __( 'Mode: Warn. The reply was left unchanged.', 'handl-ai-connector-access-control' );
 		}
 		$lines[] = __( 'Pattern types and match counts (matching text is not included in this alert):', 'handl-ai-connector-access-control' );
 		$summary = self::receipt_summary( $kinds );
@@ -828,7 +828,7 @@ final class Quarantine {
 			$lines[] = $summary;
 		}
 		$lines[] = '';
-		$lines[] = __( 'Review this plugin\'s renderer. This alert does not include the reply text.', 'handl-ai-connector-access-control' );
+		$lines[] = __( 'Review how this plugin displays AI replies. If you need help, contact the plugin developer. This alert does not include the reply text.', 'handl-ai-connector-access-control' );
 
 		return implode( "\n", $lines );
 	}
@@ -875,11 +875,12 @@ final class Quarantine {
 
 		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__( 'Response quarantine', 'handl-ai-connector-access-control' ) . '</h1>';
-		echo '<p class="description">' . esc_html__( 'Check AI replies for script tags and other active content before a plugin can add them to the site. Warn is the default, so the reply is not changed. Hard mode blocks the reply for that plugin. Off by default.', 'handl-ai-connector-access-control' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Check replies from recognized AI providers for script tags and other patterns listed below. Warn leaves replies unchanged. Block returns an error when a pattern matches. Checks are off until you configure them.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( empty( $settings['enabled'] ) && array() === $settings['plugin_modes'] ) {
-			echo '<p>' . esc_html__( 'Response quarantine is off. AI replies are not checked.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p>' . esc_html__( 'Response quarantine is off. This feature is not checking AI replies.', 'handl-ai-connector-access-control' ) . '</p>';
 		}
+		echo '<p class="description">' . esc_html__( 'This feature records pattern types and match counts, not the reply text.', 'handl-ai-connector-access-control' ) . '</p>';
 
 		if ( $can_manage ) {
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
@@ -889,15 +890,16 @@ final class Quarantine {
 				wp_nonce_field( self::ACTION_SAVE );
 			}
 			echo '<table class="form-table" role="presentation"><tbody>';
-			echo '<tr><th scope="row">' . esc_html__( 'Response quarantine', 'handl-ai-connector-access-control' ) . '</th><td>';
+			echo '<tr><th scope="row">' . esc_html__( 'Default for plugins without a setting.', 'handl-ai-connector-access-control' ) . '</th><td>';
 			echo '<label><input type="checkbox" name="' . esc_attr( self::POST_ENABLED ) . '" value="1" ' . checked( ! empty( $settings['enabled'] ), true, false ) . ' /> ';
-			echo esc_html__( 'Check AI replies for active content.', 'handl-ai-connector-access-control' );
+			echo esc_html__( 'Use Warn for plugins without a saved mode.', 'handl-ai-connector-access-control' );
 			echo '</label>';
-			echo '<p class="description">' . esc_html__( 'Warn logs the pattern type and count. The matching text is never stored. Hard replaces the reply with an error so a plugin cannot echo it.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Checked: plugins without a saved mode use Warn. Unchecked: they use Off. Saved per-plugin modes still apply. To stop all checks, uncheck this box and set every plugin below to Off.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '</td></tr></tbody></table>';
 		}
 
 		echo '<h2>' . esc_html__( 'What this checks', 'handl-ai-connector-access-control' ) . '</h2>';
+		echo '<p class="description">' . esc_html__( 'Code examples can also match these patterns. A match does not prove a reply is harmful. This check does not clean HTML or guarantee that a reply is safe to display. Only the first 512 KiB of the text being checked is scanned.', 'handl-ai-connector-access-control' ) . '</p>';
 		echo '<ul>';
 		foreach ( array_keys( self::pattern_table() ) as $kind ) {
 			echo '<li>' . esc_html( self::kind_label( $kind ) ) . '</li>';
@@ -906,7 +908,7 @@ final class Quarantine {
 
 		if ( array() !== $plugins ) {
 			echo '<h2>' . esc_html__( 'Per-plugin mode', 'handl-ai-connector-access-control' ) . '</h2>';
-			echo '<p class="description">' . esc_html__( 'Plugins without a setting use Warn when this feature is on.', 'handl-ai-connector-access-control' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Saved modes override the default above. Warn logs a match and leaves the reply unchanged. Block returns an error instead of the reply. Off skips this check for that plugin.', 'handl-ai-connector-access-control' ) . '</p>';
 			echo '<table class="widefat striped" style="max-width:52em;"><thead><tr>';
 			echo '<th>' . esc_html__( 'Plugin', 'handl-ai-connector-access-control' ) . '</th>';
 			echo '<th>' . esc_html__( 'Mode', 'handl-ai-connector-access-control' ) . '</th>';
@@ -949,7 +951,7 @@ final class Quarantine {
 	public static function mode_choices(): array {
 		return array(
 			self::MODE_WARN => __( 'Warn', 'handl-ai-connector-access-control' ),
-			self::MODE_HARD => __( 'Hard', 'handl-ai-connector-access-control' ),
+			self::MODE_HARD => __( 'Block', 'handl-ai-connector-access-control' ),
 			self::MODE_OFF  => __( 'Off', 'handl-ai-connector-access-control' ),
 		);
 	}
