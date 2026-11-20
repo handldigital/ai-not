@@ -1343,4 +1343,5 @@ require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-litmus.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-foyer.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-tripwire.php';
 require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-optout.php';
+require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quarantine.php';
 require_once __DIR__ . '/stubs/namespace-filter-input.php';
