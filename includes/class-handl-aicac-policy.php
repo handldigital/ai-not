@@ -267,6 +267,19 @@ final class Policy {
 			}
 		}
 
+		// AICAC-PHRASEBOOK (#514): owner-term screen. Runs after Tripwire even when
+		// that check already denied, so both can record a match and alert. Sets
+		// prevent only when nothing else has. Empty list does not touch the event.
+		$book = Phrasebook::apply_to_event( $event, $policy, $builder );
+		if ( ! empty( $book['prevent'] ) && ! $prevent ) {
+			$event['would_decision'] = 'deny';
+			$event['denial_reason']  = Phrasebook::REASON;
+			if ( empty( $policy['audit_only'] ) ) {
+				$prevent           = true;
+				$event['decision'] = 'deny';
+			}
+		}
+
 		// AICAC-NEWCOMER-HOLD (#271): flag first_seen_hold; deny-mode can still block.
 		$hold_reason = isset( $would_eval['reason'] ) ? (string) $would_eval['reason'] : '';
 		if ( empty( $event['selftest'] ) && ( ! $prevent || New_Plugin::REASON === $hold_reason ) ) {
@@ -1228,6 +1241,7 @@ final class Policy {
 		$policy['pii_patterns'] = Pii_Warn::sanitize_patterns( $policy['pii_patterns'] ?? null );
 		$policy['taint_screen']     = Taint::sanitize_plugin_modes( $policy['taint_screen'] ?? array() );
 		$policy['tripwire_screen']  = Tripwire::sanitize_plugin_modes( $policy['tripwire_screen'] ?? array() );
+		$policy[ Phrasebook::POLICY_KEY ] = Phrasebook::sanitize_plugin_modes( $policy[ Phrasebook::POLICY_KEY ] ?? array() );
 		// Optional role gate (AICAC-ROLE): off by default = all roles may initiate AI.
 		$policy['role_gate_enabled'] = (bool) ( $policy['role_gate_enabled'] ?? false );
 		$policy['allowed_roles']     = self::sanitize_allowed_roles( $policy['allowed_roles'] ?? array() );
@@ -1582,6 +1596,7 @@ final class Policy {
 		$policy['pii_patterns']           = Pii_Warn::sanitize_patterns( $policy['pii_patterns'] ?? null );
 		$policy['taint_screen']           = Taint::sanitize_plugin_modes( $policy['taint_screen'] ?? array() );
 		$policy['tripwire_screen']        = Tripwire::sanitize_plugin_modes( $policy['tripwire_screen'] ?? array() );
+		$policy[ Phrasebook::POLICY_KEY ] = Phrasebook::sanitize_plugin_modes( $policy[ Phrasebook::POLICY_KEY ] ?? array() );
 		$policy['role_gate_enabled']      = ! empty( $policy['role_gate_enabled'] );
 		$policy['allowed_roles']          = self::sanitize_allowed_roles( $policy['allowed_roles'] ?? array() );
 		$policy['operations']             = self::sanitize_operations( $policy['operations'] ?? array() );
@@ -2057,7 +2072,7 @@ final class Policy {
 				Drift::flush_deferred_alerts();
 			}
 			$channel = isset( $event['channel'] ) ? (string) $event['channel'] : '';
-			if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget', 'selftest', 'pii', 'taint', 'tripwire', 'latency' ), true ) ) {
+			if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget', 'selftest', 'pii', 'taint', 'tripwire', 'phrasebook', 'latency' ), true ) ) {
 				Anomaly::maybe_evaluate( $policy );
 			}
 			return;
@@ -2096,13 +2111,18 @@ final class Policy {
 			Tripwire::maybe_alert( $event, $policy );
 		}
 
+		// AICAC-PHRASEBOOK: label + count alert after retain. Never the term or request text.
+		if ( ! $is_direct_http && ! $is_selftest && isset( $event['phrasebook_match'] ) ) {
+			Phrasebook::maybe_alert( $event, $policy );
+		}
+
 		if ( $shadow_alert_eligible ) {
 			Alerts::maybe_notify_shadow( $event, $policy );
 		}
 
 		// AICAC-ANOMALY: re-check after new retained rows (skip our own audit rows).
 		$channel = isset( $event['channel'] ) ? (string) $event['channel'] : '';
-		if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget', 'selftest', 'pii', 'tripwire', 'latency' ), true ) ) {
+		if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget', 'selftest', 'pii', 'tripwire', 'phrasebook', 'latency' ), true ) ) {
 			Anomaly::maybe_evaluate( $policy );
 		}
 	}
