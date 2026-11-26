@@ -267,6 +267,11 @@ final class Policy {
 			}
 		}
 
+		// AICAC-PROMPTER (#517): stamp salted system-instruction fingerprint (never the text).
+		if ( class_exists( Prompter::class, false ) ) {
+			Prompter::stamp_event( $event, $builder );
+		}
+
 		// AICAC-NEWCOMER-HOLD (#271): flag first_seen_hold; deny-mode can still block.
 		$hold_reason = isset( $would_eval['reason'] ) ? (string) $would_eval['reason'] : '';
 		if ( empty( $event['selftest'] ) && ( ! $prevent || New_Plugin::REASON === $hold_reason ) ) {
@@ -2038,6 +2043,9 @@ final class Policy {
 		// AICAC-DRIFT: tag first-seen provider/model pairs; alerts flush after persist.
 		if ( ! $is_direct_http && ! $is_selftest ) {
 			Drift::observe( $event, $policy, true );
+			if ( class_exists( Prompter::class, false ) ) {
+				Prompter::observe( $event, $policy, true );
+			}
 			Went_AI::observe( $event, $policy );
 			// AICAC-DEAD-RULES (#290): stamp last_matched for the matched Allow rule.
 			if ( class_exists( Dead_Rules::class, false ) ) {
@@ -2055,9 +2063,12 @@ final class Policy {
 			update_option( Plugin::LOG_OPTION_KEY, $log, false );
 			if ( ! $is_direct_http && ! $is_selftest ) {
 				Drift::flush_deferred_alerts();
+				if ( class_exists( Prompter::class, false ) ) {
+					Prompter::flush_deferred_alerts();
+				}
 			}
 			$channel = isset( $event['channel'] ) ? (string) $event['channel'] : '';
-			if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget', 'selftest', 'pii', 'taint', 'tripwire', 'latency' ), true ) ) {
+			if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget', 'selftest', 'pii', 'taint', 'tripwire', 'prompter', 'latency' ), true ) ) {
 				Anomaly::maybe_evaluate( $policy );
 			}
 			return;
@@ -2075,6 +2086,9 @@ final class Policy {
 
 		if ( ! $is_direct_http && ! $is_selftest ) {
 			Drift::flush_deferred_alerts();
+			if ( class_exists( Prompter::class, false ) ) {
+				Prompter::flush_deferred_alerts();
+			}
 		}
 
 		if ( 'threshold' === $retry_storm_action ) {
@@ -2102,7 +2116,7 @@ final class Policy {
 
 		// AICAC-ANOMALY: re-check after new retained rows (skip our own audit rows).
 		$channel = isset( $event['channel'] ) ? (string) $event['channel'] : '';
-		if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget', 'selftest', 'pii', 'tripwire', 'latency' ), true ) ) {
+		if ( ! in_array( $channel, array( 'anomaly', 'spend_threshold', 'drift', 'budget', 'selftest', 'pii', 'tripwire', 'prompter', 'latency' ), true ) ) {
 			Anomaly::maybe_evaluate( $policy );
 		}
 	}
