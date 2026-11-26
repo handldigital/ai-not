@@ -208,6 +208,7 @@ final class Plugin {
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-tripwire.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-optout.php';
 		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-quarantine.php';
+		require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-toolbelt.php';
 
 		Policy::instance()->init();
 		Latency::instance()->init();
@@ -337,6 +338,7 @@ final class Plugin {
 		Tripwire::init();
 		Optout::init();
 		Quarantine::init();
+		Toolbelt::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once HANDL_AICAC_DIR . '/includes/class-handl-aicac-cli.php';
